@@ -1,0 +1,107 @@
+{
+    "HomePage": {
+        "title": "Exchanger",
+        "description": "Enterprise-ready cryptocurrency exchange platform built with Next.js, tRPC, and modern web technologies",
+        "getStarted": "Get Started",
+        "learnMore": "Learn More",
+        "features": {
+            "title": "Enterprise Features",
+            "description": "Built with modern technologies for scalability and performance",
+            "turborepo": {
+                "title": "Turborepo Monorepo",
+                "description": "Scalable monorepo architecture with shared packages and optimized builds"
+            },
+            "trpc": {
+                "title": "tRPC API",
+                "description": "End-to-end typesafe APIs with automatic type inference"
+            },
+            "i18n": {
+                "title": "Internationalization",
+                "description": "Multi-language support with next-intl"
+            },
+            "ui": {
+                "title": "Modern UI",
+                "description": "Beautiful components with shadcn/ui and Tailwind CSS"
+            },
+            "state": {
+                "title": "State Management",
+                "description": "Zustand for lightweight and performant state management"
+            },
+            "testing": {
+                "title": "Testing & Quality",
+                "description": "Jest, Playwright, ESLint, and TypeScript for code quality"
+            }
+        },
+        "cta": {
+            "title": "Ready to Start Trading?",
+            "description": "Join thousands of traders using our platform",
+            "button": "Start Trading"
+        }
+    },
+    "navigation": {
+        "overview": "Overview",
+        "trading": "Trading",
+        "portfolio": "Portfolio",
+        "transactions": "Transactions",
+        "settings": "Settings"
+    },
+    "dashboard": {
+        "title": "Dashboard",
+        "welcome": "Welcome to your trading dashboard. Here's your overview.",
+        "stats": {
+            "totalBalance": "Total Balance",
+            "activeTrades": "Active Trades",
+            "portfolioValue": "Portfolio Value",
+            "dailyVolume": "24h Volume"
+        },
+        "quickActions": {
+            "title": "Quick Actions",
+            "newTrade": "Start New Trade",
+            "viewPortfolio": "View Portfolio",
+            "openSettings": "Open Settings Modal"
+        },
+        "recentTransactions": {
+            "title": "Recent Transactions",
+            "btcPurchase": "BTC Purchase",
+            "ethSale": "ETH Sale",
+            "usdDeposit": "USD Deposit"
+        }
+    },
+    "trading": {
+        "title": "Trading",
+        "pair": "Trading Pair",
+        "amount": "Amount",
+        "price": "Price",
+        "buy": "Buy",
+        "sell": "Sell",
+        "placeOrder": "Place Order",
+        "orderBook": "Order Book",
+        "tradeHistory": "Trade History"
+    },
+    "portfolio": {
+        "title": "Portfolio",
+        "totalValue": "Total Value",
+        "assets": "Assets",
+        "balance": "Balance",
+        "value": "Value",
+        "change": "24h Change"
+    },
+    "common": {
+        "loading": "Loading...",
+        "error": "Error",
+        "success": "Success",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "close": "Close",
+        "save": "Save",
+        "delete": "Delete",
+        "edit": "Edit",
+        "view": "View",
+        "search": "Search"
+    },
+    "theme": {
+        "light": "Light",
+        "dark": "Dark",
+        "system": "System"
+    }
+}
