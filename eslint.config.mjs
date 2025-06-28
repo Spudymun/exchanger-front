@@ -14,7 +14,29 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
-  ...storybook.configs["flat/recommended"]
+  ...storybook.configs["flat/recommended"],
+  {
+    rules: {
+      // Code quality rules from our style guide
+      "max-lines-per-function": ["error", { max: 50, skipBlankLines: true, skipComments: true }],
+      "complexity": ["warn", 10],
+      "max-depth": ["error", 2],
+      "max-params": ["error", 4],
+
+      // Prevent deeply nested conditionals
+      "max-nested-callbacks": ["error", 3],
+
+      // Encourage readable code
+      "max-statements-per-line": ["error", { max: 1 }],
+
+      // React specific improvements
+      "react/jsx-max-depth": ["warn", { max: 4 }],
+
+      // TypeScript improvements
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/prefer-const": "error"
+    }
+  }
 ];
 
 export default eslintConfig;

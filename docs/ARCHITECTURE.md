@@ -59,8 +59,68 @@ exchanger-front/
 
 - `turbo.json` - Build configuration
 - `packages/ui/src/index.ts` - UI exports
+- `packages/constants/src/index.ts` - Business constants and configuration
 - `apps/web/server/trpc.ts` - API definition
 - `packages/hooks/src/state/` - Global state
+
+## 📦 Constants Package Usage
+
+### Business Constants
+```typescript
+import { ORDER_STATUSES, USER_ROLES, HTTP_STATUS } from '@repo/constants'
+
+// In API handlers
+if (response.status === HTTP_STATUS.OK) {
+  // Handle success
+}
+
+// In components
+if (order.status === ORDER_STATUSES.PENDING) {
+  return <PendingOrderBadge />
+}
+
+// In authorization
+if (user.role === USER_ROLES.ADMIN) {
+  return <AdminPanel />
+}
+```
+
+### UI Configuration
+```typescript
+import { ORDER_STATUS_CONFIG, ALERT_VARIANTS } from '@repo/constants'
+
+// Polymorphic components with configuration
+function OrderStatusBadge({ status }: Props) {
+  const config = ORDER_STATUS_CONFIG[status]
+  
+  return (
+    <Badge variant={config.color}>
+      <Icon name={config.icon} className="mr-2" />
+      {config.label}
+    </Badge>
+  )
+}
+
+// Alert variants
+<Alert variant={ALERT_VARIANTS.SUCCESS}>
+  Order created successfully!
+</Alert>
+```
+
+### Validation
+```typescript
+import { VALIDATION_LIMITS, VALIDATION_PATTERNS } from '@repo/constants'
+
+// In form validation
+const userSchema = z.object({
+  email: z.string()
+    .max(VALIDATION_LIMITS.EMAIL_MAX_LENGTH)
+    .regex(VALIDATION_PATTERNS.EMAIL),
+  password: z.string()
+    .min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH)
+    .regex(VALIDATION_PATTERNS.PASSWORD)
+})
+```
 
 ## 📋 Development Examples
 

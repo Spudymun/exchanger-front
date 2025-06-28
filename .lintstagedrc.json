@@ -1,6 +1,6 @@
 {
     "*.{js,jsx,ts,tsx}": [
-        "eslint --fix",
+        "eslint --fix --max-warnings 0",
         "prettier --write"
     ],
     "*.{css,scss}": [
@@ -9,5 +9,8 @@
     ],
     "*.{json,md}": [
         "prettier --write"
+    ],
+    "packages/constants/src/**/*.{ts,tsx}": [
+        "cd packages/constants && npm run build"
     ]
 }

@@ -28,6 +28,12 @@
       ],
       "@repo/typescript-config/*": [
         "./packages/typescript-config/*"
+      ],
+      "@repo/constants": [
+        "./packages/constants/src/index.ts"
+      ],
+      "@repo/constants/*": [
+        "./packages/constants/src/*"
       ]
     }
   },
