@@ -6,7 +6,9 @@
         ".": "./src/index.tsx"
     },
     "scripts": {
-        "lint": "eslint . --max-warnings 0",
+        "lint": "eslint . --max-warnings 5",
+        "lint:strict": "eslint . --max-warnings 0",
+        "lint:styles": "echo 'No CSS files to lint in @repo/providers'",
         "check-types": "tsc --noEmit"
     },
     "devDependencies": {

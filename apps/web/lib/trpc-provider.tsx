@@ -2,12 +2,12 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { httpBatchLink } from '@trpc/client'
-import { createTRPCReact } from '@trpc/react-query'
+import { createTRPCReact, type CreateTRPCReact } from '@trpc/react-query'
 import { useState } from 'react'
 import type { AppRouter } from '../server/trpc'
 
 // Type annotation to avoid build errors
-const trpc: any = createTRPCReact<AppRouter>()
+const trpc: CreateTRPCReact<AppRouter, unknown> = createTRPCReact<AppRouter>()
 
 function getBaseUrl() {
     if (typeof window !== 'undefined') return ''

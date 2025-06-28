@@ -44,6 +44,32 @@ export const nextJsConfig = [
       ...pluginReactHooks.configs.recommended.rules,
       // React scope no longer necessary with new JSX transform.
       "react/react-in-jsx-scope": "off",
+
+      // === INLINE STYLES CONTROL ===
+
+      // Запретить инлайн стили в пользу CSS классов
+      "react/forbid-dom-props": [
+        "warn",
+        {
+          forbid: [
+            {
+              propName: "style",
+              message: "Avoid inline styles. Use CSS classes or Tailwind utilities instead.",
+            },
+          ],
+        },
+      ],
+
+      // Контроль магических чисел в JSX (включая style объекты)
+      "no-magic-numbers": [
+        "warn",
+        {
+          ignore: [-1, 0, 1, 2, 100],
+          ignoreArrayIndexes: true,
+          enforceConst: true,
+          detectObjects: true, // Найдет магические числа в style={{width: 300}}
+        },
+      ],
     },
   },
 ];

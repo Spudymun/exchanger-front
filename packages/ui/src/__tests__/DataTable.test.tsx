@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { DataTable, type Column } from '../components/data-table'
 
-interface TestData {
+interface TestData extends Record<string, unknown> {
     id: number
     name: string
     email: string
@@ -14,7 +14,7 @@ const mockData: TestData[] = [
     { id: 3, name: 'Bob Johnson', email: 'bob@example.com' },
 ]
 
-const mockColumns: Column<TestData>[] = [
+const mockColumns: Array<Column<TestData>> = [
     { key: 'id', header: 'ID', sortable: true },
     { key: 'name', header: 'Name', sortable: true, filterable: true },
     { key: 'email', header: 'Email', sortable: true, filterable: true },

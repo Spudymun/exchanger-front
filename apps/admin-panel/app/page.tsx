@@ -16,7 +16,8 @@ import {
 import { Users, CreditCard, TrendingUp, Settings } from 'lucide-react'
 
 // Sample data for DataTable
-interface User {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface User extends Record<string, any> {
     id: number
     name: string
     email: string
@@ -80,7 +81,7 @@ const columns: Column<User>[] = [
         key: 'status',
         header: 'Status',
         sortable: true,
-        render: (value: string) => (
+        render: (value) => (
             <span
                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${value === 'active'
                     ? 'bg-green-100 text-green-800'

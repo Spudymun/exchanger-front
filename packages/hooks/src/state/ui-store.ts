@@ -1,6 +1,27 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
+/**
+ * Global UI State Store
+ *
+ * Manages app-wide UI state including:
+ * - Sidebar visibility
+ * - Modal states
+ * - Notifications
+ * - Loading states
+ * - Layout preferences
+ *
+ * @example
+ * ```tsx
+ * import { useUIStore } from '@repo/hooks'
+ *
+ * function MyComponent() {
+ *   const { sidebarOpen, toggleSidebar } = useUIStore()
+ *   return <button onClick={toggleSidebar}>Toggle</button>
+ * }
+ * ```
+ */
+
 // UI State Store
 interface UIState {
     // Sidebar
@@ -10,8 +31,16 @@ interface UIState {
 
     // Modals
     activeModal: string | null;
+    modals: {
+        settings: boolean;
+        trade: boolean;
+        deposit: boolean;
+        withdraw: boolean;
+    };
     openModal: (modalId: string) => void;
     closeModal: () => void;
+    openSpecificModal: (modal: keyof UIState['modals']) => void;
+    closeSpecificModal: (modal: keyof UIState['modals']) => void;
 
     // Notifications
     notifications: Array<{
@@ -23,10 +52,15 @@ interface UIState {
     }>;
     addNotification: (notification: Omit<UIState['notifications'][0], 'id' | 'timestamp'>) => void;
     removeNotification: (id: string) => void;
+    clearNotifications: () => void;
 
     // Loading states
     globalLoading: boolean;
     setGlobalLoading: (loading: boolean) => void;
+
+    // Theme
+    theme: 'light' | 'dark' | 'system';
+    setTheme: (theme: 'light' | 'dark' | 'system') => void;
 
     // Layout
     layout: 'default' | 'compact' | 'wide';
@@ -43,8 +77,20 @@ export const useUIStore = create<UIState>()(
 
             // Modals
             activeModal: null,
+            modals: {
+                settings: false,
+                trade: false,
+                deposit: false,
+                withdraw: false,
+            },
             openModal: (modalId) => set({ activeModal: modalId }),
             closeModal: () => set({ activeModal: null }),
+            openSpecificModal: (modal) => set((state) => ({
+                modals: { ...state.modals, [modal]: true }
+            })),
+            closeSpecificModal: (modal) => set((state) => ({
+                modals: { ...state.modals, [modal]: false }
+            })),
 
             // Notifications
             notifications: [],
@@ -63,10 +109,15 @@ export const useUIStore = create<UIState>()(
             removeNotification: (id) => set((state) => ({
                 notifications: state.notifications.filter(n => n.id !== id)
             })),
+            clearNotifications: () => set({ notifications: [] }),
 
             // Loading
             globalLoading: false,
             setGlobalLoading: (loading) => set({ globalLoading: loading }),
+
+            // Theme
+            theme: 'system',
+            setTheme: (theme) => set({ theme }),
 
             // Layout
             layout: 'default',
@@ -77,3 +128,14 @@ export const useUIStore = create<UIState>()(
         }
     )
 );
+
+// Persist theme to localStorage
+if (typeof window !== 'undefined') {
+    useUIStore.subscribe(
+        (state) => {
+            if (state.theme !== 'system') {
+                localStorage.setItem('theme', state.theme);
+            }
+        }
+    );
+}

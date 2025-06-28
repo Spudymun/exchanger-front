@@ -2,6 +2,7 @@
   "extends": "@repo/typescript-config/react-library.json",
   "compilerOptions": {
     "outDir": "dist",
+    "target": "ES2018",
     "types": [
       "jest",
       "@testing-library/jest-dom",
@@ -14,6 +15,7 @@
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "turbo"
   ]
 }

@@ -24,6 +24,16 @@
         "^lint"
       ]
     },
+    "lint:strict": {
+      "dependsOn": [
+        "^lint:strict"
+      ]
+    },
+    "lint:styles": {
+      "dependsOn": [
+        "^lint:styles"
+      ]
+    },
     "check-types": {
       "dependsOn": [
         "^check-types"

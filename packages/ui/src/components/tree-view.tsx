@@ -1,5 +1,6 @@
-import React from 'react'
 import { ChevronRight, ChevronDown, Folder, File } from 'lucide-react'
+import React from 'react'
+
 import { cn } from '../lib/utils'
 
 export interface TreeNode {
@@ -7,7 +8,7 @@ export interface TreeNode {
     label: string
     children?: TreeNode[]
     icon?: React.ReactNode
-    data?: any
+    data?: unknown
     disabled?: boolean
 }
 
@@ -87,19 +88,16 @@ function TreeItem({
                 </div>
 
                 {/* Icon */}
-                {showIcons && (
-                    <div className="w-4 h-4 mr-2 flex items-center justify-center text-muted-foreground">
+                {showIcons ? <div className="w-4 h-4 mr-2 flex items-center justify-center text-muted-foreground">
                         {node.icon || (hasChildren ? <Folder className="h-3 w-3" /> : <File className="h-3 w-3" />)}
-                    </div>
-                )}
+                    </div> : null}
 
                 {/* Label */}
                 <span className="flex-1 truncate">{node.label}</span>
             </div>
 
             {/* Children */}
-            {hasChildren && isExpanded && (
-                <div>
+            {hasChildren && isExpanded ? <div>
                     {node.children!.map((child) => (
                         <TreeItemContainer
                             key={child.id}
@@ -110,8 +108,7 @@ function TreeItem({
                             showIcons={showIcons}
                         />
                     ))}
-                </div>
-            )}
+                </div> : null}
         </div>
     )
 }

@@ -1,0 +1,13 @@
+{
+    "recommendations": [
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "stylelint.vscode-stylelint",
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-typescript-next",
+        "steoates.autoimport-es6-ts",
+        "christian-kohler.path-intellisense",
+        "ms-playwright.playwright",
+        "ms-vscode.vscode-jest"
+    ]
+}

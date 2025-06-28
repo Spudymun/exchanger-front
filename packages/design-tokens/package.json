@@ -11,8 +11,16 @@
         "typography.js",
         "spacing.js"
     ],
+    "scripts": {
+        "lint": "eslint . --max-warnings 15",
+        "lint:strict": "eslint . --max-warnings 0",
+        "lint:styles": "echo 'No CSS files to lint in @repo/design-tokens'",
+        "check-types": "tsc --noEmit"
+    },
     "devDependencies": {
+        "@repo/eslint-config": "*",
         "@repo/typescript-config": "*",
+        "eslint": "^9.29.0",
         "typescript": "^5"
     }
 }

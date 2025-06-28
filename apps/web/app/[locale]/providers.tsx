@@ -8,7 +8,7 @@ import { TRPCProvider } from '../../lib/trpc-provider'
 interface ProvidersProps {
     children: React.ReactNode
     locale: string
-    messages: any
+    messages: Record<string, unknown>
 }
 
 export function ClientProviders({ children, locale, messages }: ProvidersProps) {

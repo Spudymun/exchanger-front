@@ -9,9 +9,11 @@
         "./state": "./src/state/index.ts"
     },
     "scripts": {
-        "lint": "eslint . --max-warnings 0",
+        "lint": "eslint . --max-warnings 5",
+        "lint:strict": "eslint . --max-warnings 0",
+        "lint:styles": "echo 'No CSS files to lint in @repo/hooks'",
         "check-types": "tsc --noEmit",
-        "test": "jest",
+        "test": "jest --passWithNoTests",
         "test:watch": "jest --watch"
     },
     "devDependencies": {

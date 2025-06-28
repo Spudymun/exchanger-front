@@ -161,4 +161,70 @@
 
 ---
 
-*Обновлено: June 28, 2025*
+# Enterprise Linting Roadmap
+
+## 🎯 **Текущее состояние (Baseline)**
+
+### 📊 **Quality Metrics по пакетам:**
+
+| Пакет | Warnings | Лимит | Статус |
+|-------|----------|-------|---------|
+| `@repo/ui` | 69 | 70 | ✅ PASS |
+| `@repo/api-client` | ~1 | 5 | ✅ PASS |
+| `@repo/hooks` | ~1 | 5 | ✅ PASS |
+| `@repo/providers` | ~1 | 5 | ✅ PASS |
+| `apps/web` | ~0 | 0 | ✅ PASS |
+| `apps/admin-panel` | ~0 | 0 | ✅ PASS |
+| `apps/docs` | ~0 | 0 | ✅ PASS |
+
+### 📈 **Top проблемы в @repo/ui (69 warnings):**
+
+#### 🔥 **Critical (влияют на production):**
+1. **Performance Issues** (24 warnings):
+   - `react/jsx-no-bind` - arrow functions в JSX props
+   - `react/jsx-no-leaked-render` - потенциальные утечки рендера
+   - `react/no-array-index-key` - использование index как key
+
+2. **Complexity Issues** (3 warnings):
+   - `DataTable` function: 198 строк (лимит 100)
+   - `DataTable` complexity: 14 (лимит 10)
+   - `TreeItem` complexity: 12 (лимит 10)
+
+3. **Security/Quality** (18 warnings):
+   - `@typescript-eslint/no-explicit-any` - использование any типов
+   - `@typescript-eslint/no-non-null-assertion` - dangerous ! operator
+   - `no-alert` - production alert
+   - `no-magic-numbers` - hardcoded values
+
+#### ⚠️ **Medium (code style):**
+4. **Import Organization** (24 warnings):
+   - `import/order` - неправильный порядок импортов
+   - Отсутствие пустых строк между группами
+
+## 🛣️ **Roadmap (Phase-by-phase approach)**
+
+### **Phase 1: Quick Wins (1-2 дня)**
+*Target: 69 → 40 warnings*
+
+```bash
+# Автофикс импортов
+npm run lint -- --fix
+
+# Ручные исправления:
+# 1. Добавить type="button" в кнопки
+# 2. Убрать alert из production кода  
+# 3. Заменить magic number 16 на константу ICON_SIZE
+```
+
+### **Phase 2: Performance Critical (3-5 дней)**
+*Target: 40 → 20 warnings*
+
+```typescript
+// Исправить arrow functions в JSX:
+// ❌ Плохо
+<button onClick={() => handleClick(id)}>
+
+// ✅ Хорошо  
+const handleItemClick = useCallback((id: string) => {
+  handleClick(id)
+}, [handleClick])

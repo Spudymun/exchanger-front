@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { DataTable, type Column } from '../components/data-table'
 
 // Sample data
-interface User {
+interface User extends Record<string, unknown> {
     id: number
     name: string
     email: string
@@ -54,7 +54,7 @@ const sampleData: User[] = [
     },
 ]
 
-const columns: Column<User>[] = [
+const columns: Array<Column<User>> = [
     {
         key: 'id',
         header: 'ID',
@@ -82,14 +82,14 @@ const columns: Column<User>[] = [
         key: 'status',
         header: 'Status',
         sortable: true,
-        render: (value: string) => (
+        render: (value) => (
             <span
                 className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${value === 'active'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
                     }`}
             >
-                {value}
+                {String(value)}
             </span>
         ),
     },
@@ -102,7 +102,7 @@ const columns: Column<User>[] = [
 
 const meta: Meta<typeof DataTable<User>> = {
     title: 'Components/DataTable',
-    component: DataTable,
+    component: DataTable<User>,
     parameters: {
         layout: 'fullscreen',
     },
