@@ -34,7 +34,7 @@ const eslintConfig = [
 
       // TypeScript improvements
       "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/prefer-const": "error"
+      "prefer-const": "error"
     }
   }
 ];

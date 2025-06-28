@@ -1,33 +1,33 @@
 {
-    "name": "@repo/constants",
-    "version": "0.0.0",
-    "private": true,
-    "main": "./dist/index.js",
-    "module": "./dist/index.mjs",
-    "types": "./dist/index.d.ts",
-    "sideEffects": false,
-    "files": [
-        "dist/**"
-    ],
-    "scripts": {
-        "build": "tsc",
-        "dev": "tsc --watch",
-        "lint": "eslint src/",
-        "type-check": "tsc --noEmit --skipLibCheck",
-        "check-types": "tsc --noEmit --skipLibCheck"
-    },
-    "devDependencies": {
-        "@repo/eslint-config": "workspace:*",
-        "@repo/typescript-config": "workspace:*",
-        "eslint": "^9.17.0",
-        "tsup": "^8.3.5",
-        "typescript": "^5.7.2"
-    },
-    "exports": {
-        ".": {
-            "import": "./dist/index.mjs",
-            "require": "./dist/index.js",
-            "types": "./dist/index.d.ts"
-        }
+  "name": "@repo/constants",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist/**"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "lint": "eslint src/",
+    "type-check": "tsc --noEmit --skipLibCheck",
+    "check-types": "tsc --noEmit --skipLibCheck"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*",
+    "eslint": "^9.17.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
     }
+  }
 }
