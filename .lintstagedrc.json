@@ -1,16 +1,6 @@
 {
-    "*.{js,jsx,ts,tsx}": [
-        "eslint --fix --max-warnings 0",
-        "prettier --write"
-    ],
-    "*.{css,scss}": [
-        "stylelint --fix",
-        "prettier --write"
-    ],
-    "*.{json,md}": [
-        "prettier --write"
-    ],
-    "packages/constants/src/**/*.{ts,tsx}": [
-        "cd packages/constants && npm run build"
-    ]
+  "*.{js,jsx,ts,tsx}": ["eslint --fix --max-warnings 0", "prettier --write"],
+  "*.{css,scss}": ["stylelint --fix", "prettier --write"],
+  "*.{json,md}": ["prettier --write"],
+  "packages/constants/src/**/*.{ts,tsx}": ["npm run type-check --prefix packages/constants"]
 }
