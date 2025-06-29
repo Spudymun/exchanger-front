@@ -41,5 +41,8 @@ yarn-error.log*
 .DS_Store
 *.pem
 
+# Compiled JS files in constants package (should not be committed)
+packages/constants/src/*.js
+
 *storybook.log
 storybook-static
