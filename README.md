@@ -189,3 +189,7 @@ packages/ui/
 # Test commit workflow
 
 # Test final workflow
+
+# Test commit with cmd script
+
+# Test simple reminder
