@@ -187,3 +187,5 @@ packages/ui/
 # Test interactive workflow
 
 # Test commit workflow
+
+# Test final workflow
