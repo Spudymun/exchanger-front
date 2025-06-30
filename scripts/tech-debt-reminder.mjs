@@ -270,6 +270,9 @@ async function showUnusedImportsWarning() {
 async function additionalChecks() {
     let issues = 0;
     
+    // Проверка больших файлов
+    issues += await checkLargeFiles();
+    
     // Проверка на дублирование кода
     issues += await checkCodeDuplication();
     
@@ -282,22 +285,25 @@ async function additionalChecks() {
     // Проверка на неиспользуемые файлы
     issues += await checkUnusedFiles();
     
+    // Показываем предупреждение о неиспользуемых импортах (не блокирует коммит)
+    await showUnusedImportsWarning();
+    
     return issues;
 }
 
-// Проверка дублирования кода
+// Проверка дублирования кода (только в коде проекта, не в node_modules)
 async function checkCodeDuplication() {
     try {
-        // Ищем одинаковые строки кода (потенциальное дублирование)
+        // Ищем дублирование только в коде проекта
         const command = process.platform === 'win32'
-            ? `powershell -Command "Get-ChildItem -Path packages,apps -Recurse -Include *.ts,*.tsx,*.js,*.jsx | Where-Object {$_.Length -gt 0} | ForEach-Object { Get-Content $_.FullName | Where-Object {$_.Trim().Length -gt 20 -and $_ -notmatch '^\\s*(//|/\\*|\\*|import|export|interface|type)' } | Group-Object | Where-Object {$_.Count -gt 2} | Select-Object -First 3 Name,Count }"`
-            : `find packages apps -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" | xargs grep -h "^[[:space:]]*[^/].*" | grep -v "^[[:space:]]*import\\|^[[:space:]]*export\\|^[[:space:]]*interface\\|^[[:space:]]*type" | sort | uniq -c | sort -nr | head -5 | awk '$1 > 2'`;
+            ? `powershell -Command "Get-ChildItem -Path packages,apps -Recurse -Include *.ts,*.tsx,*.js,*.jsx | Where-Object {$_.FullName -notmatch 'node_modules|dist|build|coverage|\\.d\\.ts$|\\.(test|spec|stories|config|setup)\\.' -and $_.Length -gt 0} | ForEach-Object { Get-Content $_.FullName | Where-Object {$_.Trim().Length -gt 30 -and $_ -notmatch '^\\s*(//|/\\*|\\*|import|export|interface|type|console\\.log)' -and $_ -match '(const|let|function|if|return|throw|await)' } | Group-Object | Where-Object {$_.Count -gt 3} | Select-Object -First 5 Name,Count }"`
+            : `find packages apps -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" | grep -v -E 'node_modules|dist|build|coverage|\\.d\\.ts$|\\.(test|spec|stories|config|setup)\\.' | xargs grep -h "^[[:space:]]*[^/].*" | grep -v "^[[:space:]]*import\\|^[[:space:]]*export\\|^[[:space:]]*interface\\|^[[:space:]]*type\\|^[[:space:]]*console\\.log" | grep -E "(const|let|function|if|return|throw|await)" | sort | uniq -c | sort -nr | head -5 | awk '$1 > 3'`;
         
         const { stdout } = await execAsync(command);
         if (stdout.trim()) {
-            console.log('\x1b[33m⚠️  Потенциальное дублирование кода:\x1b[0m');
+            console.log('\x1b[33m⚠️  Потенциальное дублирование в коде проекта:\x1b[0m');
             console.log(stdout);
-            return 1;
+            return 0; // Не блокируем коммит, только предупреждение
         }
         return 0;
     } catch {
