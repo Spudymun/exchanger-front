@@ -13,3 +13,11 @@ echo "🧪 Running tests..."
 npm run test
 
 echo "✅ Pre-commit checks passed!"
+
+# Task checklist reminder (at the end)
+echo "📋 Final checklist reminder..."
+node "./scripts/checklist-reminder.mjs"
+if [ $? -ne 0 ]; then
+  echo "❌ Commit cancelled by user."
+  exit 1
+fi
