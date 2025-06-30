@@ -181,3 +181,9 @@ packages/ui/
 - [ ] Настройка мониторинга и аналитики
 
 # Test change
+
+# Test interactive input
+
+# Test interactive workflow
+
+# Test commit workflow
