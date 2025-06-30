@@ -46,3 +46,6 @@ packages/constants/src/*.js
 
 *storybook.log
 storybook-static
+
+# Project structure
+project-structure.txt
