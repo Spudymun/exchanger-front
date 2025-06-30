@@ -37,100 +37,90 @@ const documentationFiles = [
 // Универсальные исключения для всех проверок
 const commonExcludes = [...temporaryFiles, ...generatedFiles];
 
-// Список паттернов для поиска технического долга с детализированными исключениями
+// Паттерны для поиска РЕАЛЬНОГО технического долга (то, что линтеры НЕ проверяют)
 const techDebtPatterns = [
+    // 1. ХАРДКОД - URL, IP, пароли, токены, магические числа
     { 
-        pattern: 'TODO', 
-        description: 'TODO комментарии',
+        pattern: 'localhost|127\\.0\\.0\\.1|192\\.168\\.|10\\.|172\\.(1[6-9]|2[0-9]|3[01])\\.',
+        description: 'Хардкод localhost/IP адресов',
         excludeFiles: [...testFiles, ...storyFiles, ...toolingFiles, ...commonExcludes, ...documentationFiles],
-        excludePatterns: [
-            'autodocs', 'TODO: test case', 'TODO: describe', 'TODO: example',
-            'TODO.*demo', 'TODO.*story', 'TODO.*documentation'
-        ]
+        excludePatterns: ['example', 'demo', 'placeholder', 'test', 'spec']
     },
     { 
-        pattern: 'FIXME', 
-        description: 'FIXME комментарии',
+        pattern: 'password.*[\'"`][a-zA-Z0-9]{4,}[\'"`]|token.*[\'"`][a-zA-Z0-9]{10,}[\'"`]',
+        description: 'Хардкод паролей/токенов в коде',
         excludeFiles: [...testFiles, ...storyFiles, ...toolingFiles, ...commonExcludes, ...documentationFiles],
-        excludePatterns: ['FIXME.*test', 'FIXME.*example', 'FIXME.*demo']
-    }, 
-    { 
-        pattern: 'HACK', 
-        description: 'HACK комментарии',
-        excludeFiles: [...testFiles, ...storyFiles, ...toolingFiles, ...commonExcludes, ...documentationFiles],
-        excludePatterns: ['HACK.*test', 'HACK.*workaround.*test']
+        excludePatterns: ['example', 'demo', 'test', 'mock', 'placeholder', 'YOUR_TOKEN', 'your-password']
     },
     { 
-        pattern: 'TEMP', 
-        description: 'Временные решения',
+        pattern: 'api\\.openai\\.com|sk-[a-zA-Z0-9]{48}|ghp_[a-zA-Z0-9]{36}',
+        description: 'Хардкод API ключей',
         excludeFiles: [...testFiles, ...storyFiles, ...toolingFiles, ...commonExcludes, ...documentationFiles],
-        excludePatterns: ['TEMP.*test', 'TEMP.*example', 'TEMP.*demo']
+        excludePatterns: ['example', 'demo', 'placeholder']
     },
+    
+    // 2. АРХИТЕКТУРНЫЕ ПРОБЛЕМЫ - циклические зависимости, нарушения слоев
     { 
-        pattern: 'XXX', 
-        description: 'XXX маркеры',
-        excludeFiles: [...testFiles, ...storyFiles, ...toolingFiles, ...commonExcludes, ...documentationFiles],
-        excludePatterns: ['XXX.*test', 'XXX.*example']
-    },
-    { 
-        pattern: '@ts-ignore', 
-        description: 'TypeScript игнорирования',
+        pattern: 'import.*\\.\\./\\.\\./\\.\\./\\.\\./',
+        description: 'Глубокие относительные импорты (>3 уровней)',
         excludeFiles: [...testFiles, ...storyFiles, ...toolingFiles, ...commonExcludes],
-        excludePatterns: [
-            '@ts-ignore.*test', '@ts-ignore.*mock', '@ts-ignore.*story',
-            '@ts-ignore.*next/navigation', '@ts-ignore.*react-dom/test-utils'
-        ]
+        excludePatterns: []
     },
     { 
-        pattern: ':\\s*any(\\s|;|,|\\)|\\]|\\}|$)', 
-        description: 'any типы',
-        excludeFiles: [...testFiles, ...storyFiles, ...toolingFiles, ...commonExcludes, '*.d.ts'],
-        excludePatterns: [
-            // Допустимые паттерны использования any
-            'React.ComponentProps<any>', 'Record<string, any>', 'as any',
-            'export type', 'export interface', 'import type', 'declare',
-            'extends any', 'keyof any', 'typeof any', 'Array<any>',
-            'Promise<any>', 'Partial<any>', 'Required<any>', 'Readonly<any>',
-            // Типовые объявления из библиотек
-            'ComponentType<any>', 'FC<any>', 'ReactNode', 'JSX.Element',
-            // Распространенные утилитарные типы
-            'Pick<any', 'Omit<any', 'Extract<any', 'Exclude<any'
-        ]
+        pattern: 'fetch\\(|axios\\.|http\\.',
+        description: 'Прямые HTTP вызовы (нарушение архитектуры)',
+        excludeFiles: [...testFiles, ...storyFiles, ...toolingFiles, ...commonExcludes, 'packages/api-client/*'],
+        excludePatterns: ['api-client', 'http-client', 'service']
+    },
+    
+    // 3. ПРОИЗВОДИТЕЛЬНОСТЬ - блокирующие операции, утечки памяти
+    { 
+        pattern: 'setInterval\\(|setTimeout\\(.*[5-9][0-9]{3,}', // >5 секунд
+        description: 'Долгие таймеры (потенциальные утечки)',
+        excludeFiles: [...testFiles, ...storyFiles, ...toolingFiles, ...commonExcludes],
+        excludePatterns: ['poll', 'heartbeat', 'keepalive']
     },
     { 
-        pattern: 'console\\.log', 
-        description: 'console.log в коде',
-        excludeFiles: [...testFiles, ...storyFiles, ...toolingFiles, ...commonExcludes, ...documentationFiles],
-        excludePatterns: [
-            // Допустимые случаи в демо-коде и примерах
-            'console.log.*Selected:', 'console.log.*Toggle:', 'console.log.*Demo:',
-            'console.log.*Test:', 'console.log.*Example:', 'console.log.*Story:',
-            'console.log.*onClick', 'console.log.*onSelect', 'console.log.*action',
-            // Логирование ошибок и важной информации
-            'console.log.*error', 'console.log.*Error', 'console.log.*warn',
-            'console.log.*info', 'console.log.*debug'
-        ]
+        pattern: 'for.*length|while.*length.*>',
+        description: 'Неоптимальные циклы с повторным вычислением length',
+        excludeFiles: [...testFiles, ...storyFiles, ...toolingFiles, ...commonExcludes],
+        excludePatterns: []
+    },
+    
+    // 4. БЕЗОПАСНОСТЬ - уязвимости, небезопасные операции
+    { 
+        pattern: 'innerHTML\\s*=|outerHTML\\s*=|document\\.write\\(',
+        description: 'Небезопасные операции с DOM (XSS)',
+        excludeFiles: [...testFiles, ...storyFiles, ...toolingFiles, ...commonExcludes],
+        excludePatterns: ['sanitize', 'escape', 'safe']
     },
     { 
-        pattern: 'debugger', 
-        description: 'debugger statements',
-        excludeFiles: [...testFiles, ...toolingFiles, ...commonExcludes],
-        excludePatterns: ['debugger.*test', 'debugger.*example', '"no-debugger"', "'no-debugger'"]
+        pattern: '\\beval\\s*\\(|new\\s+Function\\s*\\(',
+        description: 'Опасные операции eval/Function',
+        excludeFiles: [...testFiles, ...storyFiles, ...toolingFiles, ...commonExcludes],
+        excludePatterns: []
+    },
+    
+    // 5. ПОЛЬЗОВАТЕЛЬСКИЙ ОПЫТ - отсутствие обработки ошибок
+    { 
+        pattern: '\\.then\\([^}]*\\)\\s*$|\\.catch\\(\\)\\s*$',
+        description: 'Promise без обработки ошибок',
+        excludeFiles: [...testFiles, ...storyFiles, ...toolingFiles, ...commonExcludes],
+        excludePatterns: ['void', 'ignore', 'suppress']
     },
     { 
-        pattern: 'eslint-disable-next-line', 
-        description: 'ESLint отключения (критичные)',
-        excludeFiles: [...testFiles, ...storyFiles, ...toolingFiles, ...commonExcludes, ...documentationFiles],
-        excludePatterns: [
-            // Часто оправданные отключения
-            'eslint-disable-next-line @typescript-eslint/no-unused-vars',
-            'eslint-disable-next-line react-hooks/exhaustive-deps',
-            'eslint-disable-next-line @typescript-eslint/no-explicit-any',
-            'eslint-disable-next-line @next/next/no-img-element',
-            'eslint-disable-next-line react/no-unescaped-entities',
-            // Отключения в тестах и примерах
-            'eslint-disable-next-line.*test', 'eslint-disable-next-line.*mock'
-        ]
+        pattern: 'alert\\(|confirm\\(|prompt\\(',
+        description: 'Использование нативных диалогов (плохой UX)',
+        excludeFiles: [...testFiles, ...storyFiles, ...toolingFiles, ...commonExcludes],
+        excludePatterns: []
+    },
+    
+    // 6. КАЧЕСТВО КОДА - магические числа, дублирование
+    { 
+        pattern: '\\b(100|200|300|400|500|600|700|800|900|1000|1200|1400|1600|1800|2000)\\b',
+        description: 'Магические числа (должны быть константами)',
+        excludeFiles: [...testFiles, ...storyFiles, ...toolingFiles, ...commonExcludes],
+        excludePatterns: ['px', 'ms', 'width', 'height', 'delay', 'timeout', 'status']
     }
 ];
 
@@ -276,43 +266,131 @@ async function showUnusedImportsWarning() {
     }
 }
 
-// Дополнительные проверки качества кода (переработанная версия)
+// Дополнительные архитектурные проверки (то, что линтеры НЕ проверяют)
 async function additionalChecks() {
     let issues = 0;
     
-    // Проверка больших файлов
-    issues += await checkLargeFiles();
+    // Проверка на дублирование кода
+    issues += await checkCodeDuplication();
     
-    // Показываем предупреждение о неиспользуемых импортах (не блокирует коммит)
-    await showUnusedImportsWarning();
+    // Проверка на отсутствие типизации в критичных местах
+    issues += await checkMissingTypes();
+    
+    // Проверка на нарушения архитектуры
+    issues += await checkArchitectureViolations();
+    
+    // Проверка на неиспользуемые файлы
+    issues += await checkUnusedFiles();
     
     return issues;
 }
 
+// Проверка дублирования кода
+async function checkCodeDuplication() {
+    try {
+        // Ищем одинаковые строки кода (потенциальное дублирование)
+        const command = process.platform === 'win32'
+            ? `powershell -Command "Get-ChildItem -Path packages,apps -Recurse -Include *.ts,*.tsx,*.js,*.jsx | Where-Object {$_.Length -gt 0} | ForEach-Object { Get-Content $_.FullName | Where-Object {$_.Trim().Length -gt 20 -and $_ -notmatch '^\\s*(//|/\\*|\\*|import|export|interface|type)' } | Group-Object | Where-Object {$_.Count -gt 2} | Select-Object -First 3 Name,Count }"`
+            : `find packages apps -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" | xargs grep -h "^[[:space:]]*[^/].*" | grep -v "^[[:space:]]*import\\|^[[:space:]]*export\\|^[[:space:]]*interface\\|^[[:space:]]*type" | sort | uniq -c | sort -nr | head -5 | awk '$1 > 2'`;
+        
+        const { stdout } = await execAsync(command);
+        if (stdout.trim()) {
+            console.log('\x1b[33m⚠️  Потенциальное дублирование кода:\x1b[0m');
+            console.log(stdout);
+            return 1;
+        }
+        return 0;
+    } catch {
+        return 0;
+    }
+}
+
+// Проверка отсутствия типизации в критичных местах
+async function checkMissingTypes() {
+    try {
+        const command = process.platform === 'win32'
+            ? `findstr /R /N "function.*\\(.*\\)\\s*{|export.*function.*\\(.*\\)\\s*{|const.*=.*\\(.*\\).*=>|let.*=.*\\(.*\\).*=>" packages\\*.ts packages\\*.tsx apps\\*.ts apps\\*.tsx 2>nul | findstr /V ": any\\|: string\\|: number\\|: boolean\\|: void\\|<.*>" || echo ""`
+            : `grep -rn "function.*(.*)\\s*{\\|export.*function.*(.*)\\s*{\\|const.*=.*(.*).* =>\\|let.*=.*(.*).* =>" packages/ apps/ --include="*.ts" --include="*.tsx" | grep -v ": any\\|: string\\|: number\\|: boolean\\|: void\\|<.*>" || true`;
+        
+        const { stdout } = await execAsync(command);
+        if (stdout.trim() && stdout.trim() !== '""') {
+            console.log('\x1b[33m⚠️  Функции без явной типизации:\x1b[0m');
+            const lines = stdout.trim().split('\n').slice(0, 3);
+            lines.forEach(line => console.log(`   ${line}`));
+            return 1;
+        }
+        return 0;
+    } catch {
+        return 0;
+    }
+}
+
+// Проверка нарушений архитектуры
+async function checkArchitectureViolations() {
+    try {
+        // UI компоненты не должны импортировать бизнес-логику
+        const command = process.platform === 'win32'
+            ? `findstr /R /N "import.*from.*api-client\\|import.*from.*hooks.*trading\\|import.*from.*exchange-core" packages\\ui\\*.ts packages\\ui\\*.tsx 2>nul || echo ""`
+            : `grep -rn "import.*from.*api-client\\|import.*from.*hooks.*trading\\|import.*from.*exchange-core" packages/ui/ --include="*.ts" --include="*.tsx" 2>/dev/null || true`;
+        
+        const { stdout } = await execAsync(command);
+        if (stdout.trim() && stdout.trim() !== '""') {
+            console.log('\x1b[31m❌ Нарушение архитектуры: UI импортирует бизнес-логику\x1b[0m');
+            const lines = stdout.trim().split('\n');
+            lines.forEach(line => console.log(`   ${line}`));
+            return 1;
+        }
+        return 0;
+    } catch {
+        return 0;
+    }
+}
+
+// Проверка неиспользуемых файлов
+async function checkUnusedFiles() {
+    try {
+        const command = process.platform === 'win32'
+            ? `powershell -Command "Get-ChildItem -Path packages,apps -Recurse -Include *.ts,*.tsx | Where-Object {$_.Name -notmatch '(test|spec|stories|config|setup|index)' -and (Get-Content $_.FullName | Measure-Object -Line).Lines -lt 10 -and (Get-Content $_.FullName | Select-String 'export|import' | Measure-Object).Count -lt 2}"`
+            : `find packages apps -name "*.ts" -o -name "*.tsx" | grep -v -E '(test|spec|stories|config|setup|index)' | xargs wc -l | awk '$1 < 10 {print $2}' | head -3`;
+        
+        const { stdout } = await execAsync(command);
+        if (stdout.trim()) {
+            console.log('\x1b[33mℹ️  Потенциально неиспользуемые файлы:\x1b[0m');
+            const lines = stdout.trim().split('\n').slice(0, 3);
+            lines.forEach(line => console.log(`   ${line}`));
+        }
+        return 0; // Не блокируем коммит
+    } catch {
+        return 0;
+    }
+}
+
+// Основное выполнение всех проверок
 for (const { pattern, description, excludeFiles, excludePatterns } of techDebtPatterns) {
     foundIssues += await checkPattern(pattern, description, excludeFiles, excludePatterns);
 }
 
-// Выполняем дополнительные проверки
+// Выполняем дополнительные архитектурные проверки
 foundIssues += await additionalChecks();
 
 console.log('='.repeat(50));
 
 if (foundIssues > 0) {
-    console.log(`\x1b[41m\x1b[37m ❌ НАЙДЕНО ${foundIssues} типов технического долга! \x1b[0m`);
+    console.log(`\x1b[41m\x1b[37m ❌ НАЙДЕН ТЕХНИЧЕСКИЙ ДОЛГ! \x1b[0m`);
     console.log('\x1b[31m❌ КОММИТ ЗАБЛОКИРОВАН (Правило 13)\x1b[0m\n');
-    console.log('\x1b[43m\x1b[30m📋 Команды для исправления:\x1b[0m');
-    console.log('   npm run lint');
-    console.log('   npm run build');
-    console.log('   npm run test');
+    console.log('\x1b[43m\x1b[30m🔧 Найденные проблемы требуют внимания:\x1b[0m');
+    console.log('   • Хардкод в коде (URL, пароли, магические числа)');
+    console.log('   • Архитектурные нарушения (неправильные импорты)');
+    console.log('   • Проблемы безопасности (XSS, eval)');
+    console.log('   • Проблемы производительности (неоптимальные циклы)');
     console.log('');
-    console.log('\x1b[43m\x1b[30m🔍 Поиск конкретных проблем:\x1b[0m');
-    console.log('   git grep -n "TODO\\|FIXME\\|HACK\\|TEMP\\|XXX"');
-    console.log('   git grep -n "@ts-ignore\\|: any"');
+    console.log('\x1b[43m\x1b[30m🔍 Команды для диагностики:\x1b[0m');
+    console.log('   git grep -n "localhost\\|127.0.0.1\\|password.*="');
+    console.log('   git grep -n "innerHTML\\|eval\\|setTimeout.*[0-9]{4}"');
     console.log('');
     process.exit(1);
 } else {
-    console.log('\x1b[42m\x1b[30m ✅ Технический долг не найден! Коммит разрешен. \x1b[0m');
+    console.log('\x1b[42m\x1b[30m ✅ Архитектурных проблем не найдено! Коммит разрешен. \x1b[0m');
     console.log('');
     process.exit(0);
 }
