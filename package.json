@@ -10,6 +10,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "format:styles": "stylelint \"**/*.{css,scss}\" --fix",
     "check-types": "turbo run check-types",
+    "check-tech-debt": "node ./scripts/check-tech-debt.mjs",
     "test": "turbo run test",
     "test:watch": "turbo run test:watch",
     "test:coverage": "turbo run test:coverage",

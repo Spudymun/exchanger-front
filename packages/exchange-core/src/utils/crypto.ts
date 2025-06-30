@@ -1,0 +1,94 @@
+import {
+  MOCK_CRYPTO_ADDRESSES,
+  EXPLORER_URLS,
+  NETWORK_NAMES,
+  CURRENCY_DECIMALS,
+  MIN_TRANSACTION_AMOUNTS,
+  CURRENCY_SYMBOLS,
+  CURRENCY_FULL_NAMES,
+} from '@repo/constants';
+import type { CryptoCurrency } from '../types';
+
+/**
+ * Получить случайный адрес для депозита (мок)
+ */
+export function generateDepositAddress(currency: CryptoCurrency): string {
+  const addresses = MOCK_CRYPTO_ADDRESSES[currency];
+  const randomIndex = Math.floor(Math.random() * addresses.length);
+  return addresses[randomIndex]!;
+}
+
+/**
+ * Валидация формата крипто-адреса (базовая проверка)
+ */
+export function validateCryptoAddress(address: string, currency: CryptoCurrency): boolean {
+  switch (currency) {
+    case 'BTC':
+      return /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$|^bc1[a-z0-9]{39,59}$/.test(address);
+    case 'ETH':
+    case 'USDT':
+      return /^0x[a-fA-F0-9]{40}$/.test(address);
+    case 'LTC':
+      return /^[LM3][a-km-zA-HJ-NP-Z1-9]{26,33}$|^ltc1[a-z0-9]{39,59}$/.test(address);
+    default:
+      return false;
+  }
+}
+
+/**
+ * Получить explorer URL для транзакции
+ */
+export function getTransactionExplorerUrl(txHash: string, currency: CryptoCurrency): string {
+  return `${EXPLORER_URLS[currency]}/${txHash}`;
+}
+
+/**
+ * Получить название сети для криптовалюты
+ */
+export function getNetworkName(currency: CryptoCurrency): string {
+  return NETWORK_NAMES[currency];
+}
+
+/**
+ * Получить количество десятичных знаков для криптовалюты
+ */
+export function getCurrencyDecimals(currency: CryptoCurrency): number {
+  return CURRENCY_DECIMALS[currency];
+}
+
+/**
+ * Форматирование суммы криптовалюты с правильным количеством знаков
+ */
+export function formatCryptoAmount(amount: number, currency: CryptoCurrency): string {
+  const decimals = getCurrencyDecimals(currency);
+  return amount.toFixed(Math.min(decimals, 8)); // Ограничиваем максимум 8 знаками для UI
+}
+
+/**
+ * Получить минимальную сумму для транзакции в криптовалюте
+ */
+export function getMinTransactionAmount(currency: CryptoCurrency): number {
+  return MIN_TRANSACTION_AMOUNTS[currency];
+}
+
+/**
+ * Проверить, достаточна ли сумма для транзакции
+ */
+export function isTransactionAmountValid(amount: number, currency: CryptoCurrency): boolean {
+  const minAmount = getMinTransactionAmount(currency);
+  return amount >= minAmount;
+}
+
+/**
+ * Получить символ криптовалюты для отображения
+ */
+export function getCurrencySymbol(currency: CryptoCurrency): string {
+  return CURRENCY_SYMBOLS[currency];
+}
+
+/**
+ * Получить полное название криптовалюты
+ */
+export function getCurrencyFullName(currency: CryptoCurrency): string {
+  return CURRENCY_FULL_NAMES[currency];
+}

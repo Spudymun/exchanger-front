@@ -21,3 +21,11 @@ if [ $? -ne 0 ]; then
   echo "❌ Commit cancelled by user."
   exit 1
 fi
+
+# Technical debt reminder (critical check)
+echo "🚨 Technical debt reminder..."
+node "./scripts/tech-debt-reminder.mjs"
+if [ $? -ne 0 ]; then
+  echo "❌ Commit cancelled by user."
+  exit 1
+fi
