@@ -22,10 +22,10 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-# Technical debt reminder (critical check)
-echo "🚨 Technical debt reminder..."
+# Technical debt check (blocking)
+echo "🚨 Checking technical debt (Rule 13)..."
 node "./scripts/tech-debt-reminder.mjs"
 if [ $? -ne 0 ]; then
-  echo "❌ Commit cancelled by user."
+  echo "❌ Commit blocked due to technical debt!"
   exit 1
 fi
