@@ -85,3 +85,25 @@ export const MOCK_CRYPTO_ADDRESSES = {
     'LTC1qz8y7x6w5v4u3t2s1r0q9p8o7n6m5l4k3j2',
   ],
 } as const;
+
+// Валидационные ограничения ExchangeGO
+export const EXCHANGE_VALIDATION_LIMITS = {
+  ORDER_ID_LENGTH: 36,
+  CRYPTO_ADDRESS_MAX_LENGTH: 100,
+  CARD_NUMBER_LENGTH: 16,
+} as const;
+
+// Regex паттерны ExchangeGO
+export const EXCHANGE_VALIDATION_PATTERNS = {
+  CARD_NUMBER: /^\d{16}$/,
+  CRYPTO_AMOUNT: /^\d+(\.\d{1,8})?$/,
+  UAH_AMOUNT: /^\d+(\.\d{1,2})?$/,
+} as const;
+
+// Сообщения валидации ExchangeGO
+export const EXCHANGE_VALIDATION_MESSAGES = {
+  AMOUNT_TOO_LOW: `Минимальная сумма: $${AMOUNT_LIMITS.MIN_USD}`,
+  AMOUNT_TOO_HIGH: `Максимальная сумма: $${AMOUNT_LIMITS.MAX_USD}`,
+  CURRENCY_INVALID: 'Неподдерживаемая криптовалюта',
+  CARD_NUMBER_INVALID: 'Некорректный номер карты',
+} as const;

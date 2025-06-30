@@ -1,5 +1,6 @@
 /**
- * Validation rules and limits
+ * Validation rules and limits - ОБЩИЕ для всех приложений
+ * ExchangeGO специфичные константы находятся в exchange.ts
  */
 
 export const VALIDATION_LIMITS = {
@@ -136,29 +137,3 @@ export const VALIDATION_HELPERS = {
 // Type exports
 export type ValidationPattern = (typeof VALIDATION_PATTERNS)[keyof typeof VALIDATION_PATTERNS];
 export type ValidationMessage = (typeof VALIDATION_MESSAGES)[keyof typeof VALIDATION_MESSAGES];
-
-/**
- * ExchangeGO specific validation constants
- */
-
-// ExchangeGO валидационные ограничения
-export const EXCHANGE_VALIDATION_LIMITS = {
-  ORDER_ID_LENGTH: 36,
-  CRYPTO_ADDRESS_MAX_LENGTH: 100,
-  CARD_NUMBER_LENGTH: 16,
-} as const;
-
-// ExchangeGO regex паттерны
-export const EXCHANGE_VALIDATION_PATTERNS = {
-  CARD_NUMBER: /^\d{16}$/,
-  CRYPTO_AMOUNT: /^\d+(\.\d{1,8})?$/,
-  UAH_AMOUNT: /^\d+(\.\d{1,2})?$/,
-} as const;
-
-// ExchangeGO сообщения валидации
-export const EXCHANGE_VALIDATION_MESSAGES = {
-  AMOUNT_TOO_LOW: 'Минимальная сумма: $10',
-  AMOUNT_TOO_HIGH: 'Максимальная сумма: $5000',
-  CURRENCY_INVALID: 'Неподдерживаемая криптовалюта',
-  CARD_NUMBER_INVALID: 'Некорректный номер карты',
-} as const;
