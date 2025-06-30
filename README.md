@@ -193,3 +193,5 @@ packages/ui/
 # Test commit with cmd script
 
 # Test simple reminder
+
+# Test bright reminder
