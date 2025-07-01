@@ -650,11 +650,17 @@ docs: update task implementation guide
 #### ⚠️ Частые ошибки:
 
 ```bash
-# ❌ НЕПРАВИЛЬНО - заглавная буква
-git commit -m "feat: Add new feature"
+# ❌ НЕПРАВИЛЬНО - PascalCase
+git commit -m "feat: AddNewFeature"
 
-# ✅ ПРАВИЛЬНО - строчные буквы
+# ❌ НЕПРАВИЛЬНО - UPPER_CASE
+git commit -m "feat: ADD_NEW_FEATURE"
+
+# ✅ ПРАВИЛЬНО - обычный текст
 git commit -m "feat: add new feature"
+
+# ✅ ПРАВИЛЬНО - предложение с заглавной
+git commit -m "feat: Add new feature for users"
 
 # ❌ НЕПРАВИЛЬНО - слишком длинно
 git commit -m "feat: add super awesome new feature that does amazing things"
