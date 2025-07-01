@@ -1,10 +1,10 @@
 // 🚨 DEPRECATED: HTTP Client
-// 
+//
 // This HTTP client is deprecated in favor of tRPC.
 // Use tRPC hooks instead:
 //
 // import { trpc } from '@/lib/trpc'
-// 
+//
 // function MyComponent() {
 //   const { data: users } = trpc.users.list.useQuery()
 //   const createUser = trpc.users.create.useMutation()
@@ -18,9 +18,9 @@ import { User, Transaction } from './types';
  * This class exists only for backward compatibility
  */
 export class ApiClient {
-    constructor() {
-        console.warn('ApiClient is deprecated. Use tRPC hooks instead.');
-    }
+  constructor() {
+    // Note: ApiClient is deprecated. Use tRPC hooks instead.
+  }
 }
 
 /**

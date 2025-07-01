@@ -6,15 +6,16 @@
 
 1. [Архитектура и структура проекта](#архитектура-и-структура-проекта)
 2. [Технологический стек](#технологический-стек)
-3. [Структура директорий](#структура-директорий)
-4. [UI-система и компоненты](#ui-система-и-компоненты)
-5. [State Management](#state-management)
-6. [API и типизация](#api-и-типизация)
-7. [Стилизация и темизация](#стилизация-и-темизация)
-8. [Интернационализация (i18n)](#интернационализация-i18n)
-9. [Тестирование](#тестирование)
-10. [Контроль качества кода](#контроль-качества-кода)
-11. [Workflow и best practices](#workflow-и-best-practices)
+3. [Работа с зависимостями в монорепозитории](#работа-с-зависимостями-в-монорепозитории)
+4. [Структура директорий](#структура-директорий)
+5. [UI-система и компоненты](#ui-система-и-компоненты)
+6. [State Management](#state-management)
+7. [API и типизация](#api-и-типизация)
+8. [Стилизация и темизация](#стилизация-и-темизация)
+9. [Интернационализация (i18n)](#интернационализация-i18n)
+10. [Тестирование](#тестирование)
+11. [Контроль качества кода](#контроль-качества-кода)
+12. [Workflow и best practices](#workflow-и-best-practices)
 
 ---
 
@@ -25,12 +26,14 @@
 Проект использует **монорепозиторий** для управления несколькими связанными приложениями и библиотеками.
 
 #### Принципы организации:
+
 - **`apps/`** - готовые к деплою приложения
 - **`packages/`** - переиспользуемые библиотеки и утилиты
 - **Общие зависимости** - управляются на корневом уровне
 - **Типизация** - единая система типов через TypeScript
 
 #### Turborepo конфигурация (`turbo.json`):
+
 ```json
 {
   "pipeline": {
@@ -52,24 +55,110 @@
 
 ### Основные технологии
 
-| Технология | Версия | Назначение | Статус |
-|------------|--------|------------|---------|
-| **Next.js** | 15.x | React фреймворк с App Router | ✅ Настроен |
-| **TypeScript** | 5.x | Статическая типизация | ✅ Strict mode |
-| **Turborepo** | 2.x | Монорепозиторий | ✅ Настроен |
-| **Tailwind CSS** | 4.x | Utility-first CSS | ✅ + Design Tokens |
-| **shadcn/ui** | latest | UI-компоненты | ✅ Интегрирован |
-| **tRPC** | 11.x | End-to-end типизация API | ✅ Настроен |
-| **Zustand** | 4.x | State management | ✅ Интегрирован |
-| **React Query** | 5.x | Server state management | ✅ Настроен |
-| **next-intl** | 3.x | Интернационализация | ✅ Настроен |
-| **Jest** | 29.x | Unit тесты | ✅ Настроен |
-| **Playwright** | latest | E2E тесты | ✅ Настроен |
-| **Storybook** | 8.x | UI документация | ✅ Настроен |
+| Технология       | Версия | Назначение                   | Статус             |
+| ---------------- | ------ | ---------------------------- | ------------------ |
+| **Next.js**      | 15.x   | React фреймворк с App Router | ✅ Настроен        |
+| **TypeScript**   | 5.x    | Статическая типизация        | ✅ Strict mode     |
+| **Turborepo**    | 2.x    | Монорепозиторий              | ✅ Настроен        |
+| **Tailwind CSS** | 4.x    | Utility-first CSS            | ✅ + Design Tokens |
+| **shadcn/ui**    | latest | UI-компоненты                | ✅ Интегрирован    |
+| **tRPC**         | 11.x   | End-to-end типизация API     | ✅ Настроен        |
+| **Zustand**      | 4.x    | State management             | ✅ Интегрирован    |
+| **React Query**  | 5.x    | Server state management      | ✅ Настроен        |
+| **next-intl**    | 3.x    | Интернационализация          | ✅ Настроен        |
+| **Jest**         | 29.x   | Unit тесты                   | ✅ Настроен        |
+| **Playwright**   | latest | E2E тесты                    | ✅ Настроен        |
+| **Storybook**    | 8.x    | UI документация              | ✅ Настроен        |
 
 ---
 
-## 📁 Структура директорий
+## � Работа с зависимостями в монорепозитории
+
+### Добавление зависимостей между internal packages
+
+При работе с константами, утилитами или другими общими ресурсами используйте централизованные пакеты вместо дублирования кода.
+
+#### Как добавить зависимость на internal package:
+
+1. **Откройте `package.json` целевого пакета**
+
+   ```bash
+   # Например, packages/hooks/package.json
+   ```
+
+2. **Добавьте зависимость в секцию `dependencies`**
+
+   ```json
+   {
+     "dependencies": {
+       "@repo/constants": "*",
+       "react": "^19.1.0"
+     }
+   }
+   ```
+
+3. **Используйте правильный импорт в коде**
+
+   ```typescript
+   // ❌ Неправильно - создание локальных констант
+   const TIMEOUT = 5000;
+
+   // ✅ Правильно - импорт из централизованного пакета
+   import { UI_NUMERIC_CONSTANTS } from '@repo/constants';
+   const timeout = UI_NUMERIC_CONSTANTS.NOTIFICATION_AUTO_REMOVE_TIMEOUT;
+   ```
+
+#### Обновление зависимостей после изменений:
+
+1. **Пересоберите пакет с изменениями**
+
+   ```bash
+   npx turbo run build --filter=@repo/constants
+   ```
+
+2. **Проверьте типизацию в зависимых пакетах**
+
+   ```bash
+   npx turbo run check-types --filter=@repo/hooks
+   ```
+
+3. **При проблемах с кэшированием TypeScript**
+   ```bash
+   # Очистка кэша (если нужно)
+   Remove-Item -Recurse -Force "packages/[package]/node_modules/.cache" -ErrorAction SilentlyContinue
+   ```
+
+#### Частые проблемы и решения:
+
+| Проблема                   | Симптом                                | Решение                                   |
+| -------------------------- | -------------------------------------- | ----------------------------------------- |
+| **Отсутствие зависимости** | `Cannot find module '@repo/constants'` | Добавить зависимость в `package.json`     |
+| **Старые типы**            | `Property 'NEW_CONST' does not exist`  | Пересобрать пакет с изменениями           |
+| **Кэш TypeScript**         | Типы не обновляются                    | Очистить кэш или перезапустить TypeScript |
+
+#### Принципы работы с константами:
+
+- **DRY (Don't Repeat Yourself)** - используйте `@repo/constants` вместо дублирования
+- **Централизация** - все константы в одном месте для консистентности
+- **Типизация** - константы должны быть строго типизированы
+- **Семантическая группировка** - группируйте константы по назначению
+
+#### Примеры правильного использования:
+
+```typescript
+// ✅ UI константы
+import { UI_NUMERIC_CONSTANTS, BUTTON_VARIANTS } from '@repo/constants';
+
+// ✅ API константы
+import { API_ROUTES, HTTP_STATUS } from '@repo/constants';
+
+// ✅ Бизнес константы
+import { EXCHANGE_LIMITS, CURRENCY_CODES } from '@repo/constants';
+```
+
+---
+
+## �📁 Структура директорий
 
 ```
 exchanger-front/
@@ -95,6 +184,7 @@ exchanger-front/
 ### Детальная структура пакетов
 
 #### `packages/ui/` - UI-библиотека
+
 ```
 packages/ui/
 ├── src/
@@ -115,6 +205,7 @@ packages/ui/
 ```
 
 #### `packages/hooks/` - Хуки и состояние
+
 ```
 packages/hooks/
 ├── src/
@@ -127,6 +218,7 @@ packages/hooks/
 ```
 
 #### `packages/api-client/` - API клиенты
+
 ```
 packages/api-client/
 ├── src/
@@ -143,6 +235,7 @@ packages/api-client/
 ### Централизованная система дизайна
 
 #### Design Tokens (`packages/design-tokens/`)
+
 ```javascript
 // colors.js - Цветовая палитра
 module.exports = {
@@ -151,16 +244,16 @@ module.exports = {
       50: '#f8fafc',
       100: '#f1f5f9',
       // ...
-    }
-  }
-}
+    },
+  },
+};
 
 // typography.js - Типографика
 module.exports = {
   fontFamily: {
-    sans: ['Inter', 'system-ui', 'sans-serif']
-  }
-}
+    sans: ['Inter', 'system-ui', 'sans-serif'],
+  },
+};
 
 // spacing.js - Отступы и размеры
 module.exports = {
@@ -168,44 +261,47 @@ module.exports = {
     px: '1px',
     0.5: '0.125rem',
     // ...
-  }
-}
+  },
+};
 ```
 
 ### Компонентная архитектура
 
 #### 1. Базовые компоненты (shadcn/ui)
+
 **Расположение**: `packages/ui/src/components/ui/`
 
 **Принцип**: Один компонент = один файл
+
 ```typescript
 // packages/ui/src/components/ui/button.tsx
-import { cva, type VariantProps } from 'class-variance-authority'
+import { cva, type VariantProps } from 'class-variance-authority';
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-md text-sm font-medium",
+  'inline-flex items-center justify-center rounded-md text-sm font-medium',
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
+        outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
+        default: 'h-10 px-4 py-2',
+        sm: 'h-9 rounded-md px-3',
+        lg: 'h-11 rounded-md px-8',
       },
     },
     defaultVariants: {
-      variant: "default",
-      size: "default",
+      variant: 'default',
+      size: 'default',
     },
   }
-)
+);
 ```
 
 #### 2. Составные компоненты
+
 **Расположение**: `packages/ui/src/components/`
 
 **Принцип**: Комбинируют базовые компоненты для сложной функциональности
@@ -213,26 +309,27 @@ const buttonVariants = cva(
 ```typescript
 // packages/ui/src/components/data-table.tsx
 export interface Column<T> {
-  key: keyof T
-  header: string
-  sortable?: boolean
-  filterable?: boolean
-  render?: (value: T[keyof T], row: T) => React.ReactNode
+  key: keyof T;
+  header: string;
+  sortable?: boolean;
+  filterable?: boolean;
+  render?: (value: T[keyof T], row: T) => React.ReactNode;
 }
 
 export interface DataTableProps<T> {
-  data: T[]
-  columns: Array<Column<T>>
-  searchable?: boolean
-  pagination?: boolean
-  pageSize?: number
-  onRowClick?: (row: T) => void
+  data: T[];
+  columns: Array<Column<T>>;
+  searchable?: boolean;
+  pagination?: boolean;
+  pageSize?: number;
+  onRowClick?: (row: T) => void;
 }
 ```
 
 ### Как добавлять новые компоненты
 
 #### 1. Базовый компонент (из shadcn/ui):
+
 ```bash
 # Добавить новый shadcn/ui компонент
 npx shadcn@latest add [component-name]
@@ -241,6 +338,7 @@ npx shadcn@latest add [component-name]
 ```
 
 #### 2. Составной компонент:
+
 ```bash
 # Создать новый составной компонент
 cd packages/ui
@@ -254,6 +352,7 @@ npm run generate:component
 ```
 
 #### 3. Шаблон нового компонента:
+
 ```typescript
 // packages/ui/src/components/my-component.tsx
 import React from 'react'
@@ -284,16 +383,18 @@ MyComponent.displayName = "MyComponent"
 ```
 
 #### 4. Экспорт компонента:
+
 ```typescript
 // packages/ui/src/index.ts
-export { MyComponent, type MyComponentProps } from './components/my-component'
+export { MyComponent, type MyComponentProps } from './components/my-component';
 ```
 
 #### 5. Storybook история:
+
 ```typescript
 // packages/ui/src/stories/MyComponent.stories.tsx
-import type { Meta, StoryObj } from '@storybook/react'
-import { MyComponent } from '../components/my-component'
+import type { Meta, StoryObj } from '@storybook/react';
+import { MyComponent } from '../components/my-component';
 
 const meta: Meta<typeof MyComponent> = {
   title: 'Components/MyComponent',
@@ -302,16 +403,16 @@ const meta: Meta<typeof MyComponent> = {
     layout: 'centered',
   },
   tags: ['autodocs'],
-}
+};
 
-export default meta
-type Story = StoryObj<typeof meta>
+export default meta;
+type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
-    children: 'Hello World'
+    children: 'Hello World',
   },
-}
+};
 ```
 
 ---
@@ -323,24 +424,26 @@ export const Default: Story = {
 **Расположение**: `packages/hooks/src/state/`
 
 #### Архитектура состояния:
+
 - **UI Store** - глобальное UI состояние (темы, модалы, загрузки)
 - **Business Stores** - бизнес логика (trading, user, etc.)
 
 #### UI Store (`ui-store.ts`):
+
 ```typescript
 interface UIState {
   // Темизация
-  theme: 'light' | 'dark' | 'system'
-  setTheme: (theme: 'light' | 'dark' | 'system') => void
-  
+  theme: 'light' | 'dark' | 'system';
+  setTheme: (theme: 'light' | 'dark' | 'system') => void;
+
   // Модалы
-  modals: Record<string, boolean>
-  openModal: (modalId: string) => void
-  closeModal: (modalId: string) => void
-  
+  modals: Record<string, boolean>;
+  openModal: (modalId: string) => void;
+  closeModal: (modalId: string) => void;
+
   // Загрузки
-  loadingStates: Record<string, boolean>
-  setLoading: (key: string, isLoading: boolean) => void
+  loadingStates: Record<string, boolean>;
+  setLoading: (key: string, isLoading: boolean) => void;
 }
 
 export const useUIStore = create<UIState>()(
@@ -350,60 +453,64 @@ export const useUIStore = create<UIState>()(
     }),
     {
       name: 'ui-storage',
-      partialize: (state) => ({ theme: state.theme })
+      partialize: state => ({ theme: state.theme }),
     }
   )
-)
+);
 ```
 
 #### Как добавить новый store:
 
 1. **Создать store файл**:
+
 ```typescript
 // packages/hooks/src/state/user-store.ts
 interface UserState {
-  user: User | null
-  isAuthenticated: boolean
-  login: (credentials: LoginCredentials) => Promise<void>
-  logout: () => void
+  user: User | null;
+  isAuthenticated: boolean;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  logout: () => void;
 }
 
 export const useUserStore = create<UserState>((set, get) => ({
   user: null,
   isAuthenticated: false,
-  
-  login: async (credentials) => {
+
+  login: async credentials => {
     // Login logic
-    set({ user: userData, isAuthenticated: true })
+    set({ user: userData, isAuthenticated: true });
   },
-  
+
   logout: () => {
-    set({ user: null, isAuthenticated: false })
-  }
-}))
+    set({ user: null, isAuthenticated: false });
+  },
+}));
 ```
 
 2. **Экспортировать из индекса**:
+
 ```typescript
 // packages/hooks/src/index.ts
-export { useUserStore } from './state/user-store'
+export { useUserStore } from './state/user-store';
 ```
 
 3. **Использовать в компонентах**:
+
 ```typescript
 // В любом компоненте
 import { useUserStore } from '@repo/hooks'
 
 export function LoginButton() {
   const { login, isAuthenticated } = useUserStore()
-  
+
   if (isAuthenticated) return <LogoutButton />
-  
+
   return <button onClick={() => login(credentials)}>Login</button>
 }
 ```
 
 #### Персистенция данных:
+
 ```typescript
 // Для данных, которые должны сохраняться
 export const useUserStore = create<UserState>()(
@@ -413,13 +520,13 @@ export const useUserStore = create<UserState>()(
     }),
     {
       name: 'user-storage',
-      partialize: (state) => ({ 
+      partialize: state => ({
         user: state.user,
-        isAuthenticated: state.isAuthenticated 
-      })
+        isAuthenticated: state.isAuthenticated,
+      }),
     }
   )
-)
+);
 ```
 
 ---
@@ -431,60 +538,66 @@ export const useUserStore = create<UserState>()(
 **Расположение**: `packages/api-client/src/server.ts`
 
 #### Архитектура API:
+
 - **Server procedures** - определение API на сервере
 - **Client** - типизированный клиент для фронтенда
 - **Автоматическая типизация** - от сервера к клиенту
 
 #### Определение процедур:
+
 ```typescript
 // packages/api-client/src/server.ts
-import { z } from 'zod'
-import { initTRPC } from '@trpc/server'
+import { z } from 'zod';
+import { initTRPC } from '@trpc/server';
 
-const t = initTRPC.create()
+const t = initTRPC.create();
 
 const appRouter = t.router({
   // Query (чтение данных)
   getUsers: t.procedure
-    .input(z.object({
-      page: z.number().default(1),
-      limit: z.number().default(10),
-      search: z.string().optional()
-    }))
+    .input(
+      z.object({
+        page: z.number().default(1),
+        limit: z.number().default(10),
+        search: z.string().optional(),
+      })
+    )
     .query(async ({ input }) => {
       // Бизнес логика
       return {
         users: [], // User[]
         total: 0,
-        page: input.page
-      }
+        page: input.page,
+      };
     }),
 
   // Mutation (изменение данных)
   createUser: t.procedure
-    .input(z.object({
-      name: z.string(),
-      email: z.string().email(),
-      role: z.enum(['admin', 'user'])
-    }))
+    .input(
+      z.object({
+        name: z.string(),
+        email: z.string().email(),
+        role: z.enum(['admin', 'user']),
+      })
+    )
     .mutation(async ({ input }) => {
       // Создание пользователя
-      return { user: newUser, success: true }
+      return { user: newUser, success: true };
     }),
 
   // Subscription (real-time)
-  onUserUpdate: t.procedure
-    .subscription(() => {
-      return observable<User>((emit) => {
-        // WebSocket logic
-      })
-    })
-})
+  onUserUpdate: t.procedure.subscription(() => {
+    return observable<User>(emit => {
+      // WebSocket logic
+    });
+  }),
+});
 
-export type AppRouter = typeof appRouter
+export type AppRouter = typeof appRouter;
 ```
 
 #### Использование в компонентах:
+
 ```typescript
 // В приложении
 import { trpc } from '../utils/trpc'
@@ -530,33 +643,34 @@ export function UsersList() {
 #### Как добавить новую процедуру:
 
 1. **Определить схему входных данных**:
+
 ```typescript
 const CreateProductInput = z.object({
   name: z.string().min(1),
   price: z.number().positive(),
-  categoryId: z.string()
-})
+  categoryId: z.string(),
+});
 ```
 
 2. **Добавить процедуру в роутер**:
+
 ```typescript
 const appRouter = t.router({
   // ...existing procedures
-  
-  createProduct: t.procedure
-    .input(CreateProductInput)
-    .mutation(async ({ input }) => {
-      // Валидация прав доступа
-      // Бизнес логика
-      // Возврат результата
-      return { product, success: true }
-    })
-})
+
+  createProduct: t.procedure.input(CreateProductInput).mutation(async ({ input }) => {
+    // Валидация прав доступа
+    // Бизнес логика
+    // Возврат результата
+    return { product, success: true };
+  }),
+});
 ```
 
 3. **Использовать в компоненте**:
+
 ```typescript
-const createProduct = trpc.createProduct.useMutation()
+const createProduct = trpc.createProduct.useMutation();
 ```
 
 ### React Query - Server state
@@ -564,6 +678,7 @@ const createProduct = trpc.createProduct.useMutation()
 **Настройка**: `packages/providers/src/index.tsx`
 
 #### Провайдер:
+
 ```typescript
 // packages/providers/src/index.tsx
 export function Providers({ children }: { children: React.ReactNode }) {
@@ -585,14 +700,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
 ```
 
 #### Использование без tRPC:
+
 ```typescript
 // Для внешних API
 function useExternalData() {
   return useQuery({
     queryKey: ['external-data', params],
     queryFn: () => fetch('/api/external').then(res => res.json()),
-    staleTime: 10 * 60 * 1000
-  })
+    staleTime: 10 * 60 * 1000,
+  });
 }
 ```
 
@@ -603,12 +719,10 @@ function useExternalData() {
 ### Tailwind CSS + Design Tokens
 
 #### Конфигурация (`tailwind.config.js`):
+
 ```javascript
 module.exports = {
-  content: [
-    './apps/**/*.{js,ts,jsx,tsx}',
-    './packages/ui/**/*.{js,ts,jsx,tsx}',
-  ],
+  content: ['./apps/**/*.{js,ts,jsx,tsx}', './packages/ui/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
       // Design tokens автоматически импортируются
@@ -618,10 +732,11 @@ module.exports = {
     },
   },
   plugins: [require('tailwindcss-animate')],
-}
+};
 ```
 
 #### CSS Variables для темизации:
+
 ```css
 /* packages/ui/src/styles/globals.css */
 @layer base {
@@ -644,15 +759,16 @@ module.exports = {
 ```
 
 #### Theme Provider:
+
 ```typescript
 // packages/ui/src/components/theme-provider.tsx
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system')
-  
+
   useEffect(() => {
     const root = window.document.documentElement
     root.classList.remove('light', 'dark')
-    
+
     if (theme === 'system') {
       const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
         ? 'dark' : 'light'
@@ -673,23 +789,25 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 #### Как добавить новые design tokens:
 
 1. **Добавить в токены**:
+
 ```javascript
 // packages/design-tokens/colors.js
 module.exports = {
   colors: {
     // Существующие цвета...
-    
+
     // Новые цвета
     success: {
       50: '#f0fdf4',
       500: '#22c55e',
-      900: '#14532d'
-    }
-  }
-}
+      900: '#14532d',
+    },
+  },
+};
 ```
 
 2. **Использовать в CSS**:
+
 ```css
 /* Автоматически доступно как Tailwind класс */
 .success-button {
@@ -698,6 +816,7 @@ module.exports = {
 ```
 
 3. **В компонентах**:
+
 ```typescript
 <div className="bg-success-50 border border-success-200 text-success-800">
   Success message
@@ -705,6 +824,7 @@ module.exports = {
 ```
 
 #### Кастомные CSS компоненты:
+
 ```css
 /* packages/ui/src/styles/components.css */
 @layer components {
@@ -712,7 +832,7 @@ module.exports = {
     @apply bg-primary text-primary-foreground hover:bg-primary/90;
     @apply px-4 py-2 rounded-md font-medium transition-colors;
   }
-  
+
   .card {
     @apply bg-card text-card-foreground shadow-sm border rounded-lg;
   }
@@ -728,6 +848,7 @@ module.exports = {
 **Конфигурация**: Настроена в каждом приложении
 
 #### Структура переводов:
+
 ```
 apps/web/
 ├── messages/
@@ -739,6 +860,7 @@ apps/web/
 ```
 
 #### Файлы переводов:
+
 ```json
 // apps/web/messages/en.json
 {
@@ -786,39 +908,42 @@ apps/web/
 ```
 
 #### Конфигурация i18n:
+
 ```typescript
 // apps/web/i18n.ts
-import { notFound } from 'next/navigation'
-import { getRequestConfig } from 'next-intl/server'
+import { notFound } from 'next/navigation';
+import { getRequestConfig } from 'next-intl/server';
 
-const locales = ['en', 'ru']
+const locales = ['en', 'ru'];
 
 export default getRequestConfig(async ({ locale }) => {
-  if (!locales.includes(locale as any)) notFound()
+  if (!locales.includes(locale as any)) notFound();
 
   return {
-    messages: (await import(`./messages/${locale}.json`)).default
-  }
-})
+    messages: (await import(`./messages/${locale}.json`)).default,
+  };
+});
 ```
 
 #### Middleware для роутинга:
+
 ```typescript
 // apps/web/middleware.ts
-import createMiddleware from 'next-intl/middleware'
+import createMiddleware from 'next-intl/middleware';
 
 export default createMiddleware({
   locales: ['en', 'ru'],
   defaultLocale: 'en',
-  localePrefix: 'always' // /en/page, /ru/page
-})
+  localePrefix: 'always', // /en/page, /ru/page
+});
 
 export const config = {
-  matcher: ['/', '/(ru|en)/:path*']
-}
+  matcher: ['/', '/(ru|en)/:path*'],
+};
 ```
 
 #### Использование в компонентах:
+
 ```typescript
 // В серверных компонентах
 import { useTranslations } from 'next-intl'
@@ -853,6 +978,7 @@ export function LoadingButton() {
 #### Как добавить новые переводы:
 
 1. **Добавить ключи в JSON файлы**:
+
 ```json
 // Во все locale файлы
 {
@@ -865,23 +991,26 @@ export function LoadingButton() {
 ```
 
 2. **Создать типизированный хук** (опционально):
+
 ```typescript
 // utils/translations.ts
 export function useProductTranslations() {
-  return useTranslations('products')
+  return useTranslations('products');
 }
 ```
 
 3. **Использовать в компонентах**:
+
 ```typescript
 export function ProductsPage() {
   const t = useTranslations('products')
-  
+
   return <h1>{t('title')}</h1>
 }
 ```
 
 #### Интерполяция и плюрализация:
+
 ```json
 {
   "messages": {
@@ -893,8 +1022,8 @@ export function ProductsPage() {
 
 ```typescript
 // Использование
-t('messages.welcome', { name: 'John' })
-t('messages.itemCount', { count: 5 })
+t('messages.welcome', { name: 'John' });
+t('messages.itemCount', { count: 5 });
 ```
 
 ---
@@ -906,6 +1035,7 @@ t('messages.itemCount', { count: 5 })
 **Конфигурация**: `jest.config.js` (корневой), `jest.setup.js`
 
 #### Структура тестов:
+
 ```
 packages/ui/
 ├── src/
@@ -923,6 +1053,7 @@ tests/                         # E2E тесты
 ```
 
 #### Пример unit теста:
+
 ```typescript
 // packages/ui/src/__tests__/Button.test.tsx
 import { render, screen, fireEvent } from '@testing-library/react'
@@ -937,7 +1068,7 @@ describe('Button', () => {
   it('handles click events', () => {
     const handleClick = jest.fn()
     render(<Button onClick={handleClick}>Click me</Button>)
-    
+
     fireEvent.click(screen.getByRole('button'))
     expect(handleClick).toHaveBeenCalledTimes(1)
   })
@@ -950,6 +1081,7 @@ describe('Button', () => {
 ```
 
 #### Тестирование с провайдерами:
+
 ```typescript
 // Test utilities
 function renderWithProviders(ui: React.ReactElement) {
@@ -962,7 +1094,7 @@ function renderWithProviders(ui: React.ReactElement) {
       </QueryClientProvider>
     )
   }
-  
+
   return render(ui, { wrapper: Wrapper })
 }
 
@@ -976,6 +1108,7 @@ test('component with providers', () => {
 #### Как добавить новые тесты:
 
 1. **Создать тест файл**:
+
 ```typescript
 // packages/ui/src/__tests__/NewComponent.test.tsx
 import { render, screen } from '@testing-library/react'
@@ -990,6 +1123,7 @@ describe('NewComponent', () => {
 ```
 
 2. **Запустить тесты**:
+
 ```bash
 # Все тесты
 npm run test
@@ -1006,6 +1140,7 @@ npm run test:watch
 **Конфигурация**: `playwright.config.ts`
 
 #### Структура E2E тестов:
+
 ```
 tests/
 ├── admin-panel.spec.ts        # Тесты админ панели
@@ -1014,63 +1149,66 @@ tests/
 ```
 
 #### Пример E2E теста:
+
 ```typescript
 // tests/web.spec.ts
-import { test, expect } from '@playwright/test'
+import { test, expect } from '@playwright/test';
 
 test.describe('Web Application', () => {
   test('should display homepage correctly', async ({ page }) => {
-    await page.goto('http://localhost:3000')
-    
+    await page.goto('http://localhost:3000');
+
     // Проверяем заголовок
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('Welcome')
-    
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('Welcome');
+
     // Проверяем навигацию
-    await expect(page.getByRole('navigation')).toBeVisible()
-  })
+    await expect(page.getByRole('navigation')).toBeVisible();
+  });
 
   test('should handle theme toggle', async ({ page }) => {
-    await page.goto('http://localhost:3000')
-    
+    await page.goto('http://localhost:3000');
+
     // Нажимаем на переключатель темы
-    await page.getByRole('button', { name: /theme/i }).click()
-    
+    await page.getByRole('button', { name: /theme/i }).click();
+
     // Проверяем, что тема изменилась
-    await expect(page.locator('html')).toHaveClass(/dark/)
-  })
+    await expect(page.locator('html')).toHaveClass(/dark/);
+  });
 
   test('should navigate between pages', async ({ page }) => {
-    await page.goto('http://localhost:3000')
-    
+    await page.goto('http://localhost:3000');
+
     // Кликаем на ссылку
-    await page.getByRole('link', { name: 'About' }).click()
-    
+    await page.getByRole('link', { name: 'About' }).click();
+
     // Проверяем URL
-    await expect(page).toHaveURL(/\/about/)
-  })
-})
+    await expect(page).toHaveURL(/\/about/);
+  });
+});
 ```
 
 #### Как добавить новые E2E тесты:
 
 1. **Создать spec файл**:
+
 ```typescript
 // tests/new-feature.spec.ts
-import { test, expect } from '@playwright/test'
+import { test, expect } from '@playwright/test';
 
 test.describe('New Feature', () => {
   test.beforeEach(async ({ page }) => {
     // Подготовка перед каждым тестом
-    await page.goto('/new-feature')
-  })
+    await page.goto('/new-feature');
+  });
 
   test('should work correctly', async ({ page }) => {
     // Тестовые шаги
-  })
-})
+  });
+});
 ```
 
 2. **Запустить тесты**:
+
 ```bash
 # Все E2E тесты
 npx playwright test
@@ -1090,6 +1228,7 @@ npx playwright test --debug
 **Конфигурация**: `.storybook/main.ts`
 
 #### Структура историй:
+
 ```
 packages/ui/src/stories/
 ├── Button.stories.tsx
@@ -1098,6 +1237,7 @@ packages/ui/src/stories/
 ```
 
 #### Пример Storybook истории:
+
 ```typescript
 // packages/ui/src/stories/Button.stories.tsx
 import type { Meta, StoryObj } from '@storybook/react'
@@ -1149,28 +1289,30 @@ export const WithIcon: Story = {
 #### Как добавить новые истории:
 
 1. **Создать story файл**:
+
 ```typescript
 // packages/ui/src/stories/NewComponent.stories.tsx
-import type { Meta, StoryObj } from '@storybook/react'
-import { NewComponent } from '../components/new-component'
+import type { Meta, StoryObj } from '@storybook/react';
+import { NewComponent } from '../components/new-component';
 
 const meta: Meta<typeof NewComponent> = {
   title: 'Components/NewComponent',
   component: NewComponent,
   // конфигурация
-}
+};
 
-export default meta
-type Story = StoryObj<typeof meta>
+export default meta;
+type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
     // props
   },
-}
+};
 ```
 
 2. **Запустить Storybook**:
+
 ```bash
 npm run storybook
 ```
@@ -1184,11 +1326,13 @@ npm run storybook
 **Конфигурация**: `packages/eslint-config/`
 
 #### Иерархия правил:
+
 - **`base.js`** - базовые правила (TypeScript, imports, security)
 - **`react-internal.js`** - React правила (performance, accessibility)
 - **`next.js`** - Next.js специфичные правила
 
 #### Enterprise правила:
+
 ```javascript
 // packages/eslint-config/base.js
 module.exports = {
@@ -1196,33 +1340,40 @@ module.exports = {
     // TypeScript
     '@typescript-eslint/no-explicit-any': 'warn',
     '@typescript-eslint/no-non-null-assertion': 'warn',
-    
+
     // Code Quality
-    'complexity': ['warn', { max: 10 }],
+    complexity: ['warn', { max: 10 }],
     'max-lines-per-function': ['warn', { max: 100 }],
-    'no-magic-numbers': ['warn', { 
-      ignore: [-1, 0, 1, 2, 100],
-      ignoreArrayIndexes: true 
-    }],
-    
+    'no-magic-numbers': [
+      'warn',
+      {
+        ignore: [-1, 0, 1, 2, 100],
+        ignoreArrayIndexes: true,
+      },
+    ],
+
     // Security
     'security/detect-object-injection': 'warn',
-    
+
     // Imports
-    'import/order': ['error', {
-      groups: ['builtin', 'external', 'internal', 'parent', 'sibling'],
-      'newlines-between': 'always'
-    }]
-  }
-}
+    'import/order': [
+      'error',
+      {
+        groups: ['builtin', 'external', 'internal', 'parent', 'sibling'],
+        'newlines-between': 'always',
+      },
+    ],
+  },
+};
 ```
 
 #### Как настроить правила для нового пакета:
 
 1. **Создать eslint.config.mjs**:
+
 ```javascript
 // packages/new-package/eslint.config.mjs
-import { config as baseConfig } from '@repo/eslint-config/base'
+import { config as baseConfig } from '@repo/eslint-config/base';
 
 export default [
   ...baseConfig,
@@ -1230,12 +1381,13 @@ export default [
     rules: {
       // Пакет-специфичные правила
       'no-console': 'error', // Для production пакетов
-    }
-  }
-]
+    },
+  },
+];
 ```
 
 2. **Добавить скрипты в package.json**:
+
 ```json
 {
   "scripts": {
@@ -1250,21 +1402,24 @@ export default [
 **Конфигурация**: `.stylelintrc.json`
 
 #### Правила для Tailwind:
+
 ```json
 {
-  "extends": [
-    "stylelint-config-standard"
-  ],
-  "plugins": [
-    "stylelint-config-tailwindcss"
-  ],
+  "extends": ["stylelint-config-standard"],
+  "plugins": ["stylelint-config-tailwindcss"],
   "rules": {
-    "at-rule-no-unknown": [true, {
-      "ignoreAtRules": ["tailwind", "apply", "layer"]
-    }],
-    "property-no-unknown": [true, {
-      "ignoreProperties": ["@apply"]
-    }]
+    "at-rule-no-unknown": [
+      true,
+      {
+        "ignoreAtRules": ["tailwind", "apply", "layer"]
+      }
+    ],
+    "property-no-unknown": [
+      true,
+      {
+        "ignoreProperties": ["@apply"]
+      }
+    ]
   }
 }
 ```
@@ -1274,20 +1429,13 @@ export default [
 **Конфигурация**: `.husky/pre-commit`, `.lintstagedrc.json`
 
 #### Автоматическая проверка:
+
 ```json
 // .lintstagedrc.json
 {
-  "*.{js,jsx,ts,tsx}": [
-    "eslint --fix",
-    "prettier --write"
-  ],
-  "*.{css,scss}": [
-    "stylelint --fix",
-    "prettier --write"
-  ],
-  "*.{json,md}": [
-    "prettier --write"
-  ]
+  "*.{js,jsx,ts,tsx}": ["eslint --fix", "prettier --write"],
+  "*.{css,scss}": ["stylelint --fix", "prettier --write"],
+  "*.{json,md}": ["prettier --write"]
 }
 ```
 
@@ -1298,12 +1446,14 @@ export default [
 ### Разработка нового функционала
 
 #### 1. Анализ задачи:
+
 - Какие компоненты нужны?
 - Какое состояние требуется?
 - Какие API endpoints нужны?
 - Нужны ли новые переводы?
 
 #### 2. Создание структуры:
+
 ```bash
 # 1. UI компоненты (если нужны)
 cd packages/ui
@@ -1320,6 +1470,7 @@ npm run generate:component
 ```
 
 #### 3. Разработка компонентов:
+
 ```typescript
 // Пример: функционал списка продуктов
 
@@ -1360,6 +1511,7 @@ export function ProductsList() {
 ```
 
 #### 4. Тестирование:
+
 ```bash
 # Unit тесты для компонентов
 npm run test
@@ -1372,6 +1524,7 @@ npm run storybook
 ```
 
 #### 5. Проверка качества:
+
 ```bash
 # Линтинг
 npm run lint
@@ -1386,6 +1539,7 @@ npm run build
 ### Добавление нового приложения
 
 #### 1. Создать структуру:
+
 ```bash
 mkdir apps/new-app
 cd apps/new-app
@@ -1393,12 +1547,14 @@ npm init -y
 ```
 
 #### 2. Настроить Next.js:
+
 ```bash
 npm install next react react-dom
 npm install -D @types/react @types/react-dom typescript
 ```
 
 #### 3. Настроить конфигурацию:
+
 ```json
 // apps/new-app/package.json
 {
@@ -1418,6 +1574,7 @@ npm install -D @types/react @types/react-dom typescript
 ```
 
 #### 4. Добавить в Turborepo:
+
 ```json
 // turbo.json
 {
@@ -1433,6 +1590,7 @@ npm install -D @types/react @types/react-dom typescript
 ### Добавление нового пакета
 
 #### 1. Создать структуру:
+
 ```bash
 mkdir packages/new-package
 cd packages/new-package
@@ -1440,6 +1598,7 @@ npm init -y
 ```
 
 #### 2. Настроить TypeScript:
+
 ```json
 // packages/new-package/tsconfig.json
 {
@@ -1454,6 +1613,7 @@ npm init -y
 ```
 
 #### 3. Настроить экспорты:
+
 ```json
 // packages/new-package/package.json
 {
@@ -1467,10 +1627,11 @@ npm init -y
 ```
 
 #### 4. Создать основные файлы:
+
 ```typescript
 // packages/new-package/src/index.ts
-export { myFunction } from './my-function'
-export type { MyType } from './types'
+export { myFunction } from './my-function';
+export type { MyType } from './types';
 ```
 
 ### Debug и troubleshooting
@@ -1478,6 +1639,7 @@ export type { MyType } from './types'
 #### Распространенные проблемы:
 
 1. **TypeScript ошибки**:
+
 ```bash
 # Проверить конфигурацию
 npm run check-types
@@ -1488,31 +1650,35 @@ npm install
 ```
 
 2. **Tailwind классы не работают**:
+
 ```javascript
 // Проверить tailwind.config.js
 module.exports = {
   content: [
     './apps/**/*.{js,ts,jsx,tsx}',
     './packages/ui/**/*.{js,ts,jsx,tsx}', // Важно!
-  ]
-}
+  ],
+};
 ```
 
 3. **Компоненты не импортируются**:
+
 ```typescript
 // Проверить packages/ui/src/index.ts
-export { MyComponent } from './components/my-component'
+export { MyComponent } from './components/my-component';
 ```
 
 4. **tRPC типы не работают**:
+
 ```typescript
 // Проверить настройку клиента
-import type { AppRouter } from '@repo/api-client'
+import type { AppRouter } from '@repo/api-client';
 
-const trpc = createTRPCReact<AppRouter>()
+const trpc = createTRPCReact<AppRouter>();
 ```
 
 #### Полезные команды:
+
 ```bash
 # Очистка
 npm run clean        # Очистить все build артефакты
@@ -1542,6 +1708,7 @@ npm run storybook    # UI документация
 - ✅ Масштабировать архитектуру под любые потребности
 
 **Основные принципы:**
+
 1. **Централизация** - всё общее выносится в packages/
 2. **Типизация** - TypeScript everywhere
 3. **Переиспользование** - DRY principle
