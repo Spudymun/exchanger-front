@@ -159,7 +159,7 @@ export const appRouter = router({
         if (userIndex === -1) {
           throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
         }
-        const existingUser = mockUsers[userIndex];
+        const existingUser = mockUsers.at(userIndex);
         if (!existingUser) {
           throw new Error(ERROR_MESSAGES.USER_NOT_FOUND);
         }
