@@ -5,3 +5,6 @@ export * from './types';
 export * from './utils/calculations';
 export * from './utils/validation';
 export * from './utils/crypto';
+
+// Экспорт data managers
+export * from './data';
