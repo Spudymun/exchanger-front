@@ -10,10 +10,10 @@
     "test": "jest --passWithNoTests"
   },
   "dependencies": {
-    "@repo/constants": "workspace:*",
-    "@repo/utils": "workspace:*"
+    "@repo/constants": "*",
+    "@repo/utils": "*"
   },
   "devDependencies": {
-    "@repo/typescript-config": "workspace:*"
+    "@repo/typescript-config": "*"
   }
 }

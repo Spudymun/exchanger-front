@@ -1,10 +1,11 @@
-import createNextIntlPlugin from 'next-intl/plugin'
+import createNextIntlPlugin from 'next-intl/plugin';
 
-const withNextIntl = createNextIntlPlugin('./i18n.ts')
+const withNextIntl = createNextIntlPlugin('./i18n.ts');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-    serverExternalPackages: ['@trpc/server']
-}
+  transpilePackages: ['@repo/exchange-core', '@repo/constants', '@repo/ui', '@repo/utils'],
+  serverExternalPackages: ['@trpc/server'],
+};
 
-export default withNextIntl(nextConfig)
+export default withNextIntl(nextConfig);

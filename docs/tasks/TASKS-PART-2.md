@@ -1,6 +1,7 @@
 # 🚀 ExchangeGO Development Tasks - Part 2: API Layer & tRPC
 
 **Дата создания:** 29 июня 2025  
+**Дата актуализации:** 1 июля 2025  
 **Статус:** В разработке  
 **Покрытие:** tRPC API, серверная логика, middleware, rate limiting
 
@@ -14,6 +15,8 @@
 - ✅ Применяет константы из `@repo/constants`
 - ✅ Интегрируется с мок-данными
 - ✅ Реализует бизнес-логику через core утилиты
+
+**🔄 АКТУАЛИЗИРОВАНО:** Все импорты, названия типов, статусы заявок и функции обновлены в соответствии с реальной реализацией Part-1.
 
 ### Архитектурный подход:
 
@@ -172,8 +175,8 @@ export type Context = inferAsyncReturnType<typeof createContext>;
 
 ```typescript
 import { TRPCError } from '@trpc/server';
+import { publicProcedure } from '../init';
 import { RATE_LIMITS, RATE_LIMIT_MESSAGES } from '@repo/constants';
-import { createTRPCRouter, publicProcedure } from '../init';
 
 // In-memory rate limiter (в продакшене будет Redis)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
@@ -389,9 +392,11 @@ import {
   sanitizeEmail,
   orderManager,
   userManager,
-  CRYPTOCURRENCIES,
-  ORDER_STATUSES,
 } from '@repo/exchange-core';
+import { CRYPTOCURRENCIES, EXCHANGE_ORDER_STATUSES } from '@repo/constants';
+
+// Создаем массив статусов для удобства
+const ORDER_STATUSES = Object.values(EXCHANGE_ORDER_STATUSES) as const;
 
 export const exchangeRouter = createTRPCRouter({
   // Получить текущие курсы валют
@@ -535,7 +540,7 @@ export const exchangeRouter = createTRPCRouter({
         cryptoAmount: input.cryptoAmount,
         currency: input.currency,
         uahAmount,
-        status: 'pending',
+        status: EXCHANGE_ORDER_STATUSES.PENDING,
         depositAddress,
         recipientData: input.recipientData,
       });
@@ -1067,6 +1072,10 @@ import bcrypt from 'bcryptjs';
 import { createTRPCRouter } from '../init';
 import { protectedProcedure } from '../middleware/auth';
 import { validatePassword, sanitizeEmail, userManager, orderManager } from '@repo/exchange-core';
+import { EXCHANGE_ORDER_STATUSES } from '@repo/constants';
+
+// Создаем массив статусов для удобства
+const ORDER_STATUSES = Object.values(EXCHANGE_ORDER_STATUSES) as const;
 
 export const userRouter = createTRPCRouter({
   // Получить профиль текущего пользователя
@@ -1084,13 +1093,12 @@ export const userRouter = createTRPCRouter({
       email: user.email,
       isVerified: user.isVerified,
       createdAt: user.createdAt,
-      lastLoginAt: user.lastLoginAt,
-      // Статистика пользователя
+      lastLoginAt: user.lastLoginAt, // Статистика пользователя
       stats: {
         totalOrders: orderManager.findByEmail(user.email).length,
         completedOrders: orderManager
           .findByEmail(user.email)
-          .filter(order => order.status === 'completed').length,
+          .filter(order => order.status === EXCHANGE_ORDER_STATUSES.COMPLETED).length,
       },
     };
   }),
@@ -1194,7 +1202,7 @@ export const userRouter = createTRPCRouter({
       z.object({
         limit: z.number().min(1).max(100).default(20),
         offset: z.number().min(0).default(0),
-        status: z.enum(['pending', 'processing', 'completed', 'failed', 'cancelled']).optional(),
+        status: z.enum(ORDER_STATUSES).optional(),
       })
     )
     .query(async ({ input, ctx }) => {
@@ -1322,7 +1330,11 @@ export const userRouter = createTRPCRouter({
       }
 
       // Проверяем, можно ли отменить заявку
-      if (!['pending', 'processing'].includes(order.status)) {
+      if (
+        ![EXCHANGE_ORDER_STATUSES.PENDING, EXCHANGE_ORDER_STATUSES.PROCESSING].includes(
+          order.status
+        )
+      ) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Заявку нельзя отменить в текущем статусе',
@@ -1331,7 +1343,7 @@ export const userRouter = createTRPCRouter({
 
       // Отменяем заявку
       const updatedOrder = orderManager.update(order.id, {
-        status: 'cancelled',
+        status: EXCHANGE_ORDER_STATUSES.CANCELLED,
         updatedAt: new Date(),
       });
 
@@ -1398,7 +1410,11 @@ export const userRouter = createTRPCRouter({
       // Проверяем активные заявки
       const activeOrders = orderManager
         .findByEmail(user.email)
-        .filter(order => ['pending', 'processing'].includes(order.status));
+        .filter(order =>
+          [EXCHANGE_ORDER_STATUSES.PENDING, EXCHANGE_ORDER_STATUSES.PROCESSING].includes(
+            order.status
+          )
+        );
 
       if (activeOrders.length > 0) {
         throw new TRPCError({
@@ -1484,7 +1500,11 @@ import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { createTRPCRouter } from '../init';
 import { adminProcedure } from '../middleware/auth';
-import { userManager, orderManager, ORDER_STATUSES, CRYPTOCURRENCIES } from '@repo/exchange-core';
+import { userManager, orderManager } from '@repo/exchange-core';
+import { CRYPTOCURRENCIES, EXCHANGE_ORDER_STATUSES } from '@repo/constants';
+
+// Создаем массив статусов для удобства
+const ORDER_STATUSES = Object.values(EXCHANGE_ORDER_STATUSES) as const;
 
 export const adminRouter = createTRPCRouter({
   // Получить общую статистику системы
@@ -1504,11 +1524,10 @@ export const adminRouter = createTRPCRouter({
     // Статистика по заявкам
     const orderStats = {
       total: orders.length,
-      pending: orders.filter(o => o.status === 'pending').length,
-      processing: orders.filter(o => o.status === 'processing').length,
-      completed: orders.filter(o => o.status === 'completed').length,
-      failed: orders.filter(o => o.status === 'failed').length,
-      cancelled: orders.filter(o => o.status === 'cancelled').length,
+      pending: orders.filter(o => o.status === EXCHANGE_ORDER_STATUSES.PENDING).length,
+      processing: orders.filter(o => o.status === EXCHANGE_ORDER_STATUSES.PROCESSING).length,
+      completed: orders.filter(o => o.status === EXCHANGE_ORDER_STATUSES.COMPLETED).length,
+      cancelled: orders.filter(o => o.status === EXCHANGE_ORDER_STATUSES.CANCELLED).length,
       createdToday: orders.filter(o => o.createdAt.toDateString() === new Date().toDateString())
         .length,
     };
@@ -1528,7 +1547,7 @@ export const adminRouter = createTRPCRouter({
     const financialStats = {
       totalVolume: orders.reduce((sum, o) => sum + o.uahAmount, 0),
       completedVolume: orders
-        .filter(o => o.status === 'completed')
+        .filter(o => o.status === EXCHANGE_ORDER_STATUSES.COMPLETED)
         .reduce((sum, o) => sum + o.uahAmount, 0),
       averageOrderSize:
         orders.length > 0 ? orders.reduce((sum, o) => sum + o.uahAmount, 0) / orders.length : 0,
@@ -1649,7 +1668,8 @@ export const adminRouter = createTRPCRouter({
         })),
         stats: {
           totalOrders: userOrders.length,
-          completedOrders: userOrders.filter(o => o.status === 'completed').length,
+          completedOrders: userOrders.filter(o => o.status === EXCHANGE_ORDER_STATUSES.COMPLETED)
+            .length,
           totalVolume: userOrders.reduce((sum, o) => sum + o.uahAmount, 0),
           averageOrderSize:
             userOrders.length > 0
@@ -1767,7 +1787,7 @@ export const adminRouter = createTRPCRouter({
         updatedAt: new Date(),
       };
 
-      if (input.status === 'completed' || input.status === 'failed') {
+      if (input.status === EXCHANGE_ORDER_STATUSES.COMPLETED) {
         updateData.processedAt = new Date();
       }
 
@@ -1822,7 +1842,7 @@ export const adminRouter = createTRPCRouter({
         updatedAt: new Date(),
       };
 
-      if (input.status === 'completed' || input.status === 'failed') {
+      if (input.status === EXCHANGE_ORDER_STATUSES.COMPLETED) {
         updateData.processedAt = new Date();
       }
 
@@ -2278,7 +2298,7 @@ export function OrderStatus() {
       enabled: !!orderId,
       refetchInterval: (data) => {
         // Если заявка завершена, не обновляем
-        if (data?.status === 'completed' || data?.status === 'failed') {
+        if (data?.status === 'completed' || data?.status === 'cancelled') {
           return false;
         }
         return 10 * 1000; // Обновляем каждые 10 секунд для активных заявок
@@ -2296,14 +2316,14 @@ export function OrderStatus() {
         <h1 className="text-2xl font-bold">Заявка #{order.id}</h1>
         <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium mt-2 ${
           order.status === 'completed' ? 'bg-green-100 text-green-800' :
-          order.status === 'failed' ? 'bg-red-100 text-red-800' :
           order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
+          order.status === 'paid' ? 'bg-blue-100 text-blue-800' :
           'bg-gray-100 text-gray-800'
         }`}>
           {order.status === 'pending' && 'Ожидает оплаты'}
+          {order.status === 'paid' && 'Оплачено'}
           {order.status === 'processing' && 'Обрабатывается'}
           {order.status === 'completed' && 'Завершена'}
-          {order.status === 'failed' && 'Ошибка'}
           {order.status === 'cancelled' && 'Отменена'}
         </div>
       </div>
@@ -2443,5 +2463,6 @@ export function OrderStatus() {
 ---
 
 **Дата создания:** 29 июня 2025  
-**Версия:** 1.1 (дополнена задачами 2.4-2.6)  
+**Дата актуализации:** 1 июля 2025  
+**Версия:** 1.2 (актуализирован под реальную реализацию Part-1)  
 **Следующая часть:** TASKS-PART-3.md

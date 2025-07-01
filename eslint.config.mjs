@@ -1,5 +1,6 @@
 // For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
 import storybook from "eslint-plugin-storybook";
+import security from "eslint-plugin-security";
 
 import { dirname } from "path";
 import { fileURLToPath } from "url";
@@ -16,7 +17,24 @@ const eslintConfig = [
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   ...storybook.configs["flat/recommended"],
   {
+    plugins: {
+      security,
+    },
     rules: {
+      // Security rules
+      "security/detect-object-injection": "error",
+      "security/detect-non-literal-fs-filename": "warn",
+      "security/detect-unsafe-regex": "error",
+      "security/detect-buffer-noassert": "error",
+      "security/detect-child-process": "warn",
+      "security/detect-disable-mustache-escape": "error",
+      "security/detect-eval-with-expression": "error",
+      "security/detect-no-csrf-before-method-override": "error",
+      "security/detect-non-literal-regexp": "error",
+      "security/detect-non-literal-require": "warn",
+      "security/detect-possible-timing-attacks": "warn",
+      "security/detect-pseudoRandomBytes": "error",
+
       // Code quality rules from our style guide
       "max-lines-per-function": ["error", { max: 50, skipBlankLines: true, skipComments: true }],
       "complexity": ["warn", 10],
