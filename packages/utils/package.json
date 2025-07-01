@@ -1,21 +1,21 @@
 {
-    "name": "@repo/utils",
-    "version": "0.0.0",
-    "private": true,
-    "exports": {
-        ".": "./src/index.ts"
-    },
-    "scripts": {
-        "lint": "eslint . --max-warnings 3",
-        "lint:strict": "eslint . --max-warnings 0",
-        "lint:styles": "echo 'No CSS files to lint in @repo/utils'",
-        "check-types": "tsc --noEmit"
-    },
-    "devDependencies": {
-        "@repo/eslint-config": "*",
-        "@repo/typescript-config": "*",
-        "@types/node": "^22.15.3",
-        "eslint": "^9.29.0",
-        "typescript": "5.8.2"
-    }
+  "name": "@repo/utils",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "lint:strict": "eslint . --max-warnings 0",
+    "lint:styles": "echo 'No CSS files to lint in @repo/utils'",
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*",
+    "@types/node": "^22.15.3",
+    "eslint": "^9.29.0",
+    "typescript": "5.8.2"
+  }
 }

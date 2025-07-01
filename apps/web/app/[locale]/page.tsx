@@ -1,88 +1,41 @@
 export default function HomePage() {
-    return (
-        <div style={{ minHeight: '100vh', padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-            <h1 style={{ fontSize: '48px', textAlign: 'center', marginBottom: '20px' }}>
-                Exchanger - Работает!
-            </h1>
-            <p style={{ fontSize: '18px', textAlign: 'center', color: '#666' }}>
-                Enterprise-ready cryptocurrency exchange platform
-            </p>
+  return (
+    <div className="min-h-screen p-5 font-sans">
+      <h1 className="text-5xl text-center mb-5">Exchanger - Работает!</h1>
+      <p className="text-lg text-center text-gray-600">
+        Enterprise-ready cryptocurrency exchange platform
+      </p>
 
-            <div style={{ textAlign: 'center', marginTop: '40px' }}>
-                <button style={{
-                    padding: '12px 24px',
-                    fontSize: '16px',
-                    backgroundColor: '#0070f3',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    marginRight: '20px'
-                }}>
-                    Начать
-                </button>
+      <div className="text-center mt-10">
+        <button className="px-6 py-3 text-base bg-blue-600 text-white border-0 rounded-md cursor-pointer mr-5 hover:bg-blue-700">
+          Начать
+        </button>
 
-                <button style={{
-                    padding: '12px 24px',
-                    fontSize: '16px',
-                    backgroundColor: 'transparent',
-                    color: '#0070f3',
-                    border: '2px solid #0070f3',
-                    borderRadius: '6px',
-                    cursor: 'pointer'
-                }}>
-                    Узнать больше
-                </button>
-            </div>
+        <button className="px-6 py-3 text-base bg-transparent text-blue-600 border-2 border-blue-600 rounded-md cursor-pointer hover:bg-blue-50">
+          Узнать больше
+        </button>
+      </div>
 
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                gap: '20px',
-                marginTop: '60px'
-            }}>
-                <div style={{
-                    padding: '24px',
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '8px',
-                    textAlign: 'center'
-                }}>
-                    <h3 style={{ fontSize: '20px', marginBottom: '12px', color: '#333' }}>
-                        Turborepo Monorepo
-                    </h3>
-                    <p style={{ color: '#666', lineHeight: '1.5' }}>
-                        Масштабируемая архитектура монорепозитория с общими пакетами
-                    </p>
-                </div>
-
-                <div style={{
-                    padding: '24px',
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '8px',
-                    textAlign: 'center'
-                }}>
-                    <h3 style={{ fontSize: '20px', marginBottom: '12px', color: '#333' }}>
-                        tRPC API
-                    </h3>
-                    <p style={{ color: '#666', lineHeight: '1.5' }}>
-                        End-to-end типизация API с автоматическим выводом типов
-                    </p>
-                </div>
-
-                <div style={{
-                    padding: '24px',
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '8px',
-                    textAlign: 'center'
-                }}>
-                    <h3 style={{ fontSize: '20px', marginBottom: '12px', color: '#333' }}>
-                        Интернационализация
-                    </h3>
-                    <p style={{ color: '#666', lineHeight: '1.5' }}>
-                        Поддержка нескольких языков с next-intl
-                    </p>
-                </div>
-            </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-15">
+        <div className="p-6 border border-gray-200 rounded-lg text-center">
+          <h3 className="text-xl mb-3 text-gray-800">Turborepo Monorepo</h3>
+          <p className="text-gray-600 leading-relaxed">
+            Масштабируемая архитектура монорепозитория с общими пакетами
+          </p>
         </div>
-    )
+
+        <div className="p-6 border border-gray-200 rounded-lg text-center">
+          <h3 className="text-xl mb-3 text-gray-800">tRPC API</h3>
+          <p className="text-gray-600 leading-relaxed">
+            End-to-end типизация API с автоматическим выводом типов
+          </p>
+        </div>
+
+        <div className="p-6 border border-gray-200 rounded-lg text-center">
+          <h3 className="text-xl mb-3 text-gray-800">Интернационализация</h3>
+          <p className="text-gray-600 leading-relaxed">Поддержка нескольких языков с next-intl</p>
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -2,12 +2,16 @@
 // Современная типографическая система для криптообменника
 // Создано: 30 июня 2025
 
+// Font constants
+const MAIN_FONT = 'Inter';
+const FALLBACK_FONT = 'sans-serif';
+
 export const typography = {
   // === FONT FAMILIES ===
   fontFamily: {
     // Sans: Основной шрифт для интерфейса
     sans: [
-      'Inter', // Современный, читаемый
+      MAIN_FONT, // Современный, читаемый
       'system-ui', // Системный шрифт
       '-apple-system', // macOS
       'BlinkMacSystemFont', // macOS Safari
@@ -15,14 +19,14 @@ export const typography = {
       'Roboto', // Android
       '"Helvetica Neue"', // Fallback
       'Arial', // Универсальный fallback
-      'sans-serif', // Generic fallback
+      FALLBACK_FONT, // Generic fallback
     ],
 
     // Display: Для заголовков и акцентов
     display: [
-      'Inter', // Тот же шрифт для консистентности
+      MAIN_FONT, // Тот же шрифт для консистентности
       'system-ui',
-      'sans-serif',
+      FALLBACK_FONT,
     ],
 
     // Mono: Для криптоадресов, кодов, цифр
@@ -38,10 +42,10 @@ export const typography = {
 
     // Numeric: Специально для цифр и валют
     numeric: [
-      'Inter', // Inter отлично подходит для цифр
+      MAIN_FONT, // Inter отлично подходит для цифр
       '"SF Pro Display"', // Apple's numeric font
       'system-ui',
-      'sans-serif',
+      FALLBACK_FONT,
     ],
   },
 

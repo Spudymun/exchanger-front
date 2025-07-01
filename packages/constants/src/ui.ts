@@ -33,6 +33,12 @@ export const UI_NUMERIC_CONSTANTS = {
 
   // Currency and validation
   CURRENCY_CODE_LENGTH: 3,
+
+  // Web page styling
+  WEB_PAGE_PADDING: '24px',
+  WEB_BUTTON_PADDING: '12px 24px',
+  WEB_CARD_BORDER_RADIUS: '8px',
+  WEB_GRID_GAP: '20px',
 } as const;
 
 export const ALERT_VARIANTS = {
@@ -193,6 +199,21 @@ export const TRANSACTION_STATUS_CONFIG = {
   },
 } as const;
 
+// Design token constants for color scales
+export const COLOR_SCALE_KEYS = {
+  LIGHTEST: 50,
+  LIGHTER: 100,
+  LIGHT: 200,
+  LIGHT_MEDIUM: 300,
+  MEDIUM: 400,
+  MEDIUM_DARK: 500,
+  DARK: 600,
+  DARKER: 700,
+  DARKEST: 800,
+  EXTRA_DARK: 900,
+  DEEPEST: 950,
+} as const;
+
 // Type exports
 export type AlertVariant = (typeof ALERT_VARIANTS)[keyof typeof ALERT_VARIANTS];
 export type ButtonVariant = (typeof BUTTON_VARIANTS)[keyof typeof BUTTON_VARIANTS];
@@ -205,3 +226,4 @@ export type Breakpoint = (typeof BREAKPOINTS)[keyof typeof BREAKPOINTS];
 export type ChartInterval = (typeof CHART_INTERVALS)[keyof typeof CHART_INTERVALS];
 export type TableDensity = (typeof TABLE_DENSITIES)[keyof typeof TABLE_DENSITIES];
 export type IconSize = (typeof ICON_SIZES)[keyof typeof ICON_SIZES];
+export type ColorScaleKey = (typeof COLOR_SCALE_KEYS)[keyof typeof COLOR_SCALE_KEYS];

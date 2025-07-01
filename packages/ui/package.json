@@ -7,7 +7,7 @@
     "./styles": "./src/styles/globals.css"
   },
   "scripts": {
-    "lint": "eslint . --max-warnings 40",
+    "lint": "eslint . --max-warnings 0",
     "lint:strict": "eslint . --max-warnings 0",
     "lint:styles": "stylelint \"src/**/*.{css,scss}\" --fix",
     "generate:component": "turbo gen react-component",

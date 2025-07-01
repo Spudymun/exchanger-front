@@ -1,26 +1,26 @@
 {
-    "name": "@repo/design-tokens",
-    "version": "0.1.0",
-    "private": true,
-    "main": "index.js",
-    "types": "index.d.ts",
-    "files": [
-        "index.js",
-        "index.d.ts",
-        "colors.js",
-        "typography.js",
-        "spacing.js"
-    ],
-    "scripts": {
-        "lint": "eslint . --max-warnings 15",
-        "lint:strict": "eslint . --max-warnings 0",
-        "lint:styles": "echo 'No CSS files to lint in @repo/design-tokens'",
-        "check-types": "tsc --noEmit"
-    },
-    "devDependencies": {
-        "@repo/eslint-config": "*",
-        "@repo/typescript-config": "*",
-        "eslint": "^9.29.0",
-        "typescript": "^5"
-    }
+  "name": "@repo/design-tokens",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "colors.js",
+    "typography.js",
+    "spacing.js"
+  ],
+  "scripts": {
+    "lint": "eslint . --max-warnings 0",
+    "lint:strict": "eslint . --max-warnings 0",
+    "lint:styles": "echo 'No CSS files to lint in @repo/design-tokens'",
+    "check-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*",
+    "eslint": "^9.29.0",
+    "typescript": "^5"
+  }
 }
