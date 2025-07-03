@@ -8,16 +8,14 @@ import superjson from 'superjson';
 
 import type { AppRouter } from '../src/server/trpc';
 
-// Constants
-const DEFAULT_DEV_PORT = 3000;
-
 // Type annotation to avoid build errors
 const trpc: CreateTRPCReact<AppRouter, unknown> = createTRPCReact<AppRouter>();
 
 function getBaseUrl() {
   if (typeof window !== 'undefined') return '';
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return `http://localhost:${process.env.PORT ?? DEFAULT_DEV_PORT}`;
+  // Use relative URL for development to avoid hardcoded hosts
+  return '';
 }
 
 export function TRPCProvider({ children }: { children: React.ReactNode }) {

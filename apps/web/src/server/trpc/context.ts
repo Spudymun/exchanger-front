@@ -1,4 +1,4 @@
-import { userManager } from '@repo/exchange-core';
+import { type User, userManager } from '@repo/exchange-core';
 import { type inferAsyncReturnType } from '@trpc/server';
 import { type CreateNextContextOptions } from '@trpc/server/adapters/next';
 
@@ -11,7 +11,7 @@ export const createContext = async (opts: CreateNextContextOptions) => {
     typeof forwarded === 'string' ? forwarded.split(',')[0] : req.socket.remoteAddress || 'unknown';
 
   // Проверяем аутентификацию через cookie или header
-  let user = null;
+  let user: User | null = null;
   const sessionId = req.cookies.sessionId || req.headers.authorization?.replace('Bearer ', '');
 
   if (sessionId) {

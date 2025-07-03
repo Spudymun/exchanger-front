@@ -63,14 +63,25 @@ export const VALIDATION_PATTERNS = {
   PHONE: /^\+?[1-9]\d{1,14}$/,
 
   // Crypto wallet addresses (basic patterns)
-  BTC_ADDRESS: /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$|^bc1[a-z0-9]{39,59}$/,
+  BTC_ADDRESS: /^(?:[13][a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-z0-9]{39,59})$/,
   ETH_ADDRESS: /^0x[a-fA-F0-9]{40}$/,
 
-  // URLs
-  URL: /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/,
+  // URLs - using function instead of regex for security (prevents ReDoS attacks)
+  URL: (() => {
+    const urlValidator = (url: string): boolean => {
+      try {
+        const parsed = new URL(url);
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+      } catch {
+        return false;
+      }
+    };
+    // Create regex-like object with test method for compatibility
+    return { test: urlValidator };
+  })(),
 
-  // Numbers
-  POSITIVE_NUMBER: /^\d+(\.\d+)?$/,
+  // Numbers (safe regex patterns to prevent ReDoS attacks)
+  POSITIVE_NUMBER: /^\d+\.?\d*$/,
   INTEGER: /^\d+$/,
 
   // Alphanumeric only
@@ -122,6 +133,27 @@ export const VALIDATION_MESSAGES = {
   SOMETHING_WENT_WRONG: 'Что-то пошло не так',
   NETWORK_ERROR: 'Ошибка сети',
   SERVER_ERROR: 'Ошибка сервера',
+} as const;
+
+// Authentication constants
+export const AUTH_CONSTANTS = {
+  // Session durations
+  SESSION_MAX_AGE_SECONDS: 7 * 24 * 60 * 60, // 7 дней
+  SESSION_COOKIE_NAME: 'sessionId',
+
+  // Password validation
+  PASSWORD_MIN_LENGTH: 8,
+  BCRYPT_SALT_ROUNDS: 10,
+
+  // Request delays (milliseconds)
+  AUTH_REQUEST_DELAY_MS: 300,
+  LOGIN_REQUEST_DELAY_MS: 500,
+
+  // Password reset
+  RESET_CODE_LENGTH: 6,
+  RESET_CODE_BASE: 36,
+  RESET_CODE_START: 2,
+  RESET_CODE_END: 8,
 } as const;
 
 // Validation helper functions
