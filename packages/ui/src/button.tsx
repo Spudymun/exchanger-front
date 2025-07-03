@@ -11,7 +11,6 @@ interface ButtonProps {
 export const Button = ({ children, className, appName }: ButtonProps) => {
   const handleClick = useCallback(() => {
     // Demo button - log instead of alert for better UX
-
     console.log(`Hello from your ${appName} app!`);
   }, [appName]);
 

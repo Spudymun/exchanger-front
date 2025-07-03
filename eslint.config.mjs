@@ -54,6 +54,17 @@ const eslintConfig = [
       "@typescript-eslint/no-explicit-any": "warn",
       "prefer-const": "error"
     }
+  },
+  // Override rules for infrastructure/service files
+  {
+    files: [
+      "apps/web/src/server/trpc/**/*.ts",
+      "apps/web/pages/api/trpc/**/*.ts", 
+      "packages/ui/src/**/*.tsx" // for demo components
+    ],
+    rules: {
+      "no-console": "off" // Allow console logs in infrastructure layer
+    }
   }
 ];
 

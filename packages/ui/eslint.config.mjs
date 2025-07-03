@@ -16,4 +16,11 @@ export default [
             "unicorn/prefer-module": "off",
         },
     },
+    // Override rules for demo components
+    {
+        files: ["src/**/*.tsx"],
+        rules: {
+            "no-console": "off", // Allow console logs in demo UI components
+        },
+    },
 ];
