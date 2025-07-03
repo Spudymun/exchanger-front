@@ -338,6 +338,124 @@ rules:
       - 'Это решает проблему зацикливания в планировании'
       - 'Обеспечивает полный контроль пользователя над процессом'
 
+  rule_18:
+    title: 'Двухуровневая система линтеров - строгий контроль качества'
+    description: 'В проекте действует двухуровневая система линтеров с критическими различиями в строгости проверок. Обязательное понимание и учет всех уровней линтинга.'
+
+    system_architecture:
+      title: 'Архитектура системы линтеров'
+      levels:
+        1: 'Обычный линтинг - npm run lint (базовый уровень)'
+        2: 'Pre-commit линтинг - git commit → husky → lint-staged (строгий уровень)'
+      critical_note: 'Pre-commit линтер СТРОЖЕ обычного и может выявлять ошибки, невидимые для npm run lint'
+
+    mandatory_commands:
+      title: 'ОБЯЗАТЕЛЬНЫЕ команды для работы с линтерами'
+      regular_lint: 'npm run lint'
+      strict_lint: 'git add . && git commit -m "test"'
+      type_check: 'npm run check-types'
+      styles_lint: 'npm run lint:styles'
+      full_check: 'npm run test'
+
+    lint_levels_differences:
+      title: 'Критические различия между уровнями'
+
+      level_1_regular:
+        command: 'npm run lint'
+        scope: 'Все файлы в workspace через Turbo'
+        config: 'Различные ESLint конфиги для разных пакетов'
+        strictness: 'Базовый уровень с --max-warnings 0'
+        execution: 'turbo run lint && npm run lint:styles'
+
+      level_2_precommit:
+        command: 'git commit (автоматически через husky)'
+        scope: 'Только staged файлы через lint-staged'
+        config: 'Более строгие настройки lint-staged'
+        strictness: 'МАКСИМАЛЬНЫЙ с полной type-check и тестами'
+        execution: |
+          1. lint-staged: eslint --fix --max-warnings 0 (только staged)
+          2. npm run check-types (весь проект)
+          3. npm run test (все тесты)
+          4. commitlint проверка сообщения
+
+    critical_understanding:
+      title: 'КРИТИЧЕСКИ ВАЖНОЕ понимание системы'
+      main_rule: 'Pre-commit линтер выявляет ошибки, которые НЕ видит обычный npm run lint'
+      why_different:
+        - 'Разные конфигурации ESLint между турбо и lint-staged'
+        - 'lint-staged проверяет только staged файлы (другой scope)'
+        - 'Pre-commit добавляет type-check и тесты всего проекта'
+        - 'Более строгие настройки в .lintstagedrc.json'
+
+      practical_impact:
+        - 'npm run lint может пройти без ошибок'
+        - 'Но git commit может заблокироваться на lint-staged'
+        - 'Единственный способ увидеть ВСЕ ошибки - попытаться сделать git commit'
+
+    mandatory_workflow:
+      title: 'ОБЯЗАТЕЛЬНЫЙ алгоритм работы с линтерами'
+      steps:
+        1: 'ВСЕГДА использовать npm-скрипты, а не прямые команды eslint'
+        2: 'После любых изменений кода: npm run lint'
+        3: 'Для проверки types: npm run check-types'
+        4: 'Для финальной проверки: git add . && git commit -m "test"'
+        5: 'Если pre-commit упал - исправить ошибки и повторить'
+        6: 'НЕ полагаться только на npm run lint для финальной проверки'
+
+    error_handling_protocol:
+      title: 'Протокол обработки lint-ошибок'
+
+      when_npm_lint_passes:
+        step: 'npm run lint прошел без ошибок'
+        action: 'Хорошо, но еще не гарантия чистоты'
+        next: 'Обязательно проверить через git commit'
+
+      when_precommit_fails:
+        step: 'git commit заблокирован pre-commit хуком'
+        action: 'Это выявило скрытые ошибки'
+        fix_approach:
+          - 'Изучить точные ошибки из вывода pre-commit'
+          - 'Исправить все блокирующие проблемы'
+          - 'Повторить git commit для проверки'
+          - 'НЕ использовать --no-verify без крайней необходимости'
+
+    technical_debt_prevention:
+      title: 'Предотвращение технического долга через линтеры'
+      lint_as_quality_gate: 'Линтеры - это ворота качества, а не препятствие'
+      rule_13_integration: 'Правило 13 (запрет техдолга) тесно связано с системой линтеров'
+      completion_criteria:
+        - 'npm run lint - без ошибок'
+        - 'npm run check-types - без ошибок'
+        - 'npm run test - все тесты прошли'
+        - 'git commit - pre-commit hook прошел без блокировок'
+        - 'Только после ALL GREEN задача считается завершенной'
+
+    emergency_procedures:
+      title: 'Экстренные процедуры (только в крайних случаях)'
+      bypass_precommit: 'git commit --no-verify (ТОЛЬКО для hotfix production)'
+      fix_after_bypass: 'ОБЯЗАТЕЛЬНО исправить lint-ошибки в следующем коммите'
+      rule: 'Обход pre-commit допустим только для критических production hotfix'
+
+    integration_with_existing_rules:
+      title: 'Интеграция с существующими правилами'
+      rule_13_connection: 'Линтеры обеспечивают техническое исполнение правила 13 (запрет техдолга)'
+      rule_10_connection: 'Проверка через git commit исключает предположения о "чистоте" кода'
+      rule_4_connection: 'Качество процесса включает правильную работу с линтерами'
+
+    self_control_questions:
+      title: 'Вопросы самоконтроля при работе с линтерами'
+      before_claiming_completion:
+        - 'Запустил ли я npm run lint?'
+        - 'Прошел ли npm run check-types?'
+        - 'Попытался ли git commit для проверки pre-commit?'
+        - 'Исправил ли ВСЕ ошибки, выявленные на всех уровнях?'
+        - 'Могу ли я сделать чистый git commit без блокировок?'
+      red_flags:
+        - 'Говорю "lint прошел" без проверки pre-commit'
+        - 'Игнорирую ошибки от git commit как "несущественные"'
+        - 'Использую eslint напрямую вместо npm-скриптов'
+        - 'Не проверяю type-check после изменений типов'
+
 # Метаинформация
 meta:
   created_date: '2025-06-28'
@@ -356,3 +474,4 @@ key_principles:
   - 'Сохранение функциональности при рефакторинге'
   - 'Код без технического долга - обязательное условие завершения задач'
   - 'Приоритет документации над додумками - обязательное изучение всех гайдов'
+  - 'Двухуровневая система линтеров - обязательная проверка через git commit для выявления всех ошибок'
