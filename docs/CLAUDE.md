@@ -105,7 +105,7 @@ This package serves as a shared UI component library.
 
 ## Development and Documentation
 
-The presence of extensive documentation in the top-level `docs` directory, including `ARCHITECTURE.md`, `API_DOCS.md`, `DEVELOPER_GUIDE.md`, and various `TASKS` markdown files, indicates a well-documented project with clear guidelines for development, architecture, and task management. The `scripts` directory also contains various utility scripts for project maintenance, such as `analyze-project-structure.ps1`, `check-tech-debt.mjs`, and `cleanup-unused.js`.
+The presence of extensive documentation in the top-level `docs` directory, including `ARCHITECTURE.md`, `API_DOCS.md`, `DEVELOPER_GUIDE.md`, and various `TASKS` markdown files, indicates a well-documented project with clear guidelines for development, architecture, and task management. The `scripts` directory also contains various utility scripts for project maintenance, such as `analyze-project-structure.ps1` and `cleanup-unused.js`.
 
 This project appears to be a robust and well-organized frontend system for a currency exchange platform, built with modern web technologies and a strong emphasis on modularity, reusability, and maintainability.
 
