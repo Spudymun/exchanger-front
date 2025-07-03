@@ -1,15 +1,19 @@
 import { createTRPCRouter } from '../init';
 
-import { adminRouter } from './admin';
 import { authRouter } from './auth';
 import { exchangeRouter } from './exchange';
+import { operatorRouter } from './operator';
+import { sharedRouter } from './shared';
+import { supportRouter } from './support';
 import { userRouter } from './user';
 
 export const appRouter = createTRPCRouter({
   exchange: exchangeRouter,
   auth: authRouter,
   user: userRouter,
-  admin: adminRouter,
+  operator: operatorRouter,
+  support: supportRouter,
+  shared: sharedRouter,
 });
 
 export type AppRouter = typeof appRouter;

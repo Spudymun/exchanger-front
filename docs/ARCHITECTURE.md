@@ -66,6 +66,7 @@ exchanger-front/
 ## 📦 Constants Package Usage
 
 ### Business Constants
+
 ```typescript
 import { ORDER_STATUSES, USER_ROLES, HTTP_STATUS } from '@repo/constants'
 
@@ -86,13 +87,14 @@ if (user.role === USER_ROLES.ADMIN) {
 ```
 
 ### UI Configuration
+
 ```typescript
 import { ORDER_STATUS_CONFIG, ALERT_VARIANTS } from '@repo/constants'
 
 // Polymorphic components with configuration
 function OrderStatusBadge({ status }: Props) {
   const config = ORDER_STATUS_CONFIG[status]
-  
+
   return (
     <Badge variant={config.color}>
       <Icon name={config.icon} className="mr-2" />
@@ -108,23 +110,24 @@ function OrderStatusBadge({ status }: Props) {
 ```
 
 ### Validation
+
 ```typescript
-import { VALIDATION_LIMITS, VALIDATION_PATTERNS } from '@repo/constants'
+import { VALIDATION_LIMITS, VALIDATION_PATTERNS } from '@repo/constants';
 
 // In form validation
 const userSchema = z.object({
-  email: z.string()
-    .max(VALIDATION_LIMITS.EMAIL_MAX_LENGTH)
-    .regex(VALIDATION_PATTERNS.EMAIL),
-  password: z.string()
+  email: z.string().max(VALIDATION_LIMITS.EMAIL_MAX_LENGTH).regex(VALIDATION_PATTERNS.EMAIL),
+  password: z
+    .string()
     .min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH)
-    .regex(VALIDATION_PATTERNS.PASSWORD)
-})
+    .regex(VALIDATION_PATTERNS.PASSWORD),
+});
 ```
 
 ## 📋 Development Examples
 
 ### Storybook Usage
+
 ```bash
 # Start Storybook
 npm run storybook
@@ -134,10 +137,11 @@ npm run build-storybook
 ```
 
 Component story example:
+
 ```typescript
 // packages/ui/src/stories/MyComponent.stories.tsx
-import type { Meta, StoryObj } from '@storybook/react'
-import { MyComponent } from '../components/MyComponent'
+import type { Meta, StoryObj } from '@storybook/react';
+import { MyComponent } from '../components/MyComponent';
 
 const meta: Meta<typeof MyComponent> = {
   title: 'Components/MyComponent',
@@ -146,20 +150,21 @@ const meta: Meta<typeof MyComponent> = {
     layout: 'centered',
   },
   tags: ['autodocs'],
-}
+};
 
-export default meta
-type Story = StoryObj<typeof meta>
+export default meta;
+type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   args: {
     variant: 'primary',
     children: 'Click me',
   },
-}
+};
 ```
 
 ### Playwright Testing
+
 ```bash
 # Run all E2E tests
 npm run test:e2e
@@ -175,19 +180,21 @@ npx playwright show-report
 ```
 
 Test example:
+
 ```typescript
 // tests/admin-panel.spec.ts
-import { test, expect } from '@playwright/test'
+import { test, expect } from '@playwright/test';
 
 test('admin dashboard loads correctly', async ({ page }) => {
-  await page.goto('/admin')
-  
-  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible()
-  await expect(page.getByTestId('stats-card')).toHaveCount(4)
-})
+  await page.goto('/admin');
+
+  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+  await expect(page.getByTestId('stats-card')).toHaveCount(4);
+});
 ```
 
 ### Jest Unit Testing
+
 ```bash
 # Run unit tests
 npm run test
@@ -200,32 +207,34 @@ npm run test:watch
 ```
 
 Test example:
+
 ```typescript
 // packages/hooks/src/state/__tests__/ui-store.test.ts
-import { renderHook, act } from '@testing-library/react'
-import { useUIStore } from '../ui-store'
+import { renderHook, act } from '@testing-library/react';
+import { useUIStore } from '../ui-store';
 
 describe('UIStore', () => {
   it('should toggle sidebar', () => {
-    const { result } = renderHook(() => useUIStore())
-    
+    const { result } = renderHook(() => useUIStore());
+
     act(() => {
-      result.current.toggleSidebar()
-    })
-    
-    expect(result.current.sidebarOpen).toBe(true)
-  })
-})
+      result.current.toggleSidebar();
+    });
+
+    expect(result.current.sidebarOpen).toBe(true);
+  });
+});
 ```
 
 ### State Management Examples
+
 ```typescript
 // Using UI Store
 import { useUIStore } from '@repo/hooks/state'
 
 function MyComponent() {
   const { sidebarOpen, toggleSidebar, showModal } = useUIStore()
-  
+
   return (
     <div>
       <button onClick={toggleSidebar}>
@@ -243,7 +252,7 @@ import { useTradingStore } from '@repo/hooks/state'
 
 function TradingView() {
   const { portfolio, currentPair, setTradingPair } = useTradingStore()
-  
+
   return (
     <div>
       <h2>Portfolio: ${portfolio.balance}</h2>
@@ -257,11 +266,12 @@ function TradingView() {
 ```
 
 ### tRPC API Examples
+
 ```typescript
 // apps/web/server/trpc.ts - Adding new procedure
 export const appRouter = router({
   // ...existing procedures...
-  
+
   createUser: publicProcedure
     .input(z.object({
       name: z.string().min(1),
@@ -279,9 +289,9 @@ import { trpc } from '../lib/trpc'
 function UserList() {
   const { data: users, isLoading } = trpc.getUsers.useQuery()
   const createUser = trpc.createUser.useMutation()
-  
+
   if (isLoading) return <div>Loading...</div>
-  
+
   return (
     <div>
       {users?.map(user => (
@@ -302,11 +312,13 @@ function UserList() {
 The project uses comprehensive linting and formatting tools:
 
 #### JavaScript/TypeScript
+
 - **ESLint**: Static analysis and code quality
 - **Prettier**: Code formatting
 - **TypeScript**: Type checking
 
-#### CSS/Styles  
+#### CSS/Styles
+
 - **Stylelint**: CSS/SCSS linting with Tailwind CSS support
 - **Prettier**: CSS formatting
 - **Tailwind CSS**: Utility-first CSS framework
@@ -326,7 +338,7 @@ npm run lint:styles
 # Format all code
 npm run format
 
-# Format only CSS/SCSS files  
+# Format only CSS/SCSS files
 npm run format:styles
 
 # Type checking
@@ -336,6 +348,7 @@ npm run check-types
 #### Pre-commit Hooks
 
 Husky automatically runs before each commit:
+
 - ESLint with auto-fix for JS/TS files
 - Stylelint with auto-fix for CSS/SCSS files
 - Prettier formatting for all supported files
@@ -343,7 +356,53 @@ Husky automatically runs before each commit:
 #### Stylelint Configuration
 
 The project uses:
+
 - `stylelint-config-standard`: Standard CSS rules
 - `stylelint-config-tailwindcss`: Tailwind CSS specific rules
 - `stylelint-order`: Property ordering rules
 - Custom rules for Tailwind directives (`@apply`, `@layer`, etc.)
+
+## 👥 Роли и система доступа
+
+Проект использует комплексную архитектуру ролей с четким разделением приложений и разрешений.
+
+### Архитектурные принципы
+
+- **Разделение по приложениям:** `apps/admin-panel` (только админы) vs `apps/web` (операторы, саппорт)
+- **Permission-based система:** Гранулярный контроль доступа через разрешения
+- **Модульная архитектура UI:** Условный рендеринг компонентов на основе ролей
+- **Расширяемые API:** Отдельные роутеры для каждой группы ролей
+
+### Роли в системе
+
+| Роль         | Приложение         | Базовые права                                                     |
+| ------------ | ------------------ | ----------------------------------------------------------------- |
+| **Admin**    | `apps/admin-panel` | Полное управление системой, пользователями, настройками           |
+| **Operator** | `apps/web`         | Обработка заявок, взаимодействие с клиентами, мониторинг операций |
+| **Support**  | `apps/web`         | Консультации клиентов, техподдержка, работа с базой знаний        |
+
+### Техническая реализация
+
+```typescript
+// Константы ролей
+import { USER_ROLES, ROLE_TO_APP_MAPPING } from '@repo/constants'
+
+// Middleware для проверки доступа
+import { operatorOnly, supportOnly, operatorAndSupport } from '../middleware/auth'
+
+// Роутеры по ролям
+apps/web/src/server/trpc/routers/
+├── operator.ts       // Эндпоинты для операторов
+├── support.ts        // Эндпоинты для саппорта
+├── shared.ts         // Общие эндпоинты operator + support
+└── admin.ts          // Для admin-panel (не web app)
+```
+
+### Безопасность и контроль
+
+- **Принцип наименьших привилегий** - минимально необходимые права
+- **Graceful degradation** - скрытие недоступных функций вместо ошибок
+- **Аудит доступа** - логирование всех действий с привилегиями
+- **Fail-safe подход** - при ошибке запрещать доступ
+
+> 📋 **Подробная документация:** [ROLES_ARCHITECTURE.md](./ROLES_ARCHITECTURE.md)

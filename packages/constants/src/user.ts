@@ -1,3 +1,22 @@
+// Области приложений
+export const APP_SCOPE = {
+  ADMIN_PANEL: 'admin-panel',
+  WEB_APP: 'web',
+} as const;
+
+// Маппинг ролей к приложениям (импортируем USER_ROLES из business.ts)
+import { USER_ROLES } from './business';
+
+export const ROLE_TO_APP_MAPPING = {
+  [USER_ROLES.ADMIN]: [APP_SCOPE.ADMIN_PANEL],
+  [USER_ROLES.OPERATOR]: [APP_SCOPE.WEB_APP],
+  [USER_ROLES.SUPPORT]: [APP_SCOPE.WEB_APP],
+  [USER_ROLES.USER]: [APP_SCOPE.WEB_APP], // Клиенты тоже используют web app
+} as const;
+
+// Типы для ролей
+export type AppScope = (typeof APP_SCOPE)[keyof typeof APP_SCOPE];
+
 // User API константы
 export const USER_MESSAGES = {
   NOT_FOUND: 'Пользователь не найден',

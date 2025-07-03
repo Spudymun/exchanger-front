@@ -1,8 +1,10 @@
+import { USER_ROLES } from '@repo/constants';
+import { type User } from '@repo/exchange-core';
 import { TRPCError } from '@trpc/server';
 
 import { publicProcedure } from '../init';
 
-// Middleware для проверки аутентификации
+// Базовый middleware для проверки аутентификации
 export const authMiddleware = publicProcedure.use(({ ctx, next }) => {
   if (!ctx.user) {
     throw new TRPCError({
@@ -14,24 +16,44 @@ export const authMiddleware = publicProcedure.use(({ ctx, next }) => {
   return next({
     ctx: {
       ...ctx,
-      user: ctx.user, // Гарантируем что user не null
+      user: ctx.user as User, // TypeScript assertion - user гарантированно не null после проверки
     },
   });
 });
 
-// Middleware для проверки админских прав
-export const adminMiddleware = authMiddleware.use(({ ctx, next }) => {
-  // В будущем здесь будет проверка роли админа
-  if (!ctx.user.email.includes('admin')) {
-    throw new TRPCError({
-      code: 'FORBIDDEN',
-      message: 'Недостаточно прав доступа',
-    });
-  }
+// Generic middleware для проверки роли
+export const roleMiddleware = (allowedRoles: string[]) => {
+  return authMiddleware.use(({ ctx, next }) => {
+    if (!ctx.user.role) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Роль пользователя не определена',
+      });
+    }
 
-  return next();
-});
+    if (!allowedRoles.includes(ctx.user.role)) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Недостаточно прав доступа',
+      });
+    }
 
-// Экспорт типизированных процедур
+    return next();
+  });
+};
+
+// Специализированные middleware для ролей
+export const operatorMiddleware = roleMiddleware([USER_ROLES.OPERATOR]);
+export const supportMiddleware = roleMiddleware([USER_ROLES.SUPPORT]);
+export const operatorAndSupportMiddleware = roleMiddleware([
+  USER_ROLES.OPERATOR,
+  USER_ROLES.SUPPORT,
+]);
+
+// Алиасы для удобства использования
+export const operatorOnly = operatorMiddleware;
+export const supportOnly = supportMiddleware;
+export const operatorAndSupport = operatorAndSupportMiddleware;
+
+// Экспорт типизированных процедур (сохраняем обратную совместимость)
 export const protectedProcedure = authMiddleware;
-export const adminProcedure = adminMiddleware;

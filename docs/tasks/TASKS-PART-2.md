@@ -57,7 +57,9 @@ apps/web/
 │   │   │       ├── exchange.ts   # Обмен валют
 │   │   │       ├── auth.ts       # Аутентификация
 │   │   │       ├── user.ts       # Пользователи
-│   │   │       └── admin.ts      # Админ функции
+│   │   │       ├── operator.ts   # Роутер для операторов
+│   │   │       ├── support.ts    # Роутер для саппорта
+│   │   │       └── shared.ts     # Общие эндпоинты operator + support
 │   │   └── api/
 │   │       └── trpc/
 │   │           └── [trpc].ts     # Next.js API handler
@@ -249,8 +251,9 @@ export const rateLimitMiddleware = {
 ```typescript
 import { TRPCError } from '@trpc/server';
 import { publicProcedure } from '../init';
+import { USER_ROLES } from '@repo/constants';
 
-// Middleware для проверки аутентификации
+// Базовый middleware для проверки аутентификации
 export const authMiddleware = publicProcedure.use(({ ctx, next }) => {
   if (!ctx.user) {
     throw new TRPCError({
@@ -267,14 +270,38 @@ export const authMiddleware = publicProcedure.use(({ ctx, next }) => {
   });
 });
 
-// Middleware для проверки админских прав
-export const adminMiddleware = authMiddleware.use(({ ctx, next }) => {
-  // В будущем здесь будет проверка роли админа
-  if (!ctx.user.email.includes('admin')) {
-    throw new TRPCError({
-      code: 'FORBIDDEN',
-      message: 'Недостаточно прав доступа',
-    });
+// Generic middleware для проверки роли
+export const roleMiddleware = (allowedRoles: string[]) => {
+  return authMiddleware.use(({ ctx, next }) => {
+    if (!ctx.user.role) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Роль пользователя не определена',
+      });
+    }
+
+    if (!allowedRoles.includes(ctx.user.role)) {
+      throw new TRPCError({
+        code: 'FORBIDDEN',
+        message: 'Недостаточно прав доступа',
+      });
+    }
+
+    return next();
+  });
+};
+
+// Специализированные middleware для ролей
+export const adminMiddleware = roleMiddleware([USER_ROLES.ADMIN]);
+export const operatorMiddleware = roleMiddleware([USER_ROLES.OPERATOR]);
+export const supportMiddleware = roleMiddleware([USER_ROLES.SUPPORT]);
+export const operatorAndSupportMiddleware = roleMiddleware([USER_ROLES.OPERATOR, USER_ROLES.SUPPORT]);
+
+// Алиасы для удобства использования
+export const adminOnly = adminMiddleware;
+export const operatorOnly = operatorMiddleware;
+export const supportOnly = supportMiddleware;
+export const operatorAndSupport = operatorAndSupportMiddleware;
   }
 
   return next();
@@ -292,13 +319,17 @@ import { createTRPCRouter } from '../init';
 import { exchangeRouter } from './exchange';
 import { authRouter } from './auth';
 import { userRouter } from './user';
-import { adminRouter } from './admin';
+import { operatorRouter } from './operator';
+import { supportRouter } from './support';
+import { sharedRouter } from './shared';
 
 export const appRouter = createTRPCRouter({
   exchange: exchangeRouter,
   auth: authRouter,
   user: userRouter,
-  admin: adminRouter,
+  operator: operatorRouter,
+  support: supportRouter,
+  shared: sharedRouter,
 });
 
 export type AppRouter = typeof appRouter;
@@ -310,7 +341,13 @@ export type AppRouter = typeof appRouter;
 export { appRouter, type AppRouter } from './routers';
 export { createContext } from './context';
 export { createTRPCRouter, publicProcedure, loggedProcedure } from './init';
-export { protectedProcedure, adminProcedure } from './middleware/auth';
+export {
+  authMiddleware,
+  adminOnly,
+  operatorOnly,
+  supportOnly,
+  operatorAndSupport,
+} from './middleware/auth';
 export { rateLimitMiddleware } from './middleware/rateLimit';
 ```
 
@@ -1343,7 +1380,7 @@ export const userRouter = createTRPCRouter({
 
       // Отменяем заявку
       const updatedOrder = orderManager.update(order.id, {
-        status: EXCHANGE_ORDER_STATUSES.CANCELLED,
+        status: EXCHANGE_ORDER_STATУСЫ.CANCELLED,
         updatedAt: new Date(),
       });
 
@@ -1482,299 +1519,72 @@ export const userRouter = createTRPCRouter({
 
 ---
 
-### TASK 2.5: Создать Admin API роутер
+### TASK 2.4A: Создать Operator API роутер
 
-**Время:** 2 часа  
-**Приоритет:** 🟡 Средний
+**Время:** 1.5 часа  
+**Приоритет:** 🔴 Критический
 
 #### Описание
 
-Реализовать API для администраторов: управление заявками, пользователями, статистика, массовые операции.
+Реализовать API роутер для операторов: обработка заявок, взаимодействие с клиентами, мониторинг операций.
 
 #### Реализация
 
-1. **apps/web/src/server/trpc/routers/admin.ts**
+1. **apps/web/src/server/trpc/routers/operator.ts**
 
 ```typescript
 import { z } from 'zod';
 import { TRPCError } from '@trpc/server';
 import { createTRPCRouter } from '../init';
-import { adminProcedure } from '../middleware/auth';
-import { userManager, orderManager } from '@repo/exchange-core';
-import { CRYPTOCURRENCIES, EXCHANGE_ORDER_STATUSES } from '@repo/constants';
+import { operatorOnly } from '../middleware/auth';
+import { orderManager, userManager } from '@repo/exchange-core';
+import { EXCHANGE_ORDER_STATUSES, ORDER_STATUS_CONFIG } from '@repo/constants';
 
-// Создаем массив статусов для удобства
-const ORDER_STATUSES = Object.values(EXCHANGE_ORDER_STATUSES) as const;
-
-export const adminRouter = createTRPCRouter({
-  // Получить общую статистику системы
-  getStats: adminProcedure.query(async () => {
-    const users = userManager.getAll();
-    const orders = orderManager.getAll();
-
-    // Статистика по пользователям
-    const userStats = {
-      total: users.length,
-      verified: users.filter(u => u.isVerified).length,
-      unverified: users.filter(u => !u.isVerified).length,
-      registeredToday: users.filter(u => u.createdAt.toDateString() === new Date().toDateString())
-        .length,
-    };
-
-    // Статистика по заявкам
-    const orderStats = {
-      total: orders.length,
-      pending: orders.filter(o => o.status === EXCHANGE_ORDER_STATUSES.PENDING).length,
-      processing: orders.filter(o => o.status === EXCHANGE_ORDER_STATUSES.PROCESSING).length,
-      completed: orders.filter(o => o.status === EXCHANGE_ORDER_STATUSES.COMPLETED).length,
-      cancelled: orders.filter(o => o.status === EXCHANGE_ORDER_STATUSES.CANCELLED).length,
-      createdToday: orders.filter(o => o.createdAt.toDateString() === new Date().toDateString())
-        .length,
-    };
-
-    // Статистика по валютам
-    const currencyStats = CRYPTOCURRENCIES.map(currency => {
-      const currencyOrders = orders.filter(o => o.currency === currency);
-      return {
-        currency,
-        orders: currencyOrders.length,
-        totalVolume: currencyOrders.reduce((sum, o) => sum + o.cryptoAmount, 0),
-        totalUah: currencyOrders.reduce((sum, o) => sum + o.uahAmount, 0),
-      };
-    });
-
-    // Финансовая статистика
-    const financialStats = {
-      totalVolume: orders.reduce((sum, o) => sum + o.uahAmount, 0),
-      completedVolume: orders
-        .filter(o => o.status === EXCHANGE_ORDER_STATUSES.COMPLETED)
-        .reduce((sum, o) => sum + o.uahAmount, 0),
-      averageOrderSize:
-        orders.length > 0 ? orders.reduce((sum, o) => sum + o.uahAmount, 0) / orders.length : 0,
-    };
-
-    return {
-      users: userStats,
-      orders: orderStats,
-      currencies: currencyStats,
-      financial: financialStats,
-      lastUpdated: new Date(),
-    };
-  }),
-
-  // Получить список всех пользователей с фильтрацией
-  getUsers: adminProcedure
+export const operatorRouter = createTRPCRouter({
+  // Получить заявки для обработки
+  getPendingOrders: operatorOnly
     .input(
       z.object({
-        limit: z.number().min(1).max(100).default(50),
-        offset: z.number().min(0).default(0),
-        search: z.string().optional(),
-        isVerified: z.boolean().optional(),
-        sortBy: z.enum(['createdAt', 'lastLoginAt', 'email']).default('createdAt'),
-        sortOrder: z.enum(['asc', 'desc']).default('desc'),
+        limit: z.number().min(1).max(50).default(20),
+        cursor: z.string().optional(),
+        status: z.enum(['PENDING', 'PROCESSING']).optional(),
       })
     )
     .query(async ({ input }) => {
-      let users = userManager.getAll();
+      const { limit, cursor, status } = input;
 
-      // Поиск по email
-      if (input.search) {
-        users = users.filter(u => u.email.toLowerCase().includes(input.search!.toLowerCase()));
-      }
-
-      // Фильтр по статусу верификации
-      if (input.isVerified !== undefined) {
-        users = users.filter(u => u.isVerified === input.isVerified);
-      }
-
-      // Сортировка
-      users.sort((a, b) => {
-        let aValue: any, bValue: any;
-
-        switch (input.sortBy) {
-          case 'email':
-            aValue = a.email;
-            bValue = b.email;
-            break;
-          case 'lastLoginAt':
-            aValue = a.lastLoginAt || new Date(0);
-            bValue = b.lastLoginAt || new Date(0);
-            break;
-          default: // createdAt
-            aValue = a.createdAt;
-            bValue = b.createdAt;
-        }
-
-        if (input.sortOrder === 'desc') {
-          return bValue > aValue ? 1 : -1;
-        } else {
-          return aValue > bValue ? 1 : -1;
-        }
-      });
+      const orders = orderManager
+        .getAll()
+        .filter(order => {
+          if (status) return order.status === status;
+          return (
+            order.status === EXCHANGE_ORDER_STATUSES.PENDING ||
+            order.status === EXCHANGE_ORDER_STATUSES.PROCESSING
+          );
+        })
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
       // Пагинация
-      const paginatedUsers = users.slice(input.offset, input.offset + input.limit);
+      const startIndex = cursor ? orders.findIndex(o => o.id === cursor) + 1 : 0;
+      const items = orders.slice(startIndex, startIndex + limit);
+      const nextCursor = items.length === limit ? items[items.length - 1]?.id : undefined;
 
       return {
-        users: paginatedUsers.map(user => {
-          const userOrders = orderManager.findByEmail(user.email);
-          return {
-            id: user.id,
-            email: user.email,
-            isVerified: user.isVerified,
-            createdAt: user.createdAt,
-            lastLoginAt: user.lastLoginAt,
-            ordersCount: userOrders.length,
-            totalVolume: userOrders.reduce((sum, o) => sum + o.uahAmount, 0),
-          };
-        }),
-        total: users.length,
-        hasMore: input.offset + input.limit < users.length,
-      };
-    }),
-
-  // Получить детальную информацию о пользователе
-  getUserDetails: adminProcedure
-    .input(
-      z.object({
-        userId: z.string(),
-      })
-    )
-    .query(async ({ input }) => {
-      const user = userManager.findById(input.userId);
-      if (!user) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Пользователь не найден',
-        });
-      }
-
-      const userOrders = orderManager.findByEmail(user.email);
-
-      return {
-        id: user.id,
-        email: user.email,
-        isVerified: user.isVerified,
-        createdAt: user.createdAt,
-        lastLoginAt: user.lastLoginAt,
-        notifications: user.notifications,
-        orders: userOrders.map(order => ({
-          id: order.id,
-          status: order.status,
-          cryptoAmount: order.cryptoAmount,
-          uahAmount: order.uahAmount,
-          currency: order.currency,
-          createdAt: order.createdAt,
+        items: items.map(order => ({
+          ...order,
+          config: ORDER_STATUS_CONFIG[order.status],
         })),
-        stats: {
-          totalOrders: userOrders.length,
-          completedOrders: userOrders.filter(o => o.status === EXCHANGE_ORDER_STATUSES.COMPLETED)
-            .length,
-          totalVolume: userOrders.reduce((sum, o) => sum + o.uahAmount, 0),
-          averageOrderSize:
-            userOrders.length > 0
-              ? userOrders.reduce((sum, o) => sum + o.uahAmount, 0) / userOrders.length
-              : 0,
-        },
+        nextCursor,
+        hasMore: !!nextCursor,
       };
     }),
 
-  // Получить список всех заявок с расширенной фильтрацией
-  getOrders: adminProcedure
-    .input(
-      z.object({
-        limit: z.number().min(1).max(100).default(50),
-        offset: z.number().min(0).default(0),
-        status: z.enum(ORDER_STATUSES).optional(),
-        currency: z.enum(CRYPTOCURRENCIES).optional(),
-        email: z.string().optional(),
-        dateFrom: z.date().optional(),
-        dateTo: z.date().optional(),
-        minAmount: z.number().optional(),
-        maxAmount: z.number().optional(),
-        sortBy: z.enum(['createdAt', 'uahAmount', 'cryptoAmount']).default('createdAt'),
-        sortOrder: z.enum(['asc', 'desc']).default('desc'),
-      })
-    )
-    .query(async ({ input }) => {
-      let orders = orderManager.getAll();
-
-      // Применяем фильтры
-      if (input.status) {
-        orders = orders.filter(o => o.status === input.status);
-      }
-
-      if (input.currency) {
-        orders = orders.filter(o => o.currency === input.currency);
-      }
-
-      if (input.email) {
-        orders = orders.filter(o => o.email.toLowerCase().includes(input.email!.toLowerCase()));
-      }
-
-      if (input.dateFrom) {
-        orders = orders.filter(o => o.createdAt >= input.dateFrom!);
-      }
-
-      if (input.dateTo) {
-        orders = orders.filter(o => o.createdAt <= input.dateTo!);
-      }
-
-      if (input.minAmount) {
-        orders = orders.filter(o => o.uahAmount >= input.minAmount!);
-      }
-
-      if (input.maxAmount) {
-        orders = orders.filter(o => o.uahAmount <= input.maxAmount!);
-      }
-
-      // Сортировка
-      orders.sort((a, b) => {
-        let aValue: any, bValue: any;
-
-        switch (input.sortBy) {
-          case 'uahAmount':
-            aValue = a.uahAmount;
-            bValue = b.uahAmount;
-            break;
-          case 'cryptoAmount':
-            aValue = a.cryptoAmount;
-            bValue = b.cryptoAmount;
-            break;
-          default: // createdAt
-            aValue = a.createdAt;
-            bValue = b.createdAt;
-        }
-
-        if (input.sortOrder === 'desc') {
-          return bValue > aValue ? 1 : -1;
-        } else {
-          return aValue > bValue ? 1 : -1;
-        }
-      });
-
-      // Пагинация
-      const paginatedOrders = orders.slice(input.offset, input.offset + input.limit);
-
-      return {
-        orders: paginatedOrders,
-        total: orders.length,
-        hasMore: input.offset + input.limit < orders.length,
-      };
-    }),
-
-  // Обновить статус заявки
-  updateOrderStatus: adminProcedure
-    .input(
-      z.object({
-        orderId: z.string(),
-        status: z.enum(ORDER_STATUSES),
-        notes: z.string().optional(),
-        txHash: z.string().optional(),
-      })
-    )
+  // Взять заявку в обработку
+  takeOrder: operatorOnly
+    .input(z.object({ orderId: z.string() }))
     .mutation(async ({ input, ctx }) => {
       const order = orderManager.findById(input.orderId);
+
       if (!order) {
         throw new TRPCError({
           code: 'NOT_FOUND',
@@ -1782,103 +1592,205 @@ export const adminRouter = createTRPCRouter({
         });
       }
 
-      const updateData: any = {
-        status: input.status,
-        updatedAt: new Date(),
-      };
-
-      if (input.status === EXCHANGE_ORDER_STATUSES.COMPLETED) {
-        updateData.processedAt = new Date();
-      }
-
-      if (input.txHash) {
-        updateData.txHash = input.txHash;
-      }
-
-      if (input.notes) {
-        updateData.adminNotes = input.notes;
-      }
-
-      const updatedOrder = orderManager.update(order.id, updateData);
-
-      console.log(
-        `⚡ Админ ${ctx.user.email} изменил статус заявки ${order.id}: ${order.status} → ${input.status}`
-      );
-
-      // Имитация отправки уведомления пользователю
-      console.log(
-        `📧 Уведомление отправлено на ${order.email}: статус заявки ${order.id} изменен на ${input.status}`
-      );
-
-      return {
-        id: updatedOrder.id,
-        status: updatedOrder.status,
-        updatedAt: updatedOrder.updatedAt,
-        message: 'Статус заявки успешно обновлен',
-      };
-    }),
-
-  // Массовое обновление статусов заявок
-  bulkUpdateOrders: adminProcedure
-    .input(
-      z.object({
-        orderIds: z.array(z.string()).min(1).max(50),
-        status: z.enum(ORDER_STATUSES),
-        notes: z.string().optional(),
-      })
-    )
-    .mutation(async ({ input, ctx }) => {
-      const orders = input.orderIds.map(id => orderManager.findById(id)).filter(Boolean);
-
-      if (orders.length === 0) {
+      if (order.status !== EXCHANGE_ORDER_STATUSES.PENDING) {
         throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Заявки не найдены',
+          code: 'BAD_REQUEST',
+          message: 'Заявка уже обрабатывается или завершена',
         });
       }
 
-      const updateData: any = {
-        status: input.status,
-        updatedAt: new Date(),
-      };
-
-      if (input.status === EXCHANGE_ORDER_STATUSES.COMPLETED) {
-        updateData.processedAt = new Date();
-      }
-
-      if (input.notes) {
-        updateData.adminNotes = input.notes;
-      }
-
-      // Обновляем все заявки
-      const updatedOrders = orders.map(order => orderManager.update(order.id, updateData));
-
-      console.log(
-        `⚡ Админ ${ctx.user.email} массово обновил ${orders.length} заявок до статуса ${input.status}`
+      // В реальном приложении здесь будет назначение оператора
+      const updatedOrder = orderManager.updateStatus(
+        input.orderId,
+        EXCHANGE_ORDER_STATУСЫ.PROCESSING,
+        { operatorId: ctx.user.id, operatorEmail: ctx.user.email }
       );
 
       return {
-        updatedCount: updatedOrders.length,
-        orders: updatedOrders.map(order => ({
-          id: order.id,
-          status: order.status,
-          updatedAt: order.updatedAt,
-        })),
-        message: `Успешно обновлено ${updatedOrders.length} заявок`,
+        success: true,
+        order: updatedOrder,
+        message: 'Заявка взята в обработку',
       };
     }),
 
-  // Заблокировать/разблокировать пользователя
-  toggleUserStatus: adminProcedure
+  // Обновить статус заявки
+  updateOrderStatus: operatorOnly
+    .input(
+      z.object({
+        orderId: z.string(),
+        status: z.enum(['PROCESSING', 'COMPLETED', 'CANCELLED']),
+        comment: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const order = orderManager.findById(input.orderId);
+
+      if (!order) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Заявка не найдена',
+        });
+      }
+
+      // Проверка валидных переходов статусов
+      const validTransitions = {
+        [EXCHANGE_ORDER_STATUSES.PENDING]: [
+          EXCHANGE_ORDER_STATUSES.PROCESSING,
+          EXCHANGE_ORDER_STATUSES.CANCELLED,
+        ],
+        [EXCHANGE_ORDER_STATUSES.PROCESSING]: [
+          EXCHANGE_ORDER_STATUSES.COMPLETED,
+          EXCHANGE_ORDER_STATUSES.CANCELLED,
+        ],
+      };
+
+      const allowedStatuses = validTransitions[order.status] || [];
+      if (!allowedStatuses.includes(input.status as any)) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: `Невозможно изменить статус с ${order.status} на ${input.status}`,
+        });
+      }
+
+      const updatedOrder = orderManager.updateStatus(input.orderId, input.status as any, {
+        operatorComment: input.comment,
+        operatorId: ctx.user.id,
+        updatedBy: ctx.user.email,
+      });
+
+      return {
+        success: true,
+        order: updatedOrder,
+        message: `Статус заявки изменен на ${input.status}`,
+      };
+    }),
+
+  // Получить статистику оператора
+  getMyStats: operatorOnly.query(async ({ ctx }) => {
+    const orders = orderManager.getAll();
+    const operatorOrders = orders.filter(order => order.metadata?.operatorId === ctx.user.id);
+
+    const today = new Date().toDateString();
+    const todayOrders = operatorOrders.filter(order => order.createdAt.toDateString() === today);
+
+    return {
+      total: operatorOrders.length,
+      today: todayOrders.length,
+      completed: operatorOrders.filter(o => o.status === EXCHANGE_ORDER_STATUSES.COMPLETED).length,
+      processing: operatorOrders.filter(o => o.status === EXCHANGE_ORDER_STATUSES.PROCESSING)
+        .length,
+      totalVolume: operatorOrders.reduce((sum, o) => sum + o.uahAmount, 0),
+      avgProcessingTime: '15 мин', // Заглушка, в реальности расчет из логов
+    };
+  }),
+});
+```
+
+#### Чек-лист реализации
+
+- [ ] Маршруты для получения заявок с фильтрацией
+- [ ] Функция взятия заявки в обработку
+- [ ] Валидация переходов статусов заявок
+- [ ] Статистика по работе оператора
+- [ ] Пагинация для списков заявок
+- [ ] Проверка прав доступа через operatorOnly middleware
+
+---
+
+### TASK 2.4B: Создать Support API роутер
+
+**Время:** 1.5 часа  
+**Приоритет:** 🔴 Критический
+
+#### Описание
+
+Реализовать API роутер для саппорта: консультации клиентов, работа с базой знаний, тикеты.
+
+#### Реализация
+
+1. **apps/web/src/server/trpc/routers/support.ts**
+
+```typescript
+import { z } from 'zod';
+import { TRPCError } from '@trpc/server';
+import { createTRPCRouter } from '../init';
+import { supportOnly } from '../middleware/auth';
+import { userManager, orderManager } from '@repo/exchange-core';
+
+// Мок база знаний
+const KNOWLEDGE_BASE = [
+  {
+    id: '1',
+    category: 'Обмен валют',
+    title: 'Как работает процесс обмена?',
+    content: 'Пользователь создает заявку, указывает сумму и реквизиты...',
+    tags: ['обмен', 'процесс', 'FAQ'],
+    updatedAt: new Date(),
+  },
+  {
+    id: '2',
+    category: 'Техподдержка',
+    title: 'Проблемы с подтверждением email',
+    content: 'Если письмо не приходит, проверьте папку спам...',
+    tags: ['email', 'подтверждение', 'проблемы'],
+    updatedAt: new Date(),
+  },
+];
+
+// Мок система тикетов
+let supportTickets: any[] = [];
+let ticketCounter = 1;
+
+export const supportRouter = createTRPCRouter({
+  // Поиск в базе знаний
+  searchKnowledge: supportOnly
+    .input(
+      z.object({
+        query: z.string().min(2),
+        category: z.string().optional(),
+        limit: z.number().min(1).max(20).default(10),
+      })
+    )
+    .query(async ({ input }) => {
+      const { query, category, limit } = input;
+
+      let results = KNOWLEDGE_BASE.filter(item => {
+        const matchesQuery =
+          item.title.toLowerCase().includes(query.toLowerCase()) ||
+          item.content.toLowerCase().includes(query.toLowerCase()) ||
+          item.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()));
+
+        const matchesCategory = !category || item.category === category;
+
+        return matchesQuery && matchesCategory;
+      });
+
+      return results.slice(0, limit);
+    }),
+
+  // Получить все категории базы знаний
+  getKnowledgeCategories: supportOnly.query(async () => {
+    const categories = [...new Set(KNOWLEDGE_BASE.map(item => item.category))];
+    return categories.map(category => ({
+      name: category,
+      count: KNOWLEDGE_BASE.filter(item => item.category === category).length,
+    }));
+  }),
+
+  // Создать тикет для пользователя
+  createTicket: supportOnly
     .input(
       z.object({
         userId: z.string(),
-        isBlocked: z.boolean(),
-        reason: z.string().optional(),
+        subject: z.string().min(5),
+        description: z.string().min(10),
+        priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).default('MEDIUM'),
+        category: z.string(),
       })
     )
     .mutation(async ({ input, ctx }) => {
       const user = userManager.findById(input.userId);
+
       if (!user) {
         throw new TRPCError({
           code: 'NOT_FOUND',
@@ -1886,559 +1798,350 @@ export const adminRouter = createTRPCRouter({
         });
       }
 
-      const updatedUser = userManager.update(user.id, {
-        isBlocked: input.isBlocked,
-        blockReason: input.reason,
-        updatedAt: new Date(),
-      });
+      const ticket = {
+        id: `ticket_${ticketCounter++}`,
+        userId: input.userId,
+        userEmail: user.email,
+        subject: input.subject,
+        description: input.description,
+        priority: input.priority,
+        category: input.category,
+        status: 'OPEN',
+        createdBy: ctx.user.email,
+        createdAt: new Date(),
+        messages: [],
+      };
 
-      const action = input.isBlocked ? 'заблокирован' : 'разблокирован';
-      console.log(`🔒 Админ ${ctx.user.email} ${action} пользователя ${user.email}`);
+      supportTickets.push(ticket);
 
       return {
-        id: updatedUser.id,
-        email: updatedUser.email,
-        isBlocked: updatedUser.isBlocked,
-        message: `Пользователь успешно ${action}`,
+        success: true,
+        ticket,
+        message: 'Тикет создан',
       };
     }),
 
-  // Экспорт данных для отчетности
-  exportData: adminProcedure
+  // Получить тикеты саппорта
+  getTickets: supportOnly
     .input(
       z.object({
-        type: z.enum(['users', 'orders', 'stats']),
-        dateFrom: z.date().optional(),
-        dateTo: z.date().optional(),
-        format: z.enum(['json', 'csv']).default('json'),
+        status: z.enum(['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']).optional(),
+        priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).optional(),
+        limit: z.number().min(1).max(50).default(20),
       })
     )
     .query(async ({ input }) => {
-      let data: any = {};
+      let tickets = supportTickets.filter(ticket => {
+        const matchesStatus = !input.status || ticket.status === input.status;
+        const matchesPriority = !input.priority || ticket.priority === input.priority;
+        return matchesStatus && matchesPriority;
+      });
 
-      switch (input.type) {
-        case 'users':
-          data = userManager.getAll().map(user => ({
-            id: user.id,
-            email: user.email,
-            isVerified: user.isVerified,
-            createdAt: user.createdAt,
-            lastLoginAt: user.lastLoginAt,
-          }));
-          break;
+      tickets = tickets
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .slice(0, input.limit);
 
-        case 'orders':
-          let orders = orderManager.getAll();
-          if (input.dateFrom) {
-            orders = orders.filter(o => o.createdAt >= input.dateFrom!);
-          }
-          if (input.dateTo) {
-            orders = orders.filter(o => o.createdAt <= input.dateTo!);
-          }
-          data = orders.map(order => ({
-            id: order.id,
-            email: order.email,
-            status: order.status,
-            cryptoAmount: order.cryptoAmount,
-            uahAmount: order.uahAmount,
-            currency: order.currency,
-            createdAt: order.createdAt,
-            processedAt: order.processedAt,
-          }));
-          break;
+      return tickets;
+    }),
 
-        case 'stats':
-          // Тот же код что в getStats, но с фильтрацией по датам
-          data = {
-            exportedAt: new Date(),
-            dateRange: { from: input.dateFrom, to: input.dateTo },
-            // ... статистика
-          };
-          break;
+  // Обновить статус тикета
+  updateTicketStatus: supportOnly
+    .input(
+      z.object({
+        ticketId: z.string(),
+        status: z.enum(['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']),
+        comment: z.string().optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const ticketIndex = supportTickets.findIndex(t => t.id === input.ticketId);
+
+      if (ticketIndex === -1) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'Тикет не найден',
+        });
+      }
+
+      supportTickets[ticketIndex] = {
+        ...supportTickets[ticketIndex],
+        status: input.status,
+        updatedBy: ctx.user.email,
+        updatedAt: new Date(),
+      };
+
+      if (input.comment) {
+        supportTickets[ticketIndex].messages.push({
+          id: `msg_${Date.now()}`,
+          text: input.comment,
+          author: ctx.user.email,
+          timestamp: new Date(),
+          type: 'STATUS_UPDATE',
+        });
       }
 
       return {
-        type: input.type,
-        format: input.format,
-        data,
-        count: Array.isArray(data) ? data.length : 1,
-        exportedAt: new Date(),
+        success: true,
+        ticket: supportTickets[ticketIndex],
+        message: `Статус тикета изменен на ${input.status}`,
       };
+    }),
+
+  // Получить информацию о пользователе для консультации
+  getUserInfo: supportOnly.input(z.object({ userId: z.string() })).query(async ({ input }) => {
+    const user = userManager.findById(input.userId);
+
+    if (!user) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Пользователь не найден',
+      });
+    }
+
+    const userOrders = orderManager.getAll().filter(order => order.userId === input.userId);
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        isVerified: user.isVerified,
+        createdAt: user.createdAt,
+        lastLogin: user.lastLogin,
+      },
+      stats: {
+        totalOrders: userOrders.length,
+        completedOrders: userOrders.filter(o => o.status === 'COMPLETED').length,
+        totalVolume: userOrders.reduce((sum, o) => sum + o.uahAmount, 0),
+        registrationDays: Math.floor(
+          (Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24)
+        ),
+      },
+      recentOrders: userOrders
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+        .slice(0, 5),
+    };
+  }),
+
+  // Статистика работы саппорта
+  getMyStats: supportOnly.query(async ({ ctx }) => {
+    const myTickets = supportTickets.filter(
+      ticket => ticket.createdBy === ctx.user.email || ticket.updatedBy === ctx.user.email
+    );
+
+    const today = new Date().toDateString();
+    const todayTickets = myTickets.filter(ticket => ticket.createdAt.toDateString() === today);
+
+    return {
+      totalTickets: myTickets.length,
+      todayTickets: todayTickets.length,
+      openTickets: myTickets.filter(t => t.status === 'OPEN').length,
+      resolvedTickets: myTickets.filter(t => t.status === 'RESOLVED').length,
+      avgResponseTime: '2 часа', // Заглушка
+      knowledgeBaseArticles: KNOWLEDGE_BASE.length,
+    };
+  }),
+});
+```
+
+#### Чек-лист реализации
+
+- [ ] Поиск и фильтрация в базе знаний
+- [ ] Система создания и управления тикетами
+- [ ] Получение информации о пользователях для консультаций
+- [ ] Статистика работы саппорта
+- [ ] Категоризация тикетов и статусы
+- [ ] Проверка прав доступа через supportOnly middleware
+
+---
+
+### TASK 2.4C: Создать Shared API роутер
+
+**Время:** 1 час  
+**Приоритет:** 🟡 Средний
+
+#### Описание
+
+Реализовать общий API роутер для эндпоинтов, доступных и операторам, и саппорту.
+
+#### Реализация
+
+1. **apps/web/src/server/trpc/routers/shared.ts**
+
+```typescript
+import { z } from 'zod';
+import { createTRPCRouter } from '../init';
+import { operatorAndSupport } from '../middleware/auth';
+import { orderManager, userManager } from '@repo/exchange-core';
+import { EXCHANGE_ORDER_STATUSES, CRYPTOCURRENCIES } from '@repo/constants';
+
+export const sharedRouter = createTRPCRouter({
+  // Поиск заявок (общий для operator и support)
+  searchOrders: operatorAndSupport
+    .input(
+      z.object({
+        query: z.string().min(2),
+        dateFrom: z.string().optional(),
+        dateTo: z.string().optional(),
+        status: z.string().optional(),
+        limit: z.number().min(1).max(50).default(20),
+      })
+    )
+    .query(async ({ input }) => {
+      const { query, dateFrom, dateTo, status, limit } = input;
+
+      let orders = orderManager.getAll().filter(order => {
+        // Поиск по ID, email, сумме
+        const matchesQuery =
+          order.id.toLowerCase().includes(query.toLowerCase()) ||
+          order.userEmail.toLowerCase().includes(query.toLowerCase()) ||
+          order.cryptoAmount.toString().includes(query) ||
+          order.uahAmount.toString().includes(query);
+
+        // Фильтр по дате
+        let matchesDate = true;
+        if (dateFrom || dateTo) {
+          const orderDate = order.createdAt.toISOString().split('T')[0];
+          if (dateFrom) matchesDate = matchesDate && orderDate >= dateFrom;
+          if (dateTo) matchesDate = matchesDate && orderDate <= dateTo;
+        }
+
+        // Фильтр по статусу
+        const matchesStatus = !status || order.status === status;
+
+        return matchesQuery && matchesDate && matchesStatus;
+      });
+
+      orders = orders.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit);
+
+      return orders;
+    }),
+
+  // Поиск пользователей (общий для operator и support)
+  searchUsers: operatorAndSupport
+    .input(
+      z.object({
+        query: z.string().min(2),
+        verified: z.boolean().optional(),
+        limit: z.number().min(1).max(50).default(20),
+      })
+    )
+    .query(async ({ input }) => {
+      const { query, verified, limit } = input;
+
+      let users = userManager.getAll().filter(user => {
+        const matchesQuery =
+          user.email.toLowerCase().includes(query.toLowerCase()) ||
+          user.id.toLowerCase().includes(query.toLowerCase());
+
+        const matchesVerified = verified === undefined || user.isVerified === verified;
+
+        return matchesQuery && matchesVerified;
+      });
+
+      users = users.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit);
+
+      // Возвращаем безопасную информацию о пользователях
+      return users.map(user => ({
+        id: user.id,
+        email: user.email,
+        isVerified: user.isVerified,
+        createdAt: user.createdAt,
+        lastLogin: user.lastLogin,
+        ordersCount: orderManager.getAll().filter(o => o.userId === user.id).length,
+      }));
+    }),
+
+  // Общая статистика (доступна operator и support)
+  getGeneralStats: operatorAndSupport.query(async () => {
+    const orders = orderManager.getAll();
+    const users = userManager.getAll();
+
+    const today = new Date().toDateString();
+
+    return {
+      orders: {
+        total: orders.length,
+        today: orders.filter(o => o.createdAt.toDateString() === today).length,
+        pending: orders.filter(o => o.status === EXCHANGE_ORDER_STATUSES.PENDING).length,
+        processing: orders.filter(o => o.status === EXCHANGE_ORDER_STATUSES.PROCESSING).length,
+        completed: orders.filter(o => o.status === EXCHANGE_ORDER_STATUSES.COMPLETED).length,
+      },
+      users: {
+        total: users.length,
+        verified: users.filter(u => u.isVerified).length,
+        newToday: users.filter(u => u.createdAt.toDateString() === today).length,
+      },
+      currencies: CRYPTOCURRENCIES.map(currency => ({
+        currency,
+        orders: orders.filter(o => o.currency === currency).length,
+        volume: orders
+          .filter(o => o.currency === currency)
+          .reduce((sum, o) => sum + o.cryptoAmount, 0),
+      })),
+    };
+  }),
+
+  // Быстрые действия
+  quickActions: operatorAndSupport
+    .input(
+      z.object({
+        action: z.enum(['REFRESH_RATES', 'CLEAR_CACHE', 'SEND_NOTIFICATION']),
+        params: z.record(z.any()).optional(),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { action, params } = input;
+
+      switch (action) {
+        case 'REFRESH_RATES':
+          // Имитация обновления курсов
+          await new Promise(resolve => setTimeout(resolve, 500));
+          return { success: true, message: 'Курсы обновлены', timestamp: new Date() };
+
+        case 'CLEAR_CACHE':
+          // Имитация очистки кэша
+          return { success: true, message: 'Кэш очищен', clearedItems: 42 };
+
+        case 'SEND_NOTIFICATION':
+          // Имитация отправки уведомления
+          if (!params?.message) {
+            throw new Error('Требуется параметр message');
+          }
+          return {
+            success: true,
+            message: 'Уведомление отправлено',
+            recipients: params.recipients || 'all',
+          };
+
+        default:
+          throw new Error('Неизвестное действие');
+      }
     }),
 });
 ```
 
-#### Юзкейсы и Edge Cases
-
-1. **Управление заявками**
-   - ✅ Расширенная фильтрация и поиск
-   - ✅ Массовые операции с заявками
-   - ✅ Детальная информация о каждой заявке
-   - ✅ Логирование всех админских действий
-
-2. **Управление пользователями**
-   - ✅ Поиск и фильтрация пользователей
-   - ✅ Блокировка/разблокировка аккаунтов
-   - ✅ Статистика по каждому пользователю
-   - ✅ История активности
-
-3. **Аналитика и отчеты**
-   - ✅ Реалтайм статистика системы
-   - ✅ Экспорт данных в разных форматах
-   - ✅ Финансовая аналитика
-   - ✅ Статистика по валютам
-
-4. **Безопасность**
-   - ✅ Проверка админских прав на каждый endpoint
-   - ✅ Ограничения на массовые операции
-   - ✅ Логирование критичных действий
-   - ✅ Валидация всех входных данных
-
-#### Чек-лист готовности
-
-- [ ] Все админские endpoint'ы реализованы
-- [ ] Статистика рассчитывается корректно
-- [ ] Массовые операции работают безопасно
-- [ ] Экспорт данных функционирует
-- [ ] Права доступа проверяются везде
-- [ ] Логирование ведется для аудита
-
----
-
-### TASK 2.6: Настроить клиентскую часть tRPC
-
-**Время:** 2 часа  
-**Приоритет:** 🔴 Критический
-
-#### Описание
-
-Настроить tRPC клиент для React/Next.js с React Query, DevTools и примерами использования.
-
-#### Реализация
-
-1. **apps/web/src/utils/trpc.ts**
-
-```typescript
-import { createTRPCNext } from '@trpc/next';
-import { type AppRouter } from '~/server/trpc';
-import { httpBatchLink, loggerLink } from '@trpc/client';
-import superjson from 'superjson';
-
-function getBaseUrl() {
-  if (typeof window !== 'undefined') return ''; // В браузере используем относительный URL
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`; // SSR на Vercel
-  return `http://localhost:${process.env.PORT ?? 3000}`; // dev SSR
-}
-
-export const trpc = createTRPCNext<AppRouter>({
-  config() {
-    return {
-      transformer: superjson,
-      links: [
-        loggerLink({
-          enabled: opts =>
-            process.env.NODE_ENV === 'development' ||
-            (opts.direction === 'down' && opts.result instanceof Error),
-        }),
-        httpBatchLink({
-          url: `${getBaseUrl()}/api/trpc`,
-          // Опционально добавляем заголовки для аутентификации
-          headers() {
-            return {
-              // cookie уже отправляется автоматически
-            };
-          },
-        }),
-      ],
-      queryClientConfig: {
-        defaultOptions: {
-          queries: {
-            staleTime: 5 * 60 * 1000, // 5 минут
-            cacheTime: 10 * 60 * 1000, // 10 минут
-            retry: (failureCount, error: any) => {
-              // Не повторяем запросы с ошибками аутентификации
-              if (error?.data?.code === 'UNAUTHORIZED') return false;
-              if (error?.data?.code === 'FORBIDDEN') return false;
-              return failureCount < 3;
-            },
-          },
-          mutations: {
-            retry: false, // Не повторяем мутации автоматически
-          },
-        },
-      },
-    };
-  },
-  ssr: false, // Отключаем SSR для упрощения
-});
-```
-
-2. **apps/web/src/pages/\_app.tsx**
-
-```typescript
-import { type AppType } from 'next/app';
-import { trpc } from '~/utils/trpc';
-import '~/styles/globals.css';
-
-// React Query DevTools (только в dev режиме)
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-
-const MyApp: AppType = ({ Component, pageProps }) => {
-  return (
-    <>
-      <Component {...pageProps} />
-      {process.env.NODE_ENV === 'development' && (
-        <ReactQueryDevtools initialIsOpen={false} />
-      )}
-    </>
-  );
-};
-
-export default trpc.withTRPC(MyApp);
-```
-
-3. **apps/web/src/hooks/useAuthMutation.ts**
-
-```typescript
-import { trpc } from '~/utils/trpc';
-import { toast } from 'react-hot-toast';
-import { useRouter } from 'next/router';
-
-// Хук для мутаций аутентификации с обработкой ошибок
-export function useAuthMutation() {
-  const router = useRouter();
-  const utils = trpc.useUtils();
-
-  const register = trpc.auth.register.useMutation({
-    onSuccess: data => {
-      toast.success('Регистрация успешна! Проверьте email для подтверждения.');
-      // Инвалидируем session для обновления UI
-      utils.auth.getSession.invalidate();
-    },
-    onError: error => {
-      toast.error(error.message);
-    },
-  });
-
-  const login = trpc.auth.login.useMutation({
-    onSuccess: data => {
-      toast.success('Добро пожаловать!');
-      utils.auth.getSession.invalidate();
-      router.push('/dashboard');
-    },
-    onError: error => {
-      toast.error(error.message);
-    },
-  });
-
-  const logout = trpc.auth.logout.useMutation({
-    onSuccess: () => {
-      toast.success('Вы вышли из системы');
-      utils.auth.getSession.invalidate();
-      router.push('/');
-    },
-    onError: error => {
-      toast.error('Ошибка при выходе из системы');
-    },
-  });
-
-  return {
-    register,
-    login,
-    logout,
-    isLoading: register.isLoading || login.isLoading || logout.isLoading,
-  };
-}
-```
-
-4. **apps/web/src/hooks/useExchangeMutation.ts**
-
-```typescript
-import { trpc } from '~/utils/trpc';
-import { toast } from 'react-hot-toast';
-import { useRouter } from 'next/router';
-
-// Хук для операций обмена
-export function useExchangeMutation() {
-  const router = useRouter();
-  const utils = trpc.useUtils();
-
-  const createOrder = trpc.exchange.createOrder.useMutation({
-    onSuccess: data => {
-      toast.success(`Заявка создана! ID: ${data.orderId}`);
-      // Перенаправляем на страницу заявки
-      router.push(`/order/${data.orderId}`);
-      // Инвалидируем связанные запросы
-      utils.exchange.getOrderHistory.invalidate();
-    },
-    onError: error => {
-      if (error.data?.code === 'TOO_MANY_REQUESTS') {
-        toast.error('Слишком много запросов. Попробуйте позже.');
-      } else {
-        toast.error(error.message);
-      }
-    },
-  });
-
-  const cancelOrder = trpc.user.cancelOrder.useMutation({
-    onSuccess: data => {
-      toast.success('Заявка отменена');
-      // Обновляем кэш заявок
-      utils.user.getOrderHistory.invalidate();
-      utils.exchange.getOrderStatus.invalidate();
-    },
-    onError: error => {
-      toast.error(error.message);
-    },
-  });
-
-  return {
-    createOrder,
-    cancelOrder,
-    isCreatingOrder: createOrder.isLoading,
-    isCancellingOrder: cancelOrder.isLoading,
-  };
-}
-```
-
-5. **apps/web/src/components/AuthProvider.tsx**
-
-```typescript
-import { createContext, useContext, type ReactNode } from 'react';
-import { trpc } from '~/utils/trpc';
-
-interface AuthContextType {
-  user: any | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-}
-
-const AuthContext = createContext<AuthContextType | null>(null);
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const { data: session, isLoading } = trpc.auth.getSession.useQuery();
-
-  const value: AuthContextType = {
-    user: session?.user || null,
-    isLoading,
-    isAuthenticated: !!session?.user,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
-}
-```
-
-6. **apps/web/src/components/ExchangeRates.tsx**
-
-```typescript
-import { trpc } from '~/utils/trpc';
-import { LoadingSpinner } from './ui/LoadingSpinner';
-import { ErrorMessage } from './ui/ErrorMessage';
-
-export function ExchangeRates() {
-  const { data: rates, isLoading, error, refetch } = trpc.exchange.getRates.useQuery(
-    undefined,
-    {
-      refetchInterval: 30 * 1000, // Обновляем каждые 30 секунд
-      staleTime: 15 * 1000, // Данные актуальны 15 секунд
-    }
-  );
-
-  if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorMessage error={error.message} onRetry={() => refetch()} />;
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {rates?.rates.map((rate) => (
-        <div key={rate.currency} className="bg-white rounded-lg shadow p-4">
-          <div className="flex items-center justify-between">
-            <span className="font-medium">{rate.currency}</span>
-            <span className="text-sm text-gray-500">
-              {new Date(rates.timestamp).toLocaleTimeString()}
-            </span>
-          </div>
-          <div className="mt-2">
-            <div className="text-xl font-bold">
-              ₴{rate.uahRate.toLocaleString()}
-            </div>
-            <div className="text-sm text-gray-500">
-              Комиссия: {rate.commission}%
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-```
-
-7. **apps/web/src/components/OrderStatus.tsx**
-
-```typescript
-import { trpc } from '~/utils/trpc';
-import { useRouter } from 'next/router';
-import { LoadingSpinner } from './ui/LoadingSpinner';
-import { ErrorMessage } from './ui/ErrorMessage';
-
-export function OrderStatus() {
-  const router = useRouter();
-  const orderId = router.query.orderId as string;
-
-  const { data: order, isLoading, error } = trpc.exchange.getOrderStatus.useQuery(
-    { orderId },
-    {
-      enabled: !!orderId,
-      refetchInterval: (data) => {
-        // Если заявка завершена, не обновляем
-        if (data?.status === 'completed' || data?.status === 'cancelled') {
-          return false;
-        }
-        return 10 * 1000; // Обновляем каждые 10 секунд для активных заявок
-      },
-    }
-  );
-
-  if (isLoading) return <LoadingSpinner />;
-  if (error) return <ErrorMessage error={error.message} />;
-  if (!order) return <div>Заявка не найдена</div>;
-
-  return (
-    <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6">
-      <div className="text-center mb-6">
-        <h1 className="text-2xl font-bold">Заявка #{order.id}</h1>
-        <div className={`inline-block px-3 py-1 rounded-full text-sm font-medium mt-2 ${
-          order.status === 'completed' ? 'bg-green-100 text-green-800' :
-          order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' :
-          order.status === 'paid' ? 'bg-blue-100 text-blue-800' :
-          'bg-gray-100 text-gray-800'
-        }`}>
-          {order.status === 'pending' && 'Ожидает оплаты'}
-          {order.status === 'paid' && 'Оплачено'}
-          {order.status === 'processing' && 'Обрабатывается'}
-          {order.status === 'completed' && 'Завершена'}
-          {order.status === 'cancelled' && 'Отменена'}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Сумма к отправке</label>
-          <div className="text-xl font-bold">{order.cryptoAmount} {order.currency}</div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">К получению</label>
-          <div className="text-xl font-bold">₴{order.uahAmount.toLocaleString()}</div>
-        </div>
-
-        <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700">Адрес для перевода</label>
-          <div className="bg-gray-50 p-3 rounded border font-mono text-sm break-all">
-            {order.depositAddress}
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Создана</label>
-          <div>{new Date(order.createdAt).toLocaleString()}</div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Обновлена</label>
-          <div>{new Date(order.updatedAt).toLocaleString()}</div>
-        </div>
-      </div>
-
-      {order.txHash && (
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700">Хеш транзакции</label>
-          <div className="bg-gray-50 p-3 rounded border font-mono text-sm break-all">
-            {order.txHash}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-```
-
-8. **Обновить package.json для web приложения**
-
-```json
-{
-  "dependencies": {
-    "@trpc/client": "^10.45.0",
-    "@trpc/server": "^10.45.0",
-    "@trpc/react-query": "^10.45.0",
-    "@trpc/next": "^10.45.0",
-    "@tanstack/react-query": "^4.35.0",
-    "@tanstack/react-query-devtools": "^4.35.0",
-    "superjson": "^1.13.3",
-    "react-hot-toast": "^2.4.1",
-    "bcryptjs": "^2.4.3",
-    "zod": "^3.22.4"
-  },
-  "devDependencies": {
-    "@types/bcryptjs": "^2.4.6"
-  }
-}
-```
-
-#### Юзкейсы и Edge Cases
-
-1. **Клиентская настройка**
-   - ✅ Автоматическая типизация всех API
-   - ✅ React Query интеграция с кэшированием
-   - ✅ Retry логика для разных типов ошибок
-   - ✅ DevTools для отладки в development
-
-2. **Аутентификация**
-   - ✅ Автоматическое обновление сессии
-   - ✅ Глобальный контекст пользователя
-   - ✅ Redirect после аутентификации
-   - ✅ Обработка ошибок с тостами
-
-3. **Реалтайм обновления**
-   - ✅ Автоматическое обновление курсов валют
-   - ✅ Polling статуса заявок
-   - ✅ Условное обновление (останавливается для завершенных заявок)
-   - ✅ Оптимистичные обновления
-
-4. **UX оптимизации**
-   - ✅ Loading состояния
-   - ✅ Error boundaries с retry
-   - ✅ Автоматическая инвалидация кэша
-   - ✅ Optimistic updates для быстрого UX
-
-#### Чек-лист готовности
-
-- [ ] tRPC клиент настроен и типизирован
-- [ ] React Query DevTools работают в dev режиме
-- [ ] Аутентификация интегрирована с контекстом
-- [ ] Хуки для основных операций созданы
-- [ ] Примеры компонентов реализованы
-- [ ] Error handling настроен глобально
+#### Чек-лист реализации
+
+- [ ] Поиск заявок с фильтрацией по дате и статусу
+- [ ] Поиск пользователей с базовой информацией
+- [ ] Общая статистика системы
+- [ ] Быстрые действия для операционных задач
+- [ ] Проверка прав доступа через operatorAndSupport middleware
 
 ---
 
 ## 📊 Статус Progress Part 2
 
-### Завершенные задачи: 0/6
+### Завершенные задачи: 0/8
 
 - [ ] TASK 2.1: Настроить tRPC сервер с базовой структурой
 - [ ] TASK 2.2: Создать Exchange API роутер
 - [ ] TASK 2.3: Создать Authentication API роутер
 - [ ] TASK 2.4: Создать User API роутер
-- [ ] TASK 2.5: Создать Admin API роутер
-- [ ] TASK 2.6: Настроить клиентскую часть tRPC
+- [ ] TASK 2.4A: Создать Operator API роутер
+- [ ] TASK 2.4B: Создать Support API роутер
+- [ ] TASK 2.4C: Создать Shared API роутер
+- [ ] TASK 2.5: Настроить клиентскую часть tRPC
 
 ### Готовность к следующему этапу:
 
@@ -2447,7 +2150,7 @@ export function OrderStatus() {
 - **TASKS-PART-3.md** - State Management & Hooks
 - **TASKS-PART-4.md** - UI Components & Forms
 - **TASKS-PART-5.md** - Pages & User Flow
-- **TASKS-PART-6.md** - Admin Panel
+- **TASKS-PART-6.md** - Admin Panel (здесь будет admin API)
 - **TASKS-PART-7.md** - Testing & Quality
 - **TASKS-PART-8.md** - Production Setup & Deployment
 
@@ -2455,14 +2158,16 @@ export function OrderStatus() {
 
 ✅ **Полностью типизированный API** с tRPC и Zod валидацией  
 ✅ **Безопасная аутентификация** с сессиями и rate limiting  
+✅ **Роле-ориентированная архитектура** с operator, support роутерами для apps/web  
 ✅ **Мок-данные интеграция** с реалистичными задержками  
 ✅ **React Query кэширование** с оптимистичными обновлениями  
-✅ **Admin панель API** с полной статистикой и управлением  
 ✅ **Production-ready архитектура** с логированием и мониторингом
+
+**ВАЖНО:** Admin API роутер будет создан в TASKS-PART-6.md для `apps/admin-panel`, согласно архитектуре разделения приложений.
 
 ---
 
 **Дата создания:** 29 июня 2025  
-**Дата актуализации:** 1 июля 2025  
-**Версия:** 1.2 (актуализирован под реальную реализацию Part-1)  
+**Дата актуализации:** 4 июля 2025  
+**Версия:** 1.4 (исправлена архитектура - admin роутер перенесен в admin-panel)  
 **Следующая часть:** TASKS-PART-3.md
