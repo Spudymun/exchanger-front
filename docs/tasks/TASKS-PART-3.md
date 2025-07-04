@@ -2,7 +2,7 @@
 
 **Дата создания:** 29 июня 2025  
 **Статус:** В разработке  
-**Покрытие:** State management, custom hooks, React context, form handling
+**Покрытие:** State management, custom hooks, Zustand stores, form handling
 
 ---
 
@@ -17,221 +17,174 @@
 
 ### Архитектурный подход:
 
-- **React Context** для глобального состояния
-- **Custom Hooks** для бизнес-логики
+- **Zustand** для глобального состояния в централизованных packages
+- **Custom Hooks** для бизнес-логики и интеграции
 - **Form State Management** с валидацией
-- **Cache Management** с React Query
+- **Centralized State** в `packages/hooks/src/state/`
 
 ---
 
 ## 🧠 PHASE 3: STATE MANAGEMENT & HOOKS
 
-### TASK 3.1: Создать глобальный Store и Context
+### TASK 3.1: Расширить Zustand Stores и интеграцию
 
 **Время:** 2 часа  
 **Приоритет:** 🔴 Критический
 
 #### Описание
 
-Создать централизованное управление состоянием приложения через React Context с TypeScript типизацией.
+Расширить существующие Zustand stores в централизованных packages и создать недостающие stores для полного покрытия функциональности приложения.
 
 #### Технические требования
 
 ```
-apps/web/
-├── src/
-│   ├── store/
-│   │   ├── index.ts              # Главный экспорт всех stores
-│   │   ├── AppProvider.tsx       # Главный Provider
-│   │   ├── AuthStore.tsx         # Аутентификация
-│   │   ├── ExchangeStore.tsx     # Состояние обмена
-│   │   ├── UIStore.tsx           # UI состояние
-│   │   └── NotificationStore.tsx # Уведомления
-│   ├── hooks/
-│   │   ├── index.ts              # Экспорт всех хуков
-│   │   ├── useAuth.ts            # Аутентификация
-│   │   ├── useExchange.ts        # Обмен валют
-│   │   ├── useUI.ts              # UI состояние
-│   │   └── useNotifications.ts   # Уведомления
+packages/hooks/src/state/
+├── ui-store.ts           # ✅ Существует - расширить для exchange UI
+├── trading-store.ts      # ✅ Существует - адаптировать для exchange
+├── notification-store.ts # ➕ Создать новый
+└── exchange-store.ts     # ➕ Создать новый
+
+packages/hooks/src/
+├── useUIStore.ts         # ➕ Создать wrapper hook
+├── useExchangeStore.ts   # ➕ Создать wrapper hook
+├── useNotifications.ts   # ➕ Создать wrapper hook
+└── index.ts              # ➕ Обновить экспорты
 ```
 
 #### Реализация
 
-1. **apps/web/src/store/AuthStore.tsx**
+1. **packages/hooks/src/state/notification-store.ts**
 
 ```typescript
-import React, { createContext, useContext, useReducer, type ReactNode } from 'react';
-import { trpc } from '~/utils/trpc';
+import { create } from 'zustand';
+import { devtools } from 'zustand/middleware';
 
-// Типы для Auth Store
-interface User {
+/**
+ * Notification Store
+ *
+ * Manages toast notifications, alerts, and system messages
+ */
+
+interface Notification {
   id: string;
-  email: string;
-  isVerified: boolean;
+  type: 'success' | 'error' | 'warning' | 'info';
+  title: string;
+  message?: string;
+  duration?: number;
+  persistent?: boolean;
+  actions?: Array<{
+    label: string;
+    action: () => void;
+    variant?: 'primary' | 'secondary';
+  }>;
+  createdAt: Date;
 }
 
-interface AuthState {
-  user: User | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  error: string | null;
-}
-
-type AuthAction =
-  | { type: 'AUTH_START' }
-  | { type: 'AUTH_SUCCESS'; payload: User }
-  | { type: 'AUTH_ERROR'; payload: string }
-  | { type: 'AUTH_LOGOUT' }
-  | { type: 'CLEAR_ERROR' };
-
-interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  clearError: () => void;
-}
-
-// Initial state
-const initialState: AuthState = {
-  user: null,
-  isLoading: false,
-  isAuthenticated: false,
-  error: null,
-};
-
-// Reducer
-const authReducer = (state: AuthState, action: AuthAction): AuthState => {
-  switch (action.type) {
-    case 'AUTH_START':
-      return { ...state, isLoading: true, error: null };
-
-    case 'AUTH_SUCCESS':
-      return {
-        ...state,
-        isLoading: false,
-        user: action.payload,
-        isAuthenticated: true,
-        error: null,
-      };
-
-    case 'AUTH_ERROR':
-      return {
-        ...state,
-        isLoading: false,
-        error: action.payload,
-        user: null,
-        isAuthenticated: false,
-      };
-
-    case 'AUTH_LOGOUT':
-      return {
-        ...state,
-        user: null,
-        isAuthenticated: false,
-        error: null,
-      };
-
-    case 'CLEAR_ERROR':
-      return { ...state, error: null };
-
-    default:
-      return state;
-  }
-};
-
-// Context
-const AuthContext = createContext<AuthContextType | null>(null);
-
-// Provider
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(authReducer, initialState);
-
-  // tRPC hooks
-  const loginMutation = trpc.auth.login.useMutation();
-  const registerMutation = trpc.auth.register.useMutation();
-  const logoutMutation = trpc.auth.logout.useMutation();
-  const { data: session } = trpc.auth.getSession.useQuery();
-
-  // Синхронизация с сессией из tRPC
-  React.useEffect(() => {
-    if (session?.user) {
-      dispatch({ type: 'AUTH_SUCCESS', payload: session.user });
-    } else if (session?.user === null) {
-      dispatch({ type: 'AUTH_LOGOUT' });
-    }
-  }, [session]);
+interface NotificationState {
+  notifications: Notification[];
+  maxNotifications: number;
 
   // Actions
-  const login = async (email: string, password: string) => {
-    dispatch({ type: 'AUTH_START' });
-    try {
-      const result = await loginMutation.mutateAsync({ email, password });
-      dispatch({ type: 'AUTH_SUCCESS', payload: result.user });
-    } catch (error: any) {
-      dispatch({ type: 'AUTH_ERROR', payload: error.message });
-      throw error;
-    }
-  };
+  addNotification: (notification: Omit<Notification, 'id' | 'createdAt'>) => string;
+  removeNotification: (id: string) => void;
+  clearAllNotifications: () => void;
+  updateNotification: (id: string, updates: Partial<Notification>) => void;
 
-  const register = async (email: string, password: string) => {
-    dispatch({ type: 'AUTH_START' });
-    try {
-      const result = await registerMutation.mutateAsync({ email, password });
-      dispatch({ type: 'AUTH_SUCCESS', payload: result.user });
-    } catch (error: any) {
-      dispatch({ type: 'AUTH_ERROR', payload: error.message });
-      throw error;
-    }
-  };
-
-  const logout = async () => {
-    try {
-      await logoutMutation.mutateAsync();
-      dispatch({ type: 'AUTH_LOGOUT' });
-    } catch (error: any) {
-      // Всегда логаутим локально, даже если API запрос failed
-      dispatch({ type: 'AUTH_LOGOUT' });
-    }
-  };
-
-  const clearError = () => {
-    dispatch({ type: 'CLEAR_ERROR' });
-  };
-
-  const value: AuthContextType = {
-    ...state,
-    login,
-    register,
-    logout,
-    clearError,
-  };
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  // Convenience methods
+  success: (title: string, message?: string, options?: Partial<Notification>) => string;
+  error: (title: string, message?: string, options?: Partial<Notification>) => string;
+  warning: (title: string, message?: string, options?: Partial<Notification>) => string;
+  info: (title: string, message?: string, options?: Partial<Notification>) => string;
 }
 
-// Hook
-export function useAuthStore() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuthStore must be used within AuthProvider');
-  }
-  return context;
-}
+export const useNotificationStore = create<NotificationState>()(
+  devtools(
+    (set, get) => ({
+      notifications: [],
+      maxNotifications: 5,
+
+      addNotification: notification => {
+        const id = `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        const fullNotification: Notification = {
+          ...notification,
+          id,
+          createdAt: new Date(),
+        };
+
+        set(state => {
+          const newNotifications = [fullNotification, ...state.notifications];
+
+          // Limit notifications
+          if (newNotifications.length > state.maxNotifications) {
+            newNotifications.splice(state.maxNotifications);
+          }
+
+          return { notifications: newNotifications };
+        });
+
+        // Auto-remove non-persistent notifications
+        if (!notification.persistent && notification.duration !== 0) {
+          const duration = notification.duration ?? 5000;
+          setTimeout(() => {
+            get().removeNotification(id);
+          }, duration);
+        }
+
+        return id;
+      },
+
+      removeNotification: id => {
+        set(state => ({
+          notifications: state.notifications.filter(n => n.id !== id),
+        }));
+      },
+
+      clearAllNotifications: () => {
+        set({ notifications: [] });
+      },
+
+      updateNotification: (id, updates) => {
+        set(state => ({
+          notifications: state.notifications.map(n => (n.id === id ? { ...n, ...updates } : n)),
+        }));
+      },
+
+      // Convenience methods
+      success: (title, message, options) =>
+        get().addNotification({ type: 'success', title, message, ...options }),
+
+      error: (title, message, options) =>
+        get().addNotification({ type: 'error', title, message, persistent: true, ...options }),
+
+      warning: (title, message, options) =>
+        get().addNotification({ type: 'warning', title, message, ...options }),
+
+      info: (title, message, options) =>
+        get().addNotification({ type: 'info', title, message, ...options }),
+    }),
+    {
+      name: 'notification-store',
+    }
+  )
+);
+
+export type { Notification };
 ```
 
-2. **apps/web/src/store/ExchangeStore.tsx**
+2. **packages/hooks/src/state/exchange-store.ts**
 
 ```typescript
-import React, { createContext, useContext, useReducer, type ReactNode } from 'react';
-import { trpc } from '~/utils/trpc';
+import { create } from 'zustand';
+import { devtools, subscribeWithSelector } from 'zustand/middleware';
 import { CRYPTOCURRENCIES, type Cryptocurrency } from '@repo/constants';
 import { type ExchangeRate, type OrderLimits } from '@repo/exchange-core';
 
-// Типы для Exchange Store
+/**
+ * Exchange Store
+ *
+ * Manages currency exchange state, form data, calculations, and orders
+ */
+
 interface ExchangeFormData {
   amount: string;
   currency: Cryptocurrency;
@@ -270,31 +223,23 @@ interface ExchangeState {
   // UI state
   step: 'form' | 'review' | 'payment' | 'completed';
   error: string | null;
-}
 
-type ExchangeAction =
-  | { type: 'SET_FORM_DATA'; payload: Partial<ExchangeFormData> }
-  | { type: 'SET_CALCULATION'; payload: ExchangeCalculation | null }
-  | { type: 'SET_CALCULATING'; payload: boolean }
-  | { type: 'SET_CURRENT_ORDER'; payload: any | null }
-  | { type: 'SET_CREATING_ORDER'; payload: boolean }
-  | { type: 'SET_RATES'; payload: ExchangeRate[] }
-  | { type: 'SET_LIMITS'; payload: Record<Cryptocurrency, OrderLimits> }
-  | { type: 'SET_STEP'; payload: ExchangeState['step'] }
-  | { type: 'SET_ERROR'; payload: string | null }
-  | { type: 'RESET_FORM' };
-
-interface ExchangeContextType extends ExchangeState {
+  // Actions
   updateFormData: (data: Partial<ExchangeFormData>) => void;
-  calculateExchange: () => Promise<void>;
-  createOrder: () => Promise<void>;
+  setCalculation: (calculation: ExchangeCalculation | null) => void;
+  setCalculating: (isCalculating: boolean) => void;
+  setCurrentOrder: (order: any | null) => void;
+  setCreatingOrder: (isCreating: boolean) => void;
+  setRates: (rates: ExchangeRate[]) => void;
+  setLimits: (limits: Record<Cryptocurrency, OrderLimits>) => void;
+  setStep: (step: ExchangeState['step']) => void;
+  setError: (error: string | null) => void;
   nextStep: () => void;
   prevStep: () => void;
   resetForm: () => void;
   clearError: () => void;
 }
 
-// Initial state
 const initialFormData: ExchangeFormData = {
   amount: '',
   currency: 'BTC',
@@ -303,717 +248,312 @@ const initialFormData: ExchangeFormData = {
   recipientData: {},
 };
 
-const initialState: ExchangeState = {
-  formData: initialFormData,
-  calculation: null,
-  isCalculating: false,
-  currentOrder: null,
-  isCreatingOrder: false,
-  rates: null,
-  limits: null,
-  step: 'form',
-  error: null,
-};
+export const useExchangeStore = create<ExchangeState>()(
+  devtools(
+    subscribeWithSelector((set, get) => ({
+      // Initial state
+      formData: initialFormData,
+      calculation: null,
+      isCalculating: false,
+      currentOrder: null,
+      isCreatingOrder: false,
+      rates: null,
+      limits: null,
+      step: 'form',
+      error: null,
 
-// Reducer
-const exchangeReducer = (state: ExchangeState, action: ExchangeAction): ExchangeState => {
-  switch (action.type) {
-    case 'SET_FORM_DATA':
-      return {
-        ...state,
-        formData: { ...state.formData, ...action.payload },
-        // Сбрасываем расчет при изменении формы
-        calculation: null,
-      };
+      // Actions
+      updateFormData: data => {
+        set(state => ({
+          formData: { ...state.formData, ...data },
+          calculation: null, // Reset calculation on form change
+        }));
+      },
 
-    case 'SET_CALCULATION':
-      return { ...state, calculation: action.payload };
+      setCalculation: calculation => set({ calculation }),
+      setCalculating: isCalculating => set({ isCalculating }),
+      setCurrentOrder: currentOrder => set({ currentOrder }),
+      setCreatingOrder: isCreatingOrder => set({ isCreatingOrder }),
+      setRates: rates => set({ rates }),
+      setLimits: limits => set({ limits }),
+      setStep: step => set({ step }),
+      setError: error => set({ error }),
 
-    case 'SET_CALCULATING':
-      return { ...state, isCalculating: action.payload };
+      nextStep: () => {
+        const stepOrder: ExchangeState['step'][] = ['form', 'review', 'payment', 'completed'];
+        const currentStep = get().step;
+        const currentIndex = stepOrder.indexOf(currentStep);
+        if (currentIndex < stepOrder.length - 1) {
+          set({ step: stepOrder[currentIndex + 1] });
+        }
+      },
 
-    case 'SET_CURRENT_ORDER':
-      return { ...state, currentOrder: action.payload };
+      prevStep: () => {
+        const stepOrder: ExchangeState['step'][] = ['form', 'review', 'payment', 'completed'];
+        const currentStep = get().step;
+        const currentIndex = stepOrder.indexOf(currentStep);
+        if (currentIndex > 0) {
+          set({ step: stepOrder[currentIndex - 1] });
+        }
+      },
 
-    case 'SET_CREATING_ORDER':
-      return { ...state, isCreatingOrder: action.payload };
+      resetForm: () => {
+        set({
+          formData: initialFormData,
+          calculation: null,
+          currentOrder: null,
+          step: 'form',
+          error: null,
+        });
+      },
 
-    case 'SET_RATES':
-      return { ...state, rates: action.payload };
-
-    case 'SET_LIMITS':
-      return { ...state, limits: action.payload };
-
-    case 'SET_STEP':
-      return { ...state, step: action.payload };
-
-    case 'SET_ERROR':
-      return { ...state, error: action.payload };
-
-    case 'RESET_FORM':
-      return {
-        ...state,
-        formData: initialFormData,
-        calculation: null,
-        currentOrder: null,
-        step: 'form',
-        error: null,
-      };
-
-    default:
-      return state;
-  }
-};
-
-// Context
-const ExchangeContext = createContext<ExchangeContextType | null>(null);
-
-// Provider
-export function ExchangeProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(exchangeReducer, initialState);
-
-  // tRPC hooks
-  const { data: ratesData } = trpc.exchange.getRates.useQuery(undefined, {
-    refetchInterval: 30000, // Обновляем каждые 30 секунд
-  });
-
-  const calculateMutation = trpc.exchange.calculateExchange.useMutation();
-  const createOrderMutation = trpc.exchange.createOrder.useMutation();
-
-  // Загрузка курсов при монтировании
-  React.useEffect(() => {
-    if (ratesData?.rates) {
-      dispatch({ type: 'SET_RATES', payload: ratesData.rates });
+      clearError: () => set({ error: null }),
+    })),
+    {
+      name: 'exchange-store',
     }
-  }, [ratesData]);
+  )
+);
 
-  // Actions
-  const updateFormData = (data: Partial<ExchangeFormData>) => {
-    dispatch({ type: 'SET_FORM_DATA', payload: data });
-  };
-
-  const calculateExchange = async () => {
-    const { amount, currency, direction } = state.formData;
-
-    if (!amount || isNaN(Number(amount))) {
-      dispatch({ type: 'SET_ERROR', payload: 'Введите корректную сумму' });
-      return;
-    }
-
-    dispatch({ type: 'SET_CALCULATING', payload: true });
-    dispatch({ type: 'SET_ERROR', payload: null });
-
-    try {
-      const result = await calculateMutation.mutateAsync({
-        amount: Number(amount),
-        currency,
-        direction,
-      });
-
-      dispatch({ type: 'SET_CALCULATION', payload: result });
-    } catch (error: any) {
-      dispatch({ type: 'SET_ERROR', payload: error.message });
-    } finally {
-      dispatch({ type: 'SET_CALCULATING', payload: false });
-    }
-  };
-
-  const createOrder = async () => {
-    if (!state.calculation) {
-      dispatch({ type: 'SET_ERROR', payload: 'Сначала рассчитайте сумму обмена' });
-      return;
-    }
-
-    dispatch({ type: 'SET_CREATING_ORDER', payload: true });
-    dispatch({ type: 'SET_ERROR', payload: null });
-
-    try {
-      const result = await createOrderMutation.mutateAsync({
-        email: state.formData.recipientEmail,
-        cryptoAmount: state.calculation.cryptoAmount,
-        currency: state.formData.currency,
-        recipientData: state.formData.recipientData,
-      });
-
-      dispatch({ type: 'SET_CURRENT_ORDER', payload: result });
-      dispatch({ type: 'SET_STEP', payload: 'payment' });
-    } catch (error: any) {
-      dispatch({ type: 'SET_ERROR', payload: error.message });
-    } finally {
-      dispatch({ type: 'SET_CREATING_ORDER', payload: false });
-    }
-  };
-
-  const nextStep = () => {
-    const stepOrder: ExchangeState['step'][] = ['form', 'review', 'payment', 'completed'];
-    const currentIndex = stepOrder.indexOf(state.step);
-    if (currentIndex < stepOrder.length - 1) {
-      dispatch({ type: 'SET_STEP', payload: stepOrder[currentIndex + 1] });
-    }
-  };
-
-  const prevStep = () => {
-    const stepOrder: ExchangeState['step'][] = ['form', 'review', 'payment', 'completed'];
-    const currentIndex = stepOrder.indexOf(state.step);
-    if (currentIndex > 0) {
-      dispatch({ type: 'SET_STEP', payload: stepOrder[currentIndex - 1] });
-    }
-  };
-
-  const resetForm = () => {
-    dispatch({ type: 'RESET_FORM' });
-  };
-
-  const clearError = () => {
-    dispatch({ type: 'SET_ERROR', payload: null });
-  };
-
-  const value: ExchangeContextType = {
-    ...state,
-    updateFormData,
-    calculateExchange,
-    createOrder,
-    nextStep,
-    prevStep,
-    resetForm,
-    clearError,
-  };
-
-  return (
-    <ExchangeContext.Provider value={value}>
-      {children}
-    </ExchangeContext.Provider>
-  );
-}
-
-// Hook
-export function useExchangeStore() {
-  const context = useContext(ExchangeContext);
-  if (!context) {
-    throw new Error('useExchangeStore must be used within ExchangeProvider');
-  }
-  return context;
-}
+export type { ExchangeFormData, ExchangeCalculation };
 ```
 
-3. **apps/web/src/store/UIStore.tsx**
+3. **packages/hooks/src/useUIStore.ts**
 
 ```typescript
-import React, { createContext, useContext, useReducer, type ReactNode } from 'react';
+import { useUIStore as useBaseUIStore } from './state/ui-store';
+import { useNotificationStore } from './state/notification-store';
 
-// Типы для UI Store
-interface UIState {
-  // Layout
-  sidebarOpen: boolean;
-  mobileMenuOpen: boolean;
-
-  // Modals
-  modals: {
-    login: boolean;
-    register: boolean;
-    orderDetails: boolean;
-    confirmAction: boolean;
-  };
-
-  // Loading states
-  globalLoading: boolean;
-
-  // Theme
-  theme: 'light' | 'dark';
-
-  // Current modal data
-  modalData: any;
-}
-
-type UIAction =
-  | { type: 'TOGGLE_SIDEBAR' }
-  | { type: 'SET_SIDEBAR'; payload: boolean }
-  | { type: 'TOGGLE_MOBILE_MENU' }
-  | { type: 'SET_MOBILE_MENU'; payload: boolean }
-  | { type: 'OPEN_MODAL'; payload: { modal: keyof UIState['modals']; data?: any } }
-  | { type: 'CLOSE_MODAL'; payload: keyof UIState['modals'] }
-  | { type: 'CLOSE_ALL_MODALS' }
-  | { type: 'SET_GLOBAL_LOADING'; payload: boolean }
-  | { type: 'SET_THEME'; payload: 'light' | 'dark' }
-  | { type: 'SET_MODAL_DATA'; payload: any };
-
-interface UIContextType extends UIState {
-  toggleSidebar: () => void;
-  setSidebar: (open: boolean) => void;
-  toggleMobileMenu: () => void;
-  setMobileMenu: (open: boolean) => void;
-  openModal: (modal: keyof UIState['modals'], data?: any) => void;
-  closeModal: (modal: keyof UIState['modals']) => void;
-  closeAllModals: () => void;
-  setGlobalLoading: (loading: boolean) => void;
-  setTheme: (theme: 'light' | 'dark') => void;
-  setModalData: (data: any) => void;
-}
-
-// Initial state
-const initialState: UIState = {
-  sidebarOpen: false,
-  mobileMenuOpen: false,
-  modals: {
-    login: false,
-    register: false,
-    orderDetails: false,
-    confirmAction: false,
-  },
-  globalLoading: false,
-  theme: 'light',
-  modalData: null,
-};
-
-// Reducer
-const uiReducer = (state: UIState, action: UIAction): UIState => {
-  switch (action.type) {
-    case 'TOGGLE_SIDEBAR':
-      return { ...state, sidebarOpen: !state.sidebarOpen };
-
-    case 'SET_SIDEBAR':
-      return { ...state, sidebarOpen: action.payload };
-
-    case 'TOGGLE_MOBILE_MENU':
-      return { ...state, mobileMenuOpen: !state.mobileMenuOpen };
-
-    case 'SET_MOBILE_MENU':
-      return { ...state, mobileMenuOpen: action.payload };
-
-    case 'OPEN_MODAL':
-      return {
-        ...state,
-        modals: { ...state.modals, [action.payload.modal]: true },
-        modalData: action.payload.data || null,
-      };
-
-    case 'CLOSE_MODAL':
-      return {
-        ...state,
-        modals: { ...state.modals, [action.payload]: false },
-        // Очищаем данные модалки только если это была последняя открытая
-        modalData: Object.values({
-          ...state.modals,
-          [action.payload]: false,
-        }).some(open => open) ? state.modalData : null,
-      };
-
-    case 'CLOSE_ALL_MODALS':
-      return {
-        ...state,
-        modals: {
-          login: false,
-          register: false,
-          orderDetails: false,
-          confirmAction: false,
-        },
-        modalData: null,
-      };
-
-    case 'SET_GLOBAL_LOADING':
-      return { ...state, globalLoading: action.payload };
-
-    case 'SET_THEME':
-      // Сохраняем тему в localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('theme', action.payload);
-      }
-      return { ...state, theme: action.payload };
-
-    case 'SET_MODAL_DATA':
-      return { ...state, modalData: action.payload };
-
-    default:
-      return state;
-  }
-};
-
-// Context
-const UIContext = createContext<UIContextType | null>(null);
-
-// Provider
-export function UIProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(uiReducer, initialState);
-
-  // Загружаем тему из localStorage при инициализации
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
-      if (savedTheme) {
-        dispatch({ type: 'SET_THEME', payload: savedTheme });
-      }
-    }
-  }, []);
-
-  // Применяем тему к документу
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      document.documentElement.className = state.theme;
-    }
-  }, [state.theme]);
-
-  // Actions
-  const toggleSidebar = () => {
-    dispatch({ type: 'TOGGLE_SIDEBAR' });
-  };
-
-  const setSidebar = (open: boolean) => {
-    dispatch({ type: 'SET_SIDEBAR', payload: open });
-  };
-
-  const toggleMobileMenu = () => {
-    dispatch({ type: 'TOGGLE_MOBILE_MENU' });
-  };
-
-  const setMobileMenu = (open: boolean) => {
-    dispatch({ type: 'SET_MOBILE_MENU', payload: open });
-  };
-
-  const openModal = (modal: keyof UIState['modals'], data?: any) => {
-    dispatch({ type: 'OPEN_MODAL', payload: { modal, data } });
-  };
-
-  const closeModal = (modal: keyof UIState['modals']) => {
-    dispatch({ type: 'CLOSE_MODAL', payload: modal });
-  };
-
-  const closeAllModals = () => {
-    dispatch({ type: 'CLOSE_ALL_MODALS' });
-  };
-
-  const setGlobalLoading = (loading: boolean) => {
-    dispatch({ type: 'SET_GLOBAL_LOADING', payload: loading });
-  };
-
-  const setTheme = (theme: 'light' | 'dark') => {
-    dispatch({ type: 'SET_THEME', payload: theme });
-  };
-
-  const setModalData = (data: any) => {
-    dispatch({ type: 'SET_MODAL_DATA', payload: data });
-  };
-
-  const value: UIContextType = {
-    ...state,
-    toggleSidebar,
-    setSidebar,
-    toggleMobileMenu,
-    setMobileMenu,
-    openModal,
-    closeModal,
-    closeAllModals,
-    setGlobalLoading,
-    setTheme,
-    setModalData,
-  };
-
-  return (
-    <UIContext.Provider value={value}>
-      {children}
-    </UIContext.Provider>
-  );
-}
-
-// Hook
+/**
+ * Enhanced UI Store Hook
+ *
+ * Provides additional UI utilities and integrations
+ */
 export function useUIStore() {
-  const context = useContext(UIContext);
-  if (!context) {
-    throw new Error('useUIStore must be used within UIProvider');
-  }
-  return context;
-}
-```
+  const uiStore = useBaseUIStore();
+  const notifications = useNotificationStore();
 
-4. **apps/web/src/store/NotificationStore.tsx**
+  // Enhanced modal handling with notifications
+  const openModalWithNotification = (modalId: string, title?: string) => {
+    uiStore.openModal(modalId);
+    if (title) {
+      notifications.info('Модальное окно', title);
+    }
+  };
 
-```typescript
-import React, { createContext, useContext, useReducer, type ReactNode } from 'react';
+  // Theme switching with persistence
+  const toggleTheme = () => {
+    const currentTheme = uiStore.theme || 'light';
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
 
-// Типы уведомлений
-interface Notification {
-  id: string;
-  type: 'success' | 'error' | 'warning' | 'info';
-  title: string;
-  message?: string;
-  duration?: number;
-  persistent?: boolean;
-  actions?: Array<{
-    label: string;
-    action: () => void;
-    variant?: 'primary' | 'secondary';
-  }>;
-  createdAt: Date;
-}
-
-interface NotificationState {
-  notifications: Notification[];
-  maxNotifications: number;
-}
-
-type NotificationAction =
-  | { type: 'ADD_NOTIFICATION'; payload: Notification }
-  | { type: 'REMOVE_NOTIFICATION'; payload: string }
-  | { type: 'CLEAR_ALL_NOTIFICATIONS' }
-  | { type: 'UPDATE_NOTIFICATION'; payload: { id: string; updates: Partial<Notification> } };
-
-interface NotificationContextType extends NotificationState {
-  addNotification: (notification: Omit<Notification, 'id' | 'createdAt'>) => string;
-  removeNotification: (id: string) => void;
-  clearAllNotifications: () => void;
-  updateNotification: (id: string, updates: Partial<Notification>) => void;
-
-  // Convenience methods
-  success: (title: string, message?: string, options?: Partial<Notification>) => string;
-  error: (title: string, message?: string, options?: Partial<Notification>) => string;
-  warning: (title: string, message?: string, options?: Partial<Notification>) => string;
-  info: (title: string, message?: string, options?: Partial<Notification>) => string;
-}
-
-// Initial state
-const initialState: NotificationState = {
-  notifications: [],
-  maxNotifications: 5,
-};
-
-// Reducer
-const notificationReducer = (state: NotificationState, action: NotificationAction): NotificationState => {
-  switch (action.type) {
-    case 'ADD_NOTIFICATION': {
-      const newNotifications = [action.payload, ...state.notifications];
-
-      // Ограничиваем количество уведомлений
-      if (newNotifications.length > state.maxNotifications) {
-        newNotifications.splice(state.maxNotifications);
-      }
-
-      return { ...state, notifications: newNotifications };
+    // Save to localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('theme', newTheme);
     }
 
-    case 'REMOVE_NOTIFICATION':
-      return {
-        ...state,
-        notifications: state.notifications.filter(n => n.id !== action.payload),
-      };
+    // Update store (assuming theme is added to ui-store)
+    // uiStore.setTheme(newTheme);
+  };
 
-    case 'CLEAR_ALL_NOTIFICATIONS':
-      return { ...state, notifications: [] };
+  return {
+    ...uiStore,
+    openModalWithNotification,
+    toggleTheme,
+  };
+}
+```
 
-    case 'UPDATE_NOTIFICATION':
-      return {
-        ...state,
-        notifications: state.notifications.map(n =>
-          n.id === action.payload.id ? { ...n, ...action.payload.updates } : n
-        ),
-      };
+4. **packages/hooks/src/useNotifications.ts**
 
-    default:
-      return state;
-  }
-};
+```typescript
+import { useNotificationStore } from './state/notification-store';
 
-// Context
-const NotificationContext = createContext<NotificationContextType | null>(null);
+/**
+ * Enhanced Notifications Hook
+ *
+ * Provides convenient notification methods for common use cases
+ */
+export function useNotifications() {
+  const store = useNotificationStore();
 
-// Provider
-export function NotificationProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(notificationReducer, initialState);
-
-  // Auto-remove notifications after their duration
-  React.useEffect(() => {
-    const timers: Record<string, NodeJS.Timeout> = {};
-
-    state.notifications.forEach(notification => {
-      if (!notification.persistent && notification.duration !== 0) {
-        const duration = notification.duration ?? 5000; // 5 секунд по умолчанию
-
-        timers[notification.id] = setTimeout(() => {
-          dispatch({ type: 'REMOVE_NOTIFICATION', payload: notification.id });
-        }, duration);
-      }
+  // API success/error notifications
+  const apiSuccess = (message: string, details?: string) => {
+    return store.success('API Success', message, {
+      message: details,
+      duration: 3000,
     });
-
-    return () => {
-      Object.values(timers).forEach(timer => clearTimeout(timer));
-    };
-  }, [state.notifications]);
-
-  // Actions
-  const addNotification = (notification: Omit<Notification, 'id' | 'createdAt'>) => {
-    const id = `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const fullNotification: Notification = {
-      ...notification,
-      id,
-      createdAt: new Date(),
-    };
-
-    dispatch({ type: 'ADD_NOTIFICATION', payload: fullNotification });
-    return id;
   };
 
-  const removeNotification = (id: string) => {
-    dispatch({ type: 'REMOVE_NOTIFICATION', payload: id });
+  const apiError = (message: string, details?: string) => {
+    return store.error('API Error', message, {
+      message: details,
+      persistent: true,
+    });
   };
 
-  const clearAllNotifications = () => {
-    dispatch({ type: 'CLEAR_ALL_NOTIFICATIONS' });
+  // Form validation notifications
+  const validationError = (field: string, message: string) => {
+    return store.warning('Validation Error', `${field}: ${message}`, {
+      duration: 4000,
+    });
   };
 
-  const updateNotification = (id: string, updates: Partial<Notification>) => {
-    dispatch({ type: 'UPDATE_NOTIFICATION', payload: { id, updates } });
+  // Exchange-specific notifications
+  const exchangeSuccess = (amount: number, currency: string) => {
+    return store.success('Exchange Complete', `Successfully exchanged ${amount} ${currency}`, {
+      duration: 6000,
+      actions: [
+        {
+          label: 'View Order',
+          action: () => {
+            // Navigate to order details
+            console.log('Navigate to order details');
+          },
+        },
+      ],
+    });
   };
 
-  // Convenience methods
-  const success = (title: string, message?: string, options?: Partial<Notification>) =>
-    addNotification({ type: 'success', title, message, ...options });
-
-  const error = (title: string, message?: string, options?: Partial<Notification>) =>
-    addNotification({ type: 'error', title, message, persistent: true, ...options });
-
-  const warning = (title: string, message?: string, options?: Partial<Notification>) =>
-    addNotification({ type: 'warning', title, message, ...options });
-
-  const info = (title: string, message?: string, options?: Partial<Notification>) =>
-    addNotification({ type: 'info', title, message, ...options });
-
-  const value: NotificationContextType = {
-    ...state,
-    addNotification,
-    removeNotification,
-    clearAllNotifications,
-    updateNotification,
-    success,
-    error,
-    warning,
-    info,
+  const exchangeError = (error: string) => {
+    return store.error('Exchange Failed', error, {
+      persistent: true,
+      actions: [
+        {
+          label: 'Try Again',
+          action: () => {
+            // Retry exchange
+            console.log('Retry exchange');
+          },
+        },
+        {
+          label: 'Contact Support',
+          action: () => {
+            // Open support chat
+            console.log('Open support');
+          },
+          variant: 'secondary',
+        },
+      ],
+    });
   };
 
-  return (
-    <NotificationContext.Provider value={value}>
-      {children}
-    </NotificationContext.Provider>
-  );
-}
-
-// Hook
-export function useNotificationStore() {
-  const context = useContext(NotificationContext);
-  if (!context) {
-    throw new Error('useNotificationStore must be used within NotificationProvider');
-  }
-  return context;
+  return {
+    ...store,
+    apiSuccess,
+    apiError,
+    validationError,
+    exchangeSuccess,
+    exchangeError,
+  };
 }
 ```
 
-5. **apps/web/src/store/AppProvider.tsx**
+5. **packages/hooks/src/index.ts** (обновить)
 
 ```typescript
-import { type ReactNode } from 'react';
-import { AuthProvider } from './AuthStore';
-import { ExchangeProvider } from './ExchangeStore';
-import { UIProvider } from './UIStore';
-import { NotificationProvider } from './NotificationStore';
+// State stores
+export { useUIStore } from './state/ui-store';
+export { useTradingStore } from './state/trading-store';
+export { useNotificationStore } from './state/notification-store';
+export { useExchangeStore } from './state/exchange-store';
 
-interface AppProviderProps {
-  children: ReactNode;
-}
+// Enhanced hooks
+export { useUIStore as useEnhancedUIStore } from './useUIStore';
+export { useNotifications } from './useNotifications';
 
-export function AppProvider({ children }: AppProviderProps) {
-  return (
-    <NotificationProvider>
-      <UIProvider>
-        <AuthProvider>
-          <ExchangeProvider>
-            {children}
-          </ExchangeProvider>
-        </AuthProvider>
-      </UIProvider>
-    </NotificationProvider>
-  );
-}
-```
-
-6. **apps/web/src/store/index.ts**
-
-```typescript
-// Экспорт всех store компонентов
-export { AppProvider } from './AppProvider';
-export { AuthProvider, useAuthStore } from './AuthStore';
-export { ExchangeProvider, useExchangeStore } from './ExchangeStore';
-export { UIProvider, useUIStore } from './UIStore';
-export { NotificationProvider, useNotificationStore } from './NotificationStore';
-
-// Типы
-export type { User } from './AuthStore';
-export type { ExchangeFormData, ExchangeCalculation } from './ExchangeStore';
-export type { Notification } from './NotificationStore';
+// Types
+export type { Notification } from './state/notification-store';
+export type { ExchangeFormData, ExchangeCalculation } from './state/exchange-store';
 ```
 
 #### Юзкейсы и Edge Cases
 
-1. **Состояние аутентификации**
-   - ✅ Синхронизация с tRPC сессией
-   - ✅ Автоматическое обновление при входе/выходе
-   - ✅ Обработка ошибок аутентификации
-   - ✅ Очистка состояния при logout
+1. **Zustand State Management**
+   - ✅ Глобальное состояние с TypeScript типизацией
+   - ✅ Devtools интеграция для отладки
+   - ✅ Автоматическое управление подписками
+   - ✅ Optimistic updates для лучшего UX
 
-2. **Состояние обмена**
-   - ✅ Валидация формы в реальном времени
-   - ✅ Автоматические расчеты при изменении данных
-   - ✅ Пошаговый workflow
+2. **Notification System**
+   - ✅ Автоматическое удаление по времени
+   - ✅ Persistent уведомления для критичных ошибок
+   - ✅ Действия в уведомлениях (кнопки)
+   - ✅ Лимит количества уведомлений
+
+3. **Exchange Store**
+   - ✅ Реактивное обновление расчетов
+   - ✅ Валидация данных формы
+   - ✅ Пошаговый workflow с навигацией
    - ✅ Сохранение состояния между шагами
 
-3. **UI состояние**
-   - ✅ Управление модальными окнами
-   - ✅ Responsive menu состояния
-   - ✅ Темизация с localStorage
-   - ✅ Глобальные loading состояния
-
-4. **Уведомления**
-   - ✅ Автоматическое удаление по времени
-   - ✅ Persistent уведомления для ошибок
-   - ✅ Действия в уведомлениях
-   - ✅ Лимит количества уведомлений
+4. **UI Integration**
+   - ✅ Расширение существующих UI stores
+   - ✅ Интеграция с notification system
+   - ✅ Theme management с localStorage
+   - ✅ Modal state management
 
 #### Чек-лист готовности
 
-- [ ] Все Context providers настроены
+- [ ] Все Zustand stores настроены в packages/hooks/src/state/
 - [ ] TypeScript типизация корректна
-- [ ] Reducers обрабатывают все case'ы
-- [ ] Hooks экспортируются правильно
-- [ ] localStorage интеграция работает
-- [ ] Auto-cleanup уведомлений функционирует
+- [ ] Devtools middleware подключен
+- [ ] Enhanced hooks созданы
+- [ ] Экспорты обновлены в packages/hooks/src/index.ts
+- [ ] Интеграция с существующими stores работает
 
 ---
 
-### TASK 3.2: Создать Custom Hooks для бизнес-логики
+### TASK 3.2: Создать Business Logic Hooks с Zustand интеграцией
 
 **Время:** 2 часа  
 **Приоритет:** 🔴 Критический
 
 #### Описание
 
-Создать переиспользуемые хуки для инкапсуляции бизнес-логики и интеграции с API.
+Создать переиспользуемые хуки для инкапсуляции бизнес-логики, интеграции с API и работы с Zustand stores.
+
+#### Структура файлов
+
+```
+packages/hooks/src/
+├── business/
+│   ├── useAuth.ts            # ✅ Интеграция с AuthProvider
+│   ├── useExchange.ts        # ➕ Бизнес-логика обмена
+│   ├── useForm.ts            # ➕ Универсальный form hook
+│   └── useOrderTracking.ts   # ➕ Отслеживание заказов
+└── index.ts                  # ➕ Обновить экспорты
+```
 
 #### Реализация
 
-1. **apps/web/src/hooks/useAuth.ts**
+1. **packages/hooks/src/business/useAuth.ts**
 
 ```typescript
+import { useContext } from 'react';
 import { useRouter } from 'next/router';
-import { useAuthStore } from '~/store/AuthStore';
-import { useNotificationStore } from '~/store/NotificationStore';
-import { trpc } from '~/utils/trpc';
+import { AuthContext } from '../../../apps/web/src/components/AuthProvider';
+import { useNotificationStore } from '../state/notification-store';
+import { trpc } from '../../apps/web/lib/trpc';
 
+/**
+ * Enhanced Auth Hook
+ *
+ * Integrates with existing AuthProvider and adds business logic
+ */
 export function useAuth() {
-  const auth = useAuthStore();
+  const authContext = useContext(AuthContext);
   const notifications = useNotificationStore();
   const router = useRouter();
   const utils = trpc.useUtils();
 
+  if (!authContext) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+
   // Extended login with notifications and redirect
-  const login = async (email: string, password: string) => {
+  const loginWithNotifications = async (email: string, password: string) => {
     try {
-      await auth.login(email, password);
+      await authContext.login(email, password);
       notifications.success('Добро пожаловать!', `Вы вошли как ${email}`);
 
       // Redirect based on user role or previous page
@@ -1026,9 +566,9 @@ export function useAuth() {
   };
 
   // Extended register with notifications
-  const register = async (email: string, password: string) => {
+  const registerWithNotifications = async (email: string, password: string) => {
     try {
-      await auth.register(email, password);
+      await authContext.register(email, password);
       notifications.success('Регистрация успешна!', 'Проверьте email для подтверждения аккаунта', {
         duration: 10000,
       });
@@ -1040,9 +580,9 @@ export function useAuth() {
   };
 
   // Extended logout with notifications
-  const logout = async () => {
+  const logoutWithNotifications = async () => {
     try {
-      await auth.logout();
+      await authContext.logout();
       notifications.info('Выход выполнен', 'До свидания!');
       router.push('/');
     } catch (error: any) {
@@ -1052,17 +592,16 @@ export function useAuth() {
 
   // Check if user has specific permissions
   const hasPermission = (permission: string) => {
-    if (!auth.isAuthenticated || !auth.user) return false;
+    if (!authContext.isLoggedIn || !authContext.user) return false;
 
-    // In a real app, you'd check user roles/permissions
-    // For now, simple checks based on email
-    const isAdmin = auth.user.email.includes('admin');
+    // Simple permission logic based on email
+    const isAdmin = authContext.user.email.includes('admin');
 
     switch (permission) {
       case 'admin':
         return isAdmin;
       case 'verified':
-        return auth.user.isVerified;
+        return authContext.user.isVerified;
       case 'user':
         return true; // All authenticated users
       default:
@@ -1073,91 +612,67 @@ export function useAuth() {
   // Require authentication for a page
   const requireAuth = (redirect = '/login') => {
     React.useEffect(() => {
-      if (!auth.isAuthenticated && !auth.isLoading) {
+      if (!authContext.isLoggedIn && !authContext.isLoading) {
         router.push(`${redirect}?redirect=${encodeURIComponent(router.asPath)}`);
       }
-    }, [auth.isAuthenticated, auth.isLoading, redirect]);
+    }, [authContext.isLoggedIn, authContext.isLoading, redirect]);
 
-    return auth.isAuthenticated;
-  };
-
-  // Require specific permission
-  const requirePermission = (permission: string, redirect = '/unauthorized') => {
-    const hasAuth = requireAuth();
-
-    React.useEffect(() => {
-      if (hasAuth && !hasPermission(permission)) {
-        router.push(redirect);
-      }
-    }, [hasAuth, permission, redirect]);
-
-    return hasAuth && hasPermission(permission);
+    return authContext.isLoggedIn;
   };
 
   return {
-    // State
-    ...auth,
+    // Original auth context
+    ...authContext,
 
-    // Enhanced actions
-    login,
-    register,
-    logout,
+    // Enhanced methods
+    login: loginWithNotifications,
+    register: registerWithNotifications,
+    logout: logoutWithNotifications,
 
-    // Utilities
+    // Permission utilities
     hasPermission,
     requireAuth,
-    requirePermission,
-  };
-}
-
-// Hook for protecting routes
-export function useAuthGuard(
-  options: {
-    required?: boolean;
-    permission?: string;
-    redirectTo?: string;
-  } = {}
-) {
-  const { required = true, permission, redirectTo = '/login' } = options;
-  const auth = useAuth();
-
-  React.useEffect(() => {
-    if (required && !auth.isAuthenticated && !auth.isLoading) {
-      auth.router.push(`${redirectTo}?redirect=${encodeURIComponent(auth.router.asPath)}`);
-      return;
-    }
-
-    if (permission && auth.isAuthenticated && !auth.hasPermission(permission)) {
-      auth.router.push('/unauthorized');
-    }
-  }, [auth.isAuthenticated, auth.isLoading, required, permission, redirectTo]);
-
-  return {
-    isAuthorized: required ? auth.isAuthenticated : true,
-    hasPermission: permission ? auth.hasPermission(permission) : true,
-    isLoading: auth.isLoading,
   };
 }
 ```
 
-2. **apps/web/src/hooks/useExchange.ts**
+2. **packages/hooks/src/business/useExchange.ts**
 
 ```typescript
-import { useExchangeStore } from '~/store/ExchangeStore';
-import { useNotificationStore } from '~/store/NotificationStore';
-import { useAuth } from './useAuth';
-import { trpc } from '~/utils/trpc';
+import React from 'react';
+import { useExchangeStore } from '../state/exchange-store';
+import { useNotificationStore } from '../state/notification-store';
+import { trpc } from '../../apps/web/lib/trpc';
 import { CURRENCY_LIMITS } from '@repo/constants';
 
+/**
+ * Exchange Business Logic Hook
+ *
+ * Handles exchange calculations, validation, and order management
+ */
 export function useExchange() {
-  const exchange = useExchangeStore();
+  const exchangeStore = useExchangeStore();
   const notifications = useNotificationStore();
-  const auth = useAuth();
   const utils = trpc.useUtils();
+
+  // tRPC mutations
+  const calculateMutation = trpc.exchange.calculateExchange.useMutation();
+  const createOrderMutation = trpc.exchange.createOrder.useMutation();
+
+  // Load rates on mount
+  const { data: ratesData } = trpc.exchange.getRates.useQuery(undefined, {
+    refetchInterval: 30000, // Update every 30 seconds
+  });
+
+  React.useEffect(() => {
+    if (ratesData?.rates) {
+      exchangeStore.setRates(ratesData.rates);
+    }
+  }, [ratesData, exchangeStore]);
 
   // Enhanced form validation
   const validateForm = () => {
-    const { formData, calculation } = exchange;
+    const { formData, calculation } = exchangeStore;
     const errors: string[] = [];
 
     // Email validation
@@ -1199,18 +714,51 @@ export function useExchange() {
     return { isValid: errors.length === 0, errors };
   };
 
+  // Calculate exchange with API
+  const calculateExchange = async () => {
+    const { formData } = exchangeStore;
+    const { amount, currency, direction } = formData;
+
+    if (!amount || isNaN(Number(amount))) {
+      exchangeStore.setError('Введите корректную сумму');
+      return;
+    }
+
+    exchangeStore.setCalculating(true);
+    exchangeStore.setError(null);
+
+    try {
+      const result = await calculateMutation.mutateAsync({
+        amount: Number(amount),
+        currency,
+        direction,
+      });
+
+      exchangeStore.setCalculation(result);
+    } catch (error: any) {
+      exchangeStore.setError(error.message);
+      notifications.error('Ошибка расчета', error.message);
+    } finally {
+      exchangeStore.setCalculating(false);
+    }
+  };
+
   // Auto-calculate when form changes
   React.useEffect(() => {
-    const { amount, currency, direction } = exchange.formData;
+    const { amount, currency, direction } = exchangeStore.formData;
 
     if (amount && !isNaN(Number(amount)) && Number(amount) > 0) {
       const debounceTimeout = setTimeout(() => {
-        exchange.calculateExchange();
+        calculateExchange();
       }, 500); // Debounce 500ms
 
       return () => clearTimeout(debounceTimeout);
     }
-  }, [exchange.formData.amount, exchange.formData.currency, exchange.formData.direction]);
+  }, [
+    exchangeStore.formData.amount,
+    exchangeStore.formData.currency,
+    exchangeStore.formData.direction,
+  ]);
 
   // Submit order with validation
   const submitOrder = async () => {
@@ -1221,24 +769,40 @@ export function useExchange() {
       return false;
     }
 
+    exchangeStore.setCreatingOrder(true);
+    exchangeStore.setError(null);
+
     try {
-      await exchange.createOrder();
+      const result = await createOrderMutation.mutateAsync({
+        email: exchangeStore.formData.recipientEmail,
+        cryptoAmount: exchangeStore.calculation!.cryptoAmount,
+        currency: exchangeStore.formData.currency,
+        recipientData: exchangeStore.formData.recipientData,
+      });
+
+      exchangeStore.setCurrentOrder(result);
+      exchangeStore.setStep('payment');
+
       notifications.success(
         'Заявка создана!',
-        `Заявка на обмен ${exchange.calculation?.cryptoAmount} ${exchange.formData.currency} создана`
+        `Заявка на обмен ${exchangeStore.calculation?.cryptoAmount} ${exchangeStore.formData.currency} создана`
       );
+
       return true;
     } catch (error: any) {
+      exchangeStore.setError(error.message);
       notifications.error('Ошибка создания заявки', error.message);
       return false;
+    } finally {
+      exchangeStore.setCreatingOrder(false);
     }
   };
 
   // Get exchange rate for display
   const getDisplayRate = () => {
-    if (!exchange.rates) return null;
+    if (!exchangeStore.rates) return null;
 
-    const rate = exchange.rates.find(r => r.currency === exchange.formData.currency);
+    const rate = exchangeStore.rates.find(r => r.currency === exchangeStore.formData.currency);
     if (!rate) return null;
 
     return {
@@ -1253,56 +817,57 @@ export function useExchange() {
   // Get form progress
   const getProgress = () => {
     const steps = ['form', 'review', 'payment', 'completed'];
-    const currentIndex = steps.indexOf(exchange.step);
+    const currentIndex = steps.indexOf(exchangeStore.step);
     return {
       currentStep: currentIndex + 1,
       totalSteps: steps.length,
       percentage: ((currentIndex + 1) / steps.length) * 100,
-      isComplete: exchange.step === 'completed',
+      isComplete: exchangeStore.step === 'completed',
     };
   };
 
   // Quick form helpers
   const setAmount = (amount: string) => {
-    exchange.updateFormData({ amount });
+    exchangeStore.updateFormData({ amount });
   };
 
   const setCurrency = (currency: any) => {
-    exchange.updateFormData({ currency });
+    exchangeStore.updateFormData({ currency });
   };
 
   const setDirection = (direction: 'crypto-to-uah' | 'uah-to-crypto') => {
-    exchange.updateFormData({ direction });
+    exchangeStore.updateFormData({ direction });
   };
 
   const setRecipientEmail = (email: string) => {
-    exchange.updateFormData({ recipientEmail: email });
+    exchangeStore.updateFormData({ recipientEmail: email });
   };
 
   // Swap direction helper
   const swapDirection = () => {
     const newDirection =
-      exchange.formData.direction === 'crypto-to-uah' ? 'uah-to-crypto' : 'crypto-to-uah';
+      exchangeStore.formData.direction === 'crypto-to-uah' ? 'uah-to-crypto' : 'crypto-to-uah';
 
-    exchange.updateFormData({
+    exchangeStore.updateFormData({
       direction: newDirection,
-      amount: exchange.calculation?.uahAmount.toString() || '',
+      amount: exchangeStore.calculation?.uahAmount.toString() || '',
     });
   };
 
   return {
-    // State
-    ...exchange,
+    // Store state
+    ...exchangeStore,
 
-    // Validation
+    // Business logic
     validateForm,
-
-    // Actions
+    calculateExchange,
     submitOrder,
 
-    // Helpers
+    // Display helpers
     getDisplayRate,
     getProgress,
+
+    // Form helpers
     setAmount,
     setCurrency,
     setDirection,
@@ -1310,8 +875,20 @@ export function useExchange() {
     swapDirection,
   };
 }
+```
 
-// Hook for tracking order status
+3. **packages/hooks/src/business/useOrderTracking.ts**
+
+```typescript
+import React from 'react';
+import { useNotificationStore } from '../state/notification-store';
+import { trpc } from '../../apps/web/lib/trpc';
+
+/**
+ * Order Tracking Hook
+ *
+ * Real-time order status tracking with notifications
+ */
 export function useOrderTracking(orderId?: string) {
   const notifications = useNotificationStore();
 
@@ -1371,7 +948,7 @@ export function useOrderTracking(orderId?: string) {
 }
 ```
 
-3. **apps/web/src/hooks/useForm.ts**
+4. **packages/hooks/src/business/useForm.ts**
 
 ```typescript
 import React from 'react';
@@ -1426,6 +1003,11 @@ interface UseFormReturn<T> {
   isFieldValid: <K extends keyof T>(field: K) => boolean;
 }
 
+/**
+ * Universal Form Hook
+ *
+ * Generic form management with Zod validation
+ */
 export function useForm<T extends Record<string, any>>({
   initialValues,
   validationSchema,
@@ -1442,7 +1024,6 @@ export function useForm<T extends Record<string, any>>({
       if (!validationSchema) return null;
 
       try {
-        // Create a partial schema for just this field
         const fieldSchema = validationSchema.pick({ [field]: true } as any);
         fieldSchema.parse({ [field]: value });
         return null;
@@ -1561,7 +1142,6 @@ export function useForm<T extends Record<string, any>>({
         try {
           await onSubmit(values);
         } catch (error) {
-          // Errors should be handled by the onSubmit function
           console.error('Form submission error:', error);
         } finally {
           setIsSubmitting(false);
@@ -1656,40 +1236,66 @@ export const validationSchemas = {
 };
 ```
 
+5. **packages/hooks/src/index.ts** (обновить)
+
+```typescript
+// Existing exports
+export { useUIStore } from './state/ui-store';
+export { useTradingStore } from './state/trading-store';
+
+// New state stores
+export { useNotificationStore } from './state/notification-store';
+export { useExchangeStore } from './state/exchange-store';
+
+// Enhanced hooks
+export { useUIStore as useEnhancedUIStore } from './useUIStore';
+export { useNotifications } from './useNotifications';
+
+// Business logic hooks
+export { useAuth } from './business/useAuth';
+export { useExchange } from './business/useExchange';
+export { useOrderTracking } from './business/useOrderTracking';
+export { useForm, validationSchemas } from './business/useForm';
+
+// Types
+export type { Notification } from './state/notification-store';
+export type { ExchangeFormData, ExchangeCalculation } from './state/exchange-store';
+```
+
 #### Юзкейсы и Edge Cases
 
-1. **useAuth**
-   - ✅ Интеграция с роутингом и уведомлениями
-   - ✅ Проверка прав доступа и ролей
-   - ✅ Защита маршрутов
+1. **Auth Integration**
+   - ✅ Интеграция с существующим AuthProvider (Part 2)
+   - ✅ Расширенная функциональность с уведомлениями
+   - ✅ Permission-based access control
    - ✅ Автоматические редиректы
 
-2. **useExchange**
+2. **Exchange Business Logic**
    - ✅ Автоматическая валидация формы
-   - ✅ Debounced расчеты
-   - ✅ Отслеживание прогресса
-   - ✅ Быстрые хелперы для UI
+   - ✅ Debounced расчеты через tRPC
+   - ✅ Пошаговый workflow с progress tracking
+   - ✅ Real-time курсы валют
 
-3. **useForm**
+3. **Form Management**
    - ✅ Generic TypeScript типизация
    - ✅ Zod валидация с детальными ошибками
    - ✅ Field-level и form-level валидация
    - ✅ Готовые props для input'ов
 
-4. **useOrderTracking**
+4. **Order Tracking**
    - ✅ Real-time обновления статуса
-   - ✅ Автоматические уведомления
+   - ✅ Автоматические уведомления на изменения
    - ✅ Умный polling (останавливается для завершенных)
    - ✅ Optimistic UI updates
 
 #### Чек-лист готовности
 
-- [ ] Все хуки типизированы и экспортированы
-- [ ] Интеграция с store и tRPC работает
-- [ ] Валидация форм функционирует
+- [ ] Все business hooks созданы в packages/hooks/src/business/
+- [ ] Интеграция с существующим AuthProvider работает
+- [ ] Zustand stores подключены к business logic
+- [ ] tRPC integration функционирует
 - [ ] Уведомления отображаются корректно
-- [ ] Роутинг и редиректы настроены
-- [ ] Real-time обновления работают
+- [ ] Экспорты обновлены в packages/hooks/src/index.ts
 
 ---
 
@@ -1714,12 +1320,12 @@ export const validationSchemas = {
 
 ### Ключевые результаты Part 3:
 
-✅ **Централизованное состояние** с React Context и TypeScript  
-✅ **Бизнес-логика в хуках** с валидацией и уведомлениями  
-✅ **Form management** с Zod валидацией  
-✅ **Real-time updates** с автоматическим polling  
-✅ **Auth guards** для защиты маршрутов  
-✅ **UI state management** с темизацией и модалками
+✅ **Zustand State Management** с централизованными packages и devtools  
+✅ **Business Logic Hooks** с интеграцией AuthProvider и tRPC  
+✅ **Form management** с Zod валидацией и generic типизацией  
+✅ **Real-time updates** с автоматическим polling и notifications  
+✅ **Notification system** с auto-cleanup и action buttons  
+✅ **Exchange workflow** с пошаговой навигацией и validation
 
 ---
 
