@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState } from 'react';
 
-import { trpc } from '../../lib/trpc';
+import { trpc } from '../../lib/trpc.js';
 
 interface AuthUser {
   id: string;

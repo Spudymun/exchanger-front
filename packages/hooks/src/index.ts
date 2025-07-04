@@ -6,6 +6,13 @@ export { useUIStore } from './useUIStore.js';
 export { useNotifications } from './useNotifications.js';
 export { useExchangeStore } from './useExchangeStore.js';
 
+// Business logic hooks
+export { useEnhancedAuth } from './business/useAuth.js';
+export { useExchange } from './business/useExchange.js';
+export { useOrderTracking } from './business/useOrderTracking.js';
+export { useForm, FORM_VALIDATION_SCHEMAS } from './business/useForm.js';
+export type { UseFormOptions, UseFormReturn, FormField } from './business/useForm.js';
+
 // Re-export trading store as is (no enhancements needed)
 export { useTradingStore } from './state/trading-store.js';
 
