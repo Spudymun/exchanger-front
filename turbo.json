@@ -3,64 +3,35 @@
   "ui": "tui",
   "tasks": {
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        ".env*"
-      ],
-      "outputs": [
-        ".next/**",
-        "!.next/cache/**"
-      ],
-      "env": [
-        "VERCEL_URL",
-        "PORT"
-      ]
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": ["VERCEL_URL", "PORT", "NODE_ENV"]
     },
     "lint": {
-      "dependsOn": [
-        "^lint"
-      ]
+      "dependsOn": ["^lint"]
     },
     "lint:strict": {
-      "dependsOn": [
-        "^lint:strict"
-      ]
+      "dependsOn": ["^lint:strict"]
     },
     "lint:styles": {
-      "dependsOn": [
-        "^lint:styles"
-      ]
+      "dependsOn": ["^lint:styles"]
     },
     "check-types": {
-      "dependsOn": [
-        "^check-types"
-      ]
+      "dependsOn": ["^check-types"]
     },
     "test": {
-      "dependsOn": [
-        "^test"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$"
-      ]
+      "dependsOn": ["^test"],
+      "inputs": ["$TURBO_DEFAULT$"]
     },
     "test:watch": {
       "cache": false,
       "persistent": true
     },
     "test:coverage": {
-      "dependsOn": [
-        "^test:coverage"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$"
-      ],
-      "outputs": [
-        "coverage/**"
-      ]
+      "dependsOn": ["^test:coverage"],
+      "inputs": ["$TURBO_DEFAULT$"],
+      "outputs": ["coverage/**"]
     },
     "dev": {
       "cache": false,
