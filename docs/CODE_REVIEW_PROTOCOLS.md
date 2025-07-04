@@ -579,6 +579,8 @@ export const useNotificationStore = create((set, get) => ({
 - [ ] Типизация интерфейса состояния
 - [ ] Actions возвращают новые объекты, не мутируют существующие
 - [ ] Разумный размер store (не более 200 строк)
+- [ ] **Memory leak prevention** - все таймеры/подписки имеют cleanup
+- [ ] **Stale closures prevention** - использование функциональных обновлений
 
 #### Enhanced Hooks:
 
@@ -758,12 +760,36 @@ export function ExchangeForm() {
    ```
 
 4. **Прямое использование stores в компонентах:**
+
    ```typescript
    // ❌
    export function Component() {
      const { addNotification } = useNotificationStore(); // Прямое использование!
      // Вместо enhanced hook useNotifications()
    }
+   ```
+
+5. **Memory leaks:**
+
+   ```typescript
+   // ❌
+   export function useTimer() {
+     useEffect(() => {
+       const interval = setInterval(() => {}, 1000);
+       // Забыли cleanup!
+     }, []);
+   }
+   ```
+
+6. **Stale closures:**
+   ```typescript
+   // ❌
+   const [count, setCount] = useState(0);
+   useEffect(() => {
+     const interval = setInterval(() => {
+       setCount(count + 1); // Stale closure!
+     }, 1000);
+   }, []); // Пустой deps
    ```
 
 ### 🔧 Методы анализа
@@ -774,11 +800,13 @@ export function ExchangeForm() {
 4. **Проверка селекторов:** оптимизация подписок в компонентах
 5. **DRY принцип:** отсутствие дублирования состояния между stores
 6. **Межуровневые зависимости:** правильное использование констант, утилит и API
+7. **Memory leaks check:** `setInterval|setTimeout|addEventListener` без cleanup
+8. **Stale closures check:** поиск устаревших замыканий в useEffect
 
 #### Архитектурная целостность:
 
 - [ ] **Константы из уровня 1** - все статусы, типы берутся из `@repo/constants`
-- [ ] **Утилиты из уровня 2** - валидация, вычисления используют централизованные функции
+- [ ] **Утилиты из уровня 2** - форматирование, валидация используют централизованные функции
 - [ ] **API из уровня 3** - tRPC вызовы инкапсулированы в business hooks
 - [ ] **Отсутствие дублирования** - нет повторяющихся селекторов и actions между stores
 
@@ -803,6 +831,8 @@ export function ExchangeForm() {
 - [ ] **Единственная ответственность** - один компонент = одна задача
 - [ ] **Пропсы** ≤8 пропсов на компонент
 - [ ] **Читаемость** - self-documenting код
+- [ ] **Performance awareness** - оптимизация импортов и lazy loading
+- [ ] **Accessibility basics** - базовые требования доступности
 
 ### 📋 Детальный чек-лист
 
@@ -871,6 +901,11 @@ export function Alert({ type, message, orderId }: Props) {
 - [ ] Композиция через children/slots
 - [ ] Размер компонента ≤50 строк
 - [ ] Строгая типизация пропсов
+- [ ] **Bundle size awareness** - селективные импорты библиотек
+- [ ] **Accessibility compliance** - кнопки, alt атрибуты, labels
+- [ ] **Error boundaries** - критичные компоненты обернуты
+- [ ] **SEO optimization** - правильные meta теги, структурированные данные
+- [ ] **i18n readiness** - тексты вынесены в конфигурацию (при необходимости)
 
 #### Специфичные компоненты (apps/web/src/components):
 
@@ -1065,11 +1100,36 @@ export function OrderStatus({ order }: Props) {
    ```
 
 4. **Превышение размера:**
+
    ```typescript
    // ❌ Компонент на 150+ строк
    export function Dashboard() {
      // Огромная логика, множество подкомпонентов inline
    }
+   ```
+
+5. **Bundle size problems:**
+
+   ```typescript
+   // ❌
+   import _ from 'lodash'; // Весь lodash!
+   import * as Icons from 'lucide-react'; // 500+ иконок!
+
+   // ✅
+   import { debounce } from 'lodash-es';
+   import { Search, User } from 'lucide-react';
+   ```
+
+6. **Accessibility issues:**
+
+   ```typescript
+   // ❌
+   <div onClick={handleClick}>Click me</div>
+   <img src="photo.jpg" />
+
+   // ✅
+   <button onClick={handleClick}>Click me</button>
+   <img src="photo.jpg" alt="User profile" />
    ```
 
 ### 🔧 Методы анализа
@@ -1080,6 +1140,8 @@ export function OrderStatus({ order }: Props) {
 4. **Проверка вложенности:** уровни условных операторов
 5. **DRY принцип:** отсутствие дублирования компонентов и логики
 6. **Межуровневые зависимости:** правильное использование архитектурных слоев
+7. **Bundle analysis:** поиск `import *` и массовых импортов
+8. **A11y check:** проверка кнопок, изображений, форм на доступность
 
 #### Архитектурная целостность:
 
@@ -1088,6 +1150,155 @@ export function OrderStatus({ order }: Props) {
 - [ ] **Хуки из уровня 4** - бизнес-логика инкапсулирована в business hooks
 - [ ] **НЕТ прямого API** - компоненты НЕ должны напрямую использовать tRPC (только через хуки)
 - [ ] **Отсутствие дублирования** - переиспользуемые компоненты в `@repo/ui`, специфичные логически разделены
+
+#### SEO и производительность:
+
+- [ ] **SEO compliance** - правильные meta tags, structured data, semantic HTML
+- [ ] **Performance optimization** - lazy loading, code splitting, image optimization
+- [ ] **Core Web Vitals** - LCP, FID, CLS метрики отслеживаются
+- [ ] **i18n readiness** - подготовка к интернационализации (если планируется)
+
+### 📈 Дополнительные проверки производительности
+
+#### SEO проверки (если критично для проекта):
+
+```typescript
+// ✅ Правильно - SEO-дружественная структура
+export function ProductPage({ product }: Props) {
+  return (
+    <>
+      <Head>
+        <title>{product.name} - Обмен криптовалют</title>
+        <meta name="description" content={product.description} />
+        <meta property="og:title" content={product.name} />
+        <meta property="og:description" content={product.description} />
+        <meta property="og:image" content={product.image} />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Product",
+            "name": product.name,
+            "description": product.description
+          })}
+        </script>
+      </Head>
+
+      <main>
+        <h1>{product.name}</h1>
+        <section>
+          <h2>Описание</h2>
+          <p>{product.description}</p>
+        </section>
+      </main>
+    </>
+  )
+}
+
+// ❌ Неправильно - плохая SEO структура
+export function ProductPage({ product }: Props) {
+  return (
+    <div>
+      <div className="title">{product.name}</div> {/* Не h1! */}
+      <div>{product.description}</div> {/* Нет семантики! */}
+      {/* Нет meta tags! */}
+      {/* Нет structured data! */}
+    </div>
+  )
+}
+```
+
+**SEO проверки:**
+
+- [ ] Правильная структура заголовков (h1, h2, h3)
+- [ ] Meta tags (title, description, og:tags)
+- [ ] Structured data (JSON-LD)
+- [ ] Семантические HTML элементы
+- [ ] Alt атрибуты для изображений
+- [ ] Canonical URLs
+
+#### i18n readiness (если планируется интернационализация):
+
+```typescript
+// ✅ Правильно - подготовка к i18n
+export function OrderStatus({ order }: Props) {
+  // Все тексты вынесены в константы для будущего перевода
+  const statusTexts = {
+    [ORDER_STATUS.PENDING]: 'Ожидает подтверждения',
+    [ORDER_STATUS.CONFIRMED]: 'Подтвержден',
+    [ORDER_STATUS.SHIPPED]: 'Отправлен'
+  }
+
+  return (
+    <div>
+      <span>{statusTexts[order.status]}</span>
+      <time dateTime={order.createdAt.toISOString()}>
+        {order.createdAt.toLocaleDateString()}
+      </time>
+    </div>
+  )
+}
+
+// ❌ Неправильно - hardcoded тексты
+export function OrderStatus({ order }: Props) {
+  return (
+    <div>
+      {order.status === 'pending' && <span>Ожидает подтверждения</span>}
+      {order.status === 'confirmed' && <span>Подтвержден</span>}
+      <span>{order.createdAt.toLocaleDateString('ru-RU')}</span> {/* Hardcoded locale! */}
+    </div>
+  )
+}
+```
+
+**i18n проверки:**
+
+- [ ] Все тексты вынесены в константы/конфигурацию
+- [ ] Отсутствие hardcoded строк в JSX
+- [ ] Правильное форматирование дат/чисел
+- [ ] Подготовка к namespace'ам переводов
+- [ ] Учет направления текста (LTR/RTL)
+
+#### Продвинутые performance метрики:
+
+```typescript
+// ✅ Правильно - мониторинг производительности
+import { getCLS, getFID, getLCP, getTTFB } from 'web-vitals';
+
+export function reportWebVitals(metric: any) {
+  // Отправка метрик в аналитику
+  if (metric.label === 'web-vital') {
+    console.log(metric.name, metric.value);
+
+    // Отправка в аналитику (если настроена)
+    if (typeof gtag !== 'undefined') {
+      gtag('event', metric.name, {
+        value: Math.round(metric.value),
+        event_label: metric.id,
+        non_interaction: true,
+      });
+    }
+  }
+}
+
+// В _app.tsx
+export function reportWebVitals(metric: NextWebVitalsMetric) {
+  // Мониторинг критических метрик
+  const criticalMetrics = ['CLS', 'FID', 'LCP', 'TTFB'];
+
+  if (criticalMetrics.includes(metric.name)) {
+    console.log(`${metric.name}: ${metric.value}`);
+  }
+}
+```
+
+**Core Web Vitals проверки:**
+
+- [ ] **LCP (Largest Contentful Paint)** - ≤2.5s
+- [ ] **FID (First Input Delay)** - ≤100ms
+- [ ] **CLS (Cumulative Layout Shift)** - ≤0.1
+- [ ] **TTFB (Time to First Byte)** - ≤800ms
+- [ ] Мониторинг настроен в production
+- [ ] Alerts на критические значения метрик
 
 ---
 
@@ -1110,6 +1321,7 @@ export function OrderStatus({ order }: Props) {
 - [ ] **Минимализм** - только необходимые зависимости
 - [ ] **Обратная совместимость** с существующим кодом
 - [ ] **Производительность** dev/build процессов
+- [ ] **Bundle size monitoring** - отслеживание размера сборки
 
 ### 📋 Детальный чек-лист
 
@@ -1326,56 +1538,100 @@ export default {
 - [ ] Медленные проверки в pre-commit hook
 - [ ] Автофикс настроен корректно
 
-### 🚨 Типичные нарушения
+#### Bundle size monitoring:
 
-1. **Неконсистентные версии:**
+- [ ] **Webpack Bundle Analyzer** - регулярный анализ размера бандла
+- [ ] **Performance budgets** - лимиты на размер чанков
+- [ ] **Tree shaking** - неиспользуемый код исключается
+- [ ] **Code splitting** - оптимальное разделение кода
+- [ ] **Dependencies audit** - проверка размера зависимостей
 
-   ```json
-   // ❌ apps/web/package.json
-   "react": "^18.2.0"
+#### Performance мониторинг:
 
-   // ❌ apps/admin/package.json
-   "react": "^17.0.0" // Разные версии!
-   ```
+```typescript
+// ✅ Правильно - мониторинг производительности в конфигах
+module.exports = {
+  // Bundle analyzer
+  webpack: (config, { isServer }) => {
+    if (process.env.ANALYZE) {
+      const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+      config.plugins.push(
+        new BundleAnalyzerPlugin({
+          analyzerMode: 'server',
+          openAnalyzer: true,
+        })
+      );
+    }
 
-2. **Чувствительные данные:**
+    // Performance budgets
+    config.performance = {
+      maxAssetSize: 500000, // 500KB
+      maxEntrypointSize: 500000,
+      assetFilter: assetFilename => {
+        return !assetFilename.endsWith('.map');
+      },
+    };
 
-   ```json
-   // ❌
-   {
-     "scripts": {
-       "deploy": "API_KEY=secret-key-123 deploy.sh" // Секрет в config!
-     }
-   }
-   ```
+    return config;
+  },
 
-3. **Производительность:**
+  // Performance settings
+  experimental: {
+    optimizePackageImports: ['lodash', 'date-fns'],
+    bundlePagesRouterDependencies: true,
+  },
+};
 
-   ```json
-   // ❌
-   {
-     "scripts": {
-       "lint": "eslint . && tsc --noEmit && stylelint **/*.css" // Медленно!
-     }
-   }
-   ```
+// ❌ Неправильно - отсутствие мониторинга
+module.exports = {
+  // Нет bundle analyzer
+  // Нет performance budgets
+  // Нет оптимизации импортов
+};
+```
 
-4. **Отсутствие оркестрации:**
-   ```json
-   // ❌
-   {
-     "scripts": {
-       "build": "cd apps/web && npm run build && cd ../admin && npm run build"
-     }
-   }
-   ```
+**Performance конфигурация:**
 
-### 🔧 Методы анализа
+- [ ] Bundle analyzer настроен
+- [ ] Performance budgets установлены
+- [ ] Tree shaking работает корректно
+- [ ] Оптимизация импортов библиотек
+- [ ] Мониторинг размера dependency
+- [ ] Lighthouse CI интеграция (если используется)
 
-1. **Проверка версий:** `npm ls` для поиска конфликтов
-2. **Анализ размера:** `npm run build` и анализ bundle size
-3. **Производительность:** замер времени выполнения скриптов
-4. **Безопасность:** поиск hardcoded секретов в конфигах
+#### Дополнительные проверки:
+
+```typescript
+// ✅ Правильно - комплексный мониторинг
+{
+  "scripts": {
+    "analyze": "ANALYZE=true npm run build",
+    "lighthouse": "lhci autorun",
+    "bundle-size": "npx bundlesize",
+    "perf:measure": "node scripts/performance-test.js"
+  },
+
+  // Bundle size limits
+  "bundlesize": [
+    {
+      "path": "./dist/static/js/*.js",
+      "maxSize": "500KB"
+    },
+    {
+      "path": "./dist/static/css/*.css",
+      "maxSize": "100KB"
+    }
+  ]
+}
+```
+
+**Комплексный мониторинг:**
+
+- [ ] **Bundle size CI** - проверка на PR
+- [ ] **Lighthouse CI** - автоматические проверки производительности
+- [ ] **Performance regression alerts** - уведомления о деградации
+- [ ] **Real User Monitoring** - мониторинг реальных пользователей
+- [ ] **Core Web Vitals dashboard** - дашборд с метриками
 
 ---
 
