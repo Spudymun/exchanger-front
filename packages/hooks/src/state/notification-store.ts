@@ -1,0 +1,191 @@
+import { nanoid } from 'nanoid';
+import { create } from 'zustand';
+import { devtools, subscribeWithSelector } from 'zustand/middleware';
+
+// Типы уведомлений
+export type NotificationType = 'success' | 'error' | 'warning' | 'info';
+
+export interface NotificationAction {
+  label: string;
+  onClick: () => void;
+  variant?: 'default' | 'destructive' | 'outline' | 'secondary';
+}
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  description?: string;
+  duration?: number; // в миллисекундах, null = постоянное
+  action?: NotificationAction;
+  persistent?: boolean; // не удаляется автоматически
+  createdAt: number;
+}
+
+export interface NotificationStore {
+  notifications: Notification[];
+
+  // Actions
+  addNotification: (notification: Omit<Notification, 'id' | 'createdAt'>) => string;
+  removeNotification: (id: string) => void;
+  clearNotifications: () => void;
+
+  // Convenience methods
+  success: (
+    title: string,
+    description?: string,
+    options?: Partial<Pick<Notification, 'duration' | 'action' | 'persistent'>>
+  ) => string;
+  error: (
+    title: string,
+    description?: string,
+    options?: Partial<Pick<Notification, 'duration' | 'action' | 'persistent'>>
+  ) => string;
+  warning: (
+    title: string,
+    description?: string,
+    options?: Partial<Pick<Notification, 'duration' | 'action' | 'persistent'>>
+  ) => string;
+  info: (
+    title: string,
+    description?: string,
+    options?: Partial<Pick<Notification, 'duration' | 'action' | 'persistent'>>
+  ) => string;
+
+  // Configuration
+  maxNotifications: number;
+  defaultDuration: number;
+}
+
+// Дефолтные значения
+const DEFAULT_DURATION = 5000; // 5 секунд
+const MAX_NOTIFICATIONS = 8;
+const ERROR_DURATION = 8000; // 8 секунд для ошибок
+const WARNING_DURATION = 7000; // 7 секунд для предупреждений
+
+// Функция для создания основных действий
+const createNotificationActions = (
+  set: (fn: (state: NotificationStore) => Partial<NotificationStore>) => void,
+  get: () => NotificationStore
+) => ({
+  addNotification: (notification: Omit<Notification, 'id' | 'createdAt'>) => {
+    const id = nanoid();
+    const newNotification: Notification = {
+      id,
+      createdAt: Date.now(),
+      duration: notification.duration ?? DEFAULT_DURATION,
+      ...notification,
+    };
+
+    set(state => {
+      const notifications = [...state.notifications, newNotification];
+
+      // Ограничиваем количество уведомлений
+      if (notifications.length > state.maxNotifications) {
+        notifications.shift(); // Удаляем самое старое
+      }
+
+      return { notifications };
+    });
+
+    // Автоматическое удаление через duration (если не persistent)
+    if (!notification.persistent && newNotification.duration !== null) {
+      setTimeout(() => {
+        get().removeNotification(id);
+      }, newNotification.duration);
+    }
+
+    return id;
+  },
+
+  removeNotification: (id: string) => {
+    set(state => ({
+      notifications: state.notifications.filter(n => n.id !== id),
+    }));
+  },
+
+  clearNotifications: () => {
+    set(() => ({ notifications: [] }));
+  },
+});
+
+// Функция для создания convenience методов
+const createConvenienceMethods = (get: () => NotificationStore) => ({
+  success: (
+    title: string,
+    description?: string,
+    options?: Partial<Pick<Notification, 'duration' | 'action' | 'persistent'>>
+  ) => {
+    return get().addNotification({
+      type: 'success',
+      title,
+      description,
+      ...options,
+    });
+  },
+
+  error: (
+    title: string,
+    description?: string,
+    options?: Partial<Pick<Notification, 'duration' | 'action' | 'persistent'>>
+  ) => {
+    return get().addNotification({
+      type: 'error',
+      title,
+      description,
+      duration: options?.duration ?? ERROR_DURATION, // Ошибки показываем дольше
+      ...options,
+    });
+  },
+
+  warning: (
+    title: string,
+    description?: string,
+    options?: Partial<Pick<Notification, 'duration' | 'action' | 'persistent'>>
+  ) => {
+    return get().addNotification({
+      type: 'warning',
+      title,
+      description,
+      duration: options?.duration ?? WARNING_DURATION, // Предупреждения показываем дольше
+      ...options,
+    });
+  },
+
+  info: (
+    title: string,
+    description?: string,
+    options?: Partial<Pick<Notification, 'duration' | 'action' | 'persistent'>>
+  ) => {
+    return get().addNotification({
+      type: 'info',
+      title,
+      description,
+      ...options,
+    });
+  },
+});
+
+export const useNotificationStore = create<NotificationStore>()(
+  devtools(
+    subscribeWithSelector((set, get) => ({
+      notifications: [],
+      maxNotifications: MAX_NOTIFICATIONS,
+      defaultDuration: DEFAULT_DURATION,
+
+      // Actions
+      ...createNotificationActions(set, get),
+      ...createConvenienceMethods(get),
+    })),
+    {
+      name: 'notification-store',
+      version: 1,
+    }
+  )
+);
+
+// Селекторы для оптимизации
+export const selectNotifications = (state: NotificationStore) => state.notifications;
+export const selectNotificationCount = (state: NotificationStore) => state.notifications.length;
+export const selectNotificationsByType = (type: NotificationType) => (state: NotificationStore) =>
+  state.notifications.filter(n => n.type === type);
