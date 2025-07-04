@@ -96,8 +96,31 @@ export const EXCHANGE_VALIDATION_LIMITS = {
 // Regex паттерны ExchangeGO
 export const EXCHANGE_VALIDATION_PATTERNS = {
   CARD_NUMBER: /^\d{16}$/,
-  CRYPTO_AMOUNT: /^\d+(\.\d{1,8})?$/,
-  UAH_AMOUNT: /^\d+(\.\d{1,2})?$/,
+
+  // Safe validators to prevent ReDoS attacks
+  CRYPTO_AMOUNT: (() => {
+    const cryptoAmountValidator = (amount: string): boolean => {
+      // Validate crypto amount format: number with up to 8 decimal places
+      if (!/^\d+$/.test(amount.replace('.', ''))) return false;
+      const parts = amount.split('.');
+      if (parts.length > 2) return false;
+      if (parts.length === 2 && parts[1].length > 8) return false;
+      return parts[0].length > 0 && /^\d+$/.test(parts[0]);
+    };
+    return { test: cryptoAmountValidator };
+  })(),
+
+  UAH_AMOUNT: (() => {
+    const uahAmountValidator = (amount: string): boolean => {
+      // Validate UAH amount format: number with up to 2 decimal places
+      if (!/^\d+$/.test(amount.replace('.', ''))) return false;
+      const parts = amount.split('.');
+      if (parts.length > 2) return false;
+      if (parts.length === 2 && parts[1].length > 2) return false;
+      return parts[0].length > 0 && /^\d+$/.test(parts[0]);
+    };
+    return { test: uahAmountValidator };
+  })(),
 } as const;
 
 // Blockchain explorer URLs
@@ -174,4 +197,35 @@ export const EXCHANGE_VALIDATION_MESSAGES = {
   AMOUNT_TOO_HIGH: `Максимальная сумма: $${AMOUNT_LIMITS.MAX_USD}`,
   CURRENCY_INVALID: 'Неподдерживаемая криптовалюта',
   CARD_NUMBER_INVALID: 'Некорректный номер карты',
+} as const;
+
+// Exchange router constants
+export const EXCHANGE_STATUS_PROCESSING = 'processing';
+export const EXCHANGE_STATUS_COMPLETED = 'completed';
+export const EXCHANGE_STATUS_FAILED = 'failed';
+
+// Exchange request processing
+export const EXCHANGE_REQUEST_TIMEOUT_MS = 30000;
+export const EXCHANGE_RETRY_ATTEMPTS = 3;
+export const EXCHANGE_RETRY_DELAY_MS = 1000;
+
+// Exchange validation
+export const MIN_EXCHANGE_AMOUNT = 0.01;
+export const MAX_EXCHANGE_AMOUNT = 1000000;
+export const EXCHANGE_AMOUNT_PRECISION = 8;
+
+// API delays for exchange operations
+export const API_DELAY_MS = 100;
+export const ORDER_CREATION_DELAY_MS = 200;
+
+// Order pagination limits
+export const DEFAULT_ORDER_LIMIT = 20;
+export const MAX_ORDER_LIMIT = 50;
+
+// Currency display names (centralized)
+export const CURRENCY_NAMES = {
+  BTC: 'Bitcoin',
+  ETH: 'Ethereum',
+  USDT: 'Tether (ERC-20)',
+  LTC: 'Litecoin',
 } as const;

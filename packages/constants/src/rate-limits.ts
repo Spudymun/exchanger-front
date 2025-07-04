@@ -2,6 +2,9 @@
  * Rate limiting configuration for ExchangeGO
  */
 
+// Time conversion constants
+export const MILLISECONDS_IN_SECOND = 1000;
+
 // Rate limiting конфигурация
 export const RATE_LIMITS = {
   CREATE_ORDER: {

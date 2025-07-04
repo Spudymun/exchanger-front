@@ -28,6 +28,9 @@ export const VALIDATION_LIMITS = {
   PORTFOLIO_ASSETS_MAX: 100,
   OPEN_ORDERS_MAX: 20,
 
+  // Time constants
+  MILLISECONDS_IN_SECOND: 1000,
+
   // Content
   DESCRIPTION_MAX_LENGTH: 500,
   COMMENT_MAX_LENGTH: 1000,
@@ -154,6 +157,9 @@ export const AUTH_CONSTANTS = {
   RESET_CODE_BASE: 36,
   RESET_CODE_START: 2,
   RESET_CODE_END: 8,
+
+  // HTTP headers
+  SET_COOKIE_HEADER: 'Set-Cookie',
 } as const;
 
 // Validation helper functions

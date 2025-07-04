@@ -14,8 +14,6 @@ import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '../init';
 import { rateLimitMiddleware } from '../middleware/rateLimit';
 
-const SET_COOKIE_HEADER = 'Set-Cookie';
-
 export const authRouter = createTRPCRouter({
   // Регистрация нового пользователя
   register: rateLimitMiddleware.register
@@ -72,7 +70,7 @@ export const authRouter = createTRPCRouter({
 
       // Устанавливаем cookie с session ID
       ctx.res.setHeader(
-        SET_COOKIE_HEADER,
+        AUTH_CONSTANTS.SET_COOKIE_HEADER,
         `sessionId=${sessionId}; HttpOnly; Path=/; Max-Age=${AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS}; SameSite=Lax`
       );
 
@@ -132,7 +130,7 @@ export const authRouter = createTRPCRouter({
 
       // Устанавливаем cookie
       ctx.res.setHeader(
-        SET_COOKIE_HEADER,
+        AUTH_CONSTANTS.SET_COOKIE_HEADER,
         `sessionId=${sessionId}; HttpOnly; Path=/; Max-Age=${AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS}; SameSite=Lax`
       );
 
@@ -265,7 +263,7 @@ export const authRouter = createTRPCRouter({
 
       // Устанавливаем cookie
       ctx.res.setHeader(
-        SET_COOKIE_HEADER,
+        AUTH_CONSTANTS.SET_COOKIE_HEADER,
         `sessionId=${sessionId}; HttpOnly; Path=/; Max-Age=${AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS}; SameSite=Lax`
       );
 

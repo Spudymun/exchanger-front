@@ -17,6 +17,13 @@ export const UI_NUMERIC_CONSTANTS = {
   MAX_PAGE_SIZE_SMALL: 20,
   MAX_PAGE_SIZE_LARGE: 50,
 
+  // Table rendering
+  SKELETON_ROWS_COUNT: 5,
+  ROW_ID_TRUNCATE_LENGTH: 50,
+
+  // Tree view constants
+  TREE_LEVEL_PADDING: 16,
+
   // Form validation
   MIN_SUBJECT_LENGTH: 5,
   MIN_DESCRIPTION_LENGTH: 10,
@@ -136,6 +143,13 @@ export const ICON_SIZES = {
   MD: 'md',
   LG: 'lg',
   XL: 'xl',
+} as const;
+
+// CSS class constants for components
+export const CSS_CLASSES = {
+  // Icon sizes (Tailwind classes)
+  ICON_SIZE_SMALL: 'h-3 w-3',
+  ICON_SIZE_MEDIUM: 'h-4 w-4',
 } as const;
 
 // UI Status configurations with colors and icons

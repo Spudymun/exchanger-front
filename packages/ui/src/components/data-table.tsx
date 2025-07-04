@@ -1,3 +1,4 @@
+import { UI_NUMERIC_CONSTANTS } from '@repo/constants';
 import { ChevronDown, Search, Filter } from 'lucide-react';
 import React, { useCallback } from 'react';
 
@@ -12,11 +13,6 @@ import {
 } from './ui/dropdown-menu';
 import { Input } from './ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
-
-// Constants for magic numbers
-const DEFAULT_PAGE_SIZE = 10;
-const SKELETON_ROWS_COUNT = 5;
-const ROW_ID_TRUNCATE_LENGTH = 50;
 
 export interface Column<T> {
   key: keyof T;
@@ -141,7 +137,7 @@ function DataTableSkeleton() {
     <div className="space-y-4">
       <div className="h-10 bg-muted animate-pulse rounded" />
       <div className="space-y-2">
-        {Array.from({ length: SKELETON_ROWS_COUNT }, (_, i) => (
+        {Array.from({ length: UI_NUMERIC_CONSTANTS.SKELETON_ROWS_COUNT }, (_, i) => (
           <div key={`skeleton-row-${i}`} className="h-16 bg-muted animate-pulse rounded" />
         ))}
       </div>
@@ -179,7 +175,7 @@ export function DataTable<T extends Record<string, unknown>>({
   searchable = true,
   filterable = true,
   pagination = true,
-  pageSize = DEFAULT_PAGE_SIZE,
+  pageSize = UI_NUMERIC_CONSTANTS.DEFAULT_PAGE_SIZE,
   loading = false,
   onRowClick,
   className,
@@ -237,13 +233,13 @@ interface DataTableToolbarProps<T> {
   columns: Array<Column<T>>;
 }
 
-function DataTableToolbar<T extends Record<string, unknown>>({
-  searchable,
-  filterable,
+function SearchInput({
   searchTerm,
   onSearchChange,
-  columns,
-}: DataTableToolbarProps<T>) {
+}: {
+  searchTerm: string;
+  onSearchChange: (value: string) => void;
+}) {
   const handleSearchChange = React.useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       onSearchChange(e.target.value);
@@ -251,42 +247,62 @@ function DataTableToolbar<T extends Record<string, unknown>>({
     [onSearchChange]
   );
 
+  return (
+    <div className="relative">
+      <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+      <Input
+        placeholder="Search..."
+        value={searchTerm}
+        onChange={handleSearchChange}
+        className="pl-8"
+      />
+    </div>
+  );
+}
+
+function FilterDropdown<T extends Record<string, unknown>>({
+  columns,
+}: {
+  columns: Array<Column<T>>;
+}) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Filter className="mr-2 h-4 w-4" />
+          Filter
+          <ChevronDown className="ml-2 h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        <DropdownMenuLabel>Filter by</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {columns
+          .filter(col => col.filterable)
+          .map(col => (
+            <DropdownMenuItem key={String(col.key)}>{col.header}</DropdownMenuItem>
+          ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function DataTableToolbar<T extends Record<string, unknown>>({
+  searchable,
+  filterable,
+  searchTerm,
+  onSearchChange,
+  columns,
+}: DataTableToolbarProps<T>) {
   if (!searchable && !filterable) return null;
 
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-2">
         {searchable ? (
-          <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={handleSearchChange}
-              className="pl-8"
-            />
-          </div>
+          <SearchInput searchTerm={searchTerm} onSearchChange={onSearchChange} />
         ) : null}
-        {filterable ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Filter className="mr-2 h-4 w-4" />
-                Filter
-                <ChevronDown className="ml-2 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuLabel>Filter by</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {columns
-                .filter(col => col.filterable)
-                .map(col => (
-                  <DropdownMenuItem key={String(col.key)}>{col.header}</DropdownMenuItem>
-                ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : null}
+        {filterable ? <FilterDropdown columns={columns} /> : null}
       </div>
     </div>
   );
@@ -383,7 +399,7 @@ function DataTableBody<T extends Record<string, unknown>>({
         const rowKey =
           'id' in row && typeof row.id === 'string'
             ? row.id
-            : `row-${index}-${JSON.stringify(row).slice(0, ROW_ID_TRUNCATE_LENGTH)}`;
+            : `row-${index}-${JSON.stringify(row).slice(0, UI_NUMERIC_CONSTANTS.ROW_ID_TRUNCATE_LENGTH)}`;
 
         return (
           <TableRow

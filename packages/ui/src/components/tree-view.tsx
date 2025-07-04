@@ -3,10 +3,7 @@ import React from 'react';
 
 import { cn } from '../lib/utils';
 
-// Constants for magic numbers
-const TREE_LEVEL_PADDING = 16;
-const ICON_SIZE = 'h-3 w-3';
-const CONTAINER_ICON_SIZE = 'h-4 w-4';
+const TREE_LEVEL_PADDING = 16; // Отступ для уровней в дереве
 
 export interface TreeNode {
   id: string;
@@ -58,7 +55,7 @@ function TreeToggleButton({
       onClick={onToggle}
       className="hover:bg-muted rounded p-0.5 transition-colors"
     >
-      {isExpanded ? <ChevronDown className={ICON_SIZE} /> : <ChevronRight className={ICON_SIZE} />}
+      {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
     </button>
   );
 }
@@ -76,11 +73,8 @@ function TreeItemIcon({
   if (!showIcons) return null;
 
   return (
-    <div
-      className={`${CONTAINER_ICON_SIZE} mr-2 flex items-center justify-center text-muted-foreground`}
-    >
-      {customIcon ||
-        (hasChildren ? <Folder className={ICON_SIZE} /> : <File className={ICON_SIZE} />)}
+    <div className="h-4 w-4 mr-2 flex items-center justify-center text-muted-foreground">
+      {customIcon || (hasChildren ? <Folder className="h-3 w-3" /> : <File className="h-3 w-3" />)}
     </div>
   );
 }
@@ -114,7 +108,7 @@ function TreeItemContent({
         node.disabled && 'opacity-50 cursor-not-allowed'
       )}
     >
-      <div className={`${CONTAINER_ICON_SIZE} mr-1 flex items-center justify-center`}>
+      <div className="h-4 w-4 mr-1 flex items-center justify-center">
         <TreeToggleButton hasChildren={hasChildren} isExpanded={isExpanded} onToggle={onToggle} />
       </div>
 
@@ -321,24 +315,21 @@ function TreeNodeList({
   );
 }
 
-export function TreeView({
-  data,
-  onSelect,
+function useTreeViewHandlers({
   selectedId,
-  expandedIds: controlledExpandedIds,
+  isControlled,
+  setInternalSelectedId,
+  setInternalExpandedIds,
+  onSelect,
   onToggle,
-  className,
-  showIcons = true,
-  defaultExpandAll = false,
-}: TreeViewProps) {
-  const {
-    expandedIds,
-    currentSelectedId,
-    setInternalExpandedIds,
-    setInternalSelectedId,
-    isControlled,
-  } = useTreeViewState(data, selectedId, controlledExpandedIds, defaultExpandAll);
-
+}: {
+  selectedId: string | undefined;
+  isControlled: boolean;
+  setInternalSelectedId: (id: string) => void;
+  setInternalExpandedIds: React.Dispatch<React.SetStateAction<Set<string>>>;
+  onSelect?: (node: TreeNode) => void;
+  onToggle?: (nodeId: string, expanded: boolean) => void;
+}) {
   const handleSelect = React.useCallback(
     (node: TreeNode) => {
       if (!selectedId) {
@@ -366,6 +357,36 @@ export function TreeView({
     },
     [isControlled, setInternalExpandedIds, onToggle]
   );
+
+  return { handleSelect, handleToggle };
+}
+
+export function TreeView({
+  data,
+  onSelect,
+  selectedId,
+  expandedIds: controlledExpandedIds,
+  onToggle,
+  className,
+  showIcons = true,
+  defaultExpandAll = false,
+}: TreeViewProps) {
+  const {
+    expandedIds,
+    currentSelectedId,
+    setInternalExpandedIds,
+    setInternalSelectedId,
+    isControlled,
+  } = useTreeViewState(data, selectedId, controlledExpandedIds, defaultExpandAll);
+
+  const { handleSelect, handleToggle } = useTreeViewHandlers({
+    selectedId,
+    isControlled,
+    setInternalSelectedId,
+    setInternalExpandedIds,
+    onSelect,
+    onToggle,
+  });
 
   return (
     <div className={cn('space-y-0.5', className)}>

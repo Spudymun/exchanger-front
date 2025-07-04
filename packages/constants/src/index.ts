@@ -7,3 +7,6 @@ export * from './user';
 // ExchangeGO specific exports
 export * from './exchange';
 export * from './rate-limits';
+
+// Common time constants
+export const MILLISECONDS_IN_SECOND = 1000;

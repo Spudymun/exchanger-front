@@ -1,4 +1,11 @@
-import { CRYPTOCURRENCIES } from '@repo/constants';
+import {
+  CRYPTOCURRENCIES,
+  API_DELAY_MS,
+  ORDER_CREATION_DELAY_MS,
+  DEFAULT_ORDER_LIMIT,
+  MAX_ORDER_LIMIT,
+  CURRENCY_NAMES,
+} from '@repo/constants';
 import {
   validateCreateOrder,
   calculateUahAmount,
@@ -15,20 +22,6 @@ import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '../init';
 import { rateLimitMiddleware } from '../middleware/rateLimit';
-
-// Константы для magic numbers
-const API_DELAY_MS = 100;
-const ORDER_CREATION_DELAY_MS = 200;
-const DEFAULT_ORDER_LIMIT = 20;
-const MAX_ORDER_LIMIT = 50;
-
-// Названия криптовалют
-const CURRENCY_NAMES = {
-  BTC: 'Bitcoin',
-  ETH: 'Ethereum',
-  USDT: 'Tether (ERC-20)',
-  LTC: 'Litecoin',
-} as const;
 
 export const exchangeRouter = createTRPCRouter({
   // Получить текущие курсы валют

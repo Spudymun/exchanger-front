@@ -1,4 +1,4 @@
-import { RATE_LIMITS, RATE_LIMIT_MESSAGES } from '@repo/constants';
+import { RATE_LIMITS, RATE_LIMIT_MESSAGES, MILLISECONDS_IN_SECOND } from '@repo/constants';
 
 import { TRPCError } from '@trpc/server';
 
@@ -6,8 +6,6 @@ import { publicProcedure } from '../init';
 
 // In-memory rate limiter (в продакшене будет Redis)
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
-
-const MILLISECONDS_IN_SECOND = 1000;
 
 export function createRateLimiter(action: keyof typeof RATE_LIMITS) {
   // eslint-disable-next-line security/detect-object-injection
