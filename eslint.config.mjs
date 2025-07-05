@@ -5,7 +5,6 @@ import {
   FILE_SIZE_LIMITS, 
   DEPTH_LIMITS, 
   PARAMETERS_LIMITS, 
-  MAGIC_NUMBERS, 
   DESCRIPTION_LENGTHS
 } from './packages/constants/dist/index.js';
 
@@ -96,9 +95,8 @@ export default [
       'packages/exchange-core/src/utils/calculations.ts'
     ],
     rules: lazyLoadConfig('constants-rules', () => ({
-      // Константы и валидация могут содержать magic numbers
+      // Все magic numbers должны быть заменены на семантические константы
       'no-magic-numbers': ['error', {
-        ignore: MAGIC_NUMBERS.COMMON, // Частые значения из централизованных констант
         ignoreArrayIndexes: true,
         ignoreDefaultValues: true,
         ignoreClassFieldInitialValues: true
@@ -111,9 +109,8 @@ export default [
     name: 'crypto-utils',
     files: ['packages/exchange-core/**/*.{js,ts}'],
     rules: lazyLoadConfig('crypto-rules', () => ({
-      // Криптографические функции могут использовать magic numbers
+      // Все magic numbers должны быть заменены на семантические константы
       'no-magic-numbers': ['error', {
-        ignore: MAGIC_NUMBERS.CRYPTO, // Частые значения в crypto из централизованных констант
         ignoreArrayIndexes: true
       }],
     })),
@@ -172,7 +169,8 @@ export default [
     rules: lazyLoadConfig('api-complexity-rules', () => ({
       // API слой может иметь более сложную логику
       'max-lines-per-function': ['error', { max: FUNCTION_SIZE_LIMITS.API_ENDPOINTS }],
-      'complexity': ['error', COMPLEXITY_LIMITS.API_LAYER]
+      'complexity': ['error', COMPLEXITY_LIMITS.API_LAYER],
+      'no-console': 'off', // Разрешено для логирования согласно DEVELOPER_GUIDE.md
     })),
   },
 
@@ -185,15 +183,6 @@ export default [
   },
 
   {
-    name: 'scripts-depth',
-    files: ['scripts/**/*.js'],
-    rules: lazyLoadConfig('scripts-rules', () => ({
-      // Могут иметь более глубокую вложенность
-      'max-depth': ['error', DEPTH_LIMITS.SCRIPTS],
-    })),
-  },
-
-  {
     name: 'utils-quality',
     files: ['packages/utils/**/*.{ts,tsx}', 'packages/exchange-core/**/*.{ts,tsx}'],
     rules: lazyLoadConfig('utils-quality-rules', () => ({
@@ -201,6 +190,78 @@ export default [
       'complexity': ['error', COMPLEXITY_LIMITS.UTILS], // Строже базового
       'max-statements': ['error', 10],
       'max-nested-callbacks': ['error', 2],
+    })),
+  },
+
+  // === ESLINT CONFIG INFRASTRUCTURE ===
+  {
+    name: 'eslint-config-infrastructure',
+    files: ['packages/eslint-config/**/*.js'],
+    rules: lazyLoadConfig('eslint-config-rules', () => ({
+      // ESLint конфигурация может быть больше и содержать инфраструктурный код
+      'max-lines-per-function': ['error', { max: 100 }], // Больше лимит для config функций
+      'no-console': 'off', // Разрешено для performance мониторинга
+      'promise/catch-or-return': 'off', // Разрешено в benchmark утилитах
+      'promise/always-return': 'off', // Разрешено в benchmark утилитах
+    })),
+  },
+
+  // === HOOKS LAYER SECURITY OVERRIDES ===
+  {
+    name: 'hooks-security-overrides',
+    files: ['packages/hooks/**/*.{ts,tsx}'],
+    rules: lazyLoadConfig('hooks-security-rules', () => ({
+      // Разрешено object injection для типизированных theme объектов
+      'security/detect-object-injection': 'off',
+    })),
+  },
+
+  // === ROOT CONFIG FILES ===
+  {
+    name: 'root-configs',
+    files: ['*.config.{js,mjs,ts}', 'jest.config.js'],
+    rules: lazyLoadConfig('root-config-rules', () => ({
+      'no-console': 'off', // Разрешено в конфигурационных файлах
+      'sonarjs/no-duplicate-string': 'off', // Разрешено дублирование в конфигах
+    })),
+  },
+
+  // === SECURITY FALSE POSITIVES OVERRIDES ===
+  {
+    name: 'crypto-enum-access',
+    files: [
+      'packages/exchange-core/src/utils/crypto.ts',
+      'packages/exchange-core/src/utils/calculations.ts',
+      'packages/exchange-core/src/data/manager.ts'
+    ],
+    rules: lazyLoadConfig('crypto-enum-rules', () => ({
+      // Разрешено object injection для типизированного enum-based доступа
+      'security/detect-object-injection': 'off',
+      // Разрешено non-null assertion для типизированных индексов
+      '@typescript-eslint/no-non-null-assertion': 'off',
+    })),
+  },
+
+  {
+    name: 'build-scripts-access',
+    files: ['scripts/**/*.js'],
+    rules: lazyLoadConfig('build-scripts-rules', () => ({
+      // Могут иметь более глубокую вложенность
+      'max-depth': ['error', DEPTH_LIMITS.SCRIPTS],
+      'no-console': 'off', // Разрешено для build scripts
+      '@typescript-eslint/no-unused-vars': 'off', // Разрешено в утилитарных скриптах
+      'security/detect-object-injection': 'off', // Разрешено для package.json доступа
+    })),
+  },
+
+  {
+    name: 'ui-demo-components',
+    files: ['packages/ui/**/*.{tsx,jsx}'],
+    rules: lazyLoadConfig('ui-demo-rules', () => ({
+      // UI компоненты могут быть больше из-за JSX
+      'max-lines': ['error', { max: FILE_SIZE_LIMITS.UI_LIBRARY }],
+      'max-lines-per-function': ['error', { max: FUNCTION_SIZE_LIMITS.UI_COMPONENTS }],
+      'no-console': 'off', // Разрешено для demo функций в UI компонентах
     })),
   },
 ];

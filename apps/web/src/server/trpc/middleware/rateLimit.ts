@@ -1,4 +1,4 @@
-import { RATE_LIMITS, RATE_LIMIT_MESSAGES, MILLISECONDS_IN_SECOND } from '@repo/constants';
+import { RATE_LIMITS, RATE_LIMIT_MESSAGES, TIME_CONSTANTS } from '@repo/constants';
 
 import { TRPCError } from '@trpc/server';
 
@@ -22,7 +22,7 @@ export function createRateLimiter(action: keyof typeof RATE_LIMITS) {
     if (!current || now > current.resetTime) {
       rateLimitStore.set(key, {
         count: 1,
-        resetTime: now + config.duration * MILLISECONDS_IN_SECOND,
+        resetTime: now + config.duration * TIME_CONSTANTS.MILLISECONDS_IN_SECOND,
       });
       return;
     }

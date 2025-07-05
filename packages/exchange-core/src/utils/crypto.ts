@@ -6,6 +6,7 @@ import {
   MIN_TRANSACTION_AMOUNTS,
   CURRENCY_SYMBOLS,
   CURRENCY_FULL_NAMES,
+  DECIMAL_PRECISION,
 } from '@repo/constants';
 
 import type { CryptoCurrency } from '../types';
@@ -62,7 +63,7 @@ export function getCurrencyDecimals(currency: CryptoCurrency): number {
  */
 export function formatCryptoAmount(amount: number, currency: CryptoCurrency): string {
   const decimals = getCurrencyDecimals(currency);
-  return amount.toFixed(Math.min(decimals, 8)); // Ограничиваем максимум 8 знаками для UI
+  return amount.toFixed(Math.min(decimals, DECIMAL_PRECISION.UI_MAX_DECIMAL_PLACES)); // Ограничиваем максимум 8 знаками для UI
 }
 
 /**

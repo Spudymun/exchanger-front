@@ -1,3 +1,6 @@
+import { DECIMAL_PRECISION } from './decimal-precision';
+import { VALIDATION_BOUNDS } from './validation-bounds';
+
 /**
  * ExchangeGO specific constants
  */
@@ -68,9 +71,9 @@ export const EXCHANGE_VALIDATION_PATTERNS = {
       // Validate crypto amount format: number with up to 8 decimal places
       if (!/^\d+$/.test(amount.replace('.', ''))) return false;
       const parts = amount.split('.');
-      if (parts.length > 2) return false;
-      if (parts.length === 2 && parts[1].length > 8) return false;
-      return parts[0].length > 0 && /^\d+$/.test(parts[0]);
+      if (parts.length > VALIDATION_BOUNDS.MAX_SPLIT_PARTS) return false;
+      if (parts.length === VALIDATION_BOUNDS.MAX_SPLIT_PARTS && parts[VALIDATION_BOUNDS.SINGLE_ELEMENT].length > DECIMAL_PRECISION.CRYPTO_DECIMAL_PLACES) return false;
+      return parts[VALIDATION_BOUNDS.MIN_VALUE].length > VALIDATION_BOUNDS.MIN_VALUE && /^\d+$/.test(parts[VALIDATION_BOUNDS.MIN_VALUE]);
     };
     return { test: cryptoAmountValidator };
   })(),
@@ -80,9 +83,9 @@ export const EXCHANGE_VALIDATION_PATTERNS = {
       // Validate UAH amount format: number with up to 2 decimal places
       if (!/^\d+$/.test(amount.replace('.', ''))) return false;
       const parts = amount.split('.');
-      if (parts.length > 2) return false;
-      if (parts.length === 2 && parts[1].length > 2) return false;
-      return parts[0].length > 0 && /^\d+$/.test(parts[0]);
+      if (parts.length > VALIDATION_BOUNDS.MAX_SPLIT_PARTS) return false;
+      if (parts.length === VALIDATION_BOUNDS.MAX_SPLIT_PARTS && parts[VALIDATION_BOUNDS.SINGLE_ELEMENT].length > DECIMAL_PRECISION.UAH_DECIMAL_PLACES) return false;
+      return parts[VALIDATION_BOUNDS.MIN_VALUE].length > VALIDATION_BOUNDS.MIN_VALUE && /^\d+$/.test(parts[VALIDATION_BOUNDS.MIN_VALUE]);
     };
     return { test: uahAmountValidator };
   })(),

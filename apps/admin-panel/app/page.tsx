@@ -110,15 +110,18 @@ const ADMIN_COLUMNS: Array<Column<User>> = [
     key: 'status',
     header: 'Status',
     sortable: true,
-    render: value => (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          value === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-        }`}
-      >
-        {value}
-      </span>
-    ),
+    render: (user: User) => {
+      const status = user.status;
+      return (
+        <span
+          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+            status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          }`}
+        >
+          {status}
+        </span>
+      );
+    },
   },
   {
     key: 'lastLogin',
@@ -289,7 +292,7 @@ function NavigationTree({ data, onSelect }: NavigationTreeProps) {
         <CardDescription>Быстрый доступ к разделам</CardDescription>
       </CardHeader>
       <CardContent>
-        <TreeView data={data} onSelect={onSelect} defaultExpandAll={true} />
+        <TreeView data={data} onSelect={onSelect} defaultExpanded={data.map(item => item.id)} />
       </CardContent>
     </Card>
   );

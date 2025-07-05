@@ -4,6 +4,9 @@ import {
   CRYPTOCURRENCIES,
   EXCHANGE_VALIDATION_PATTERNS,
   EXCHANGE_VALIDATION_MESSAGES,
+  VALIDATION_BOUNDS,
+  DECIMAL_PRECISION,
+  UI_NUMERIC_CONSTANTS,
 } from '@repo/constants';
 
 import type { CryptoCurrency, CreateOrderRequest, CreateUserRequest } from '../types';
@@ -28,7 +31,7 @@ export function validateEmail(email: string): ValidationResult {
   }
 
   return {
-    isValid: errors.length === 0,
+    isValid: errors.length === VALIDATION_BOUNDS.MIN_VALUE,
     errors,
   };
 }
@@ -46,7 +49,7 @@ export function validatePassword(password: string): ValidationResult {
   }
 
   return {
-    isValid: errors.length === 0,
+    isValid: errors.length === VALIDATION_BOUNDS.MIN_VALUE,
     errors,
   };
 }
@@ -62,7 +65,7 @@ export function validateCurrency(currency: string): ValidationResult {
   }
 
   return {
-    isValid: errors.length === 0,
+    isValid: errors.length === VALIDATION_BOUNDS.MIN_VALUE,
     errors,
   };
 }
@@ -73,7 +76,7 @@ export function validateCurrency(currency: string): ValidationResult {
 export function validateCryptoAmount(amount: number, currency: CryptoCurrency): ValidationResult {
   const errors: string[] = [];
 
-  if (!amount || amount <= 0) {
+  if (!amount || amount <= VALIDATION_BOUNDS.MIN_VALUE) {
     errors.push(VALIDATION_MESSAGES.AMOUNT_INVALID);
   } else {
     const limitCheck = isAmountWithinLimits(amount, currency);
@@ -83,7 +86,44 @@ export function validateCryptoAmount(amount: number, currency: CryptoCurrency): 
   }
 
   return {
-    isValid: errors.length === 0,
+    isValid: errors.length === VALIDATION_BOUNDS.MIN_VALUE,
+    errors,
+  };
+}
+
+/**
+ * Валидация базовых данных заявки (email, currency)
+ */
+function validateOrderBasicData(email: string, currency: string): { errors: string[]; currencyIsValid: boolean } {
+  const errors: string[] = [];
+
+  const emailValidation = validateEmail(email);
+  errors.push(...emailValidation.errors);
+
+  const currencyValidation = validateCurrency(currency);
+  errors.push(...currencyValidation.errors);
+
+  return {
+    errors,
+    currencyIsValid: currencyValidation.isValid,
+  };
+}
+
+/**
+ * Валидация данных получателя
+ */
+function validateRecipientData(recipientData?: { cardNumber?: string }): ValidationResult {
+  const errors: string[] = [];
+
+  if (
+    recipientData?.cardNumber &&
+    !EXCHANGE_VALIDATION_PATTERNS.CARD_NUMBER.test(recipientData.cardNumber)
+  ) {
+    errors.push(EXCHANGE_VALIDATION_MESSAGES.CARD_NUMBER_INVALID);
+  }
+
+  return {
+    isValid: errors.length === VALIDATION_BOUNDS.MIN_VALUE,
     errors,
   };
 }
@@ -94,30 +134,22 @@ export function validateCryptoAmount(amount: number, currency: CryptoCurrency): 
 export function validateCreateOrder(request: CreateOrderRequest): ValidationResult {
   const errors: string[] = [];
 
-  // Валидация email
-  const emailValidation = validateEmail(request.email);
-  errors.push(...emailValidation.errors);
+  // Валидация базовых данных
+  const basicValidation = validateOrderBasicData(request.email, request.currency);
+  errors.push(...basicValidation.errors);
 
-  // Валидация криптовалюты
-  const currencyValidation = validateCurrency(request.currency);
-  errors.push(...currencyValidation.errors);
-
-  // Валидация суммы
-  if (currencyValidation.isValid) {
+  // Валидация суммы (только если валюта валидна)
+  if (basicValidation.currencyIsValid) {
     const amountValidation = validateCryptoAmount(request.cryptoAmount, request.currency);
     errors.push(...amountValidation.errors);
   }
 
-  // Валидация номера карты (если указан)
-  if (
-    request.recipientData?.cardNumber &&
-    !EXCHANGE_VALIDATION_PATTERNS.CARD_NUMBER.test(request.recipientData.cardNumber)
-  ) {
-    errors.push(EXCHANGE_VALIDATION_MESSAGES.CARD_NUMBER_INVALID);
-  }
+  // Валидация данных получателя
+  const recipientValidation = validateRecipientData(request.recipientData);
+  errors.push(...recipientValidation.errors);
 
   return {
-    isValid: errors.length === 0,
+    isValid: errors.length === VALIDATION_BOUNDS.MIN_VALUE,
     errors,
   };
 }
@@ -139,7 +171,7 @@ export function validateCreateUser(request: CreateUserRequest): ValidationResult
   }
 
   return {
-    isValid: errors.length === 0,
+    isValid: errors.length === VALIDATION_BOUNDS.MIN_VALUE,
     errors,
   };
 }
@@ -162,5 +194,5 @@ export function generateSessionId(): string {
  * Генерация ID заявки
  */
 export function generateOrderId(): string {
-  return `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `order_${Date.now()}_${Math.random().toString(UI_NUMERIC_CONSTANTS.ID_GENERATION_BASE).substr(UI_NUMERIC_CONSTANTS.SUBSTR_START_INDEX, DECIMAL_PRECISION.ORDER_ID_RANDOM_LENGTH)}`;
 }

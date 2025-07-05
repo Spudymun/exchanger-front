@@ -6,6 +6,8 @@ import { useNotificationStore } from './state/notification-store.js';
 import type { NotificationStore } from './state/notification-store.js';
 import { useNotificationUtils } from './useNotificationUtils.js';
 
+// Сохраняем helper функции в том же файле для совместимости
+
 const extractErrorMessage = (error: unknown): string => {
   if (error instanceof Error) return error.message;
   if (typeof error === 'string') return error;

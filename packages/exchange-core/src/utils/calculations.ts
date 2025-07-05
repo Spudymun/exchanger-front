@@ -1,4 +1,4 @@
-import { COMMISSION_RATES, AMOUNT_LIMITS, MOCK_EXCHANGE_RATES } from '@repo/constants';
+import { COMMISSION_RATES, AMOUNT_LIMITS, MOCK_EXCHANGE_RATES, PERCENTAGE_CALCULATIONS, VALIDATION_BOUNDS, DECIMAL_PRECISION } from '@repo/constants';
 
 import type { CryptoCurrency, ExchangeRate } from '../types';
 
@@ -22,8 +22,8 @@ export function getExchangeRate(currency: CryptoCurrency): ExchangeRate {
 export function calculateUahAmount(cryptoAmount: number, currency: CryptoCurrency): number {
   const rate = getExchangeRate(currency);
   const grossAmount = cryptoAmount * rate.uahRate;
-  const commission = grossAmount * (rate.commission / 100);
-  return Number((grossAmount - commission).toFixed(2));
+  const commission = grossAmount * (rate.commission / PERCENTAGE_CALCULATIONS.PERCENT_BASE);
+  return Number((grossAmount - commission).toFixed(PERCENTAGE_CALCULATIONS.UAH_ROUNDING_PRECISION));
 }
 
 /**
@@ -31,11 +31,11 @@ export function calculateUahAmount(cryptoAmount: number, currency: CryptoCurrenc
  */
 export function calculateCryptoAmount(uahAmount: number, currency: CryptoCurrency): number {
   const rate = getExchangeRate(currency);
-  const grossAmount = uahAmount / (1 - rate.commission / 100);
+  const grossAmount = uahAmount / (VALIDATION_BOUNDS.SINGLE_ELEMENT - rate.commission / PERCENTAGE_CALCULATIONS.PERCENT_BASE);
   const cryptoAmount = grossAmount / rate.uahRate;
 
   // Округление до 8 знаков для криптовалют
-  return Number(cryptoAmount.toFixed(8));
+  return Number(cryptoAmount.toFixed(DECIMAL_PRECISION.CRYPTO_DECIMAL_PLACES));
 }
 
 /**
@@ -44,8 +44,8 @@ export function calculateCryptoAmount(uahAmount: number, currency: CryptoCurrenc
 export function calculateCommission(cryptoAmount: number, currency: CryptoCurrency): number {
   const rate = getExchangeRate(currency);
   const grossAmount = cryptoAmount * rate.uahRate;
-  const commission = grossAmount * (rate.commission / 100);
-  return Number(commission.toFixed(2));
+  const commission = grossAmount * (rate.commission / PERCENTAGE_CALCULATIONS.PERCENT_BASE);
+  return Number(commission.toFixed(PERCENTAGE_CALCULATIONS.UAH_ROUNDING_PRECISION));
 }
 
 /**

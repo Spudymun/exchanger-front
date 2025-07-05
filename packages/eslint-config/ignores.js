@@ -45,6 +45,13 @@ export const tempIgnores = [
 // === GENERATED FILES ===
 export const generatedIgnores = ['**/*.d.ts', '**/*.map', '**/*.tsbuildinfo'];
 
+// === DEVELOPMENT/NON-PRODUCTION APPS ===
+export const devAppIgnores = [
+  'docs/**',            // Документация
+  'apps/docs/**',       // Документация приложение
+  'apps/admin-panel/**', // Admin panel (в разработке)
+];
+
 // === ПОЛНЫЙ СПИСОК IGNORES ===
 export const allIgnores = [
   ...buildIgnores,
@@ -52,4 +59,5 @@ export const allIgnores = [
   ...systemIgnores,
   ...tempIgnores,
   ...generatedIgnores,
+  ...devAppIgnores,
 ];

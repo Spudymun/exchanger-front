@@ -1,47 +1,58 @@
+
+import { VALIDATION_BOUNDS, UI_NUMERIC_CONSTANTS } from '@repo/constants';
+
 import type { User, Order, CryptoCurrency, OrderStatus } from '../types';
 import { generateOrderId } from '../utils/validation';
+
+import { 
+  MOCK_AUTH_DATA, 
+  MOCK_USER_EMAILS, 
+  MOCK_TIMESTAMPS,
+  MOCK_TRANSACTION_DATA,
+  MOCK_ORDER_IDS 
+} from './mock-data';
 
 // Мок данные пользователей
 const mockUsers = [
   {
     id: 'user_1',
-    email: 'test@example.com',
-    hashedPassword: '$2b$10$example_hash',
+    email: MOCK_USER_EMAILS.TEST_USER,
+    hashedPassword: MOCK_AUTH_DATA.EXAMPLE_HASH,
     isVerified: true,
-    createdAt: '2025-06-29T10:00:00.000Z',
-    lastLoginAt: '2025-06-29T10:00:00.000Z',
+    createdAt: MOCK_TIMESTAMPS.BASE_CREATED_AT,
+    lastLoginAt: MOCK_TIMESTAMPS.LAST_LOGIN_AT,
   },
   {
     id: 'user_2',
-    email: 'admin@exchangego.com',
-    hashedPassword: '$2b$10$example_hash_admin',
+    email: MOCK_USER_EMAILS.ADMIN_USER,
+    hashedPassword: MOCK_AUTH_DATA.ADMIN_HASH,
     isVerified: true,
-    createdAt: '2025-06-29T10:00:00.000Z',
-    lastLoginAt: '2025-06-29T10:00:00.000Z',
+    createdAt: MOCK_TIMESTAMPS.BASE_CREATED_AT,
+    lastLoginAt: MOCK_TIMESTAMPS.LAST_LOGIN_AT,
   },
 ];
 
 // Мок данные заявок
 const mockOrders = [
   {
-    id: 'order_1703847600000_abc123',
-    email: 'test@example.com',
+    id: MOCK_ORDER_IDS.ORDER_1,
+    email: MOCK_USER_EMAILS.TEST_USER,
     cryptoAmount: 0.001,
     currency: 'BTC' as CryptoCurrency,
     uahAmount: 1755.0,
     status: 'COMPLETED' as OrderStatus,
-    depositAddress: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
+    depositAddress: MOCK_TRANSACTION_DATA.BTC_ADDRESS,
     recipientData: {
-      cardNumber: '1234567890123456',
+      cardNumber: MOCK_TRANSACTION_DATA.CARD_NUMBER,
     },
-    createdAt: '2025-06-29T10:00:00.000Z',
-    updatedAt: '2025-06-29T12:00:00.000Z',
-    processedAt: '2025-06-29T12:00:00.000Z',
-    txHash: 'example_tx_hash_123',
+    createdAt: MOCK_TIMESTAMPS.BASE_CREATED_AT,
+    updatedAt: MOCK_TIMESTAMPS.ORDER_UPDATED_AT,
+    processedAt: MOCK_TIMESTAMPS.ORDER_PROCESSED_AT,
+    txHash: MOCK_TRANSACTION_DATA.TX_HASH,
   },
   {
-    id: 'order_1703847660000_def456',
-    email: 'test@example.com',
+    id: MOCK_ORDER_IDS.ORDER_2,
+    email: MOCK_USER_EMAILS.TEST_USER,
     cryptoAmount: 1.0,
     currency: 'ETH' as CryptoCurrency,
     uahAmount: 117600.0,
@@ -93,7 +104,7 @@ export const userManager = {
     >
   ): User | undefined => {
     const index = users.findIndex(u => u.id === id);
-    if (index === -1) return undefined;
+    if (index === VALIDATION_BOUNDS.NOT_FOUND) return undefined;
 
     const originalUser = users[index]!;
 
@@ -137,7 +148,7 @@ export const orderManager = {
     updates: Partial<Pick<Order, 'status' | 'recipientData' | 'processedAt' | 'txHash'>>
   ): Order | undefined => {
     const index = orders.findIndex(o => o.id === id);
-    if (index === -1) return undefined;
+    if (index === VALIDATION_BOUNDS.NOT_FOUND) return undefined;
 
     const originalOrder = orders[index]!;
 
@@ -159,8 +170,8 @@ export const orderManager = {
 
   count: (): number => orders.length,
 
-  getRecent: (limit: number = 10): Order[] => {
-    return orders.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit);
+  getRecent: (limit: number = UI_NUMERIC_CONSTANTS.DEFAULT_PAGE_SIZE): Order[] => {
+    return orders.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(VALIDATION_BOUNDS.MIN_VALUE, limit);
   },
 };
 
@@ -173,7 +184,7 @@ export const statsManager = {
   getOrdersByStatus: () => {
     const stats: Record<string, number> = {};
     for (const order of orders) {
-      stats[order.status] = (stats[order.status] || 0) + 1;
+      stats[order.status] = (stats[order.status] || VALIDATION_BOUNDS.MIN_VALUE) + VALIDATION_BOUNDS.SINGLE_ELEMENT;
     }
     return stats;
   },
@@ -181,6 +192,6 @@ export const statsManager = {
   getTotalVolume: (): number => {
     return orders
       .filter(o => o.status === 'COMPLETED')
-      .reduce((sum, order) => sum + order.uahAmount, 0);
+      .reduce((sum: number, order) => sum + order.uahAmount, VALIDATION_BOUNDS.MIN_VALUE);
   },
 };

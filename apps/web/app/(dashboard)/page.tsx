@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@repo/ui';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface StatCardProps {
   title: string;
@@ -157,9 +158,20 @@ function QuickActions({ onAction }: QuickActionsProps) {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
+
   const handleQuickAction = (action: string) => {
-    // TODO: Implement quick action functionality
-    void action;
+    switch (action) {
+      case 'New Trade':
+        router.push('/dashboard/trading');
+        break;
+      case 'View Portfolio':
+        router.push('/dashboard/portfolio');
+        break;
+      default:
+        // eslint-disable-next-line no-console -- Error handling for unknown actions
+        console.warn(`Unknown quick action: ${action}`);
+    }
   };
 
   return (

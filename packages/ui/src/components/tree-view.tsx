@@ -1,419 +1,125 @@
-import { ChevronRight, ChevronDown, Folder, File } from 'lucide-react';
-import React from 'react';
+"use client";
 
-import { cn } from '../lib/utils';
+import React, { useState, useCallback } from 'react';
 
-const TREE_LEVEL_PADDING = 16; // Отступ для уровней в дереве
+import { TreeNodeItem, type TreeNode } from './TreeNodeItem';
 
-export interface TreeNode {
-  id: string;
-  label: string;
-  children?: TreeNode[];
-  icon?: React.ReactNode;
-  data?: unknown;
-  disabled?: boolean;
-}
+export type { TreeNode };
 
 export interface TreeViewProps {
   data: TreeNode[];
   onSelect?: (node: TreeNode) => void;
   selectedId?: string;
-  expandedIds?: string[];
-  onToggle?: (nodeId: string, expanded: boolean) => void;
+  defaultExpanded?: string[];
+  showLines?: boolean;
+  checkable?: boolean;
+  onCheck?: (checkedKeys: string[]) => void;
   className?: string;
-  showIcons?: boolean;
-  defaultExpandAll?: boolean;
+  levelPadding?: number;
 }
 
-interface TreeItemProps {
-  node: TreeNode;
-  level: number;
-  isExpanded: boolean;
-  isSelected: boolean;
-  onSelect?: (node: TreeNode) => void;
-  onToggle?: (nodeId: string, expanded: boolean) => void;
-  showIcons?: boolean;
-}
-
-// Tree item expand/collapse button component
-function TreeToggleButton({
-  hasChildren,
-  isExpanded,
-  onToggle,
-}: {
-  hasChildren: boolean;
-  isExpanded: boolean;
-  onToggle: (e: React.MouseEvent) => void;
-}) {
-  if (!hasChildren) {
-    return <div className="w-3 h-3" />;
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      className="hover:bg-muted rounded p-0.5 transition-colors"
-    >
-      {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-    </button>
-  );
-}
-
-// Tree item icon component
-function TreeItemIcon({
-  showIcons,
-  hasChildren,
-  customIcon,
-}: {
-  showIcons: boolean;
-  hasChildren: boolean;
-  customIcon?: React.ReactNode;
-}) {
-  if (!showIcons) return null;
-
-  return (
-    <div className="h-4 w-4 mr-2 flex items-center justify-center text-muted-foreground">
-      {customIcon || (hasChildren ? <Folder className="h-3 w-3" /> : <File className="h-3 w-3" />)}
-    </div>
-  );
-}
-
-// Tree item content component
-function TreeItemContent({
-  node,
-  level,
-  isSelected,
-  hasChildren,
-  showIcons,
-  onToggle,
-  isExpanded,
-}: {
-  node: TreeNode;
-  level: number;
-  isSelected: boolean;
-  hasChildren: boolean;
-  showIcons: boolean;
-  onToggle: (e: React.MouseEvent) => void;
-  isExpanded: boolean;
-}) {
-  const paddingClass = `pl-[${level * TREE_LEVEL_PADDING}px]`;
-
-  return (
-    <div
-      className={cn(
-        'flex items-center py-1 px-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-md transition-colors',
-        paddingClass,
-        isSelected && 'bg-accent text-accent-foreground',
-        node.disabled && 'opacity-50 cursor-not-allowed'
-      )}
-    >
-      <div className="h-4 w-4 mr-1 flex items-center justify-center">
-        <TreeToggleButton hasChildren={hasChildren} isExpanded={isExpanded} onToggle={onToggle} />
-      </div>
-
-      <TreeItemIcon showIcons={showIcons} hasChildren={hasChildren} customIcon={node.icon} />
-
-      <span className="flex-1 truncate">{node.label}</span>
-    </div>
-  );
-}
-
-// Tree children renderer
-function TreeChildren({
-  hasChildren,
-  isExpanded,
-  nodeChildren,
-  level,
-  onSelect,
-  onToggle,
-  showIcons,
-}: {
-  hasChildren: boolean;
-  isExpanded: boolean;
-  nodeChildren?: TreeNode[];
-  level: number;
-  onSelect?: (node: TreeNode) => void;
-  onToggle?: (nodeId: string, expanded: boolean) => void;
-  showIcons: boolean;
-}) {
-  if (!hasChildren || !isExpanded || !nodeChildren) return null;
-
-  return (
-    <div>
-      {nodeChildren.map(child => (
-        <TreeItemContainer
-          key={child.id}
-          node={child}
-          level={level + 1}
-          onSelect={onSelect}
-          onToggle={onToggle}
-          showIcons={showIcons}
-        />
-      ))}
-    </div>
-  );
-}
-
-function TreeItem({
-  node,
-  level,
-  isExpanded,
-  isSelected,
-  onSelect,
-  onToggle,
-  showIcons = true,
-}: TreeItemProps) {
-  const hasChildren = Boolean(node.children && node.children.length > 0);
-
-  const handleClick = React.useCallback(() => {
-    if (!node.disabled) {
-      onSelect?.(node);
-    }
-  }, [node, onSelect]);
-
-  const handleToggle = React.useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      if (hasChildren) {
-        onToggle?.(node.id, !isExpanded);
-      }
-    },
-    [hasChildren, node.id, isExpanded, onToggle]
+// Хук для управления состоянием развернутых узлов
+const useExpandedNodes = (defaultExpanded: string[]) => {
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(
+    new Set(defaultExpanded)
   );
 
-  return (
-    <div>
-      <div onClick={handleClick}>
-        <TreeItemContent
-          node={node}
-          level={level}
-          isSelected={isSelected}
-          hasChildren={hasChildren}
-          showIcons={showIcons}
-          onToggle={handleToggle}
-          isExpanded={isExpanded}
-        />
-      </div>
-
-      <TreeChildren
-        hasChildren={hasChildren}
-        isExpanded={isExpanded}
-        nodeChildren={node.children}
-        level={level}
-        onSelect={onSelect}
-        onToggle={onToggle}
-        showIcons={showIcons}
-      />
-    </div>
-  );
-}
-
-interface TreeItemContainerProps {
-  node: TreeNode;
-  level: number;
-  onSelect?: (node: TreeNode) => void;
-  onToggle?: (nodeId: string, expanded: boolean) => void;
-  showIcons?: boolean;
-}
-
-function TreeItemContainer({ node, level, onSelect, onToggle, showIcons }: TreeItemContainerProps) {
-  const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
-  const [selectedId, setSelectedId] = React.useState<string>();
-
-  const handleSelect = React.useCallback(
-    (selectedNode: TreeNode) => {
-      setSelectedId(selectedNode.id);
-      onSelect?.(selectedNode);
-    },
-    [onSelect]
-  );
-
-  const handleToggle = React.useCallback(
-    (nodeId: string, expanded: boolean) => {
-      const newExpandedIds = new Set(expandedIds);
-      if (expanded) {
-        newExpandedIds.add(nodeId);
+  const toggleNode = useCallback((nodeId: string) => {
+    setExpandedNodes((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(nodeId)) {
+        newSet.delete(nodeId);
       } else {
-        newExpandedIds.delete(nodeId);
+        newSet.add(nodeId);
       }
-      setExpandedIds(newExpandedIds);
-      onToggle?.(nodeId, expanded);
-    },
-    [expandedIds, onToggle]
-  );
+      return newSet;
+    });
+  }, []);
 
-  return (
-    <TreeItem
+  return { expandedNodes, toggleNode };
+};
+
+// Хук для управления состоянием отмеченных узлов
+const useCheckedNodes = (onCheck: (checkedKeys: string[]) => void) => {
+  const [checkedNodes, setCheckedNodes] = useState<Set<string>>(new Set());
+
+  const handleCheck = useCallback((nodeId: string, checked: boolean) => {
+    setCheckedNodes((prev) => {
+      const newSet = new Set(prev);
+      if (checked) {
+        newSet.add(nodeId);
+      } else {
+        newSet.delete(nodeId);
+      }
+      onCheck(Array.from(newSet));
+      return newSet;
+    });
+  }, [onCheck]);
+
+  return { checkedNodes, handleCheck };
+};
+
+// Функция для рендеринга узлов дерева
+const renderTreeNodes = (
+  nodes: TreeNode[],
+  props: {
+    selectedId?: string;
+    onSelect: (node: TreeNode) => void;
+    expandedNodes: Set<string>;
+    toggleNode: (nodeId: string) => void;
+    levelPadding: number;
+    showLines: boolean;
+    checkable: boolean;
+    checkedNodes: Set<string>;
+    handleCheck: (nodeId: string, checked: boolean) => void;
+  }
+) => {
+  return nodes.map((node) => (
+    <TreeNodeItem
+      key={node.id}
       node={node}
-      level={level}
-      isExpanded={expandedIds.has(node.id)}
-      isSelected={selectedId === node.id}
-      onSelect={handleSelect}
-      onToggle={handleToggle}
-      showIcons={showIcons}
+      level={0}
+      isSelected={node.id === props.selectedId}
+      isExpanded={props.expandedNodes.has(node.id)}
+      onSelect={props.onSelect}
+      onToggle={props.toggleNode}
+      expandedNodes={props.expandedNodes}
+      levelPadding={props.levelPadding}
+      showLines={props.showLines}
+      checkable={props.checkable}
+      checkedNodes={props.checkedNodes}
+      onCheck={props.handleCheck}
     />
-  );
-}
+  ));
+};
 
-// Hook for managing tree view state
-function useTreeViewState(
-  data: TreeNode[],
-  selectedId?: string,
-  controlledExpandedIds?: string[],
-  defaultExpandAll = false
-) {
-  const [internalExpandedIds, setInternalExpandedIds] = React.useState<Set<string>>(
-    new Set(defaultExpandAll ? getAllNodeIds(data) : [])
-  );
-  const [internalSelectedId, setInternalSelectedId] = React.useState<string>();
-
-  const isControlled = controlledExpandedIds !== undefined;
-  const expandedIds = isControlled ? new Set(controlledExpandedIds) : internalExpandedIds;
-  const currentSelectedId = selectedId ?? internalSelectedId;
-
-  return {
-    expandedIds,
-    currentSelectedId,
-    setInternalExpandedIds,
-    setInternalSelectedId,
-    isControlled,
-  };
-}
-
-// Tree node list component
-function TreeNodeList({
+export const TreeView: React.FC<TreeViewProps> = ({
   data,
-  expandedIds,
-  currentSelectedId,
-  showIcons,
-  onSelect,
-  onToggle,
-}: {
-  data: TreeNode[];
-  expandedIds: Set<string>;
-  currentSelectedId?: string;
-  showIcons: boolean;
-  onSelect: (node: TreeNode) => void;
-  onToggle: (nodeId: string, expanded: boolean) => void;
-}) {
-  return (
-    <>
-      {data.map(node => (
-        <TreeItem
-          key={node.id}
-          node={node}
-          level={0}
-          isExpanded={expandedIds.has(node.id)}
-          isSelected={currentSelectedId === node.id}
-          onSelect={onSelect}
-          onToggle={onToggle}
-          showIcons={showIcons}
-        />
-      ))}
-    </>
-  );
-}
-
-function useTreeViewHandlers({
+  onSelect = () => {},
   selectedId,
-  isControlled,
-  setInternalSelectedId,
-  setInternalExpandedIds,
-  onSelect,
-  onToggle,
-}: {
-  selectedId: string | undefined;
-  isControlled: boolean;
-  setInternalSelectedId: (id: string) => void;
-  setInternalExpandedIds: React.Dispatch<React.SetStateAction<Set<string>>>;
-  onSelect?: (node: TreeNode) => void;
-  onToggle?: (nodeId: string, expanded: boolean) => void;
-}) {
-  const handleSelect = React.useCallback(
-    (node: TreeNode) => {
-      if (!selectedId) {
-        setInternalSelectedId(node.id);
-      }
-      onSelect?.(node);
-    },
-    [selectedId, setInternalSelectedId, onSelect]
-  );
-
-  const handleToggle = React.useCallback(
-    (nodeId: string, expanded: boolean) => {
-      if (!isControlled) {
-        setInternalExpandedIds(prev => {
-          const newExpandedIds = new Set(prev);
-          if (expanded) {
-            newExpandedIds.add(nodeId);
-          } else {
-            newExpandedIds.delete(nodeId);
-          }
-          return newExpandedIds;
-        });
-      }
-      onToggle?.(nodeId, expanded);
-    },
-    [isControlled, setInternalExpandedIds, onToggle]
-  );
-
-  return { handleSelect, handleToggle };
-}
-
-export function TreeView({
-  data,
-  onSelect,
-  selectedId,
-  expandedIds: controlledExpandedIds,
-  onToggle,
-  className,
-  showIcons = true,
-  defaultExpandAll = false,
-}: TreeViewProps) {
-  const {
-    expandedIds,
-    currentSelectedId,
-    setInternalExpandedIds,
-    setInternalSelectedId,
-    isControlled,
-  } = useTreeViewState(data, selectedId, controlledExpandedIds, defaultExpandAll);
-
-  const { handleSelect, handleToggle } = useTreeViewHandlers({
-    selectedId,
-    isControlled,
-    setInternalSelectedId,
-    setInternalExpandedIds,
-    onSelect,
-    onToggle,
-  });
+  defaultExpanded = [],
+  showLines = false,
+  checkable = false,
+  onCheck = () => {},
+  className = '',
+  levelPadding = 16,
+}) => {
+  const { expandedNodes, toggleNode } = useExpandedNodes(defaultExpanded);
+  const { checkedNodes, handleCheck } = useCheckedNodes(onCheck);
 
   return (
-    <div className={cn('space-y-0.5', className)}>
-      <TreeNodeList
-        data={data}
-        expandedIds={expandedIds}
-        currentSelectedId={currentSelectedId}
-        showIcons={showIcons}
-        onSelect={handleSelect}
-        onToggle={handleToggle}
-      />
+    <div className={`tree-view ${className}`}>
+      {renderTreeNodes(data, {
+        selectedId,
+        onSelect,
+        expandedNodes,
+        toggleNode,
+        levelPadding,
+        showLines,
+        checkable,
+        checkedNodes,
+        handleCheck,
+      })}
     </div>
   );
-}
-
-function getAllNodeIds(nodes: TreeNode[]): string[] {
-  const ids: string[] = [];
-
-  function traverse(nodeList: TreeNode[]) {
-    for (const node of nodeList) {
-      ids.push(node.id);
-      if (node.children) {
-        traverse(node.children);
-      }
-    }
-  }
-
-  traverse(nodes);
-  return ids;
-}
+};

@@ -1,3 +1,5 @@
+import { TIME_CONSTANTS } from './time-constants';
+
 /**
  * Validation rules and limits - ОБЩИЕ для всех приложений
  * ExchangeGO специфичные константы находятся в exchange.ts
@@ -138,7 +140,7 @@ export const VALIDATION_MESSAGES = {
 // Authentication constants
 export const AUTH_CONSTANTS = {
   // Session durations
-  SESSION_MAX_AGE_SECONDS: 7 * 24 * 60 * 60, // 7 дней
+  SESSION_MAX_AGE_SECONDS: TIME_CONSTANTS.DAYS_IN_WEEK * TIME_CONSTANTS.HOURS_IN_DAY * TIME_CONSTANTS.MINUTES_IN_HOUR * TIME_CONSTANTS.SECONDS_IN_MINUTE, // 7 дней
   SESSION_COOKIE_NAME: 'sessionId',
 
   // Password validation

@@ -22,6 +22,7 @@ export const UI_NUMERIC_CONSTANTS = {
   DEFAULT_PAGE_SIZE: 10,
   MAX_PAGE_SIZE_SMALL: 20,
   MAX_PAGE_SIZE_LARGE: 50,
+  MAX_ITEMS_PER_PAGE: 100,
 
   // Table rendering
   SKELETON_ROWS_COUNT: 5,
@@ -53,6 +54,8 @@ export const UI_NUMERIC_CONSTANTS = {
   // ID generation
   ID_GENERATION_BASE: 36,
   ID_GENERATION_LENGTH: 9,
+  /** Количество символов для обрезки в substr при генерации ID */
+  SUBSTR_START_INDEX: 2,
 
   // Currency and validation
   CURRENCY_CODE_LENGTH: 3,

@@ -23,7 +23,7 @@ const createBasicEnhancedMethods = (
     store.calculateExchange();
 
     if (store.isCalculating) {
-      notifications.showProgress('Расчет курса обмена');
+      notifications.showProgress('Расчет курса обмена', 0);
     }
   },
 });
@@ -86,7 +86,7 @@ const createOrderEnhancedMethods = (
     store.updateOrderStatus(status);
 
     if (oldStatus !== status && store.currentOrder) {
-      notifications.handleOrderStatusChange(store.currentOrder.id, status);
+      notifications.info(`Статус заказа изменен: ${status}`);
     }
   },
 

@@ -55,21 +55,6 @@ export const PARAMETERS_LIMITS = {
   STATEMENTS_PER_LINE: 1,
 } as const;
 
-// === MAGIC NUMBERS ДЛЯ РАЗНЫХ СЛОЕВ ===
-// Числа объявлены как константы для избежания magic numbers в самой конфигурации
-const HOURS_IN_DAY = 24;
-const MINUTES_IN_HOUR = 60;
-const MILLISECONDS_IN_SECOND = 1000;
-
-export const MAGIC_NUMBERS = {
-  /** Общие допустимые magic numbers */
-  COMMON: [0, 1, -1, 2, 7, 8, 9, 10, 36, 100, 5000],
-  /** Криптографические константы */
-  CRYPTO: [0, 1, -1, 8, 9, 10, 36, 5000],
-  /** Временные константы */
-  TIME: [0, 1, -1, HOURS_IN_DAY, MINUTES_IN_HOUR, 100, MILLISECONDS_IN_SECOND],
-} as const;
-
 // === ДЛИНА ОПИСАНИЙ ===
 export const DESCRIPTION_LENGTHS = {
   /** Минимальная длина описания для @ts-ignore */
@@ -96,5 +81,4 @@ export type FunctionSizeLimits = typeof FUNCTION_SIZE_LIMITS;
 export type FileSizeLimits = typeof FILE_SIZE_LIMITS;
 export type DepthLimits = typeof DEPTH_LIMITS;
 export type ParametersLimits = typeof PARAMETERS_LIMITS;
-export type MagicNumbers = typeof MAGIC_NUMBERS;
 export type ArchitecturalLayers = typeof ARCHITECTURAL_LAYERS;
