@@ -6,6 +6,7 @@ export * from './user';
 
 // ExchangeGO specific exports
 export * from './exchange';
+export * from './exchange-currencies';
 export * from './rate-limits';
 
 // Common time constants

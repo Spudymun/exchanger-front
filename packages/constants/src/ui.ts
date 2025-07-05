@@ -2,12 +2,18 @@
  * UI related constants and configurations
  */
 
+// ============================================================================
+// NUMERIC CONSTANTS FOR UI COMPONENTS
+// ============================================================================
+
 // Numeric constants for UI components and layout
 export const UI_NUMERIC_CONSTANTS = {
   // Grid and layout
   DEFAULT_GRID_COLUMNS: 3,
   GRID_COLUMNS_MEDIUM: 4,
   GRID_COLUMNS_LARGE: 5,
+  GRID_LAYOUT_COLS: 36,
+  GRID_LAYOUT_ROWS: 9,
 
   // Spacing and sizing
   ICON_SIZE_SMALL: 4,
@@ -44,10 +50,6 @@ export const UI_NUMERIC_CONSTANTS = {
   MINUTES_PER_HOUR: 60,
   HOURS_PER_DAY: 24,
 
-  // Grid calculations
-  GRID_LAYOUT_COLS: 36,
-  GRID_LAYOUT_ROWS: 9,
-
   // ID generation
   ID_GENERATION_BASE: 36,
   ID_GENERATION_LENGTH: 9,
@@ -61,6 +63,14 @@ export const UI_NUMERIC_CONSTANTS = {
   WEB_CARD_BORDER_RADIUS: '8px',
   WEB_GRID_GAP: '20px',
 } as const;
+
+// ============================================================================
+// COMPONENT VARIANTS AND SIZES
+// ============================================================================
+
+// ============================================================================
+// COMPONENT VARIANTS AND SIZES
+// ============================================================================
 
 export const ALERT_VARIANTS = {
   SUCCESS: 'success',
@@ -107,6 +117,22 @@ export const MODAL_SIZES = {
   FULL: 'full',
 } as const;
 
+export const ICON_SIZES = {
+  XS: 'xs',
+  SM: 'sm',
+  MD: 'md',
+  LG: 'lg',
+  XL: 'xl',
+} as const;
+
+// ============================================================================
+// THEME AND LAYOUT CONSTANTS
+// ============================================================================
+
+// ============================================================================
+// THEME AND LAYOUT CONSTANTS
+// ============================================================================
+
 export const THEME_MODES = {
   LIGHT: 'light',
   DARK: 'dark',
@@ -138,13 +164,9 @@ export const TABLE_DENSITIES = {
   COMFORTABLE: 'comfortable',
 } as const;
 
-export const ICON_SIZES = {
-  XS: 'xs',
-  SM: 'sm',
-  MD: 'md',
-  LG: 'lg',
-  XL: 'xl',
-} as const;
+// ============================================================================
+// CSS AND STYLING CONSTANTS
+// ============================================================================
 
 // CSS class constants for components
 export const CSS_CLASSES = {
@@ -152,6 +174,25 @@ export const CSS_CLASSES = {
   ICON_SIZE_SMALL: 'h-3 w-3',
   ICON_SIZE_MEDIUM: 'h-4 w-4',
 } as const;
+
+// Design token constants for color scales
+export const COLOR_SCALE_KEYS = {
+  LIGHTEST: 50,
+  LIGHTER: 100,
+  LIGHT: 200,
+  LIGHT_MEDIUM: 300,
+  MEDIUM: 400,
+  MEDIUM_DARK: 500,
+  DARK: 600,
+  DARKER: 700,
+  DARKEST: 800,
+  EXTRA_DARK: 900,
+  DEEPEST: 950,
+} as const;
+
+// ============================================================================
+// STATUS CONFIGURATIONS
+// ============================================================================
 
 // UI Status configurations with colors and icons
 export const ORDER_STATUS_CONFIG = {
@@ -227,20 +268,9 @@ export const TRANSACTION_STATUS_CONFIG = {
   },
 } as const;
 
-// Design token constants for color scales
-export const COLOR_SCALE_KEYS = {
-  LIGHTEST: 50,
-  LIGHTER: 100,
-  LIGHT: 200,
-  LIGHT_MEDIUM: 300,
-  MEDIUM: 400,
-  MEDIUM_DARK: 500,
-  DARK: 600,
-  DARKER: 700,
-  DARKEST: 800,
-  EXTRA_DARK: 900,
-  DEEPEST: 950,
-} as const;
+// ============================================================================
+// TYPE EXPORTS
+// ============================================================================
 
 // Type exports
 export type AlertVariant = (typeof ALERT_VARIANTS)[keyof typeof ALERT_VARIANTS];
