@@ -5,7 +5,9 @@ import {
   EXCHANGE_VALIDATION_PATTERNS,
   EXCHANGE_VALIDATION_MESSAGES,
 } from '@repo/constants';
+
 import type { CryptoCurrency, CreateOrderRequest, CreateUserRequest } from '../types';
+
 import { isAmountWithinLimits } from './calculations';
 
 export interface ValidationResult {
@@ -107,10 +109,11 @@ export function validateCreateOrder(request: CreateOrderRequest): ValidationResu
   }
 
   // Валидация номера карты (если указан)
-  if (request.recipientData?.cardNumber) {
-    if (!EXCHANGE_VALIDATION_PATTERNS.CARD_NUMBER.test(request.recipientData.cardNumber)) {
-      errors.push(EXCHANGE_VALIDATION_MESSAGES.CARD_NUMBER_INVALID);
-    }
+  if (
+    request.recipientData?.cardNumber &&
+    !EXCHANGE_VALIDATION_PATTERNS.CARD_NUMBER.test(request.recipientData.cardNumber)
+  ) {
+    errors.push(EXCHANGE_VALIDATION_MESSAGES.CARD_NUMBER_INVALID);
   }
 
   return {

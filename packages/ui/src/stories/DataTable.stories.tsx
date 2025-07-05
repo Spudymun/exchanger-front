@@ -1,5 +1,6 @@
-import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { UI_NUMERIC_CONSTANTS } from '@repo/constants';
+import type { Meta, StoryObj } from '@storybook/nextjs-vite';
+
 import { DataTable, type Column } from '../components/data-table';
 
 // Sample data

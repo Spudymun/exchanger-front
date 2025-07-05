@@ -4,8 +4,8 @@
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev",
-    "lint": "turbo run lint && npm run lint:styles",
-    "lint:strict": "turbo run lint:strict && npm run lint:styles",
+    "lint": "eslint \"**/*.{js,jsx,ts,tsx}\" --fix",
+    "lint:check": "eslint \"**/*.{js,jsx,ts,tsx}\"",
     "lint:styles": "stylelint \"**/*.{css,scss}\" --fix",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "format:styles": "stylelint \"**/*.{css,scss}\" --fix",

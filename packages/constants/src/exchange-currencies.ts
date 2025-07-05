@@ -88,3 +88,31 @@ export const MOCK_EXCHANGE_RATES = {
     uahRate: 4000,
   },
 } as const;
+
+// Mock crypto addresses for testing/demo purposes
+export const MOCK_CRYPTO_ADDRESSES = {
+  BTC: [
+    '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa', // Genesis block address
+    '1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2',
+    'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh',
+    '3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy',
+  ],
+  ETH: [
+    '0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe',
+    '0x742d35Cc6634C0532925a3b8D43C693C1e8AE95C',
+    '0x8ba1f109551bD432803012645Hac136c47F63b',
+    '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2',
+  ],
+  USDT: [
+    '0xa0b86a33E6c6cA2F91e9FdE7Be3fEbC4E4c3eE25',
+    '0x3fE9C7c9b0F8F7f0c5f5e3c9a2c1c9f8e7d6c5b4',
+    '0x1f573d6fb3f13d689ff844b4ce37794d79a7ff1c',
+    '0x6b175474e89094c44da98b954eedeac495271d0f',
+  ],
+  LTC: [
+    'LU8Xfo4e7v2QA5jKHHSgP91D2kPZ9K4nB2',
+    'ltc1qfy2nxhxlw4p8e3j4h7n6q9d8c7b6a5g4f3e2d',
+    'M9o7s6t3a2b8c7d6e5f4g3h2i1j0k9l8m',
+    'LTC_ADDRESS_FOR_TESTING_PURPOSES_ONLY',
+  ],
+} as const;

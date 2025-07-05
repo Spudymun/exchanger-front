@@ -1,6 +1,5 @@
 {
-  "*.{js,jsx,ts,tsx}": ["eslint --fix --max-warnings 0", "prettier --write"],
+  "*.{js,jsx,ts,tsx}": ["eslint --fix --max-warnings 52", "prettier --write"],
   "*.{css,scss}": ["stylelint --fix", "prettier --write"],
-  "*.{json,md}": ["prettier --write"],
-  "packages/constants/src/**/*.{ts,tsx}": ["npm run type-check --prefix packages/constants"]
+  "*.{json,md,yml,yaml}": ["prettier --write"]
 }

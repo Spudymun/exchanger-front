@@ -1,29 +1,17 @@
 {
-    "extends": "../../packages/typescript-config/nextjs.json",
-    "compilerOptions": {
-        "plugins": [
-            {
-                "name": "next"
-            }
-        ],
-        "baseUrl": ".",
-        "paths": {
-            "@repo/constants": [
-                "../../packages/constants/dist"
-            ],
-            "@repo/constants/*": [
-                "../../packages/constants/dist/*"
-            ]
-        }
-    },
-    "include": [
-        "**/*.ts",
-        "**/*.tsx",
-        "next-env.d.ts",
-        "next.config.js",
-        ".next/types/**/*.ts"
+  "extends": "../../packages/typescript-config/nextjs.json",
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "next"
+      }
     ],
-    "exclude": [
-        "node_modules"
-    ]
+    "baseUrl": ".",
+    "paths": {
+      "@repo/constants": ["../../packages/constants/dist"],
+      "@repo/constants/*": ["../../packages/constants/dist/*"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx", "next-env.d.ts", "next.config.js"],
+  "exclude": ["node_modules", ".next/types/**/*.ts"]
 }

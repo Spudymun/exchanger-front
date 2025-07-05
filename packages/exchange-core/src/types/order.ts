@@ -1,4 +1,5 @@
 import { EXCHANGE_ORDER_STATUSES } from '@repo/constants';
+
 import type { CryptoCurrency } from './currency';
 
 export type OrderStatus = keyof typeof EXCHANGE_ORDER_STATUSES;

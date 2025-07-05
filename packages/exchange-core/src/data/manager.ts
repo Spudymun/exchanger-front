@@ -172,9 +172,9 @@ export const statsManager = {
 
   getOrdersByStatus: () => {
     const stats: Record<string, number> = {};
-    orders.forEach(order => {
+    for (const order of orders) {
       stats[order.status] = (stats[order.status] || 0) + 1;
-    });
+    }
     return stats;
   },
 

@@ -7,6 +7,7 @@ import {
   CURRENCY_SYMBOLS,
   CURRENCY_FULL_NAMES,
 } from '@repo/constants';
+
 import type { CryptoCurrency } from '../types';
 
 /**

@@ -8,22 +8,10 @@
     ],
     "baseUrl": ".",
     "paths": {
-      "@repo/constants": [
-        "../../packages/constants/dist"
-      ],
-      "@repo/constants/*": [
-        "../../packages/constants/dist/*"
-      ]
+      "@repo/constants": ["../../packages/constants/dist"],
+      "@repo/constants/*": ["../../packages/constants/dist/*"]
     }
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "next-env.d.ts",
-    "next.config.js",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["**/*.ts", "**/*.tsx", "next-env.d.ts", "next.config.js"],
+  "exclude": ["node_modules", ".next/types/**/*.ts"]
 }

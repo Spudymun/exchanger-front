@@ -1,7 +1,8 @@
+import { UI_NUMERIC_CONSTANTS } from '@repo/constants';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
 import { DataTable, type Column } from '../components/data-table';
-import { UI_NUMERIC_CONSTANTS } from '@repo/constants';
 
 interface TestData extends Record<string, unknown> {
   id: number;

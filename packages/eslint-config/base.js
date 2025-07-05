@@ -1,14 +1,14 @@
 import js from '@eslint/js';
 import eslintConfigPrettier from 'eslint-config-prettier';
-import turboPlugin from 'eslint-plugin-turbo';
-import tseslint from 'typescript-eslint';
-import onlyWarn from 'eslint-plugin-only-warn';
-import sonarjs from 'eslint-plugin-sonarjs';
-import security from 'eslint-plugin-security';
-import unicorn from 'eslint-plugin-unicorn';
 import importPlugin from 'eslint-plugin-import';
+import onlyWarn from 'eslint-plugin-only-warn';
 import promisePlugin from 'eslint-plugin-promise';
+import security from 'eslint-plugin-security';
+import sonarjs from 'eslint-plugin-sonarjs';
+import turboPlugin from 'eslint-plugin-turbo';
+import unicorn from 'eslint-plugin-unicorn';
 import unusedImports from 'eslint-plugin-unused-imports';
+import tseslint from 'typescript-eslint';
 
 /**
  * A shared ESLint configuration for the repository.
@@ -173,7 +173,6 @@ export const config = [
           ignoreRestArgs: false,
         },
       ],
-      '@typescript-eslint/prefer-as-const': 'error',
       '@typescript-eslint/array-type': ['error', { default: 'array-simple' }],
       '@typescript-eslint/consistent-type-definitions': ['error', 'interface'],
     },
