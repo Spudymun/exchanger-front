@@ -29,55 +29,147 @@ packages/
 
 ## 📐 Размер компонентов и функций
 
-### ESLint конфигурация
+### ESLint конфигурация (централизованная архитектура)
+
+**Архитектура**: Единый `eslint.config.mjs` с модульной структурой и lazy loading
 
 ```javascript
-// eslint.config.mjs
-{
-  rules: {
-    "max-lines-per-function": ["error", 50],
-    "complexity": ["warn", 10], 
-    "max-depth": ["error", 2],
-    "max-params": ["error", 4]
-  }
-}
+// eslint.config.mjs - ЕДИНСТВЕННАЯ конфигурация
+import {
+  FUNCTION_SIZE_LIMITS,
+  COMPLEXITY_LIMITS,
+  DEPTH_LIMITS,
+  PARAMETERS_LIMITS,
+} from './packages/constants/dist/index.js';
+
+import { lazyLoadConfig } from './packages/eslint-config/lazy-loading.js';
+
+export default [
+  // Глобальные правила с централизованными лимитами
+  {
+    name: 'global-rules',
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    rules: lazyLoadConfig('global-rules', () => ({
+      // Размер функций - из CODE_STYLE_GUIDE.md
+      'max-lines-per-function': ['error', { max: FUNCTION_SIZE_LIMITS.BASE }], // 50 строк
+      complexity: ['error', COMPLEXITY_LIMITS.BASE], // 10 (error, не warn)
+      'max-depth': ['error', DEPTH_LIMITS.BASE], // 2 уровня
+      'max-params': ['error', PARAMETERS_LIMITS.BASE], // 4 параметра
+
+      // Правило 13: Запрет техдолга
+      '@typescript-eslint/no-explicit-any': 'error', // НЕ warn!
+      'no-warning-comments': [
+        'error',
+        {
+          terms: ['todo', 'fixme', 'hack', 'temp', 'xxx'],
+        },
+      ],
+
+      // Качество кода
+      'prefer-const': 'error',
+      'no-console': 'error', // Строго запрещено (кроме инфраструктуры)
+      'no-debugger': 'error',
+    })),
+  },
+
+  // Динамические лимиты для разных типов файлов
+  {
+    name: 'ui-components',
+    files: ['packages/ui/**/*.{js,jsx,ts,tsx}'],
+    rules: lazyLoadConfig('ui-rules', () => ({
+      'max-lines-per-function': ['error', { max: FUNCTION_SIZE_LIMITS.UI_COMPONENTS }], // 60 строк
+    })),
+  },
+
+  {
+    name: 'main-pages',
+    files: ['apps/*/app/page.tsx', 'apps/*/app/**/page.tsx'],
+    rules: lazyLoadConfig('main-pages-rules', () => ({
+      'max-lines-per-function': ['error', { max: FUNCTION_SIZE_LIMITS.MAIN_PAGES }], // 80 строк
+    })),
+  },
+
+  {
+    name: 'api-layer',
+    files: ['apps/web/src/server/trpc/**/*.ts'],
+    rules: lazyLoadConfig('api-rules', () => ({
+      'max-lines-per-function': ['error', { max: FUNCTION_SIZE_LIMITS.API_ENDPOINTS }], // 100 строк
+      complexity: ['error', COMPLEXITY_LIMITS.API_LAYER], // 12 (выше базового)
+      'no-console': 'off', // Разрешено для логирования
+    })),
+  },
+
+  {
+    name: 'utils-strict',
+    files: ['packages/utils/**/*.ts', 'packages/exchange-core/**/*.ts'],
+    rules: lazyLoadConfig('utils-rules', () => ({
+      complexity: ['error', COMPLEXITY_LIMITS.UTILS], // 8 (строже базового)
+    })),
+  },
+];
 ```
 
-### Практические лимиты
+### Практические лимиты (из централизованных констант)
+
+**Источник**: `packages/constants/src/linter-limits.ts`
 
 - **Простые компоненты**: до 20 строк
 - **Средние компоненты**: 20-40 строк
-- **Сложные компоненты**: до 50 строк (красная зона)
-- **Функции**: до 50 строк
+- **UI компоненты**: до 60 строк (`FUNCTION_SIZE_LIMITS.UI_COMPONENTS`)
+- **Основные страницы**: до 80 строк (`FUNCTION_SIZE_LIMITS.MAIN_PAGES`)
+- **API endpoints**: до 100 строк (`FUNCTION_SIZE_LIMITS.API_ENDPOINTS`)
+- **Тесты**: до 120 строк (`FUNCTION_SIZE_LIMITS.TESTS`)
+- **Хуки**: до 75 строк (`FUNCTION_SIZE_LIMITS.HOOKS`)
+
+#### Централизованные константы:
+
+```typescript
+// packages/constants/src/linter-limits.ts
+export const FUNCTION_SIZE_LIMITS = {
+  BASE: 50, // Базовый лимит
+  UI_COMPONENTS: 60, // UI компоненты (JSX)
+  MAIN_PAGES: 80, // Основные страницы
+  API_ENDPOINTS: 100, // API endpoints
+  TESTS: 120, // Тесты
+  HOOKS: 75, // Хуки
+  DASHBOARD: 70, // Dashboard компоненты
+} as const;
+
+export const COMPLEXITY_LIMITS = {
+  BASE: 10, // Базовая сложность
+  UTILS: 8, // Утилиты (строже)
+  API_LAYER: 12, // API слой
+} as const;
+```
 
 ### Техники сокращения
 
 ```tsx
 // ❌ Плохо - слишком много ответственности
 function UserDashboard({ userId }: Props) {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [orders, setOrders] = useState<Order[]>([])
-  
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [orders, setOrders] = useState<Order[]>([]);
+
   useEffect(() => {
     async function loadData() {
-      setLoading(true)
+      setLoading(true);
       try {
-        const userData = await fetchUser(userId)
-        const ordersData = await fetchUserOrders(userId)
-        setUser(userData)
-        setOrders(ordersData)
+        const userData = await fetchUser(userId);
+        const ordersData = await fetchUserOrders(userId);
+        setUser(userData);
+        setOrders(ordersData);
       } catch (error) {
-        toast.error('Failed to load data')
+        toast.error('Failed to load data');
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
     }
-    loadData()
-  }, [userId])
+    loadData();
+  }, [userId]);
 
-  if (loading) return <DashboardSkeleton />
-  if (!user) return <UserNotFound />
+  if (loading) return <DashboardSkeleton />;
+  if (!user) return <UserNotFound />;
 
   return (
     <div className="grid grid-cols-2 gap-6">
@@ -85,18 +177,18 @@ function UserDashboard({ userId }: Props) {
       <RecentOrders orders={orders} />
       <UserStats user={user} orders={orders} />
     </div>
-  )
+  );
 }
 
 // ✅ Хорошо - разделение ответственности
 function UserDashboard({ userId }: Props) {
-  const userQuery = useUserQuery(userId)
-  const ordersQuery = useUserOrdersQuery(userId)
-  
-  if (userQuery.isLoading) return <DashboardSkeleton />
-  if (!userQuery.data) return <UserNotFound />
+  const userQuery = useUserQuery(userId);
+  const ordersQuery = useUserOrdersQuery(userId);
 
-  return <DashboardContent user={userQuery.data} orders={ordersQuery.data} />
+  if (userQuery.isLoading) return <DashboardSkeleton />;
+  if (!userQuery.data) return <UserNotFound />;
+
+  return <DashboardContent user={userQuery.data} orders={ordersQuery.data} />;
 }
 
 function DashboardContent({ user, orders }: Props) {
@@ -106,7 +198,7 @@ function DashboardContent({ user, orders }: Props) {
       <RecentOrders orders={orders || []} />
       <UserStats user={user} orders={orders || []} />
     </div>
-  )
+  );
 }
 ```
 
@@ -119,11 +211,11 @@ function DashboardContent({ user, orders }: Props) {
 ```tsx
 // ✅ Хорошо - ранние возвраты
 function OrderSummary({ order }: Props) {
-  if (!order) return <OrderNotFound />
-  if (order.items.length === 0) return <EmptyCart />
-  if (order.status === 'cancelled') return <CancelledOrder order={order} />
-  
-  return <ActiveOrder order={order} />
+  if (!order) return <OrderNotFound />;
+  if (order.items.length === 0) return <EmptyCart />;
+  if (order.status === 'cancelled') return <CancelledOrder order={order} />;
+
+  return <ActiveOrder order={order} />;
 }
 ```
 
@@ -152,16 +244,16 @@ function PaymentForm({ user, cart }: Props) {
         <LoginPrompt />
       )}
     </div>
-  )
+  );
 }
 
 // ✅ Хорошо - плоская структура
 function PaymentForm({ user, cart }: Props) {
-  if (!user) return <LoginPrompt />
-  if (cart.items.length === 0) return <EmptyCart />
-  if (user.paymentMethods.length === 0) return <AddPaymentMethod />
-  
-  return <PaymentSelector methods={user.paymentMethods} />
+  if (!user) return <LoginPrompt />;
+  if (cart.items.length === 0) return <EmptyCart />;
+  if (user.paymentMethods.length === 0) return <AddPaymentMethod />;
+
+  return <PaymentSelector methods={user.paymentMethods} />;
 }
 ```
 
@@ -172,6 +264,7 @@ function PaymentForm({ user, cart }: Props) {
 ### Когда использовать
 
 ✅ **ДА** - для UI вариантов:
+
 - Кнопки с разными стилями
 - Алерты/уведомления
 - Бейджи/статусы
@@ -185,35 +278,37 @@ const AlertVariants = {
   success: 'bg-green-50 text-green-800 border-green-200',
   error: 'bg-red-50 text-red-800 border-red-200',
   warning: 'bg-yellow-50 text-yellow-800 border-yellow-200',
-  info: 'bg-blue-50 text-blue-800 border-blue-200'
-} as const
+  info: 'bg-blue-50 text-blue-800 border-blue-200',
+} as const;
 
 const AlertIcons = {
   success: CheckCircleIcon,
   error: XCircleIcon,
   warning: ExclamationTriangleIcon,
-  info: InformationCircleIcon
-} as const
+  info: InformationCircleIcon,
+} as const;
 
 interface AlertProps {
-  variant?: keyof typeof AlertVariants
-  children: React.ReactNode
-  className?: string
+  variant?: keyof typeof AlertVariants;
+  children: React.ReactNode;
+  className?: string;
 }
 
 export function Alert({ variant = 'info', children, className }: AlertProps) {
-  const Icon = AlertIcons[variant]
-  
+  const Icon = AlertIcons[variant];
+
   return (
-    <div className={cn(
-      'flex items-center gap-3 p-4 rounded-lg border',
-      AlertVariants[variant],
-      className
-    )}>
+    <div
+      className={cn(
+        'flex items-center gap-3 p-4 rounded-lg border',
+        AlertVariants[variant],
+        className
+      )}
+    >
       <Icon className="h-5 w-5 flex-shrink-0" />
       <div>{children}</div>
     </div>
-  )
+  );
 }
 ```
 
@@ -225,27 +320,27 @@ const ButtonVariants = {
   primary: 'bg-blue-600 hover:bg-blue-700 text-white',
   secondary: 'bg-gray-200 hover:bg-gray-300 text-gray-900',
   destructive: 'bg-red-600 hover:bg-red-700 text-white',
-  outline: 'border border-gray-300 hover:bg-gray-50 text-gray-700'
-} as const
+  outline: 'border border-gray-300 hover:bg-gray-50 text-gray-700',
+} as const;
 
 const ButtonSizes = {
   sm: 'px-3 py-1.5 text-sm',
-  md: 'px-4 py-2 text-base', 
-  lg: 'px-6 py-3 text-lg'
-} as const
+  md: 'px-4 py-2 text-base',
+  lg: 'px-6 py-3 text-lg',
+} as const;
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: keyof typeof ButtonVariants
-  size?: keyof typeof ButtonSizes
-  children: React.ReactNode
+  variant?: keyof typeof ButtonVariants;
+  size?: keyof typeof ButtonSizes;
+  children: React.ReactNode;
 }
 
-export function Button({ 
-  variant = 'primary', 
-  size = 'md', 
-  className, 
-  children, 
-  ...props 
+export function Button({
+  variant = 'primary',
+  size = 'md',
+  className,
+  children,
+  ...props
 }: ButtonProps) {
   return (
     <button
@@ -259,7 +354,7 @@ export function Button({
     >
       {children}
     </button>
-  )
+  );
 }
 ```
 
@@ -270,6 +365,7 @@ export function Button({
 ### Когда использовать
 
 ✅ **ДА** - для состояний с конфигурацией:
+
 - Статусы заказов/платежей
 - Типы пользователей
 - Уровни доступа
@@ -283,53 +379,53 @@ export const ORDER_STATUS_CONFIG = {
     color: 'yellow',
     icon: 'clock',
     canCancel: true,
-    canEdit: true
+    canEdit: true,
   },
   confirmed: {
     label: 'Подтвержден',
-    color: 'blue', 
+    color: 'blue',
     icon: 'check',
     canCancel: true,
-    canEdit: false
+    canEdit: false,
   },
   shipped: {
     label: 'Отправлен',
     color: 'purple',
     icon: 'truck',
     canCancel: false,
-    canEdit: false
+    canEdit: false,
   },
   delivered: {
     label: 'Доставлен',
     color: 'green',
     icon: 'check-circle',
     canCancel: false,
-    canEdit: false
-  }
-} as const
+    canEdit: false,
+  },
+} as const;
 
-export type OrderStatus = keyof typeof ORDER_STATUS_CONFIG
+export type OrderStatus = keyof typeof ORDER_STATUS_CONFIG;
 ```
 
 ```tsx
 // packages/ui/src/components/order-status.tsx
-import { ORDER_STATUS_CONFIG } from '@repo/constants'
+import { ORDER_STATUS_CONFIG } from '@repo/constants';
 
 interface OrderStatusProps {
-  status: OrderStatus
-  showActions?: boolean
+  status: OrderStatus;
+  showActions?: boolean;
 }
 
 export function OrderStatus({ status, showActions = false }: OrderStatusProps) {
-  const config = ORDER_STATUS_CONFIG[status]
-  
+  const config = ORDER_STATUS_CONFIG[status];
+
   return (
     <div className="flex items-center justify-between">
       <Badge variant={config.color}>
         <Icon name={config.icon} className="mr-2" />
         {config.label}
       </Badge>
-      
+
       {showActions && (
         <div className="flex gap-2">
           {config.canEdit && <EditButton />}
@@ -337,7 +433,7 @@ export function OrderStatus({ status, showActions = false }: OrderStatusProps) {
         </div>
       )}
     </div>
-  )
+  );
 }
 ```
 
@@ -350,19 +446,19 @@ export function OrderStatus({ status, showActions = false }: OrderStatusProps) {
 ```tsx
 // ✅ Хорошо - простые guard clauses
 function Avatar({ user }: Props) {
-  if (!user) return <DefaultAvatar />
-  if (!user.avatar) return <InitialsAvatar name={user.name} />
-  
-  return <img src={user.avatar} alt={user.name} className="rounded-full" />
+  if (!user) return <DefaultAvatar />;
+  if (!user.avatar) return <InitialsAvatar name={user.name} />;
+
+  return <img src={user.avatar} alt={user.name} className="rounded-full" />;
 }
 
 // ✅ Хорошо - простая условная логика
 function WelcomeMessage({ user }: Props) {
-  const greeting = user.lastLoginAt 
+  const greeting = user.lastLoginAt
     ? `Добро пожаловать, ${user.name}!`
-    : `Впервые у нас, ${user.name}?`
-    
-  return <h1>{greeting}</h1>
+    : `Впервые у нас, ${user.name}?`;
+
+  return <h1>{greeting}</h1>;
 }
 ```
 
@@ -371,21 +467,21 @@ function WelcomeMessage({ user }: Props) {
 ```tsx
 // ✅ Хорошо - не усложняйте
 function LoadingState({ type }: Props) {
-  if (type === 'spinner') return <Spinner />
-  if (type === 'skeleton') return <Skeleton />
-  return <div>Loading...</div>
+  if (type === 'spinner') return <Spinner />;
+  if (type === 'skeleton') return <Skeleton />;
+  return <div>Loading...</div>;
 }
 
 // ❌ Плохо - излишнее усложнение для 3 вариантов
 const LoadingComponents = {
   spinner: Spinner,
   skeleton: Skeleton,
-  default: () => <div>Loading...</div>
-}
+  default: () => <div>Loading...</div>,
+};
 
 function LoadingState({ type }: Props) {
-  const Component = LoadingComponents[type] ?? LoadingComponents.default
-  return <Component />
+  const Component = LoadingComponents[type] ?? LoadingComponents.default;
+  return <Component />;
 }
 ```
 
@@ -397,17 +493,17 @@ function LoadingState({ type }: Props) {
 
 ```typescript
 // packages/constants/src/index.ts
-export * from './api'
-export * from './business'
-export * from './ui'
-export * from './validation'
+export * from './api';
+export * from './business';
+export * from './ui';
+export * from './validation';
 
 // packages/constants/src/api.ts
 export const API_ENDPOINTS = {
   USERS: '/api/users',
-  ORDERS: '/api/orders', 
-  PAYMENTS: '/api/payments'
-} as const
+  ORDERS: '/api/orders',
+  PAYMENTS: '/api/payments',
+} as const;
 
 export const HTTP_STATUS = {
   OK: 200,
@@ -415,38 +511,38 @@ export const HTTP_STATUS = {
   BAD_REQUEST: 400,
   UNAUTHORIZED: 401,
   NOT_FOUND: 404,
-  SERVER_ERROR: 500
-} as const
+  SERVER_ERROR: 500,
+} as const;
 
 // packages/constants/src/business.ts
 export const ORDER_STATUSES = {
   PENDING: 'pending',
   CONFIRMED: 'confirmed',
-  SHIPPED: 'shipped', 
+  SHIPPED: 'shipped',
   DELIVERED: 'delivered',
-  CANCELLED: 'cancelled'
-} as const
+  CANCELLED: 'cancelled',
+} as const;
 
 export const USER_ROLES = {
   ADMIN: 'admin',
   MANAGER: 'manager',
-  USER: 'user'
-} as const
+  USER: 'user',
+} as const;
 
 // packages/constants/src/validation.ts
 export const VALIDATION_LIMITS = {
   EMAIL_MAX_LENGTH: 255,
   PASSWORD_MIN_LENGTH: 8,
   USERNAME_MIN_LENGTH: 3,
-  ORDER_ITEMS_MAX: 50
-} as const
+  ORDER_ITEMS_MAX: 50,
+} as const;
 ```
 
 ### Использование
 
 ```typescript
 // В компонентах
-import { ORDER_STATUSES, HTTP_STATUS } from '@repo/constants'
+import { ORDER_STATUSES, HTTP_STATUS } from '@repo/constants';
 
 // В API
 if (response.status === HTTP_STATUS.OK) {
@@ -464,28 +560,33 @@ if (order.status === ORDER_STATUSES.PENDING) {
 ## ✅ Code Review Checklist
 
 ### Размер и сложность
+
 - [ ] Функции не превышают 50 строк
 - [ ] Сложность функций не превышает 10
 - [ ] Глубина вложенности не больше 2 уровней
 - [ ] Используются guard clauses вместо глубокой вложенности
 
 ### Условная логика
+
 - [ ] UI варианты реализованы через конфигурацию (lookup tables)
 - [ ] Состояния с множественными свойствами вынесены в константы
 - [ ] Простые условия (2-3 варианта) оставлены как if/else
 - [ ] Guard clauses используются для валидации входных данных
 
 ### Константы
+
 - [ ] Отсутствуют магические строки и числа
 - [ ] API endpoints, статусы, роли вынесены в constants пакет
 - [ ] Конфигурация UI компонентов централизована
 
 ### Архитектура
+
 - [ ] UI компоненты не содержат бизнес-логику
 - [ ] Hooks/stores изолированы от UI деталей
 - [ ] Зависимости направлены правильно (UI → hooks → api-client)
 
 ### TypeScript
+
 - [ ] Типы экспортированы из правильных пакетов
 - [ ] Используется `as const` для конфигурационных объектов
 - [ ] Нет `any` типов без веской причины
@@ -503,18 +604,18 @@ if (order.status === ORDER_STATUSES.PENDING) {
 ```json
 {
   "*.{js,jsx,ts,tsx}": [
-    "eslint --fix --max-warnings 0",  // ESLint с нулевой толерантностью к предупреждениям
-    "prettier --write"                // Автоформатирование
+    "eslint --fix --max-warnings 0", // ESLint с нулевой толерантностью к предупреждениям
+    "prettier --write" // Автоформатирование
   ],
   "*.{css,scss}": [
-    "stylelint --fix",               // Stylelint с автофиксом
-    "prettier --write"               // Форматирование CSS
+    "stylelint --fix", // Stylelint с автофиксом
+    "prettier --write" // Форматирование CSS
   ],
   "*.{json,md}": [
-    "prettier --write"               // Форматирование JSON/Markdown
+    "prettier --write" // Форматирование JSON/Markdown
   ],
   "packages/constants/**/*.{ts,tsx}": [
-    "npm run build --workspace=@repo/constants"  // Пересборка constants при изменении
+    "npm run build --workspace=@repo/constants" // Пересборка constants при изменении
   ]
 }
 ```
@@ -536,7 +637,7 @@ if (order.status === ORDER_STATUSES.PENDING) {
 ```bash
 # Примеры правильных сообщений:
 feat(ui): add polymorphic Alert component
-fix(constants): correct ORDER_STATUS_CONFIG types  
+fix(constants): correct ORDER_STATUS_CONFIG types
 docs: update code style guide
 refactor(hooks): simplify user store logic
 test(ui): add Button component tests
@@ -566,6 +667,7 @@ npx husky add .husky/commit-msg "npx commitlint --edit $1"
 ### Решение проблем
 
 #### ESLint ошибки:
+
 ```bash
 # Автофикс всех файлов
 npm run lint
@@ -575,6 +677,7 @@ npx eslint src/components/Button.tsx --fix
 ```
 
 #### TypeScript ошибки:
+
 ```bash
 # Проверка типов
 npm run check-types
@@ -584,11 +687,12 @@ npm run check-types --workspace=@repo/ui
 ```
 
 #### Stylelint ошибки:
+
 ```bash
 # Автофикс стилей
 npm run lint:styles
 
-# Проверка конкретного файла  
+# Проверка конкретного файла
 npx stylelint src/styles/globals.css --fix
 ```
 
@@ -604,8 +708,10 @@ npx stylelint src/styles/globals.css --fix
 
 ## 🎉 **Итоговая сводка изменений**
 
-### ✅ **1. Code Style Guide** 
+### ✅ **1. Code Style Guide**
+
 Создан комплексный стайл-гайд в `docs/CODE_STYLE_GUIDE.md`:
+
 - Правила размера компонентов (до 50 строк)
 - Guard clauses вместо глубокой вложенности
 - Полиморфные компоненты для UI вариантов
@@ -613,7 +719,9 @@ npx stylelint src/styles/globals.css --fix
 - Code Review Checklist
 
 ### ✅ **2. ESLint конфигурация обновлена**
+
 В `eslint.config.mjs` добавлены правила:
+
 ```javascript
 "max-lines-per-function": ["error", 50],
 "complexity": ["warn", 10],
@@ -622,7 +730,9 @@ npx stylelint src/styles/globals.css --fix
 ```
 
 ### ✅ **3. Constants пакет создан**
+
 Структура `packages/constants/`:
+
 - `api.ts` - API endpoints, HTTP статусы
 - `business.ts` - Бизнес константы (роли, статусы)
 - `ui.ts` - UI конфигурация с lookup tables
@@ -630,24 +740,29 @@ npx stylelint src/styles/globals.css --fix
 - Полная типизация с TypeScript
 
 ### ✅ **4. Pre-commit хуки настроены**
+
 Создан `docs/PRE_COMMIT_GUIDE.md` и обновлены:
+
 - `.husky/pre-commit` - комплексные проверки
 - `.lintstagedrc.json` - автофиксы для staged файлов
 - Проверки: ESLint, Prettier, Stylelint, TypeScript, Tests
 
 ### ✅ **5. Документация**
+
 - `docs/CODE_STYLE_GUIDE.md` - основной стайл-гайд
 - `docs/PRE_COMMIT_GUIDE.md` - руководство по хукам
 - `packages/constants/README.md` - документация constants
 - `docs/CONSTANTS_EXAMPLES.ts` - примеры использования
 
 ### 🎯 **Готово к использованию:**
+
 1. **ESLint правила** автоматически проверяют качество кода
 2. **Constants пакет** заменяет магические строки
 3. **Pre-commit хуки** предотвращают попадание плохого кода в репозиторий
 4. **Стайл-гайд** обеспечивает единообразие разработки
 
 ### 🚀 **Следующие шаги для команды:**
+
 1. Ознакомиться со стайл-гайдом
 2. Начать использовать константы вместо магических строк
 3. Создать первые полиморфные компоненты (Alert, Button)

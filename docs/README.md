@@ -14,6 +14,10 @@
 
 ## Контроль качества
 
+- **[CENTRALIZED_ESLINT_ARCHITECTURE.md](CENTRALIZED_ESLINT_ARCHITECTURE.md)** - **НОВОЕ** Детальное описание новой централизованной архитектуры ESLint с lazy loading и performance tuning
+- **[CODE_STYLE_GUIDE.md](CODE_STYLE_GUIDE.md)** - Руководство по стилю кода, централизованные ESLint правила и архитектурные паттерны
+- **[CODE_REVIEW_PROTOCOLS.md](CODE_REVIEW_PROTOCOLS.md)** - Протоколы code review с централизованной архитектурой линтинга
+- **[PRE_COMMIT_GUIDE.md](PRE_COMMIT_GUIDE.md)** - Настройка pre-commit хуков с новой ESLint архитектурой
 - **[ENTERPRISE_LINTING.md](ENTERPRISE_LINTING.md)** - Настройки ESLint, Stylelint, прогрессивные лимиты и roadmap снижения technical debt
 - **[ENTERPRISE_ROADMAP.md](ENTERPRISE_ROADMAP.md)** - План развития проекта, внедрение enterprise-практик
 

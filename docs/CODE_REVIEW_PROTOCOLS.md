@@ -1374,35 +1374,66 @@ export function reportWebVitals(metric: NextWebVitalsMetric) {
 
 #### ESLint конфигурация:
 
+**Архитектура**: Централизованная с модульной структурой
+
 ```javascript
-// ✅ Правильно - eslint.config.mjs
+// ✅ Правильно - eslint.config.mjs (единственный конфиг)
+import {
+  FUNCTION_SIZE_LIMITS,
+  COMPLEXITY_LIMITS
+} from './packages/constants/dist/index.js';
+
+import { lazyLoadConfig } from './packages/eslint-config/lazy-loading.js';
+
 export default [
   {
-    files: ["**/*.{js,jsx,ts,tsx}"],
-    rules: {
-      "max-lines-per-function": ["error", 50],
-      "complexity": ["warn", 10],
+    name: 'global-rules',
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    rules: lazyLoadConfig('global-rules', () => ({
+      "max-lines-per-function": ["error", { max: FUNCTION_SIZE_LIMITS.BASE }],
+      "complexity": ["error", COMPLEXITY_LIMITS.BASE],
       "max-depth": ["error", 2],
       "max-params": ["error", 4],
-      "no-console": ["warn", { allow: ["warn", "error"] }],
+      "no-console": "error", // Строго запрещен
       "@typescript-eslint/no-unused-vars": "error",
       "@typescript-eslint/no-explicit-any": "error"
-    }
+    }))
   },
-  {
-    files: ["packages/ui/**/*.{ts,tsx}"],
-    rules: {
-      "react-hooks/rules-of-hooks": "error",
-      "react-hooks/exhaustive-deps": "warn"
-    }
-  }
-]
 
-// ❌ Неправильно
+  // Модульные конфигурации с lazy loading
+  ...reactConfig,
+  ...apiConfig,
+  ...testingConfig,
+  ...utilsConfig,
+
+  // Архитектурные overrides
+  {
+    name: 'ui-components',
+    files: ['packages/ui/**/*.{js,jsx,ts,tsx}'],
+    rules: lazyLoadConfig('ui-rules', () => ({
+      "max-lines-per-function": ["error", { max: FUNCTION_SIZE_LIMITS.UI_COMPONENTS }],
+      "react-hooks/rules-of-hooks": "error",
+      "react-hooks/exhaustive-deps": "warn",
+      "jsx-a11y/alt-text": "error"
+    }))
+  },
+
+  {
+    name: 'api-infrastructure',
+    files: ['apps/web/src/server/trpc/**/*.ts'],
+    rules: lazyLoadConfig('api-rules', () => ({
+      "max-lines-per-function": ["error", { max: FUNCTION_SIZE_LIMITS.API_ENDPOINTS }],
+      "complexity": ["error", COMPLEXITY_LIMITS.API_LAYER],
+      "no-console": "off", // Разрешен для логирования
+    }))
+  }
+];
+
+// ❌ Неправильно - устаревшая архитектура
 export default {
   rules: {
     // Слишком мягкие ограничения
-    "max-lines-per-function": ["warn", 100],
+    "max-lines-per-function": ["warn", 100], // Хардкод лимита!
     "@typescript-eslint/no-explicit-any": "off", // Отключен any!
 
     // Противоречивые правила
@@ -1413,11 +1444,14 @@ export default {
 
 **Проверки:**
 
-- [ ] Правила соответствуют CODE_STYLE_GUIDE.md
-- [ ] Строгие ограничения на размер функций и сложность
-- [ ] TypeScript правила предотвращают any и unused vars
-- [ ] Раздельные конфигурации для packages/apps
-- [ ] Security правила включены
+- [ ] Единственный конфиг файл: `eslint.config.mjs` (root)
+- [ ] Использование централизованных лимитов из `@repo/constants`
+- [ ] Модульная структура в `packages/eslint-config/`
+- [ ] Lazy loading для производительности
+- [ ] Правила severity: `"error"` для критичных правил
+- [ ] Архитектурные overrides для разных типов файлов
+- [ ] Security правила включены (XSS, injection защита)
+- [ ] React hooks и a11y правила настроены
 
 #### TypeScript конфигурация:
 

@@ -75,6 +75,14 @@ git commit -m "test: verify pre-commit hooks"
 | `*.{json,md}`                | Prettier             |
 | `packages/constants/**/*.ts` | Пересборка пакета    |
 
+**ESLint проверки** (централизованная архитектура):
+
+- **Единый конфиг**: `eslint.config.mjs` с модульной структурой
+- **Лимит warnings**: максимум 52 warning (настроено в `.lintstagedrc.json`)
+- **Архитектурные правила**: разные лимиты для разных типов файлов
+- **Lazy loading**: оптимизированная производительность
+- **Централизованные константы**: все лимиты из `@repo/constants`
+
 ### 🔧 Для всего проекта:
 
 1. **Type Checking**: Проверка TypeScript типов
@@ -91,12 +99,25 @@ git commit -m "feat: add new component"
 🔍 Running pre-commit checks...
 
 📝 Checking staged files...
-✅ eslint --fix --max-warnings 0
+✅ eslint --fix --max-warnings 52  # Обновлен лимит warnings
 ✅ prettier --write
 ✅ stylelint --fix
 
 🔧 Checking TypeScript...
 ✅ npm run check-types
+
+🧪 Running tests...
+✅ npm run test
+
+📋 Validating commit message...
+✅ Conventional commit format
+
+⚡ Performance monitoring...
+✅ ESLint config loaded in ~0ms (lazy loading)
+✅ Lint completed in ~6.9s
+
+🎉 All checks passed!
+```
 
 🧪 Running tests...
 ✅ npm run test
@@ -107,7 +128,8 @@ git commit -m "feat: add new component"
 ✅ feat: add new component
 
 [main abc1234] feat: add new component
-```
+
+````
 
 ## 🚨 Возможные ошибки и решения
 
@@ -121,7 +143,7 @@ error: 'useState' is defined but never used (unused-imports/no-unused-imports)
 # Удалить неиспользуемые импорты или добавить комментарий
 // eslint-disable-next-line unused-imports/no-unused-imports
 import { useState } from 'react'
-```
+````
 
 ### TypeScript ошибки
 

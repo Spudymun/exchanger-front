@@ -1326,80 +1326,156 @@ npm run storybook
 
 ## 🔍 Контроль качества кода
 
-### ESLint - Линтинг кода
+### ESLint - Централизованная архитектура линтинга
 
-**Конфигурация**: `packages/eslint-config/`
+**Архитектура**: Единый конфиг с модульной структурой и lazy loading
 
-#### Иерархия правил:
+#### Основные принципы новой архитектуры:
 
-- **`base.js`** - базовые правила (TypeScript, imports, security)
-- **`react-internal.js`** - React правила (performance, accessibility)
-- **`next.js`** - Next.js специфичные правила
+- **Единый файл конфигурации**: `eslint.config.mjs` (root-level)
+- **Модульная структура**: `packages/eslint-config/` с разделением по типам файлов
+- **Lazy loading**: Условная загрузка конфигов для оптимизации производительности
+- **Централизованные лимиты**: Все правила используют константы из `@repo/constants`
+- **Shared rules**: Мемоизированные общие правила для избежания дублирования
 
-#### Enterprise правила:
+#### Структура модулей ESLint:
 
-```javascript
-// packages/eslint-config/base.js
-module.exports = {
-  rules: {
-    // TypeScript
-    '@typescript-eslint/no-explicit-any': 'warn',
-    '@typescript-eslint/no-non-null-assertion': 'warn',
-
-    // Code Quality
-    complexity: ['warn', { max: 10 }],
-    'max-lines-per-function': ['warn', { max: 100 }],
-    'no-magic-numbers': [
-      'warn',
-      {
-        ignore: [-1, 0, 1, 2, 100],
-        ignoreArrayIndexes: true,
-      },
-    ],
-
-    // Security
-    'security/detect-object-injection': 'warn',
-
-    // Imports
-    'import/order': [
-      'error',
-      {
-        groups: ['builtin', 'external', 'internal', 'parent', 'sibling'],
-        'newlines-between': 'always',
-      },
-    ],
-  },
-};
+```
+packages/eslint-config/
+├── base.js               # Базовые TypeScript правила
+├── shared-rules.js       # Централизованные правила (мемоизированные)
+├── react.js              # React, hooks, a11y правила
+├── api.js                # API слой (tRPC, endpoints)
+├── testing.js            # Jest/testing правила
+├── configs.js            # Конфигурационные файлы (turbo, etc.)
+├── utils.js              # Утилитарные пакеты
+├── ignores.js            # Централизованные ignores
+├── lazy-loading.js       # Утилиты производительности
+└── performance-benchmark.js # Мониторинг производительности
 ```
 
-#### Как настроить правила для нового пакета:
+#### Ключевые особенности:
 
-1. **Создать eslint.config.mjs**:
+- **Мониторинг производительности**: Отслеживание времени загрузки конфигов
+- **Централизованные ignores**: Устранение 80%+ ложных срабатываний
+- **Архитектурные overrides**: Динамические лимиты для разных типов файлов
+- **Security правила**: Защита от XSS, инъекций, eval
+- **Ordering импортов**: Единообразная организация импортов
+- **React hooks**: Валидация правильного использования хуков
+- **Accessibility**: A11y правила для улучшения UX
+
+#### Централизованные лимиты:
+
+```typescript
+// packages/constants/src/linter-limits.ts
+export const FUNCTION_SIZE_LIMITS = {
+  BASE: 50, // Базовый лимит
+  UI_COMPONENTS: 60, // UI компоненты
+  MAIN_PAGES: 80, // Основные страницы
+  API_ENDPOINTS: 100, // API endpoints
+  TESTS: 120, // Тесты
+  HOOKS: 75, // Хуки
+  DASHBOARD: 70, // Dashboard компоненты
+} as const;
+
+export const COMPLEXITY_LIMITS = {
+  BASE: 10, // Базовая сложность
+  UTILS: 8, // Утилиты (строже)
+  API_LAYER: 12, // API слой
+} as const;
+```
+
+#### Примеры правил для разных типов файлов:
 
 ```javascript
-// packages/new-package/eslint.config.mjs
-import { config as baseConfig } from '@repo/eslint-config/base';
+// eslint.config.mjs - главный конфиг
+import { FUNCTION_SIZE_LIMITS, COMPLEXITY_LIMITS } from './packages/constants/dist/index.js';
+import { lazyLoadConfig } from './packages/eslint-config/lazy-loading.js';
 
 export default [
-  ...baseConfig,
+  // Глобальные правила
   {
-    rules: {
-      // Пакет-специфичные правила
-      'no-console': 'error', // Для production пакетов
-    },
+    name: 'global-rules',
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    rules: lazyLoadConfig('global-rules', () => ({
+      'max-lines-per-function': ['error', { max: FUNCTION_SIZE_LIMITS.BASE }],
+      complexity: ['error', COMPLEXITY_LIMITS.BASE],
+      '@typescript-eslint/no-explicit-any': 'error',
+      'no-console': 'error',
+    })),
+  },
+
+  // UI компоненты
+  {
+    name: 'ui-components',
+    files: ['packages/ui/**/*.{js,jsx,ts,tsx}'],
+    rules: lazyLoadConfig('ui-rules', () => ({
+      'max-lines-per-function': ['error', { max: FUNCTION_SIZE_LIMITS.UI_COMPONENTS }],
+      'react-hooks/rules-of-hooks': 'error',
+      'jsx-a11y/alt-text': 'error',
+    })),
+  },
+
+  // API слой
+  {
+    name: 'api-layer',
+    files: ['apps/web/src/server/trpc/**/*.ts'],
+    rules: lazyLoadConfig('api-rules', () => ({
+      'max-lines-per-function': ['error', { max: FUNCTION_SIZE_LIMITS.API_ENDPOINTS }],
+      complexity: ['error', COMPLEXITY_LIMITS.API_LAYER],
+      'no-console': 'off', // Разрешен для логирования
+    })),
   },
 ];
 ```
 
-2. **Добавить скрипты в package.json**:
+#### Как настроить правила для нового пакета:
+
+1. **Использовать centralized config**:
+
+```javascript
+// packages/new-package/eslint.config.mjs (не нужен, используется root)
+// Все правила настраиваются в root eslint.config.mjs через overrides
+```
+
+2. **Добавить override в root eslint.config.mjs**:
+
+```javascript
+// eslint.config.mjs
+export default [
+  // ...existing configs...
+
+  // Новый пакет
+  {
+    name: 'new-package',
+    files: ['packages/new-package/**/*.{js,ts}'],
+    rules: lazyLoadConfig('new-package-rules', () => ({
+      'max-lines-per-function': ['error', { max: FUNCTION_SIZE_LIMITS.BASE }],
+      'no-console': 'error',
+    })),
+  },
+];
+```
+
+3. **Добавить скрипты в package.json**:
 
 ```json
 {
   "scripts": {
-    "lint": "eslint . --max-warnings 5",
-    "lint:fix": "eslint . --fix --max-warnings 5"
+    "lint": "eslint . --max-warnings 52",
+    "lint:fix": "eslint . --fix --max-warnings 52"
   }
 }
+```
+
+#### Performance мониторинг:
+
+```bash
+# Бенчмарк производительности
+npm run lint:benchmark
+
+# Мониторинг времени загрузки конфига
+# Автоматически в консоли при запуске eslint
 ```
 
 #### Архитектурно оправданные console.log
@@ -1411,30 +1487,34 @@ export default [
 **📋 Паттерн конфигурации**:
 
 ```javascript
-// apps/web/eslint.config.js или packages/ui/eslint.config.mjs
+// eslint.config.mjs - уже настроен
 export default [
-  ...baseConfig,
+  // ...base configs...
+
   // Override для инфраструктурных файлов
   {
+    name: 'infrastructure-console',
     files: [
       'src/server/trpc/**/*.ts', // tRPC middleware & routers
       'pages/api/trpc/**/*.ts', // API endpoints
       'src/components/ui/**/*.tsx', // Demo UI components
+      'scripts/**/*.js', // Build scripts
     ],
-    rules: {
+    rules: lazyLoadConfig('infrastructure-console', () => ({
       'no-console': 'off', // Разрешить console.log в инфраструктуре
-    },
+    })),
   },
 ];
 ```
 
-**🎯 Где разрешены console.log**:
+**🎯 Где разрешены console.log** (уже настроено):
 
 | Тип файла           | Путь                         | Обоснование                             |
 | ------------------- | ---------------------------- | --------------------------------------- |
 | **tRPC middleware** | `src/server/trpc/**/*.ts`    | Логирование запросов, ошибок, метрик    |
 | **API endpoints**   | `pages/api/trpc/**/*.ts`     | Отладка серверной логики                |
 | **Demo компоненты** | `src/components/ui/**/*.tsx` | Примеры использования для разработчиков |
+| **Build scripts**   | `scripts/**/*.js`            | Информация о процессе сборки            |
 
 **⚠️ Критерии применения**:
 
@@ -1444,10 +1524,10 @@ export default [
 - ❌ **НЕ использовать для обычных UI компонентов**
 - ❌ **НЕ использовать для utils/helpers**
 
-**🔧 Пример реализации**:
+**🔧 Пример использования**:
 
 ```javascript
-// ✅ ПРАВИЛЬНО: В tRPC middleware
+// ✅ ПРАВИЛЬНО: В tRPC middleware (уже разрешено)
 export const loggingMiddleware = t.middleware(async ({ next, path }) => {
   console.log(`[tRPC] ${path} started`); // Архитектурно оправдано
   const result = await next();
@@ -1457,10 +1537,26 @@ export const loggingMiddleware = t.middleware(async ({ next, path }) => {
 
 // ❌ НЕПРАВИЛЬНО: В UI компоненте
 export function UserCard() {
-  console.log('UserCard rendered'); // Должно быть удалено
+  console.log('UserCard rendered'); // Будет заблокировано ESLint
   return <div>...</div>;
 }
 ```
+
+**💡 Важно**: Это решение предотвращает конфликты между архитектурными требованиями логирования и автоматизированными проверками качества кода.
+export const loggingMiddleware = t.middleware(async ({ next, path }) => {
+console.log(`[tRPC] ${path} started`); // Архитектурно оправдано
+const result = await next();
+console.log(`[tRPC] ${path} completed`);
+return result;
+});
+
+// ❌ НЕПРАВИЛЬНО: В UI компоненте
+export function UserCard() {
+console.log('UserCard rendered'); // Должно быть удалено
+return <div>...</div>;
+}
+
+````
 
 **💡 Важно**: Это решение предотвращает конфликты между архитектурными требованиями логирования и автоматизированными проверками качества кода.
 
@@ -1489,7 +1585,7 @@ export function UserCard() {
     ]
   }
 }
-```
+````
 
 ### Husky + lint-staged - Pre-commit хуки
 
