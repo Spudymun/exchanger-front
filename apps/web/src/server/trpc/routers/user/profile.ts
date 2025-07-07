@@ -1,12 +1,10 @@
 import { USER_SUCCESS_MESSAGES } from '@repo/constants';
-import { orderManager } from '@repo/exchange-core';
+import { orderManager, validateUserAccess } from '@repo/exchange-core';
 
 import { z } from 'zod';
 
 import { createTRPCRouter } from '../../init';
 import { protectedProcedure } from '../../middleware/auth';
-
-import { validateUserAccess } from './helpers';
 
 export const profileRouter = createTRPCRouter({
   // Получить профиль текущего пользователя

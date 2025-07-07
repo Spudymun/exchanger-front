@@ -23,6 +23,68 @@ import { z } from 'zod';
 import { createTRPCRouter, publicProcedure } from '../init';
 import { rateLimitMiddleware } from '../middleware/rateLimit';
 
+// === HELPER FUNCTIONS FOR BUSINESS LOGIC ===
+
+/**
+ * Создает или находит пользователя по email
+ */
+function ensureUser(email: string) {
+  let user = userManager.findByEmail(email);
+  if (!user) {
+    user = userManager.create({
+      email,
+      isVerified: false,
+    });
+  }
+  return user;
+}
+
+/**
+ * Подготавливает данные для создания заявки
+ */
+function prepareOrderRequest(input: {
+  email: string;
+  cryptoAmount: number;
+  currency: (typeof CRYPTOCURRENCIES)[number];
+  recipientData?: { cardNumber?: string; bankDetails?: string };
+}) {
+  const sanitizedEmail = sanitizeEmail(input.email);
+  const uahAmount = calculateUahAmount(input.cryptoAmount, input.currency);
+
+  return {
+    email: sanitizedEmail,
+    cryptoAmount: input.cryptoAmount,
+    currency: input.currency,
+    uahAmount,
+    recipientData: input.recipientData,
+  };
+}
+
+/**
+ * Создает новую заявку в системе
+ */
+function createOrderInSystem(orderRequest: {
+  email: string;
+  cryptoAmount: number;
+  currency: (typeof CRYPTOCURRENCIES)[number];
+  uahAmount: number;
+  recipientData?: { cardNumber?: string; bankDetails?: string };
+}) {
+  const depositAddress = generateDepositAddress(orderRequest.currency);
+
+  const order = orderManager.create({
+    email: orderRequest.email,
+    cryptoAmount: orderRequest.cryptoAmount,
+    currency: orderRequest.currency,
+    uahAmount: orderRequest.uahAmount,
+    status: 'PENDING',
+    depositAddress,
+    recipientData: orderRequest.recipientData,
+  });
+
+  return { order, depositAddress };
+}
+
 export const exchangeRouter = createTRPCRouter({
   // Получить текущие курсы валют
   getRates: publicProcedure.query(async () => {
@@ -121,62 +183,29 @@ export const exchangeRouter = createTRPCRouter({
       // Имитация задержки
       await new Promise(resolve => setTimeout(resolve, ORDER_CREATION_DELAY_MS));
 
-      const sanitizedEmail = sanitizeEmail(input.email);
-
-      // Рассчитываем сумму в UAH
-      const uahAmount = calculateUahAmount(input.cryptoAmount, input.currency);
-
-      const orderRequest = {
-        email: sanitizedEmail,
-        cryptoAmount: input.cryptoAmount,
-        currency: input.currency,
-        uahAmount,
-        recipientData: input.recipientData,
-      };
+      // Подготавливаем данные заявки
+      const orderRequest = prepareOrderRequest(input);
 
       // Валидация заявки
       const validation = validateCreateOrder(orderRequest);
       if (!validation.isValid) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message: validation.errors[0], // Показываем первую ошибку
+          message: validation.errors[0],
         });
       }
 
-      // Проверяем/создаем пользователя
-      let user = userManager.findByEmail(sanitizedEmail);
-      if (!user) {
-        user = userManager.create({
-          email: sanitizedEmail,
-          isVerified: false,
-        });
-        // Новый пользователь создан
-      }
-
-      // Генерируем адрес для депозита
-      const depositAddress = generateDepositAddress(input.currency);
+      // Обеспечиваем существование пользователя
+      ensureUser(orderRequest.email);
 
       // Создаем заявку
-      const order = orderManager.create({
-        email: sanitizedEmail,
-        cryptoAmount: input.cryptoAmount,
-        currency: input.currency,
-        uahAmount,
-        status: 'PENDING',
-        depositAddress,
-        recipientData: input.recipientData,
-      });
-
-      // Заявка создана успешно
-
-      // Имитация отправки email (в реальном проекте будет асинхронно)
-      // Отправляется информация о созданной заявке
+      const { order, depositAddress } = createOrderInSystem(orderRequest);
 
       return {
         orderId: order.id,
         depositAddress,
         cryptoAmount: input.cryptoAmount,
-        uahAmount,
+        uahAmount: orderRequest.uahAmount,
         currency: input.currency,
         status: order.status,
         createdAt: order.createdAt,

@@ -1,27 +1,8 @@
 import { initTRPC } from '@trpc/server';
-import { type CreateNextContextOptions } from '@trpc/server/adapters/next';
 import superjson from 'superjson';
 import { ZodError } from 'zod';
 
-// Контекст для каждого запроса
-export const createTRPCContext = (opts: CreateNextContextOptions) => {
-  const { req, res } = opts;
-
-  // Получаем IP адрес для rate limiting
-  const forwarded = req.headers['x-forwarded-for'];
-  const ip =
-    typeof forwarded === 'string' ? forwarded.split(',')[0] : req.socket.remoteAddress || 'unknown';
-
-  return {
-    req,
-    res,
-    ip,
-    // Пользователь будет добавлен в middleware
-    user: null as { id: string; email: string } | null,
-  };
-};
-
-export type Context = Awaited<ReturnType<typeof createTRPCContext>>;
+import { type Context } from './context';
 
 // Инициализация tRPC
 const t = initTRPC.context<Context>().create({

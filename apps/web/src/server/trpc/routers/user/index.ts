@@ -6,14 +6,19 @@ import { securityRouter } from './security';
 
 /**
  * User API роутер - объединяет все пользовательские операции
+ *
+ * Архитектура: namespace композиция вместо spread procedures
+ * Использование: trpc.user.profile.getProfile.useQuery()
+ *                trpc.user.security.changePassword.useMutation()
+ *                trpc.user.orders.getMyOrders.useQuery()
  */
 export const userRouter = createTRPCRouter({
-  // Профиль пользователя
-  ...profileRouter._def.procedures,
+  // Профиль пользователя - trpc.user.profile.*
+  profile: profileRouter,
 
-  // Безопасность и аккаунт
-  ...securityRouter._def.procedures,
+  // Безопасность и аккаунт - trpc.user.security.*
+  security: securityRouter,
 
-  // Управление заявками
-  ...ordersRouter._def.procedures,
+  // Управление заявками - trpc.user.orders.*
+  orders: ordersRouter,
 });

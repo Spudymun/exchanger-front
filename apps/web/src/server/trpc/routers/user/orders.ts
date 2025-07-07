@@ -5,15 +5,13 @@ import {
   USER_ORDER_STATUSES,
   CANCELLABLE_ORDER_STATUSES,
 } from '@repo/constants';
-import { orderManager } from '@repo/exchange-core';
+import { orderManager, validateUserAccess, validateOrderAccess } from '@repo/exchange-core';
 
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
 import { createTRPCRouter } from '../../init';
 import { protectedProcedure } from '../../middleware/auth';
-
-import { validateUserAccess, validateOrderAccess } from './helpers';
 
 export const ordersRouter = createTRPCRouter({
   // Получить историю заявок пользователя

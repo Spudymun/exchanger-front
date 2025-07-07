@@ -1,12 +1,12 @@
 import { USER_ROLES } from '@repo/constants';
-import { type User } from '@repo/exchange-core';
+import { isAuthenticatedUser } from '@repo/exchange-core';
 import { TRPCError } from '@trpc/server';
 
 import { publicProcedure } from '../init';
 
 // Базовый middleware для проверки аутентификации
 export const authMiddleware = publicProcedure.use(({ ctx, next }) => {
-  if (!ctx.user) {
+  if (!isAuthenticatedUser(ctx.user)) {
     throw new TRPCError({
       code: 'UNAUTHORIZED',
       message: 'Необходима аутентификация',
@@ -16,7 +16,7 @@ export const authMiddleware = publicProcedure.use(({ ctx, next }) => {
   return next({
     ctx: {
       ...ctx,
-      user: ctx.user as User, // TypeScript assertion - user гарантированно не null после проверки
+      user: ctx.user, // TypeScript теперь знает, что user: User
     },
   });
 });

@@ -5,7 +5,7 @@ import {
   validateEmail,
   validatePassword,
   userManager,
-  type User,
+  isAuthenticatedUser,
 } from '@repo/exchange-core';
 import { TRPCError } from '@trpc/server';
 import bcrypt from 'bcryptjs';
@@ -161,12 +161,12 @@ export const authRouter = createTRPCRouter({
   // Получить текущую сессию
   getSession: publicProcedure.query(async ({ ctx }) => {
     // Если нет пользователя в контексте, возвращаем null
-    if (!ctx.user) {
+    if (!isAuthenticatedUser(ctx.user)) {
       return { user: null };
     }
 
-    // Type assertion для правильной типизации
-    const user = ctx.user as User;
+    // TypeScript теперь знает, что user: User
+    const user = ctx.user;
 
     return {
       user: {

@@ -1,5 +1,11 @@
 import { USER_MESSAGES, USER_SUCCESS_MESSAGES, USER_CONFIG } from '@repo/constants';
-import { validatePassword, userManager, orderManager } from '@repo/exchange-core';
+import {
+  validatePassword,
+  userManager,
+  orderManager,
+  validateUserAccess,
+  generateVerificationCode,
+} from '@repo/exchange-core';
 
 import { TRPCError } from '@trpc/server';
 import bcrypt from 'bcryptjs';
@@ -7,8 +13,6 @@ import { z } from 'zod';
 
 import { createTRPCRouter } from '../../init';
 import { protectedProcedure } from '../../middleware/auth';
-
-import { validateUserAccess, generateVerificationCode } from './helpers';
 
 export const securityRouter = createTRPCRouter({
   // Изменить пароль
