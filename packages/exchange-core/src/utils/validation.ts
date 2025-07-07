@@ -1,13 +1,15 @@
 import {
-  VALIDATION_PATTERNS,
   VALIDATION_MESSAGES,
   CRYPTOCURRENCIES,
   EXCHANGE_VALIDATION_PATTERNS,
   EXCHANGE_VALIDATION_MESSAGES,
   VALIDATION_BOUNDS,
-  DECIMAL_PRECISION,
-  UI_NUMERIC_CONSTANTS,
 } from '@repo/constants';
+
+import {
+  generateSessionId as serviceGenerateSessionId,
+  generateOrderId as serviceGenerateOrderId,
+} from '../services';
 
 import type {
   CryptoCurrency,
@@ -16,7 +18,10 @@ import type {
   RecipientData,
 } from '../types';
 
-import { isAmountWithinLimits } from './calculations';
+import {
+  validateEmail as validateBasicEmail,
+  validatePassword as validateBasicPassword,
+} from './basic-validators';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -25,42 +30,23 @@ export interface ValidationResult {
 
 /**
  * Валидация email
+ * @deprecated Use validateBasicEmail from basic-validators instead
  */
 export function validateEmail(email: string): ValidationResult {
-  const errors: string[] = [];
-
-  if (!email) {
-    errors.push(VALIDATION_MESSAGES.EMAIL_REQUIRED);
-  } else if (!VALIDATION_PATTERNS.EMAIL.test(email)) {
-    errors.push(VALIDATION_MESSAGES.EMAIL_INVALID);
-  }
-
-  return {
-    isValid: errors.length === VALIDATION_BOUNDS.MIN_VALUE,
-    errors,
-  };
+  return validateBasicEmail(email);
 }
 
 /**
  * Валидация пароля
+ * @deprecated Use validateBasicPassword from basic-validators instead
  */
 export function validatePassword(password: string): ValidationResult {
-  const errors: string[] = [];
-
-  if (!password) {
-    errors.push(VALIDATION_MESSAGES.PASSWORD_REQUIRED);
-  } else if (!VALIDATION_PATTERNS.PASSWORD.test(password)) {
-    errors.push(VALIDATION_MESSAGES.PASSWORD_WEAK);
-  }
-
-  return {
-    isValid: errors.length === VALIDATION_BOUNDS.MIN_VALUE,
-    errors,
-  };
+  return validateBasicPassword(password);
 }
 
 /**
  * Валидация криптовалюты
+ * @deprecated Use basic-validators instead
  */
 export function validateCurrency(currency: string): ValidationResult {
   const errors: string[] = [];
@@ -77,17 +63,13 @@ export function validateCurrency(currency: string): ValidationResult {
 
 /**
  * Валидация суммы криптовалюты
+ * @deprecated Use basic-validators instead
  */
-export function validateCryptoAmount(amount: number, currency: CryptoCurrency): ValidationResult {
+export function validateCryptoAmount(amount: number, _currency: CryptoCurrency): ValidationResult {
   const errors: string[] = [];
 
   if (!amount || amount <= VALIDATION_BOUNDS.MIN_VALUE) {
     errors.push(VALIDATION_MESSAGES.AMOUNT_INVALID);
-  } else {
-    const limitCheck = isAmountWithinLimits(amount, currency);
-    if (!limitCheck.isValid && limitCheck.reason) {
-      errors.push(limitCheck.reason);
-    }
   }
 
   return {
@@ -164,15 +146,14 @@ export function validateCreateOrder(request: CreateOrderRequest): ValidationResu
 
 /**
  * Валидация создания пользователя
+ * @deprecated Use basic-validators instead
  */
 export function validateCreateUser(request: CreateUserRequest): ValidationResult {
   const errors: string[] = [];
 
-  // Валидация email
   const emailValidation = validateEmail(request.email);
   errors.push(...emailValidation.errors);
 
-  // Валидация пароля (если указан)
   if (request.password) {
     const passwordValidation = validatePassword(request.password);
     errors.push(...passwordValidation.errors);
@@ -186,6 +167,7 @@ export function validateCreateUser(request: CreateUserRequest): ValidationResult
 
 /**
  * Санитизация email
+ * @deprecated Use sanitizeEmail from data-sanitizers instead
  */
 export function sanitizeEmail(email: string): string {
   return email.toLowerCase().trim();
@@ -193,14 +175,16 @@ export function sanitizeEmail(email: string): string {
 
 /**
  * Генерация безопасного session ID
+ * @deprecated Use generateSessionId from services instead
  */
 export function generateSessionId(): string {
-  return crypto.randomUUID();
+  return serviceGenerateSessionId();
 }
 
 /**
  * Генерация ID заявки
+ * @deprecated Use generateOrderId from services instead
  */
 export function generateOrderId(): string {
-  return `order_${Date.now()}_${Math.random().toString(UI_NUMERIC_CONSTANTS.ID_GENERATION_BASE).substr(UI_NUMERIC_CONSTANTS.SUBSTR_START_INDEX, DECIMAL_PRECISION.ORDER_ID_RANDOM_LENGTH)}`;
+  return serviceGenerateOrderId();
 }

@@ -1,4 +1,16 @@
-import { COMMISSION_RATES, AMOUNT_LIMITS, MOCK_EXCHANGE_RATES, PERCENTAGE_CALCULATIONS, VALIDATION_BOUNDS, DECIMAL_PRECISION } from '@repo/constants';
+import {
+  COMMISSION_RATES,
+  AMOUNT_LIMITS,
+  MOCK_EXCHANGE_RATES,
+  PERCENTAGE_CALCULATIONS,
+} from '@repo/constants';
+import {
+  calculateNetAmount,
+  calculateGrossAmountFromNet,
+  formatUahAmount,
+  formatCryptoAmount,
+  parseFormattedAmount,
+} from '@repo/utils';
 
 import type { CryptoCurrency, ExchangeRate } from '../types';
 
@@ -18,24 +30,40 @@ export function getExchangeRate(currency: CryptoCurrency): ExchangeRate {
 
 /**
  * Рассчитать сумму в UAH с учетом комиссии
+ * @deprecated Use calculateUahAmountV2 for better maintainability
  */
 export function calculateUahAmount(cryptoAmount: number, currency: CryptoCurrency): number {
+  return calculateUahAmountV2(cryptoAmount, currency);
+}
+
+/**
+ * Рассчитать сумму в UAH с учетом комиссии (новая версия)
+ * Uses centralized calculation utilities to eliminate code duplication
+ */
+export function calculateUahAmountV2(cryptoAmount: number, currency: CryptoCurrency): number {
   const rate = getExchangeRate(currency);
   const grossAmount = cryptoAmount * rate.uahRate;
-  const commission = grossAmount * (rate.commission / PERCENTAGE_CALCULATIONS.PERCENT_BASE);
-  return Number((grossAmount - commission).toFixed(PERCENTAGE_CALCULATIONS.UAH_ROUNDING_PRECISION));
+  const netAmount = calculateNetAmount(grossAmount, rate.commission);
+  return parseFormattedAmount(formatUahAmount(netAmount));
 }
 
 /**
  * Рассчитать сумму криптовалюты из UAH
+ * @deprecated Use calculateCryptoAmountV2 for better maintainability
  */
 export function calculateCryptoAmount(uahAmount: number, currency: CryptoCurrency): number {
-  const rate = getExchangeRate(currency);
-  const grossAmount = uahAmount / (VALIDATION_BOUNDS.SINGLE_ELEMENT - rate.commission / PERCENTAGE_CALCULATIONS.PERCENT_BASE);
-  const cryptoAmount = grossAmount / rate.uahRate;
+  return calculateCryptoAmountV2(uahAmount, currency);
+}
 
-  // Округление до 8 знаков для криптовалют
-  return Number(cryptoAmount.toFixed(DECIMAL_PRECISION.CRYPTO_DECIMAL_PLACES));
+/**
+ * Рассчитать сумму криптовалюты из UAH (новая версия)
+ * Uses centralized calculation utilities to eliminate code duplication
+ */
+export function calculateCryptoAmountV2(uahAmount: number, currency: CryptoCurrency): number {
+  const rate = getExchangeRate(currency);
+  const grossAmount = calculateGrossAmountFromNet(uahAmount, rate.commission);
+  const cryptoAmount = grossAmount / rate.uahRate;
+  return parseFormattedAmount(formatCryptoAmount(cryptoAmount));
 }
 
 /**

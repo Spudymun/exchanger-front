@@ -1,0 +1,51 @@
+import { UI_NUMERIC_CONSTANTS, DECIMAL_PRECISION } from '@repo/constants';
+
+/**
+ * Service for generating various types of IDs
+ * Moved from validation.ts to eliminate side effects from utils layer
+ */
+export class IdGenerationService {
+  /**
+   * Generate unique order ID with timestamp and random suffix
+   */
+  generateOrderId(): string {
+    const timestamp = Date.now();
+    const randomSuffix = Math.random()
+      .toString(UI_NUMERIC_CONSTANTS.ID_GENERATION_BASE)
+      .substr(UI_NUMERIC_CONSTANTS.SUBSTR_START_INDEX, DECIMAL_PRECISION.ORDER_ID_RANDOM_LENGTH);
+
+    return `order_${timestamp}_${randomSuffix}`;
+  }
+
+  /**
+   * Generate secure session ID using crypto API
+   */
+  generateSessionId(): string {
+    return crypto.randomUUID();
+  }
+
+  /**
+   * Generate transaction ID for tracking
+   */
+  generateTransactionId(): string {
+    const hexBase = 16;
+    const substrStart = 2;
+    const randomLength = 8;
+    return `tx_${Date.now()}_${Math.random().toString(hexBase).substr(substrStart, randomLength)}`;
+  }
+}
+
+// Export convenience functions for backward compatibility
+const idService = new IdGenerationService();
+
+export function generateOrderId(): string {
+  return idService.generateOrderId();
+}
+
+export function generateSessionId(): string {
+  return idService.generateSessionId();
+}
+
+export function generateTransactionId(): string {
+  return idService.generateTransactionId();
+}

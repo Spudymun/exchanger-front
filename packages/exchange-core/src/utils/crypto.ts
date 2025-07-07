@@ -1,5 +1,4 @@
 import {
-  MOCK_CRYPTO_ADDRESSES,
   EXPLORER_URLS,
   NETWORK_NAMES,
   CURRENCY_DECIMALS,
@@ -7,17 +6,21 @@ import {
   CURRENCY_SYMBOLS,
   CURRENCY_FULL_NAMES,
   DECIMAL_PRECISION,
+  CRYPTO_ADDRESS_PATTERNS,
 } from '@repo/constants';
+
+import { formatCryptoAmountForUI } from '@repo/utils';
+
+import { generateCryptoDepositAddress } from '../services';
 
 import type { CryptoCurrency } from '../types';
 
 /**
  * Получить случайный адрес для депозита (мок)
+ * @deprecated Use generateCryptoDepositAddress from services instead
  */
 export function generateDepositAddress(currency: CryptoCurrency): string {
-  const addresses = MOCK_CRYPTO_ADDRESSES[currency];
-  const randomIndex = Math.floor(Math.random() * addresses.length);
-  return addresses[randomIndex]!;
+  return generateCryptoDepositAddress(currency);
 }
 
 /**
@@ -26,12 +29,12 @@ export function generateDepositAddress(currency: CryptoCurrency): string {
 export function validateCryptoAddress(address: string, currency: CryptoCurrency): boolean {
   switch (currency) {
     case 'BTC':
-      return /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$|^bc1[a-z0-9]{39,59}$/.test(address);
+      return CRYPTO_ADDRESS_PATTERNS.BTC.test(address);
     case 'ETH':
     case 'USDT':
-      return /^0x[a-fA-F0-9]{40}$/.test(address);
+      return CRYPTO_ADDRESS_PATTERNS.ETH.test(address);
     case 'LTC':
-      return /^[LM3][a-km-zA-HJ-NP-Z1-9]{26,33}$|^ltc1[a-z0-9]{39,59}$/.test(address);
+      return CRYPTO_ADDRESS_PATTERNS.LTC.test(address);
     default:
       return false;
   }
@@ -63,7 +66,10 @@ export function getCurrencyDecimals(currency: CryptoCurrency): number {
  */
 export function formatCryptoAmount(amount: number, currency: CryptoCurrency): string {
   const decimals = getCurrencyDecimals(currency);
-  return amount.toFixed(Math.min(decimals, DECIMAL_PRECISION.UI_MAX_DECIMAL_PLACES)); // Ограничиваем максимум 8 знаками для UI
+  return formatCryptoAmountForUI(
+    amount,
+    Math.min(decimals, DECIMAL_PRECISION.UI_MAX_DECIMAL_PLACES)
+  );
 }
 
 /**

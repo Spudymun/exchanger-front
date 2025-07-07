@@ -3,6 +3,7 @@ export * from './business';
 export * from './ui';
 export * from './validation';
 export * from './user';
+export * from './regex-patterns';
 
 // ExchangeGO specific exports
 export * from './exchange';
