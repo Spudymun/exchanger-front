@@ -9,7 +9,12 @@ import {
   UI_NUMERIC_CONSTANTS,
 } from '@repo/constants';
 
-import type { CryptoCurrency, CreateOrderRequest, CreateUserRequest } from '../types';
+import type {
+  CryptoCurrency,
+  CreateOrderRequest,
+  CreateUserRequest,
+  RecipientData,
+} from '../types';
 
 import { isAmountWithinLimits } from './calculations';
 
@@ -94,7 +99,10 @@ export function validateCryptoAmount(amount: number, currency: CryptoCurrency): 
 /**
  * Валидация базовых данных заявки (email, currency)
  */
-function validateOrderBasicData(email: string, currency: string): { errors: string[]; currencyIsValid: boolean } {
+function validateOrderBasicData(
+  email: string,
+  currency: string
+): { errors: string[]; currencyIsValid: boolean } {
   const errors: string[] = [];
 
   const emailValidation = validateEmail(email);
@@ -112,7 +120,7 @@ function validateOrderBasicData(email: string, currency: string): { errors: stri
 /**
  * Валидация данных получателя
  */
-function validateRecipientData(recipientData?: { cardNumber?: string }): ValidationResult {
+function validateRecipientData(recipientData?: RecipientData): ValidationResult {
   const errors: string[] = [];
 
   if (

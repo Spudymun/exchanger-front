@@ -26,10 +26,11 @@
 
 ## 📝 PHASE 5.3: CONTACT & PAYMENT STEPS
 
-### TASK 5.3.1: Создать Contact Info Step с валидацией
+### TASK 5.3.1: Создать Contact Info Step с валидацией ✅ ТИПЫ МИГРИРОВАНЫ
 
 **Время:** 2 часа  
-**Приоритет:** 🔴 Критический
+**Приоритет:** 🔴 Критический  
+**Миграция типов:** ✅ Использует централизованные типы из @repo/exchange-core/types/contact
 
 #### Описание
 
@@ -47,8 +48,10 @@ import { z } from 'zod';
 import { Card, CardContent, CardHeader, CardTitle, Button, Input, Select } from '@repo/ui';
 import { useForm } from '~/hooks/useForm';
 import { useOrderCreate } from '~/hooks/useOrderCreate';
+import type { ContactInfo } from '@repo/exchange-core/types/contact';
 import { UserIcon, EnvelopeIcon, PhoneIcon, IdentificationIcon } from '@heroicons/react/24/outline';
 
+// Схема валидации соответствует централизованному типу ContactInfo
 const contactInfoSchema = z.object({
   firstName: z.string().min(2, 'Минимум 2 символа').max(50, 'Максимум 50 символов'),
   lastName: z.string().min(2, 'Минимум 2 символа').max(50, 'Максимум 50 символов'),
@@ -62,9 +65,9 @@ const contactInfoSchema = z.object({
   communicationMethod: z.enum(['email', 'phone', 'telegram'], {
     required_error: 'Выберите способ связи',
   }),
-});
+}) satisfies z.ZodType<ContactInfo>;
 
-type ContactInfoData = z.infer<typeof contactInfoSchema>;
+type ContactInfoData = ContactInfo;
 
 interface ContactInfoStepProps {
   onNext: () => void;
@@ -254,6 +257,7 @@ import { Card, CardContent, CardHeader, CardTitle, Button, Input, Select } from 
 import { useForm } from '~/hooks/useForm';
 import { useOrderCreate } from '~/hooks/useOrderCreate';
 import { ExchangeCalculation } from '@repo/types';
+import type { PaymentMethod } from '@repo/exchange-core/types/contact';
 import {
   CreditCardIcon,
   BanknotesIcon,
@@ -333,9 +337,9 @@ const paymentMethodSchema = z.object({
       });
     }
   }
-});
+) satisfies z.ZodType<PaymentMethod>;
 
-type PaymentMethodData = z.infer<typeof paymentMethodSchema>;
+type PaymentMethodData = PaymentMethod;
 
 interface PaymentMethodStepProps {
   calculation: ExchangeCalculation;
@@ -590,10 +594,11 @@ export function PaymentMethodStep({ calculation, onNext, onBack }: PaymentMethod
 
 ---
 
-### TASK 5.3.2: Создать Confirmation Step и Order Creation
+### TASK 5.3.2: Создать Confirmation Step и Order Creation ✅ ТИПЫ МИГРИРОВАНЫ
 
 **Время:** 2.5 часа  
-**Приоритет:** 🔴 Критический
+**Приоритет:** 🔴 Критический  
+**Миграция типов:** ✅ Использует централизованные типы из @repo/exchange-core/types/contact
 
 #### Описание
 
@@ -612,6 +617,7 @@ import { useExchange } from '~/hooks/useExchange';
 import { useOrderCreate } from '~/hooks/useOrderCreate';
 import { useRouter } from 'next/navigation';
 import { getCurrencyIcon } from '~/utils/currency';
+import type { ContactInfo, PaymentMethod } from '@repo/exchange-core/types/contact';
 import {
   CheckCircleIcon,
   ClockIcon,
@@ -862,25 +868,7 @@ export function ConfirmationStep({ onBack }: ConfirmationStepProps) {
 
 import { create } from 'zustand';
 import { trpc } from '~/utils/trpc';
-
-interface ContactInfo {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  telegramUsername?: string;
-  communicationMethod: 'email' | 'phone' | 'telegram';
-}
-
-interface PaymentMethod {
-  method: 'bank_card' | 'bank_transfer' | 'cash' | 'mobile_payment';
-  cardNumber?: string;
-  cardHolder?: string;
-  iban?: string;
-  bankName?: string;
-  phoneNumber?: string;
-  cashLocation?: string;
-}
+import type { ContactInfo, PaymentMethod } from '@repo/exchange-core/types/contact';
 
 interface OrderCreateState {
   // Data
@@ -947,22 +935,32 @@ export const useOrderCreate = create<OrderCreateState>((set, get) => ({
 
 ## 📊 Статус Progress Part 5.3
 
-### Завершенные задачи: 0/3
+### Завершенные задачи: 2/3 (Миграция типов)
 
-- [ ] TASK 5.3.1: Создать Contact Info Step с валидацией
-- [ ] TASK 5.3.2: Создать Confirmation Step и Order Creation
-- **TASK 5.3.3** - Order Tracking Pages (следующий)
+- [x] ✅ **МИГРАЦИЯ ТИПОВ** TASK 5.3.1: Contact Info Step готов к реализации с централизованными типами
+- [x] ✅ **МИГРАЦИЯ ТИПОВ** TASK 5.3.2: Confirmation Step готов к реализации с централизованными типами
+- [ ] TASK 5.3.3 - Order Tracking Pages (следующий)
+
+### 🎯 Миграция типов ЗАВЕРШЕНА:
+
+✅ **ContactInfo** → `@repo/exchange-core/types/contact`  
+✅ **PaymentMethod** → `@repo/exchange-core/types/contact`  
+✅ **Схемы валидации** обновлены с `satisfies z.ZodType<T>`  
+✅ **Удалены дублированные** локальные определения типов  
+✅ **Добавлены правильные импорты** в документацию
 
 ### Ключевые результаты Part 5.3:
 
-✅ **Contact Info Step** с полной валидацией  
-✅ **Payment Method Step** с множественными способами  
-✅ **Confirmation Step** с финальным review  
-✅ **Order Creation Flow** с error handling  
-✅ **Form Validation** на каждом этапе  
-✅ **Data Persistence** между шагами  
-✅ **Security Notices** и terms acceptance  
-✅ **Mobile-responsive Forms** для всех устройств
+✅ **📋 МИГРАЦИЯ ТИПОВ ЗАВЕРШЕНА** - готово к реализации форм  
+✅ **Contact Info Step** с централизованными типами и валидацией  
+✅ **Payment Method Step** с централизованными типами  
+✅ **Confirmation Step** с правильными импортами  
+✅ **Order Creation Flow** использует типизированные данные  
+✅ **Устранено дублирование типов** в документации  
+✅ **TypeScript type safety** с `satisfies z.ZodType<T>`  
+✅ **Архитектурная целостность** через централизованные типы
+
+**🎯 При реализации форм все типы уже централизованы и готовы к использованию!**
 
 ---
 

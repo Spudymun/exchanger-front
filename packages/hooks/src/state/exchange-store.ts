@@ -1,4 +1,9 @@
-import type { CryptoCurrency, ExchangeRate, OrderStatus } from '@repo/exchange-core';
+import type {
+  CryptoCurrency,
+  ExchangeRate,
+  OrderStatus,
+  ExchangeRecipientData,
+} from '@repo/exchange-core';
 import { create } from 'zustand';
 import { devtools, subscribeWithSelector } from 'zustand/middleware';
 
@@ -16,11 +21,7 @@ export interface ExchangeFormData {
   toCurrency: 'UAH'; // Проект поддерживает только обмен на UAH
   fromAmount: string;
   toAmount: string;
-  recipientData: {
-    cardNumber: string;
-    recipientName?: string;
-    phone?: string;
-  };
+  recipientData: ExchangeRecipientData;
   userEmail: string;
   agreementAccepted: boolean;
 }
