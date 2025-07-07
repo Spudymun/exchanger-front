@@ -30,17 +30,9 @@ export function getExchangeRate(currency: CryptoCurrency): ExchangeRate {
 
 /**
  * Рассчитать сумму в UAH с учетом комиссии
- * @deprecated Use calculateUahAmountV2 for better maintainability
- */
-export function calculateUahAmount(cryptoAmount: number, currency: CryptoCurrency): number {
-  return calculateUahAmountV2(cryptoAmount, currency);
-}
-
-/**
- * Рассчитать сумму в UAH с учетом комиссии (новая версия)
  * Uses centralized calculation utilities to eliminate code duplication
  */
-export function calculateUahAmountV2(cryptoAmount: number, currency: CryptoCurrency): number {
+export function calculateUahAmount(cryptoAmount: number, currency: CryptoCurrency): number {
   const rate = getExchangeRate(currency);
   const grossAmount = cryptoAmount * rate.uahRate;
   const netAmount = calculateNetAmount(grossAmount, rate.commission);
@@ -49,17 +41,9 @@ export function calculateUahAmountV2(cryptoAmount: number, currency: CryptoCurre
 
 /**
  * Рассчитать сумму криптовалюты из UAH
- * @deprecated Use calculateCryptoAmountV2 for better maintainability
- */
-export function calculateCryptoAmount(uahAmount: number, currency: CryptoCurrency): number {
-  return calculateCryptoAmountV2(uahAmount, currency);
-}
-
-/**
- * Рассчитать сумму криптовалюты из UAH (новая версия)
  * Uses centralized calculation utilities to eliminate code duplication
  */
-export function calculateCryptoAmountV2(uahAmount: number, currency: CryptoCurrency): number {
+export function calculateCryptoAmount(uahAmount: number, currency: CryptoCurrency): number {
   const rate = getExchangeRate(currency);
   const grossAmount = calculateGrossAmountFromNet(uahAmount, rate.commission);
   const cryptoAmount = grossAmount / rate.uahRate;

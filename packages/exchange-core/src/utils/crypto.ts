@@ -17,7 +17,7 @@ import type { CryptoCurrency } from '../types';
 
 /**
  * Получить случайный адрес для депозита (мок)
- * @deprecated Use generateCryptoDepositAddress from services instead
+ * Uses service function for proper architecture
  */
 export function generateDepositAddress(currency: CryptoCurrency): string {
   return generateCryptoDepositAddress(currency);

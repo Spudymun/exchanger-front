@@ -1,9 +1,9 @@
 import { AUTH_CONSTANTS } from '@repo/constants/validation';
 import {
+  generateSessionId,
+  sanitizeEmail,
   validateEmail,
   validatePassword,
-  sanitizeEmail,
-  generateSessionId,
   userManager,
   type User,
 } from '@repo/exchange-core';

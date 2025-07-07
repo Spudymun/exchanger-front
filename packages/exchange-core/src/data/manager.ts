@@ -1,15 +1,14 @@
-
 import { VALIDATION_BOUNDS, UI_NUMERIC_CONSTANTS } from '@repo/constants';
 
+import { generateOrderId } from '../services';
 import type { User, Order, CryptoCurrency, OrderStatus } from '../types';
-import { generateOrderId } from '../utils/validation';
 
-import { 
-  MOCK_AUTH_DATA, 
-  MOCK_USER_EMAILS, 
+import {
+  MOCK_AUTH_DATA,
+  MOCK_USER_EMAILS,
   MOCK_TIMESTAMPS,
   MOCK_TRANSACTION_DATA,
-  MOCK_ORDER_IDS 
+  MOCK_ORDER_IDS,
 } from './mock-data';
 
 // Мок данные пользователей
@@ -171,7 +170,9 @@ export const orderManager = {
   count: (): number => orders.length,
 
   getRecent: (limit: number = UI_NUMERIC_CONSTANTS.DEFAULT_PAGE_SIZE): Order[] => {
-    return orders.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(VALIDATION_BOUNDS.MIN_VALUE, limit);
+    return orders
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(VALIDATION_BOUNDS.MIN_VALUE, limit);
   },
 };
 
@@ -184,7 +185,8 @@ export const statsManager = {
   getOrdersByStatus: () => {
     const stats: Record<string, number> = {};
     for (const order of orders) {
-      stats[order.status] = (stats[order.status] || VALIDATION_BOUNDS.MIN_VALUE) + VALIDATION_BOUNDS.SINGLE_ELEMENT;
+      stats[order.status] =
+        (stats[order.status] || VALIDATION_BOUNDS.MIN_VALUE) + VALIDATION_BOUNDS.SINGLE_ELEMENT;
     }
     return stats;
   },

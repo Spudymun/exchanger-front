@@ -1,5 +1,5 @@
-// 🚨 DEPRECATED: This file is being phased out
-// Please use stores from @repo/hooks instead:
+// Legacy stores file - Use @repo/hooks instead
+// Please use stores from @repo/hooks for consistency:
 //
 // import { useUIStore, useTradingStore } from '@repo/hooks'
 //

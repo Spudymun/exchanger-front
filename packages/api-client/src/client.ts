@@ -1,6 +1,6 @@
-// 🚨 DEPRECATED: HTTP Client
+// Legacy HTTP Client - Use tRPC instead
 //
-// This HTTP client is deprecated in favor of tRPC.
+// This HTTP client should not be used in new development.
 // Use tRPC hooks instead:
 //
 // import { trpc } from '@/lib/trpc'
@@ -14,17 +14,17 @@
 import { User, Transaction } from './types';
 
 /**
- * @deprecated Use tRPC instead
- * This class exists only for backward compatibility
+ * Legacy API client for backward compatibility only
+ * New development should use tRPC
  */
 export class ApiClient {
   constructor() {
-    // Note: ApiClient is deprecated. Use tRPC hooks instead.
+    // Note: Use tRPC hooks for new development
   }
 }
 
 /**
- * @deprecated Use tRPC instead
+ * Legacy instance for backward compatibility
  */
 export const apiClient = new ApiClient();
 
