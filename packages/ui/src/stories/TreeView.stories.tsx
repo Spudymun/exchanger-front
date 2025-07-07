@@ -111,14 +111,6 @@ const meta: Meta<typeof TreeView> = {
     layout: 'centered',
   },
   tags: ['autodocs'],
-  argTypes: {
-    showIcons: {
-      control: 'boolean',
-    },
-    defaultExpandAll: {
-      control: 'boolean',
-    },
-  },
 };
 
 export default meta;
@@ -136,7 +128,6 @@ export const Default: Story = {
 export const WithoutIcons: Story = {
   args: {
     data: sampleData,
-    showIcons: false,
     onSelect: (node: TreeNode) => {
       console.log('Selected:', node);
     },
@@ -146,7 +137,7 @@ export const WithoutIcons: Story = {
 export const ExpandedByDefault: Story = {
   args: {
     data: sampleData,
-    defaultExpandAll: true,
+    defaultExpanded: ['1', '2', '3'],
     onSelect: (node: TreeNode) => {
       console.log('Selected:', node);
     },
@@ -157,12 +148,9 @@ export const WithSelection: Story = {
   args: {
     data: sampleData,
     selectedId: '4',
-    expandedIds: ['1', '2', '3'],
+    defaultExpanded: ['1', '2', '3'],
     onSelect: (node: TreeNode) => {
       console.log('Selected:', node);
-    },
-    onToggle: (nodeId: string, expanded: boolean) => {
-      console.log('Toggle:', nodeId, expanded);
     },
   },
 };

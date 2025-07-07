@@ -42,37 +42,26 @@ describe('DataTable - Basic Rendering', () => {
 
   it('shows empty state when no data', () => {
     render(<DataTable data={[]} columns={mockColumns} />);
-    expect(screen.getByText('No results found.')).toBeInTheDocument();
-  });
-
-  it('shows loading state', () => {
-    renderDataTable({ loading: true });
-
-    // Should show loading skeleton instead of data
-    expect(screen.queryByText('John Doe')).not.toBeInTheDocument();
-
-    // Check for loading elements (animate-pulse class)
-    const loadingElements = document.querySelectorAll('.animate-pulse');
-    expect(loadingElements.length).toBeGreaterThan(0);
+    expect(screen.getByText('Нет данных для отображения')).toBeInTheDocument();
   });
 });
 
 describe('DataTable - Search Functionality', () => {
   it('shows search input when searchable is true', () => {
     renderDataTable({ searchable: true });
-    expect(screen.getByPlaceholderText('Search...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Поиск...')).toBeInTheDocument();
   });
 
   it('hides search input when searchable is false', () => {
     renderDataTable({ searchable: false });
-    expect(screen.queryByPlaceholderText('Search...')).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('Поиск...')).not.toBeInTheDocument();
   });
 
   it('filters data based on search term', async () => {
     const user = userEvent.setup();
     renderDataTable({ searchable: true });
 
-    const searchInput = screen.getByPlaceholderText('Search...');
+    const searchInput = screen.getByPlaceholderText('Поиск...');
     await user.type(searchInput, 'John');
 
     expect(screen.getByText('John Doe')).toBeInTheDocument();
@@ -100,6 +89,10 @@ describe('DataTable - Interactions', () => {
 
     const nameHeader = screen.getByText('Name');
     await user.click(nameHeader);
+
+    // Select ascending sort option from dropdown
+    const ascendingOption = screen.getByText('По возрастанию');
+    await user.click(ascendingOption);
 
     // After sorting, Bob should come first (alphabetically)
     const rows = screen.getAllByRole('row');

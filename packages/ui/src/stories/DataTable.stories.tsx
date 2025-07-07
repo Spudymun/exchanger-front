@@ -84,13 +84,13 @@ const columns: Array<Column<User>> = [
     key: 'status',
     header: 'Status',
     sortable: true,
-    render: value => (
+    render: (row: User) => (
       <span
         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-          value === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          row.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
         }`}
       >
-        {String(value)}
+        {row.status}
       </span>
     ),
   },
@@ -132,7 +132,7 @@ export const WithoutFilters: Story = {
   args: {
     data: sampleData,
     columns: columns,
-    filterable: false,
+    _filterable: false,
   },
 };
 
@@ -144,11 +144,11 @@ export const WithoutPagination: Story = {
   },
 };
 
-export const Loading: Story = {
+export const EmptyState: Story = {
   args: {
-    data: sampleData,
+    data: [],
     columns: columns,
-    loading: true,
+    emptyMessage: 'No users found',
   },
 };
 
