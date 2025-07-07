@@ -6,13 +6,6 @@ import { DECIMAL_PRECISION, PERCENTAGE_CALCULATIONS } from '@repo/constants';
  */
 
 /**
- * Format cryptocurrency amount with proper decimal places
- */
-export function formatCryptoAmount(amount: number): string {
-  return amount.toFixed(DECIMAL_PRECISION.CRYPTO_DECIMAL_PLACES);
-}
-
-/**
  * Format UAH amount with proper decimal places
  */
 export function formatUahAmount(amount: number): string {

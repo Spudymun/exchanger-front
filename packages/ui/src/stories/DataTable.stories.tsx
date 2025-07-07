@@ -1,62 +1,12 @@
-import { UI_NUMERIC_CONSTANTS } from '@repo/constants';
+import { createUITestUsers, type UITestUser } from '@repo/exchange-core';
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 
 import { DataTable, type Column } from '../components/data-table';
 
-// Sample data
-interface User extends Record<string, unknown> {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  status: 'active' | 'inactive';
-  lastLogin: string;
-}
+// Sample data из централизованной фабрики
+const sampleData: UITestUser[] = createUITestUsers();
 
-const sampleData: User[] = [
-  {
-    id: 1,
-    name: 'John Doe',
-    email: 'john@example.com',
-    role: 'Admin',
-    status: 'active',
-    lastLogin: '2024-01-15',
-  },
-  {
-    id: 2,
-    name: 'Jane Smith',
-    email: 'jane@example.com',
-    role: 'User',
-    status: 'active',
-    lastLogin: '2024-01-14',
-  },
-  {
-    id: UI_NUMERIC_CONSTANTS.MOCK_DATA_ROWS,
-    name: 'Bob Johnson',
-    email: 'bob@example.com',
-    role: 'User',
-    status: 'inactive',
-    lastLogin: '2024-01-10',
-  },
-  {
-    id: UI_NUMERIC_CONSTANTS.GRID_COLUMNS_MEDIUM,
-    name: 'Alice Brown',
-    email: 'alice@example.com',
-    role: 'Moderator',
-    status: 'active',
-    lastLogin: '2024-01-16',
-  },
-  {
-    id: UI_NUMERIC_CONSTANTS.GRID_COLUMNS_LARGE,
-    name: 'Charlie Wilson',
-    email: 'charlie@example.com',
-    role: 'User',
-    status: 'active',
-    lastLogin: '2024-01-13',
-  },
-];
-
-const columns: Array<Column<User>> = [
+const columns: Array<Column<UITestUser>> = [
   {
     key: 'id',
     header: 'ID',
@@ -84,7 +34,7 @@ const columns: Array<Column<User>> = [
     key: 'status',
     header: 'Status',
     sortable: true,
-    render: (row: User) => (
+    render: (row: UITestUser) => (
       <span
         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
           row.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
@@ -101,9 +51,9 @@ const columns: Array<Column<User>> = [
   },
 ];
 
-const meta: Meta<typeof DataTable<User>> = {
+const meta: Meta<typeof DataTable<UITestUser>> = {
   title: 'Components/DataTable',
-  component: DataTable<User>,
+  component: DataTable<UITestUser>,
   parameters: {
     layout: 'fullscreen',
   },
@@ -156,7 +106,7 @@ export const WithClickHandler: Story = {
   args: {
     data: sampleData,
     columns: columns,
-    onRowClick: (row: User) => {
+    onRowClick: (row: UITestUser) => {
       alert(`Clicked on ${row.name}`);
     },
   },

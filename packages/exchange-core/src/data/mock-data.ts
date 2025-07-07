@@ -1,7 +1,9 @@
 /**
  * Централизованные mock данные для тестирования
- * Согласно ai-agent-rules.yml (правило 19) - все константы должны быть централизованы
+ * Согласно ai-agent-rules.yml (правило 20) - все константы должны быть централизованы
  */
+
+import { generateTestOrderId } from '../services/id-generation';
 
 // === MOCK AUTHENTICATION DATA ===
 export const MOCK_AUTH_DATA = {
@@ -29,6 +31,10 @@ export const MOCK_TIMESTAMPS = {
   ORDER_UPDATED_AT: '2025-06-29T12:00:00.000Z',
   /** Время обработки заявки */
   ORDER_PROCESSED_AT: '2025-06-29T12:00:00.000Z',
+  /** Timestamp для генерации первого тестового ID заявки */
+  MOCK_ORDER_1_TIMESTAMP: 1703847600000,
+  /** Timestamp для генерации второго тестового ID заявки */
+  MOCK_ORDER_2_TIMESTAMP: 1703847660000,
 } as const;
 
 // === MOCK TRANSACTION DATA ===
@@ -42,11 +48,15 @@ export const MOCK_TRANSACTION_DATA = {
 } as const;
 
 // === MOCK ORDER IDS ===
+/**
+ * Генерируемые mock ID заявок используя IdGenerationService
+ * Устранено дублирование статических ID (Rule 20)
+ */
 export const MOCK_ORDER_IDS = {
   /** ID первой тестовой заявки */
-  ORDER_1: 'order_1703847600000_abc123',
+  ORDER_1: generateTestOrderId(MOCK_TIMESTAMPS.MOCK_ORDER_1_TIMESTAMP, 'abc123'),
   /** ID второй тестовой заявки */
-  ORDER_2: 'order_1703847660000_def456',
+  ORDER_2: generateTestOrderId(MOCK_TIMESTAMPS.MOCK_ORDER_2_TIMESTAMP, 'def456'),
 } as const;
 
 // === ТИПЫ ===

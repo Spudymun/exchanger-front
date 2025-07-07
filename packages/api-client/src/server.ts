@@ -1,4 +1,5 @@
 import { UI_NUMERIC_CONSTANTS } from '@repo/constants';
+import type { ApiUser as User, Transaction } from '@repo/exchange-core';
 
 import { initTRPC } from '@trpc/server';
 import { z } from 'zod';
@@ -10,25 +11,8 @@ const t = initTRPC.create();
 export const router = t.router;
 export const publicProcedure = t.procedure;
 
-// Types
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'user' | 'moderator';
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface Transaction {
-  id: string;
-  userId: string;
-  amount: number;
-  currency: string;
-  type: 'deposit' | 'withdrawal' | 'exchange';
-  status: 'pending' | 'completed' | 'failed';
-  createdAt: Date;
-}
+// Re-export types for client usage
+export type { ApiUser as User, Transaction } from '@repo/exchange-core';
 
 // Mock data for development
 const mockUsers: User[] = [
@@ -59,6 +43,7 @@ const mockTransactions: Transaction[] = [
     type: 'deposit',
     status: 'completed',
     createdAt: new Date('2024-01-10'),
+    updatedAt: new Date('2024-01-10'),
   },
   {
     id: '2',
@@ -68,6 +53,7 @@ const mockTransactions: Transaction[] = [
     type: 'exchange',
     status: 'pending',
     createdAt: new Date('2024-01-12'),
+    updatedAt: new Date('2024-01-12'),
   },
 ];
 
@@ -126,7 +112,7 @@ export const appRouter = router({
         z.object({
           name: z.string().min(1),
           email: z.string().email(),
-          role: z.enum(['admin', 'user', 'moderator']).default('user'),
+          role: z.enum(['admin', 'user', 'operator']).default('user'),
         })
       )
       .mutation(({ input }) => {
@@ -151,7 +137,7 @@ export const appRouter = router({
           id: z.string(),
           name: z.string().min(1).optional(),
           email: z.string().email().optional(),
-          role: z.enum(['admin', 'user', 'moderator']).optional(),
+          role: z.enum(['admin', 'user', 'operator']).optional(),
         })
       )
       .mutation(({ input }) => {
@@ -248,6 +234,7 @@ export const appRouter = router({
           type: input.type,
           status: 'pending',
           createdAt: new Date(),
+          updatedAt: new Date(),
         };
 
         mockTransactions.push(newTransaction);

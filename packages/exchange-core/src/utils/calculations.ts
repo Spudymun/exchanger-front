@@ -7,12 +7,14 @@ import {
 import {
   calculateNetAmount,
   calculateGrossAmountFromNet,
+  calculateCommissionAmount,
   formatUahAmount,
-  formatCryptoAmount,
   parseFormattedAmount,
 } from '@repo/utils';
 
 import type { CryptoCurrency, ExchangeRate } from '../types';
+
+import { formatCryptoAmount } from './crypto';
 
 /**
  * Получить текущий курс криптовалюты
@@ -47,7 +49,7 @@ export function calculateCryptoAmount(uahAmount: number, currency: CryptoCurrenc
   const rate = getExchangeRate(currency);
   const grossAmount = calculateGrossAmountFromNet(uahAmount, rate.commission);
   const cryptoAmount = grossAmount / rate.uahRate;
-  return parseFormattedAmount(formatCryptoAmount(cryptoAmount));
+  return parseFormattedAmount(formatCryptoAmount(cryptoAmount, currency));
 }
 
 /**
@@ -56,7 +58,7 @@ export function calculateCryptoAmount(uahAmount: number, currency: CryptoCurrenc
 export function calculateCommission(cryptoAmount: number, currency: CryptoCurrency): number {
   const rate = getExchangeRate(currency);
   const grossAmount = cryptoAmount * rate.uahRate;
-  const commission = grossAmount * (rate.commission / PERCENTAGE_CALCULATIONS.PERCENT_BASE);
+  const commission = calculateCommissionAmount(grossAmount, rate.commission);
   return Number(commission.toFixed(PERCENTAGE_CALCULATIONS.UAH_ROUNDING_PRECISION));
 }
 

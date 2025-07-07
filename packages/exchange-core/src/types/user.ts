@@ -11,6 +11,19 @@ export interface User {
   lastLoginAt?: Date;
 }
 
+/**
+ * Extended User interface for API responses
+ * Includes additional fields required by API clients
+ */
+export interface ApiUser {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface CreateUserRequest {
   email: string;
   password?: string;

@@ -5,5 +5,4 @@
 // - composite-validators.ts for complex data structures
 // - order-validators.ts for complete order validation
 
-// Re-export ValidationResult for compatibility
-export type { ValidationResult } from './basic-validators';
+// ValidationResult is now imported from @repo/utils (centralized)

@@ -1,23 +1,5 @@
-// Shared types between client and server
-export interface User {
-    id: string
-    name: string
-    email: string
-    role: 'admin' | 'user'
-    createdAt: Date
-    updatedAt: Date
-}
-
-export interface Transaction {
-    id: string
-    userId: string
-    amount: number
-    currency: string
-    type: 'deposit' | 'withdrawal' | 'exchange'
-    status: 'pending' | 'completed' | 'failed'
-    createdAt: Date
-    updatedAt: Date
-}
+// Shared types between client and server - import from centralized sources
+export type { ApiUser as User, Transaction } from '@repo/exchange-core';
 
 // Re-export AppRouter type only (no runtime code)
-export type { AppRouter } from './server'
+export type { AppRouter } from './server';

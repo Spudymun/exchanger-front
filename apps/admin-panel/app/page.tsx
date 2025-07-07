@@ -13,18 +13,9 @@ import {
   type TreeNode,
   ThemeToggle,
 } from '@repo/ui';
+import { createUITestUsers, type UITestUser } from '@repo/exchange-core';
+import { UI_NUMERIC_CONSTANTS } from '@repo/constants';
 import { Users, CreditCard, TrendingUp, Settings } from 'lucide-react';
-
-// Sample data for DataTable
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-interface User extends Record<string, any> {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  status: 'active' | 'inactive';
-  lastLogin: string;
-}
 
 interface AdminHeaderProps {
   userName?: string;
@@ -43,9 +34,9 @@ interface NavigationTreeProps {
 }
 
 interface UsersTableProps {
-  users: User[];
-  columns: Array<Column<User>>;
-  onRowClick: (user: User) => void;
+  users: UITestUser[];
+  columns: Array<Column<UITestUser>>;
+  onRowClick: (user: UITestUser) => void;
 }
 
 interface ActionButtonsProps {
@@ -53,36 +44,11 @@ interface ActionButtonsProps {
   onCreateUser: () => void;
 }
 
-const MAGIC_NUMBER_THREE = 3;
+const MAGIC_NUMBER_THREE = UI_NUMERIC_CONSTANTS.MOCK_DATA_ROWS;
 
-const ADMIN_USERS_DATA: User[] = [
-  {
-    id: 1,
-    name: 'John Doe',
-    email: 'john@example.com',
-    role: 'Admin',
-    status: 'active',
-    lastLogin: '2024-01-15',
-  },
-  {
-    id: 2,
-    name: 'Jane Smith',
-    email: 'jane@example.com',
-    role: 'User',
-    status: 'active',
-    lastLogin: '2024-01-14',
-  },
-  {
-    id: MAGIC_NUMBER_THREE,
-    name: 'Bob Johnson',
-    email: 'bob@example.com',
-    role: 'User',
-    status: 'inactive',
-    lastLogin: '2024-01-10',
-  },
-];
+const ADMIN_USERS_DATA: UITestUser[] = createUITestUsers();
 
-const ADMIN_COLUMNS: Array<Column<User>> = [
+const ADMIN_COLUMNS: Array<Column<UITestUser>> = [
   {
     key: 'id',
     header: 'ID',
@@ -110,7 +76,7 @@ const ADMIN_COLUMNS: Array<Column<User>> = [
     key: 'status',
     header: 'Status',
     sortable: true,
-    render: (user: User) => {
+    render: (user: UITestUser) => {
       const status = user.status;
       return (
         <span
@@ -329,7 +295,7 @@ export default function AdminDashboard() {
     void node;
   };
 
-  const handleUserClick = (user: User) => {
+  const handleUserClick = (user: UITestUser) => {
     // TODO: Implement user details functionality
     void user;
   };

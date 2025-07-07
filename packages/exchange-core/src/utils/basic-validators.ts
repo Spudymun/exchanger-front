@@ -1,24 +1,10 @@
-import { VALIDATION_PATTERNS, VALIDATION_MESSAGES, VALIDATION_BOUNDS } from '@repo/constants';
+import { VALIDATION_PATTERNS, VALIDATION_MESSAGES } from '@repo/constants';
+import { createValidationResult, type ValidationResult } from '@repo/utils';
 
 /**
  * Basic validation functions for common data types
  * Separated from complex business validation logic
  */
-
-export interface ValidationResult {
-  isValid: boolean;
-  errors: string[];
-}
-
-/**
- * Create validation result from errors array
- */
-function createValidationResult(errors: string[]): ValidationResult {
-  return {
-    isValid: errors.length === VALIDATION_BOUNDS.MIN_VALUE,
-    errors,
-  };
-}
 
 /**
  * Validate email format

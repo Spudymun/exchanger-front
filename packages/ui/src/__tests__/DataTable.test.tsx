@@ -1,20 +1,10 @@
-import { UI_NUMERIC_CONSTANTS } from '@repo/constants';
+import { createTestData, type TestData } from '@repo/exchange-core';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { DataTable, type Column } from '../components/data-table';
 
-interface TestData extends Record<string, unknown> {
-  id: number;
-  name: string;
-  email: string;
-}
-
-const mockData: TestData[] = [
-  { id: 1, name: 'John Doe', email: 'john@example.com' },
-  { id: 2, name: 'Jane Smith', email: 'jane@example.com' },
-  { id: UI_NUMERIC_CONSTANTS.MOCK_DATA_ROWS, name: 'Bob Johnson', email: 'bob@example.com' },
-];
+const mockData: TestData[] = createTestData();
 
 const mockColumns: Array<Column<TestData>> = [
   { key: 'id', header: 'ID', sortable: true },

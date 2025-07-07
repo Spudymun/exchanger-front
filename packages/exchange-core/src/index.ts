@@ -3,7 +3,6 @@ export * from './types';
 
 // Экспорт утилит
 export * from './utils/calculations';
-export * from './utils/validation';
 export * from './utils/crypto';
 export * from './utils/basic-validators';
 export * from './utils/business-validators';
