@@ -1,7 +1,8 @@
 import type { CryptoCurrency } from '@repo/exchange-core';
 import React from 'react';
 
-import { useExchangeStore, type ExchangeStore } from '../state/exchange-store.js';
+import type { ExchangeStore } from '../state/exchange-store.js';
+import { useExchangeStore } from '../useExchangeStore.js';
 
 const DEBOUNCE_DELAY = 500;
 

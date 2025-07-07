@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { useNotificationStore, type NotificationStore } from '../state/notification-store.js';
+import { useNotifications, type UseNotificationsReturn } from '../useNotifications.js';
 
 interface Order {
   id: string;
@@ -21,7 +21,7 @@ const STATUS_CHANGE_MESSAGE = 'Статус заявки изменен';
  * Real-time order status tracking with notifications
  */
 export function useOrderTracking(orderId?: string) {
-  const notifications = useNotificationStore();
+  const notifications = useNotifications();
   const [order, setOrder] = React.useState<Order | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -30,7 +30,7 @@ export function useOrderTracking(orderId?: string) {
   React.useEffect(() => {
     if (!orderId) return;
 
-    simulateOrderTracking(orderId, setOrder, setIsLoading, setError);
+    return simulateOrderTracking(orderId, setOrder, setIsLoading, setError);
   }, [orderId]);
 
   // Notify on status changes
@@ -52,11 +52,11 @@ function simulateOrderTracking(
   setOrder: React.Dispatch<React.SetStateAction<Order | null>>,
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>,
   setError: React.Dispatch<React.SetStateAction<string | null>>
-) {
+): () => void {
   setIsLoading(true);
   setError(null);
 
-  setTimeout(() => {
+  const timerId = setTimeout(() => {
     const mockOrder: Order = {
       id: orderId,
       status: 'processing',
@@ -71,10 +71,16 @@ function simulateOrderTracking(
     setOrder(mockOrder);
     setIsLoading(false);
   }, 1000);
+
+  // Возвращаем cleanup функцию
+  return () => {
+    clearTimeout(timerId);
+    setIsLoading(false);
+  };
 }
 
 // Separate notification hook to reduce complexity
-function useOrderStatusNotifications(order: Order | null, notifications: NotificationStore) {
+function useOrderStatusNotifications(order: Order | null, notifications: UseNotificationsReturn) {
   const prevStatus = React.useRef(order?.status);
 
   React.useEffect(() => {
@@ -100,7 +106,11 @@ function useOrderStatusNotifications(order: Order | null, notifications: Notific
 }
 
 // Helper function to handle notifications
-function notifyStatusChange(status: string, message: string, notifications: NotificationStore) {
+function notifyStatusChange(
+  status: string,
+  message: string,
+  notifications: UseNotificationsReturn
+) {
   switch (status) {
     case 'completed':
       notifications.success(STATUS_CHANGE_MESSAGE, message);

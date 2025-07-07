@@ -75,6 +75,9 @@ export interface ExchangeStore {
   // Available data
   availableRates: ExchangeRate[];
 
+  // Timer cleanup для debounce
+  debounceTimerId: NodeJS.Timeout | null;
+
   // Actions
   updateFormData: (data: Partial<ExchangeFormData>) => void;
   updateRecipientData: (data: Partial<ExchangeFormData['recipientData']>) => void;
@@ -109,9 +112,28 @@ const createFormActions = (
       formData: { ...state.formData, ...data },
     }));
 
-    // Автоматический пересчет при изменении валюты или суммы
+    // Автоматический пересчет при изменении валюты или суммы с cleanup
     if (data.fromCurrency || data.fromAmount) {
-      setTimeout(() => get().calculateExchange(), DEBOUNCE_DELAY);
+      const state = get();
+
+      // Очищаем предыдущий таймер
+      if (state.debounceTimerId) {
+        clearTimeout(state.debounceTimerId);
+      }
+
+      // Устанавливаем новый таймер
+      const timerId = setTimeout(() => {
+        get().calculateExchange();
+        set(currentState => ({
+          ...currentState,
+          debounceTimerId: null,
+        }));
+      }, DEBOUNCE_DELAY);
+
+      set(currentState => ({
+        ...currentState,
+        debounceTimerId: timerId,
+      }));
     }
   },
 
@@ -250,19 +272,33 @@ const createRatesActions = (
 });
 
 const createResetActions = (
-  set: (fn: (state: ExchangeStore) => Partial<ExchangeStore>) => void
+  set: (fn: (state: ExchangeStore) => Partial<ExchangeStore>) => void,
+  get: () => ExchangeStore
 ) => ({
   resetForm: () => {
+    // Очищаем debounce таймер при сбросе формы
+    const state = get();
+    if (state.debounceTimerId) {
+      clearTimeout(state.debounceTimerId);
+    }
+
     set(() => ({
       formData: DEFAULT_FORM_DATA,
       calculation: null,
       currentStep: 0,
       steps: DEFAULT_STEPS,
       currentOrder: null,
+      debounceTimerId: null,
     }));
   },
 
   resetStore: () => {
+    // Очищаем debounce таймер при полном сбросе
+    const state = get();
+    if (state.debounceTimerId) {
+      clearTimeout(state.debounceTimerId);
+    }
+
     set(() => ({
       formData: DEFAULT_FORM_DATA,
       calculation: null,
@@ -272,6 +308,7 @@ const createResetActions = (
       isSubmitting: false,
       currentOrder: null,
       availableRates: [],
+      debounceTimerId: null,
     }));
   },
 });
@@ -288,6 +325,7 @@ export const useExchangeStore = create<ExchangeStore>()(
       isSubmitting: false,
       currentOrder: null,
       availableRates: [],
+      debounceTimerId: null,
 
       // Actions
       ...createFormActions(set, get),
@@ -295,7 +333,7 @@ export const useExchangeStore = create<ExchangeStore>()(
       ...createStepActions(set),
       ...createOrderActions(set),
       ...createRatesActions(set, get),
-      ...createResetActions(set),
+      ...createResetActions(set, get),
     })),
     {
       name: 'exchange-store',

@@ -51,6 +51,7 @@ interface UIState {
     message: string;
     timestamp: number;
   }>;
+  notificationTimers: Map<string, NodeJS.Timeout>; // Добавляем для cleanup
   addNotification: (notification: Omit<UIState['notifications'][0], 'id' | 'timestamp'>) => void;
   removeNotification: (id: string) => void;
   clearNotifications: () => void;
@@ -68,13 +69,99 @@ interface UIState {
   setLayout: (layout: UIState['layout']) => void;
 }
 
+// Helper functions for UI Store actions
+const createSidebarActions = (
+  set: (partial: Partial<UIState> | ((state: UIState) => Partial<UIState>)) => void
+) => ({
+  toggleSidebar: () => set((state: UIState) => ({ sidebarOpen: !state.sidebarOpen })),
+  setSidebarOpen: (open: boolean) => set({ sidebarOpen: open }),
+});
+
+const createModalActions = (
+  set: (partial: Partial<UIState> | ((state: UIState) => Partial<UIState>)) => void
+) => ({
+  openModal: (modalId: string) => set({ activeModal: modalId }),
+  closeModal: () => set({ activeModal: null }),
+  openSpecificModal: (modal: keyof UIState['modals']) =>
+    set((state: UIState) => ({
+      modals: { ...state.modals, [modal]: true },
+    })),
+  closeSpecificModal: (modal: keyof UIState['modals']) =>
+    set((state: UIState) => ({
+      modals: { ...state.modals, [modal]: false },
+    })),
+});
+
+const createNotificationActions = (
+  set: (partial: Partial<UIState> | ((state: UIState) => Partial<UIState>)) => void,
+  get: () => UIState
+) => ({
+  addNotification: (notification: Omit<UIState['notifications'][0], 'id' | 'timestamp'>) => {
+    const id = Math.random()
+      .toString(UI_NUMERIC_CONSTANTS.ID_GENERATION_BASE)
+      .substr(2, UI_NUMERIC_CONSTANTS.ID_GENERATION_LENGTH);
+    const timestamp = Date.now();
+    set((state: UIState) => ({
+      notifications: [...state.notifications, { ...notification, id, timestamp }],
+    }));
+
+    // Auto-remove after timeout with cleanup
+    const timerId = setTimeout(() => {
+      get().removeNotification(id);
+    }, UI_NUMERIC_CONSTANTS.NOTIFICATION_AUTO_REMOVE_TIMEOUT);
+
+    // Сохраняем timerId для возможности cleanup
+    set((state: UIState) => {
+      const newTimers = new Map(state.notificationTimers);
+      newTimers.set(id, timerId);
+      return { notificationTimers: newTimers };
+    });
+  },
+
+  removeNotification: (id: string) => {
+    // Очищаем таймер при ручном удалении
+    const timers = get().notificationTimers;
+    const timerId = timers.get(id);
+    if (timerId) {
+      clearTimeout(timerId);
+    }
+
+    set((state: UIState) => {
+      const newTimers = new Map(state.notificationTimers);
+      newTimers.delete(id);
+      return {
+        notifications: state.notifications.filter(n => n.id !== id),
+        notificationTimers: newTimers,
+      };
+    });
+  },
+
+  clearNotifications: () => {
+    // Очищаем все таймеры
+    const timers = get().notificationTimers;
+    for (const timerId of timers.values()) {
+      clearTimeout(timerId);
+    }
+
+    set({
+      notifications: [],
+      notificationTimers: new Map(),
+    });
+  },
+});
+
+const createConfigActions = (set: (partial: Partial<UIState>) => void) => ({
+  setGlobalLoading: (loading: boolean) => set({ globalLoading: loading }),
+  setTheme: (theme: UIState['theme']) => set({ theme }),
+  setLayout: (layout: UIState['layout']) => set({ layout }),
+});
+
 export const useUIStore = create<UIState>()(
   devtools(
     (set, get) => ({
       // Sidebar
       sidebarOpen: true,
-      toggleSidebar: () => set(state => ({ sidebarOpen: !state.sidebarOpen })),
-      setSidebarOpen: open => set({ sidebarOpen: open }),
+      ...createSidebarActions(set),
 
       // Modals
       activeModal: null,
@@ -84,50 +171,24 @@ export const useUIStore = create<UIState>()(
         deposit: false,
         withdraw: false,
       },
-      openModal: modalId => set({ activeModal: modalId }),
-      closeModal: () => set({ activeModal: null }),
-      openSpecificModal: modal =>
-        set(state => ({
-          modals: { ...state.modals, [modal]: true },
-        })),
-      closeSpecificModal: modal =>
-        set(state => ({
-          modals: { ...state.modals, [modal]: false },
-        })),
+      ...createModalActions(set),
 
       // Notifications
       notifications: [],
-      addNotification: notification => {
-        const id = Math.random()
-          .toString(UI_NUMERIC_CONSTANTS.ID_GENERATION_BASE)
-          .substr(2, UI_NUMERIC_CONSTANTS.ID_GENERATION_LENGTH);
-        const timestamp = Date.now();
-        set(state => ({
-          notifications: [...state.notifications, { ...notification, id, timestamp }],
-        }));
-
-        // Auto-remove after 5 seconds
-        setTimeout(() => {
-          get().removeNotification(id);
-        }, UI_NUMERIC_CONSTANTS.NOTIFICATION_AUTO_REMOVE_TIMEOUT);
-      },
-      removeNotification: id =>
-        set(state => ({
-          notifications: state.notifications.filter(n => n.id !== id),
-        })),
-      clearNotifications: () => set({ notifications: [] }),
+      notificationTimers: new Map(),
+      ...createNotificationActions(set, get),
 
       // Loading
       globalLoading: false,
-      setGlobalLoading: loading => set({ globalLoading: loading }),
 
       // Theme
       theme: 'system',
-      setTheme: theme => set({ theme }),
 
       // Layout
       layout: 'default',
-      setLayout: layout => set({ layout }),
+
+      // Config actions
+      ...createConfigActions(set),
     }),
     {
       name: 'ui-store',

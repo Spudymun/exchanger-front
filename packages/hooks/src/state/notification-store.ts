@@ -24,6 +24,7 @@ export interface Notification {
 
 export interface NotificationStore {
   notifications: Notification[];
+  notificationTimers: Map<string, NodeJS.Timeout>; // Добавляем для cleanup
 
   // Actions
   addNotification: (notification: Omit<Notification, 'id' | 'createdAt'>) => string;
@@ -63,12 +64,13 @@ const MAX_NOTIFICATIONS = 8;
 const ERROR_DURATION = 8000; // 8 секунд для ошибок
 const WARNING_DURATION = 7000; // 7 секунд для предупреждений
 
-// Функция для создания основных действий
-const createNotificationActions = (
-  set: (fn: (state: NotificationStore) => Partial<NotificationStore>) => void,
-  get: () => NotificationStore
-) => ({
-  addNotification: (notification: Omit<Notification, 'id' | 'createdAt'>) => {
+// Функция для создания основных действий (разделена для соблюдения max-lines-per-function)
+const createAddNotificationAction =
+  (
+    set: (fn: (state: NotificationStore) => Partial<NotificationStore>) => void,
+    get: () => NotificationStore
+  ) =>
+  (notification: Omit<Notification, 'id' | 'createdAt'>) => {
     const id = nanoid();
     const newNotification: Notification = {
       id,
@@ -80,32 +82,66 @@ const createNotificationActions = (
     set(state => {
       const notifications = [...state.notifications, newNotification];
 
-      // Ограничиваем количество уведомлений
-      if (notifications.length > state.maxNotifications) {
-        notifications.shift(); // Удаляем самое старое
-      }
+      // Ограничиваем количество уведомлений - исправляем мутацию
+      const limitedNotifications =
+        notifications.length > state.maxNotifications
+          ? notifications.slice(1) // Создаем новый массив без первого элемента
+          : notifications;
 
-      return { notifications };
+      return { notifications: limitedNotifications };
     });
 
-    // Автоматическое удаление через duration (если не persistent)
+    // Автоматическое удаление через duration (если не persistent) с cleanup
     if (!notification.persistent && newNotification.duration !== null) {
-      setTimeout(() => {
+      const timerId = setTimeout(() => {
         get().removeNotification(id);
       }, newNotification.duration);
+
+      // Сохраняем timerId для возможности cleanup
+      set(state => {
+        const newTimers = new Map(state.notificationTimers);
+        newTimers.set(id, timerId);
+        return { notificationTimers: newTimers };
+      });
     }
 
     return id;
-  },
+  };
 
+// Функция для создания cleanup действий
+const createCleanupActions = (
+  set: (fn: (state: NotificationStore) => Partial<NotificationStore>) => void,
+  get: () => NotificationStore
+) => ({
   removeNotification: (id: string) => {
-    set(state => ({
-      notifications: state.notifications.filter(n => n.id !== id),
-    }));
+    // Очищаем таймер при ручном удалении
+    const timers = get().notificationTimers;
+    const timerId = timers.get(id);
+    if (timerId) {
+      clearTimeout(timerId);
+    }
+
+    set(state => {
+      const newTimers = new Map(state.notificationTimers);
+      newTimers.delete(id);
+      return {
+        notifications: state.notifications.filter(n => n.id !== id),
+        notificationTimers: newTimers,
+      };
+    });
   },
 
   clearNotifications: () => {
-    set(() => ({ notifications: [] }));
+    // Очищаем все таймеры
+    const timers = get().notificationTimers;
+    for (const timerId of timers.values()) {
+      clearTimeout(timerId);
+    }
+
+    set(() => ({
+      notifications: [],
+      notificationTimers: new Map(),
+    }));
   },
 });
 
@@ -170,11 +206,13 @@ export const useNotificationStore = create<NotificationStore>()(
   devtools(
     subscribeWithSelector((set, get) => ({
       notifications: [],
+      notificationTimers: new Map(),
       maxNotifications: MAX_NOTIFICATIONS,
       defaultDuration: DEFAULT_DURATION,
 
       // Actions
-      ...createNotificationActions(set, get),
+      addNotification: createAddNotificationAction(set, get),
+      ...createCleanupActions(set, get),
       ...createConvenienceMethods(get),
     })),
     {

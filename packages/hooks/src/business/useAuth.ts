@@ -1,4 +1,4 @@
-import { useNotificationStore } from '../state/notification-store.js';
+import { useNotifications } from '../useNotifications.js';
 
 const DEFAULT_ERROR_MESSAGE = 'Неизвестная ошибка';
 
@@ -24,7 +24,7 @@ interface AuthContextType {
  * Note: This hook expects AuthProvider to be available in the React context
  */
 export function useEnhancedAuth(baseAuth: AuthContextType) {
-  const notifications = useNotificationStore();
+  const notifications = useNotifications();
 
   // Extended login with notifications and redirect
   const loginWithNotifications = async (email: string, password: string) => {
