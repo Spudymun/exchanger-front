@@ -1,0 +1,10 @@
+# Ignore AI agent rules file from prettier formatting
+# This file contains carefully structured YAML that should not be auto-formatted
+docs/ai-agent-rules.yml
+
+# Other files that should not be formatted
+*.min.js
+*.min.css
+dist/
+build/
+node_modules/

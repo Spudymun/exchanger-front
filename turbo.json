@@ -5,7 +5,7 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
       "env": ["VERCEL_URL", "PORT", "NODE_ENV"]
     },
     "lint": {
@@ -19,6 +19,17 @@
     },
     "check-types": {
       "dependsOn": ["^check-types"]
+    },
+    "build:clean": {
+      "cache": false
+    },
+    "build:force": {
+      "dependsOn": ["^build:force"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+    },
+    "build:rebuild": {
+      "dependsOn": ["^build:rebuild"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
     "test": {
       "dependsOn": ["^test"],

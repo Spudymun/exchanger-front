@@ -3,6 +3,9 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
+    "build:clean": "turbo run build:clean",
+    "build:force": "turbo run build:force",
+    "build:rebuild": "turbo run build:rebuild",
     "dev": "turbo run dev",
     "lint": "eslint \"**/*.{js,jsx,ts,tsx}\" --fix",
     "lint:check": "eslint \"**/*.{js,jsx,ts,tsx}\"",
