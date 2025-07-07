@@ -1,10 +1,11 @@
+import { EXCHANGE_ORDER_STATUSES, type OrderStatus } from '@repo/constants';
 import React from 'react';
 
 import { useNotifications, type UseNotificationsReturn } from '../useNotifications.js';
 
 interface Order {
   id: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  status: OrderStatus;
   createdAt: string;
   updatedAt: string;
   amount: number;
@@ -40,9 +41,15 @@ export function useOrderTracking(orderId?: string) {
     order,
     isLoading,
     error,
-    isActive: order && ['pending', 'processing'].includes(order.status),
-    isCompleted: order?.status === 'completed',
-    isFailed: order?.status === 'failed',
+    isActive:
+      order &&
+      [
+        EXCHANGE_ORDER_STATUSES.PENDING,
+        EXCHANGE_ORDER_STATUSES.PAID,
+        EXCHANGE_ORDER_STATUSES.PROCESSING,
+      ].includes(order.status as typeof EXCHANGE_ORDER_STATUSES.PENDING),
+    isCompleted: order?.status === EXCHANGE_ORDER_STATUSES.COMPLETED,
+    isFailed: order?.status === EXCHANGE_ORDER_STATUSES.CANCELLED, // Используем централизованный статус вместо хардкод 'failed'
   };
 }
 
@@ -59,7 +66,7 @@ function simulateOrderTracking(
   const timerId = setTimeout(() => {
     const mockOrder: Order = {
       id: orderId,
-      status: 'processing',
+      status: EXCHANGE_ORDER_STATUSES.PROCESSING,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       amount: 1000,
@@ -89,10 +96,9 @@ function useOrderStatusNotifications(order: Order | null, notifications: UseNoti
     }
 
     const statusMessages = {
-      processing: 'Заявка поступила в обработку',
-      completed: 'Заявка успешно выполнена!',
-      failed: 'Произошла ошибка при выполнении заявки',
-      cancelled: 'Заявка была отменена',
+      [EXCHANGE_ORDER_STATUSES.PROCESSING]: 'Заявка поступила в обработку',
+      [EXCHANGE_ORDER_STATUSES.COMPLETED]: 'Заявка успешно выполнена!',
+      [EXCHANGE_ORDER_STATUSES.CANCELLED]: 'Заявка была отменена',
     };
 
     const message = statusMessages[order.status as keyof typeof statusMessages];
@@ -112,10 +118,10 @@ function notifyStatusChange(
   notifications: UseNotificationsReturn
 ) {
   switch (status) {
-    case 'completed':
+    case EXCHANGE_ORDER_STATUSES.COMPLETED:
       notifications.success(STATUS_CHANGE_MESSAGE, message);
       break;
-    case 'failed':
+    case EXCHANGE_ORDER_STATUSES.CANCELLED:
       notifications.error(STATUS_CHANGE_MESSAGE, message);
       break;
     default:

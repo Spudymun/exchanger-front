@@ -45,11 +45,8 @@ export const UI_NUMERIC_CONSTANTS = {
   NOTIFICATION_AUTO_REMOVE_TIMEOUT: 5000,
   ORDER_STATUS_REFRESH_INTERVAL: 30000,
 
-  // Time constants
+  // Time constants (keep only unique ones)
   MILLISECONDS_PER_SECOND: 1000,
-  SECONDS_PER_MINUTE: 60,
-  MINUTES_PER_HOUR: 60,
-  HOURS_PER_DAY: 24,
 
   // ID generation
   ID_GENERATION_BASE: 36,
@@ -197,51 +194,8 @@ export const COLOR_SCALE_KEYS = {
 // STATUS CONFIGURATIONS
 // ============================================================================
 
-// UI Status configurations with colors and icons
-export const ORDER_STATUS_CONFIG = {
-  pending: {
-    label: 'Ожидает',
-    color: 'yellow',
-    icon: 'clock',
-    canCancel: true,
-    canEdit: true,
-  },
-  open: {
-    label: 'Открыт',
-    color: 'blue',
-    icon: 'play',
-    canCancel: true,
-    canEdit: false,
-  },
-  partially_filled: {
-    label: 'Частично исполнен',
-    color: 'orange',
-    icon: 'progress',
-    canCancel: true,
-    canEdit: false,
-  },
-  filled: {
-    label: 'Исполнен',
-    color: 'green',
-    icon: 'check-circle',
-    canCancel: false,
-    canEdit: false,
-  },
-  cancelled: {
-    label: 'Отменен',
-    color: 'gray',
-    icon: 'x-circle',
-    canCancel: false,
-    canEdit: false,
-  },
-  rejected: {
-    label: 'Отклонен',
-    color: 'red',
-    icon: 'x-circle',
-    canCancel: false,
-    canEdit: false,
-  },
-} as const;
+// Order status configuration moved to exchange.ts (Rule 20 - no redundancy)
+// Use EXCHANGE_ORDER_STATUS_CONFIG for all order status UI needs
 
 export const TRANSACTION_STATUS_CONFIG = {
   pending: {

@@ -1,10 +1,10 @@
 import type { CryptoCurrency } from '@repo/exchange-core';
+import { validateEmail } from '@repo/exchange-core';
 import React from 'react';
 
+import { DEBOUNCE_DELAY } from '../state/exchange-constants.js';
 import type { ExchangeStore } from '../state/exchange-store.js';
 import { useExchangeStore } from '../useExchangeStore.js';
-
-const DEBOUNCE_DELAY = 500;
 
 /**
  * Exchange Business Logic Hook
@@ -42,17 +42,20 @@ export function useExchange() {
   };
 }
 
-// Separate form validator to reduce main function size
+// Separate form validator using centralized validation utilities
 function useFormValidator(exchangeStore: ExchangeStore) {
   return () => {
     const { formData, calculation } = exchangeStore;
     const errors: string[] = [];
 
-    // Email validation
+    // Use centralized email validation
     if (!formData.userEmail) {
       errors.push('Укажите email для получения уведомлений');
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.userEmail)) {
-      errors.push('Введите корректный email адрес');
+    } else {
+      const emailValidation = validateEmail(formData.userEmail);
+      if (!emailValidation.isValid) {
+        errors.push('Введите корректный email адрес');
+      }
     }
 
     // Amount validation

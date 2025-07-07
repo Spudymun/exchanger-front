@@ -77,7 +77,7 @@ function createOrderInSystem(orderRequest: {
     cryptoAmount: orderRequest.cryptoAmount,
     currency: orderRequest.currency,
     uahAmount: orderRequest.uahAmount,
-    status: 'PENDING',
+    status: 'pending',
     depositAddress,
     recipientData: orderRequest.recipientData,
   });

@@ -21,7 +21,7 @@ export const profileRouter = createTRPCRouter({
         totalOrders: orderManager.findByEmail(user.email).length,
         completedOrders: orderManager
           .findByEmail(user.email)
-          .filter(order => order.status === 'COMPLETED').length,
+          .filter(order => order.status === 'completed').length,
       },
     };
   }),

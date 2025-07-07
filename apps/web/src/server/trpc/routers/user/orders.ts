@@ -2,7 +2,6 @@ import {
   USER_MESSAGES,
   USER_SUCCESS_MESSAGES,
   USER_CONFIG,
-  USER_ORDER_STATUSES,
   CANCELLABLE_ORDER_STATUSES,
 } from '@repo/constants';
 import { orderManager, validateUserAccess, validateOrderAccess } from '@repo/exchange-core';
@@ -24,7 +23,7 @@ export const ordersRouter = createTRPCRouter({
           .max(USER_CONFIG.MAX_ORDERS_LIMIT)
           .default(USER_CONFIG.DEFAULT_ORDERS_LIMIT),
         offset: z.number().min(0).default(0),
-        status: z.enum(USER_ORDER_STATUSES).optional(),
+        status: z.enum(['pending', 'paid', 'processing', 'completed', 'cancelled']).optional(),
       })
     )
     .query(async ({ input, ctx }) => {
@@ -116,7 +115,7 @@ export const ordersRouter = createTRPCRouter({
 
       // Отменяем заявку
       const updatedOrder = orderManager.update(order.id, {
-        status: 'CANCELLED',
+        status: 'cancelled',
       });
 
       if (!updatedOrder) {

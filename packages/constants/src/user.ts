@@ -31,8 +31,6 @@ export const USER_MESSAGES = {
 } as const;
 
 export const USER_CONFIG = {
-  MIN_PASSWORD_LENGTH: 8,
-  BCRYPT_SALT_ROUNDS: 10,
   DEFAULT_ORDERS_LIMIT: 20,
   MAX_ORDERS_LIMIT: 100,
   VERIFICATION_CODE_BASE: 36,
@@ -47,14 +45,8 @@ export const USER_SUCCESS_MESSAGES = {
   ACCOUNT_DELETED: 'Аккаунт успешно удален',
 } as const;
 
-// Статусы заказов для фильтрации
-export const USER_ORDER_STATUSES = [
-  'PENDING',
-  'PAID',
-  'PROCESSING',
-  'COMPLETED',
-  'CANCELLED',
-] as const;
+// Order statuses centralized in exchange.ts (Rule 20 - no redundancy)
+// Use EXCHANGE_ORDER_STATUSES instead of duplicating
 
-// Статусы, при которых можно отменить заявку
-export const CANCELLABLE_ORDER_STATUSES = ['PENDING', 'PROCESSING'] as const;
+// Statuses that allow order cancellation - using exchange.ts values
+export const CANCELLABLE_ORDER_STATUSES = ['pending', 'processing'] as const;

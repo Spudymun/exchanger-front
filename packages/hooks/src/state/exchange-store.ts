@@ -1,9 +1,5 @@
-import type {
-  CryptoCurrency,
-  ExchangeRate,
-  OrderStatus,
-  ExchangeRecipientData,
-} from '@repo/exchange-core';
+import type { OrderStatus } from '@repo/constants';
+import type { CryptoCurrency, ExchangeRate, ExchangeRecipientData } from '@repo/exchange-core';
 import { create } from 'zustand';
 import { devtools, subscribeWithSelector } from 'zustand/middleware';
 

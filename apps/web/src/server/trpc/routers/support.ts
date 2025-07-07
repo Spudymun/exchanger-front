@@ -1,4 +1,4 @@
-import { VALIDATION_LIMITS, UI_NUMERIC_CONSTANTS } from '@repo/constants';
+import { VALIDATION_LIMITS, UI_NUMERIC_CONSTANTS, TIME_CONSTANTS } from '@repo/constants';
 import { userManager, orderManager } from '@repo/exchange-core';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
@@ -244,13 +244,13 @@ export const supportRouter = createTRPCRouter({
       },
       stats: {
         totalOrders: userOrders.length,
-        completedOrders: userOrders.filter(o => o.status === 'COMPLETED').length,
+        completedOrders: userOrders.filter(o => o.status === 'completed').length,
         totalVolume: userOrders.reduce((sum, o) => sum + o.uahAmount, 0),
         registrationDays: Math.floor(
           (Date.now() - user.createdAt.getTime()) /
-            (UI_NUMERIC_CONSTANTS.HOURS_PER_DAY *
-              UI_NUMERIC_CONSTANTS.MINUTES_PER_HOUR *
-              UI_NUMERIC_CONSTANTS.SECONDS_PER_MINUTE *
+            (TIME_CONSTANTS.HOURS_IN_DAY *
+              TIME_CONSTANTS.MINUTES_IN_HOUR *
+              TIME_CONSTANTS.SECONDS_IN_MINUTE *
               UI_NUMERIC_CONSTANTS.MILLISECONDS_PER_SECOND)
         ),
       },

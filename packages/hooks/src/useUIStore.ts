@@ -1,32 +1,33 @@
-import { useNotificationStore } from './state/notification-store.js';
 import { useUIStore as useUIStoreBase } from './state/ui-store.js';
+import { useNotifications } from './useNotifications.js';
 
-// Enhanced UI Store wrapper - оптимизированная версия
+// Enhanced UI Store wrapper - интеграция с централизованной notification системой
 export const useUIStore = () => {
   const uiStore = useUIStoreBase();
-  const notificationStore = useNotificationStore();
+  const notifications = useNotifications();
 
-  // Базовые методы с интеграцией
+  // Методы с интеграцией notification системы
   const setTheme = (theme: 'light' | 'dark' | 'system') => {
     uiStore.setTheme(theme);
     const themeNames = { light: 'светлую', dark: 'темную', system: 'системную' };
-    notificationStore.success('Тема изменена', `Переключено на ${themeNames[theme]} тему`);
+    notifications.success('Тема изменена', `Переключено на ${themeNames[theme]} тему`);
   };
 
   const handleError = (error: string | Error, context?: string) => {
     const errorMessage = typeof error === 'string' ? error : error.message;
     const title = context ? `Ошибка: ${context}` : 'Ошибка';
-    notificationStore.error(title, errorMessage);
+    notifications.error(title, errorMessage);
     uiStore.setGlobalLoading(false);
   };
 
   return {
     ...uiStore,
-    ...notificationStore,
+    // Notification методы из централизованной системы
+    ...notifications,
     setTheme,
     handleError,
     handleSuccess: (message: string, description?: string) => {
-      notificationStore.success(message, description);
+      notifications.success(message, description);
       uiStore.setGlobalLoading(false);
     },
   };

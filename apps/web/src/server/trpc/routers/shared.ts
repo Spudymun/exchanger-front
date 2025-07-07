@@ -105,9 +105,9 @@ export const sharedRouter = createTRPCRouter({
       orders: {
         total: orders.length,
         today: orders.filter(o => o.createdAt.toDateString() === today).length,
-        pending: orders.filter(o => o.status === 'PENDING').length,
-        processing: orders.filter(o => o.status === 'PROCESSING').length,
-        completed: orders.filter(o => o.status === 'COMPLETED').length,
+        pending: orders.filter(o => o.status === 'pending').length,
+        processing: orders.filter(o => o.status === 'processing').length,
+        completed: orders.filter(o => o.status === 'completed').length,
       },
       users: {
         total: users.length,

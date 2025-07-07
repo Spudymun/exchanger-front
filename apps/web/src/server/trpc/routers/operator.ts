@@ -1,8 +1,4 @@
-import {
-  EXCHANGE_ORDER_STATUSES,
-  EXCHANGE_ORDER_STATUS_CONFIG,
-  VALIDATION_LIMITS,
-} from '@repo/constants';
+import { EXCHANGE_ORDER_STATUS_CONFIG, VALIDATION_LIMITS } from '@repo/constants';
 import { orderManager } from '@repo/exchange-core';
 import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
@@ -26,7 +22,7 @@ export const operatorRouter = createTRPCRouter({
           .max(VALIDATION_LIMITS.ORDER_ITEMS_MAX)
           .default(VALIDATION_LIMITS.DEFAULT_PAGE_SIZE),
         cursor: z.string().optional(),
-        status: z.enum(['PENDING', 'PROCESSING']).optional(),
+        status: z.enum(['pending', 'processing']).optional(),
       })
     )
     .query(async ({ input }) => {
@@ -36,7 +32,7 @@ export const operatorRouter = createTRPCRouter({
         .getAll()
         .filter(order => {
           if (status) return order.status === status;
-          return order.status === 'PENDING' || order.status === 'PROCESSING';
+          return order.status === 'pending' || order.status === 'processing';
         })
         .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
@@ -71,7 +67,7 @@ export const operatorRouter = createTRPCRouter({
         });
       }
 
-      if (order.status !== 'PENDING') {
+      if (order.status !== 'pending') {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'Заявка уже обрабатывается или завершена',
@@ -80,7 +76,7 @@ export const operatorRouter = createTRPCRouter({
 
       // Обновляем статус заявки на processing
       const updatedOrder = orderManager.update(input.orderId, {
-        status: 'PROCESSING',
+        status: 'processing',
       });
 
       if (!updatedOrder) {
@@ -104,7 +100,7 @@ export const operatorRouter = createTRPCRouter({
     .input(
       z.object({
         orderId: z.string(),
-        status: z.enum(['PROCESSING', 'COMPLETED', 'CANCELLED']),
+        status: z.enum(['processing', 'completed', 'cancelled']),
         comment: z.string().optional(),
       })
     )
@@ -133,8 +129,8 @@ export const operatorRouter = createTRPCRouter({
       }
 
       const updatedOrder = orderManager.update(input.orderId, {
-        status: input.status as keyof typeof EXCHANGE_ORDER_STATUSES,
-        ...(input.status === 'COMPLETED' && { processedAt: new Date() }),
+        status: input.status,
+        ...(input.status === 'completed' && { processedAt: new Date() }),
       });
 
       if (!updatedOrder) {
@@ -169,11 +165,11 @@ export const operatorRouter = createTRPCRouter({
     return {
       total: orders.length,
       today: todayOrders.length,
-      completed: orders.filter(o => o.status === 'COMPLETED').length,
-      processing: orders.filter(o => o.status === 'PROCESSING').length,
-      pending: orders.filter(o => o.status === 'PENDING').length,
+      completed: orders.filter(o => o.status === 'completed').length,
+      processing: orders.filter(o => o.status === 'processing').length,
+      pending: orders.filter(o => o.status === 'pending').length,
       totalVolume: orders
-        .filter(o => o.status === 'COMPLETED')
+        .filter(o => o.status === 'completed')
         .reduce((sum, o) => sum + o.uahAmount, 0),
       avgProcessingTime: '15 мин', // Заглушка, в реальности расчет из логов
     };

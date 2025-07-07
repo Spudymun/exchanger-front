@@ -1,4 +1,3 @@
-import { UI_NUMERIC_CONSTANTS } from '@repo/constants';
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
 
@@ -43,19 +42,6 @@ interface UIState {
   openSpecificModal: (modal: keyof UIState['modals']) => void;
   closeSpecificModal: (modal: keyof UIState['modals']) => void;
 
-  // Notifications
-  notifications: Array<{
-    id: string;
-    type: 'success' | 'error' | 'warning' | 'info';
-    title: string;
-    message: string;
-    timestamp: number;
-  }>;
-  notificationTimers: Map<string, NodeJS.Timeout>; // Добавляем для cleanup
-  addNotification: (notification: Omit<UIState['notifications'][0], 'id' | 'timestamp'>) => void;
-  removeNotification: (id: string) => void;
-  clearNotifications: () => void;
-
   // Loading states
   globalLoading: boolean;
   setGlobalLoading: (loading: boolean) => void;
@@ -92,64 +78,6 @@ const createModalActions = (
     })),
 });
 
-const createNotificationActions = (
-  set: (partial: Partial<UIState> | ((state: UIState) => Partial<UIState>)) => void,
-  get: () => UIState
-) => ({
-  addNotification: (notification: Omit<UIState['notifications'][0], 'id' | 'timestamp'>) => {
-    const id = Math.random()
-      .toString(UI_NUMERIC_CONSTANTS.ID_GENERATION_BASE)
-      .substr(2, UI_NUMERIC_CONSTANTS.ID_GENERATION_LENGTH);
-    const timestamp = Date.now();
-    set((state: UIState) => ({
-      notifications: [...state.notifications, { ...notification, id, timestamp }],
-    }));
-
-    // Auto-remove after timeout with cleanup
-    const timerId = setTimeout(() => {
-      get().removeNotification(id);
-    }, UI_NUMERIC_CONSTANTS.NOTIFICATION_AUTO_REMOVE_TIMEOUT);
-
-    // Сохраняем timerId для возможности cleanup
-    set((state: UIState) => {
-      const newTimers = new Map(state.notificationTimers);
-      newTimers.set(id, timerId);
-      return { notificationTimers: newTimers };
-    });
-  },
-
-  removeNotification: (id: string) => {
-    // Очищаем таймер при ручном удалении
-    const timers = get().notificationTimers;
-    const timerId = timers.get(id);
-    if (timerId) {
-      clearTimeout(timerId);
-    }
-
-    set((state: UIState) => {
-      const newTimers = new Map(state.notificationTimers);
-      newTimers.delete(id);
-      return {
-        notifications: state.notifications.filter(n => n.id !== id),
-        notificationTimers: newTimers,
-      };
-    });
-  },
-
-  clearNotifications: () => {
-    // Очищаем все таймеры
-    const timers = get().notificationTimers;
-    for (const timerId of timers.values()) {
-      clearTimeout(timerId);
-    }
-
-    set({
-      notifications: [],
-      notificationTimers: new Map(),
-    });
-  },
-});
-
 const createConfigActions = (set: (partial: Partial<UIState>) => void) => ({
   setGlobalLoading: (loading: boolean) => set({ globalLoading: loading }),
   setTheme: (theme: UIState['theme']) => set({ theme }),
@@ -158,7 +86,7 @@ const createConfigActions = (set: (partial: Partial<UIState>) => void) => ({
 
 export const useUIStore = create<UIState>()(
   devtools(
-    (set, get) => ({
+    (set, _get) => ({
       // Sidebar
       sidebarOpen: true,
       ...createSidebarActions(set),
@@ -173,10 +101,7 @@ export const useUIStore = create<UIState>()(
       },
       ...createModalActions(set),
 
-      // Notifications
-      notifications: [],
-      notificationTimers: new Map(),
-      ...createNotificationActions(set, get),
+      // Notifications - УДАЛЕНЫ (используем notification-store.ts)
 
       // Loading
       globalLoading: false,

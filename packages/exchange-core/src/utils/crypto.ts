@@ -6,7 +6,7 @@ import {
   CURRENCY_SYMBOLS,
   CURRENCY_FULL_NAMES,
   DECIMAL_PRECISION,
-  CRYPTO_ADDRESS_PATTERNS,
+  VALIDATION_PATTERNS,
 } from '@repo/constants';
 
 import { formatCryptoAmountForUI } from '@repo/utils';
@@ -29,12 +29,12 @@ export function generateDepositAddress(currency: CryptoCurrency): string {
 export function validateCryptoAddress(address: string, currency: CryptoCurrency): boolean {
   switch (currency) {
     case 'BTC':
-      return CRYPTO_ADDRESS_PATTERNS.BTC.test(address);
+      return VALIDATION_PATTERNS.BTC_ADDRESS.test(address);
     case 'ETH':
     case 'USDT':
-      return CRYPTO_ADDRESS_PATTERNS.ETH.test(address);
+      return VALIDATION_PATTERNS.ETH_ADDRESS.test(address);
     case 'LTC':
-      return CRYPTO_ADDRESS_PATTERNS.LTC.test(address);
+      return VALIDATION_PATTERNS.LTC_ADDRESS.test(address);
     default:
       return false;
   }

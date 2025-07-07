@@ -13,6 +13,9 @@ export const VALIDATION_LIMITS = {
   USERNAME_MIN_LENGTH: 3,
   USERNAME_MAX_LENGTH: 30,
 
+  // Password security
+  BCRYPT_SALT_ROUNDS: 10,
+
   // Names
   FIRST_NAME_MIN_LENGTH: 1,
   FIRST_NAME_MAX_LENGTH: 50,
@@ -64,9 +67,14 @@ export const VALIDATION_PATTERNS = {
   // Phone number (international format)
   PHONE: /^\+?[1-9]\d{1,14}$/,
 
-  // Crypto wallet addresses (basic patterns)
+  // Crypto wallet addresses (consolidated from regex-patterns.ts)
   BTC_ADDRESS: /^(?:[13][a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-z0-9]{39,59})$/,
   ETH_ADDRESS: /^0x[a-fA-F0-9]{40}$/,
+  USDT_ADDRESS: /^0x[a-fA-F0-9]{40}$/, // USDT uses Ethereum format
+  LTC_ADDRESS: /^[LM3][a-km-zA-HJ-NP-Z1-9]{26,33}$|^ltc1[a-z0-9]{39,59}$/,
+
+  // Card validation
+  CARD_NUMBER: /^\d{16}$/,
 
   // URLs - using function instead of regex for security (prevents ReDoS attacks)
   URL: (() => {
@@ -140,12 +148,12 @@ export const VALIDATION_MESSAGES = {
 // Authentication constants
 export const AUTH_CONSTANTS = {
   // Session durations
-  SESSION_MAX_AGE_SECONDS: TIME_CONSTANTS.DAYS_IN_WEEK * TIME_CONSTANTS.HOURS_IN_DAY * TIME_CONSTANTS.MINUTES_IN_HOUR * TIME_CONSTANTS.SECONDS_IN_MINUTE, // 7 дней
+  SESSION_MAX_AGE_SECONDS:
+    TIME_CONSTANTS.DAYS_IN_WEEK *
+    TIME_CONSTANTS.HOURS_IN_DAY *
+    TIME_CONSTANTS.MINUTES_IN_HOUR *
+    TIME_CONSTANTS.SECONDS_IN_MINUTE, // 7 дней
   SESSION_COOKIE_NAME: 'sessionId',
-
-  // Password validation
-  PASSWORD_MIN_LENGTH: 8,
-  BCRYPT_SALT_ROUNDS: 10,
 
   // Request delays (milliseconds)
   AUTH_REQUEST_DELAY_MS: 300,

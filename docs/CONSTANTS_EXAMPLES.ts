@@ -4,8 +4,8 @@
 import {
   API_ENDPOINTS,
   HTTP_STATUS,
-  ORDER_STATUSES,
-  ORDER_STATUS_CONFIG,
+  EXCHANGE_ORDER_STATUSES,
+  EXCHANGE_ORDER_STATUS_CONFIG,
   ALERT_VARIANTS,
   VALIDATION_LIMITS,
   VALIDATION_PATTERNS,
@@ -23,15 +23,14 @@ export async function fetchUser(id: string) {
 }
 
 // ✅ Использование бизнес констант с конфигурацией
-export function getOrderStatusInfo(status: keyof typeof ORDER_STATUS_CONFIG) {
-  const config = ORDER_STATUS_CONFIG[status];
+export function getOrderStatusInfo(status: keyof typeof EXCHANGE_ORDER_STATUS_CONFIG) {
+  const config = EXCHANGE_ORDER_STATUS_CONFIG[status];
 
   return {
     label: config.label,
-    canCancel: config.canCancel,
-    canEdit: config.canEdit,
     color: config.color,
     icon: config.icon,
+    description: config.description,
   };
 }
 
@@ -55,7 +54,7 @@ export function validateEmail(email: string): boolean {
 
 // ✅ Пример проверки статуса заказа
 export function canCancelOrder(status: string): boolean {
-  if (status === ORDER_STATUSES.PENDING || status === ORDER_STATUSES.OPEN) {
+  if (status === EXCHANGE_ORDER_STATUSES.PENDING || status === EXCHANGE_ORDER_STATUSES.PAID) {
     return true;
   }
 
@@ -63,7 +62,7 @@ export function canCancelOrder(status: string): boolean {
 }
 
 console.log('✅ Constants package examples work correctly!');
-console.log('Order pending status:', ORDER_STATUSES.PENDING);
+console.log('Order pending status:', EXCHANGE_ORDER_STATUSES.PENDING);
 console.log('Success alert variant:', ALERT_VARIANTS.SUCCESS);
 console.log('Email max length:', VALIDATION_LIMITS.EMAIL_MAX_LENGTH);
 

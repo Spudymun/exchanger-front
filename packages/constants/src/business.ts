@@ -23,15 +23,9 @@ export const ORDER_TYPES = {
   STOP_LIMIT: 'stop_limit',
 } as const;
 
-export const ORDER_STATUSES = {
-  PENDING: 'pending',
-  OPEN: 'open',
-  PARTIALLY_FILLED: 'partially_filled',
-  FILLED: 'filled',
-  CANCELLED: 'cancelled',
-  REJECTED: 'rejected',
-  EXPIRED: 'expired',
-} as const;
+// Order statuses - CENTRALIZED in exchange.ts
+// Use EXCHANGE_ORDER_STATUSES for all order status operations
+// This removes redundancy in line with Rule 20
 
 export const TRANSACTION_TYPES = {
   BUY: 'buy',
@@ -93,7 +87,7 @@ export const NOTIFICATION_TYPES = {
 export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 export type UserStatus = (typeof USER_STATUS)[keyof typeof USER_STATUS];
 export type OrderType = (typeof ORDER_TYPES)[keyof typeof ORDER_TYPES];
-export type OrderStatus = (typeof ORDER_STATUSES)[keyof typeof ORDER_STATUSES];
+// OrderStatus type moved to exchange.ts to eliminate redundancy (Rule 20)
 export type TransactionType = (typeof TRANSACTION_TYPES)[keyof typeof TRANSACTION_TYPES];
 export type TransactionStatus = (typeof TRANSACTION_STATUSES)[keyof typeof TRANSACTION_STATUSES];
 export type CurrencyType = (typeof CURRENCY_TYPES)[keyof typeof CURRENCY_TYPES];

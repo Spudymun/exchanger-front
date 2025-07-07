@@ -1,4 +1,4 @@
-import { AUTH_CONSTANTS } from '@repo/constants/validation';
+import { AUTH_CONSTANTS, VALIDATION_LIMITS } from '@repo/constants/validation';
 import {
   generateSessionId,
   sanitizeEmail,
@@ -20,7 +20,7 @@ export const authRouter = createTRPCRouter({
     .input(
       z.object({
         email: z.string().email(),
-        password: z.string().min(AUTH_CONSTANTS.PASSWORD_MIN_LENGTH),
+        password: z.string().min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -57,7 +57,10 @@ export const authRouter = createTRPCRouter({
       }
 
       // Хешируем пароль
-      const hashedPassword = await bcrypt.hash(input.password, AUTH_CONSTANTS.BCRYPT_SALT_ROUNDS);
+      const hashedPassword = await bcrypt.hash(
+        input.password,
+        VALIDATION_LIMITS.BCRYPT_SALT_ROUNDS
+      );
 
       // Создаем пользователя
       const sessionId = generateSessionId();
@@ -218,7 +221,7 @@ export const authRouter = createTRPCRouter({
       z.object({
         email: z.string().email(),
         resetCode: z.string(),
-        newPassword: z.string().min(AUTH_CONSTANTS.PASSWORD_MIN_LENGTH),
+        newPassword: z.string().min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -249,7 +252,7 @@ export const authRouter = createTRPCRouter({
       // Хешируем новый пароль
       const hashedPassword = await bcrypt.hash(
         input.newPassword,
-        AUTH_CONSTANTS.BCRYPT_SALT_ROUNDS
+        VALIDATION_LIMITS.BCRYPT_SALT_ROUNDS
       );
 
       // Генерируем новый session ID

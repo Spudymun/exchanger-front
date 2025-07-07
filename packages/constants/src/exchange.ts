@@ -72,8 +72,15 @@ export const EXCHANGE_VALIDATION_PATTERNS = {
       if (!/^\d+$/.test(amount.replace('.', ''))) return false;
       const parts = amount.split('.');
       if (parts.length > VALIDATION_BOUNDS.MAX_SPLIT_PARTS) return false;
-      if (parts.length === VALIDATION_BOUNDS.MAX_SPLIT_PARTS && parts[VALIDATION_BOUNDS.SINGLE_ELEMENT].length > DECIMAL_PRECISION.CRYPTO_DECIMAL_PLACES) return false;
-      return parts[VALIDATION_BOUNDS.MIN_VALUE].length > VALIDATION_BOUNDS.MIN_VALUE && /^\d+$/.test(parts[VALIDATION_BOUNDS.MIN_VALUE]);
+      if (
+        parts.length === VALIDATION_BOUNDS.MAX_SPLIT_PARTS &&
+        parts[VALIDATION_BOUNDS.SINGLE_ELEMENT].length > DECIMAL_PRECISION.CRYPTO_DECIMAL_PLACES
+      )
+        return false;
+      return (
+        parts[VALIDATION_BOUNDS.MIN_VALUE].length > VALIDATION_BOUNDS.MIN_VALUE &&
+        /^\d+$/.test(parts[VALIDATION_BOUNDS.MIN_VALUE])
+      );
     };
     return { test: cryptoAmountValidator };
   })(),
@@ -84,8 +91,15 @@ export const EXCHANGE_VALIDATION_PATTERNS = {
       if (!/^\d+$/.test(amount.replace('.', ''))) return false;
       const parts = amount.split('.');
       if (parts.length > VALIDATION_BOUNDS.MAX_SPLIT_PARTS) return false;
-      if (parts.length === VALIDATION_BOUNDS.MAX_SPLIT_PARTS && parts[VALIDATION_BOUNDS.SINGLE_ELEMENT].length > DECIMAL_PRECISION.UAH_DECIMAL_PLACES) return false;
-      return parts[VALIDATION_BOUNDS.MIN_VALUE].length > VALIDATION_BOUNDS.MIN_VALUE && /^\d+$/.test(parts[VALIDATION_BOUNDS.MIN_VALUE]);
+      if (
+        parts.length === VALIDATION_BOUNDS.MAX_SPLIT_PARTS &&
+        parts[VALIDATION_BOUNDS.SINGLE_ELEMENT].length > DECIMAL_PRECISION.UAH_DECIMAL_PLACES
+      )
+        return false;
+      return (
+        parts[VALIDATION_BOUNDS.MIN_VALUE].length > VALIDATION_BOUNDS.MIN_VALUE &&
+        /^\d+$/.test(parts[VALIDATION_BOUNDS.MIN_VALUE])
+      );
     };
     return { test: uahAmountValidator };
   })(),
@@ -121,3 +135,6 @@ export const ORDER_CREATION_DELAY_MS = 200;
 // Order pagination limits
 export const DEFAULT_ORDER_LIMIT = 20;
 export const MAX_ORDER_LIMIT = 50;
+
+// Type exports - centralized order status type (Rule 20)
+export type OrderStatus = (typeof EXCHANGE_ORDER_STATUSES)[keyof typeof EXCHANGE_ORDER_STATUSES];

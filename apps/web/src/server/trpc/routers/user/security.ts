@@ -1,4 +1,9 @@
-import { USER_MESSAGES, USER_SUCCESS_MESSAGES, USER_CONFIG } from '@repo/constants';
+import {
+  USER_MESSAGES,
+  USER_SUCCESS_MESSAGES,
+  USER_CONFIG,
+  VALIDATION_LIMITS,
+} from '@repo/constants';
 import {
   validatePassword,
   userManager,
@@ -20,7 +25,7 @@ export const securityRouter = createTRPCRouter({
     .input(
       z.object({
         currentPassword: z.string(),
-        newPassword: z.string().min(USER_CONFIG.MIN_PASSWORD_LENGTH),
+        newPassword: z.string().min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH),
       })
     )
     .mutation(async ({ input, ctx }) => {
@@ -55,7 +60,10 @@ export const securityRouter = createTRPCRouter({
       }
 
       // Хешируем новый пароль
-      const hashedPassword = await bcrypt.hash(input.newPassword, USER_CONFIG.BCRYPT_SALT_ROUNDS);
+      const hashedPassword = await bcrypt.hash(
+        input.newPassword,
+        VALIDATION_LIMITS.BCRYPT_SALT_ROUNDS
+      );
 
       // Обновляем пароль
       userManager.update(user.id, {
@@ -121,7 +129,7 @@ export const securityRouter = createTRPCRouter({
       // Проверяем активные заявки
       const activeOrders = orderManager
         .findByEmail(user.email)
-        .filter(order => ['PENDING', 'PROCESSING'].includes(order.status));
+        .filter(order => ['pending', 'processing'].includes(order.status));
 
       if (activeOrders.length > 0) {
         throw new TRPCError({

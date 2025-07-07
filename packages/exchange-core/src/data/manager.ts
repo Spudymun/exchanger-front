@@ -1,7 +1,9 @@
 import { VALIDATION_BOUNDS, UI_NUMERIC_CONSTANTS } from '@repo/constants';
+import type { OrderStatus } from '@repo/constants';
 
 import { generateOrderId } from '../services';
-import type { User, Order, CryptoCurrency, OrderStatus } from '../types';
+
+import type { User, Order, CryptoCurrency } from '../types';
 
 import {
   MOCK_AUTH_DATA,
@@ -39,7 +41,7 @@ const mockOrders = [
     cryptoAmount: 0.001,
     currency: 'BTC' as CryptoCurrency,
     uahAmount: 1755.0,
-    status: 'COMPLETED' as OrderStatus,
+    status: 'completed' as OrderStatus,
     depositAddress: MOCK_TRANSACTION_DATA.BTC_ADDRESS,
     recipientData: {
       cardNumber: MOCK_TRANSACTION_DATA.CARD_NUMBER,
@@ -55,7 +57,7 @@ const mockOrders = [
     cryptoAmount: 1.0,
     currency: 'ETH' as CryptoCurrency,
     uahAmount: 117600.0,
-    status: 'PROCESSING' as OrderStatus,
+    status: 'processing' as OrderStatus,
     depositAddress: '0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe',
     createdAt: '2025-06-29T11:00:00.000Z',
     updatedAt: '2025-06-29T11:30:00.000Z',
@@ -193,7 +195,7 @@ export const statsManager = {
 
   getTotalVolume: (): number => {
     return orders
-      .filter(o => o.status === 'COMPLETED')
+      .filter(o => o.status === 'completed')
       .reduce((sum: number, order) => sum + order.uahAmount, VALIDATION_BOUNDS.MIN_VALUE);
   },
 };

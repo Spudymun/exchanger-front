@@ -1,10 +1,10 @@
-import { COMMISSION_RATES } from '@repo/constants';
+import { calculateUahAmount, calculateCommission } from '@repo/exchange-core';
 import type { ExchangeRate } from '@repo/exchange-core';
 
 import { DEBOUNCE_DELAY } from './exchange-constants.js';
 import type { ExchangeCalculation, ExchangeFormData } from './exchange-store.js';
 
-// Вспомогательные функции для расчетов
+// Вспомогательные функции для расчетов using centralized utilities
 export const calculateExchangeRate = (
   formData: ExchangeFormData,
   availableRates: ExchangeRate[]
@@ -41,19 +41,16 @@ export const calculateExchangeRate = (
     };
   }
 
-  const commission =
-    formData.fromCurrency && COMMISSION_RATES[formData.fromCurrency]
-      ? COMMISSION_RATES[formData.fromCurrency]
-      : 0;
-  const toAmount = fromAmount * rate.uahRate;
-  const commissionAmount = toAmount * commission;
-  const finalAmount = toAmount - commissionAmount;
+  // Use centralized calculation utilities instead of local logic
+  const toAmount = calculateUahAmount(fromAmount, formData.fromCurrency);
+  const commissionAmount = calculateCommission(fromAmount, formData.fromCurrency);
+  const finalAmount = toAmount;
 
   return {
     fromAmount,
     toAmount,
     rate: rate.uahRate,
-    commission,
+    commission: rate.commission,
     commissionAmount,
     finalAmount,
     isValid: finalAmount > 0,

@@ -1,133 +1,57 @@
-import type { ExchangeStore } from './state/exchange-store.js';
-import { useExchangeStore as useExchangeStoreBase } from './state/exchange-store.js';
+import { validateEmail } from '@repo/exchange-core';
+
+import {
+  useExchangeStore as useExchangeStoreBase,
+  type ExchangeStore,
+} from './state/exchange-store.js';
 import { useNotifications } from './useNotifications.js';
 
-// Types
-type ExchangeStoreInstance = ExchangeStore;
-type NotificationsInstance = ReturnType<typeof useNotifications>;
+// Helper function to validate basic form fields
+const validateBasicFields = (formData: ExchangeStore['formData']) => {
+  const errors: Record<string, string[]> = {};
 
-// Базовые enhanced методы
-const createBasicEnhancedMethods = (
-  store: ExchangeStoreInstance,
-  notifications: NotificationsInstance
-) => ({
-  updateFormData: (data: Parameters<ExchangeStoreInstance['updateFormData']>[0]) => {
-    store.updateFormData(data);
+  if (!formData.fromCurrency) {
+    errors.fromCurrency = ['Выберите валюту для обмена'];
+  }
 
-    if (data.fromCurrency) {
-      notifications.info('Валюта выбрана', `Выбрана валюта: ${data.fromCurrency}`);
-    }
-  },
+  if (!formData.fromAmount || parseFloat(formData.fromAmount) <= 0) {
+    errors.fromAmount = ['Введите корректную сумму'];
+  }
 
-  calculateExchange: () => {
-    store.calculateExchange();
+  if (!formData.recipientData.cardNumber) {
+    errors.cardNumber = ['Введите номер карты'];
+  }
 
-    if (store.isCalculating) {
-      notifications.showProgress('Расчет курса обмена', 0);
-    }
-  },
-});
+  if (!formData.agreementAccepted) {
+    errors.agreement = ['Необходимо принять соглашение'];
+  }
 
-// Step navigation методы
-const createStepEnhancedMethods = (
-  store: ExchangeStoreInstance,
-  notifications: NotificationsInstance
-) => ({
-  nextStep: () => {
-    const currentStep = store.currentStep;
-    store.nextStep();
+  return errors;
+};
 
-    if (store.currentStep > currentStep) {
-      notifications.success('Переход к следующему шагу');
-    }
-  },
+// Helper function to validate email using centralized utilities
+const validateEmailField = (userEmail: string) => {
+  if (!userEmail) {
+    return ['Введите email'];
+  }
 
-  prevStep: () => {
-    const currentStep = store.currentStep;
-    store.prevStep();
+  const emailValidation = validateEmail(userEmail);
+  return emailValidation.isValid ? [] : emailValidation.errors;
+};
 
-    if (store.currentStep < currentStep) {
-      notifications.info('Возврат к предыдущему шагу');
-    }
-  },
-
-  goToStep: (stepIndex: number) => {
-    const currentStep = store.currentStep;
-    store.goToStep(stepIndex);
-
-    if (store.currentStep !== currentStep && stepIndex >= 0 && stepIndex < store.steps.length) {
-      const steps = store.steps;
-      const step = steps.at(stepIndex);
-      const stepName = step ? step.title : `Шаг ${stepIndex + 1}`;
-      notifications.info('Переход к шагу', stepName);
-    }
-  },
-});
-
-// Order management методы
-const createOrderEnhancedMethods = (
-  store: ExchangeStoreInstance,
-  notifications: NotificationsInstance
-) => ({
-  setCurrentOrder: (order: Parameters<ExchangeStoreInstance['setCurrentOrder']>[0]) => {
-    store.setCurrentOrder(order);
-
-    if (order) {
-      notifications.handleExchangeSuccess(
-        store.formData.fromCurrency || 'Крипто',
-        'UAH',
-        parseFloat(store.formData.fromAmount) || 0
-      );
-    }
-  },
-
-  updateOrderStatus: (status: Parameters<ExchangeStoreInstance['updateOrderStatus']>[0]) => {
-    const oldStatus = store.currentOrder?.status;
-    store.updateOrderStatus(status);
-
-    if (oldStatus !== status && store.currentOrder) {
-      notifications.info(`Статус заказа изменен: ${status}`);
-    }
-  },
-
-  resetForm: () => {
-    store.resetForm();
-    notifications.info('Форма очищена');
-  },
-
-  resetStore: () => {
-    store.resetStore();
-    notifications.info('Все данные очищены');
-  },
-});
-
-// Validation методы
-const createValidationMethods = (
-  store: ExchangeStoreInstance,
-  notifications: NotificationsInstance
-) => ({
-  validateForm: () => {
+// Validation helper using centralized validation utilities
+const createValidationFunction = (
+  store: ExchangeStore,
+  notifications: ReturnType<typeof useNotifications>
+) => {
+  return () => {
     const { formData, calculation } = store;
-    const errors: Record<string, string[]> = {};
+    const errors = validateBasicFields(formData);
 
-    if (!formData.fromCurrency) {
-      errors.fromCurrency = ['Выберите валюту для обмена'];
-    }
-
-    if (!formData.fromAmount || parseFloat(formData.fromAmount) <= 0) {
-      errors.fromAmount = ['Введите корректную сумму'];
-    }
-
-    if (!formData.recipientData.cardNumber) {
-      errors.cardNumber = ['Введите номер карты'];
-    }
-
-    if (!formData.userEmail) {
-      errors.userEmail = ['Введите email'];
-    }
-
-    if (!formData.agreementAccepted) {
-      errors.agreement = ['Необходимо принять соглашение'];
+    // Use centralized email validation
+    const emailErrors = validateEmailField(formData.userEmail);
+    if (emailErrors.length > 0) {
+      errors.userEmail = emailErrors;
     }
 
     if (!calculation?.isValid) {
@@ -140,11 +64,11 @@ const createValidationMethods = (
     }
 
     return true;
-  },
-});
+  };
+};
 
-// Helper методы
-const createHelperMethods = (store: ExchangeStoreInstance) => ({
+// Helper methods
+const createHelperMethods = (store: ExchangeStore) => ({
   canProceedToNextStep: () => {
     const { currentStep, formData, calculation } = store;
 
@@ -182,23 +106,21 @@ const createHelperMethods = (store: ExchangeStoreInstance) => ({
   },
 });
 
-// Enhanced Exchange Store wrapper с интеграцией уведомлений
+// Enhanced Exchange Store wrapper - устранена избыточная абстракция
 export const useExchangeStore = () => {
   const store = useExchangeStoreBase();
   const notifications = useNotifications();
 
   return {
-    // Все методы и состояние из базового store
+    // Прямой доступ к store без избыточных оберток
     ...store,
 
-    // Enhanced методы
-    ...createBasicEnhancedMethods(store, notifications),
-    ...createStepEnhancedMethods(store, notifications),
-    ...createOrderEnhancedMethods(store, notifications),
-
-    // Utility методы
-    ...createValidationMethods(store, notifications),
+    // Только реально полезные методы
+    validateForm: createValidationFunction(store, notifications),
     ...createHelperMethods(store),
+
+    // Прямой доступ к notifications для использования компонентами
+    notifications,
   };
 };
 
