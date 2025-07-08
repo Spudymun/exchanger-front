@@ -1,4 +1,4 @@
-import { EXCHANGE_ORDER_STATUSES, type OrderStatus } from '@repo/constants';
+import { type OrderStatus, ORDER_STATUSES, BUSINESS_LIMITS } from '@repo/constants';
 import React from 'react';
 
 import { useNotifications, type UseNotificationsReturn } from '../useNotifications.js';
@@ -43,13 +43,11 @@ export function useOrderTracking(orderId?: string) {
     error,
     isActive:
       order &&
-      [
-        EXCHANGE_ORDER_STATUSES.PENDING,
-        EXCHANGE_ORDER_STATUSES.PAID,
-        EXCHANGE_ORDER_STATUSES.PROCESSING,
-      ].includes(order.status as typeof EXCHANGE_ORDER_STATUSES.PENDING),
-    isCompleted: order?.status === EXCHANGE_ORDER_STATUSES.COMPLETED,
-    isFailed: order?.status === EXCHANGE_ORDER_STATUSES.CANCELLED, // Используем централизованный статус вместо хардкод 'failed'
+      [ORDER_STATUSES.PENDING, ORDER_STATUSES.PAID, ORDER_STATUSES.PROCESSING].includes(
+        order.status as typeof ORDER_STATUSES.PENDING
+      ),
+    isCompleted: order?.status === ORDER_STATUSES.COMPLETED,
+    isFailed: order?.status === ORDER_STATUSES.CANCELLED, // Используем централизованный статус вместо хардкод 'failed'
   };
 }
 
@@ -66,10 +64,10 @@ function simulateOrderTracking(
   const timerId = setTimeout(() => {
     const mockOrder: Order = {
       id: orderId,
-      status: EXCHANGE_ORDER_STATUSES.PROCESSING,
+      status: ORDER_STATUSES.PROCESSING,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      amount: 1000,
+      amount: BUSINESS_LIMITS.TEST_ORDER_AMOUNT,
       currency: 'BTC',
       direction: 'crypto-to-uah',
       userEmail: 'user@example.com',
@@ -77,7 +75,7 @@ function simulateOrderTracking(
 
     setOrder(mockOrder);
     setIsLoading(false);
-  }, 1000);
+  }, BUSINESS_LIMITS.SIMULATION_UPDATE_INTERVAL_MS);
 
   // Возвращаем cleanup функцию
   return () => {
@@ -95,13 +93,16 @@ function useOrderStatusNotifications(order: Order | null, notifications: UseNoti
       return;
     }
 
-    const statusMessages = {
-      [EXCHANGE_ORDER_STATUSES.PROCESSING]: 'Заявка поступила в обработку',
-      [EXCHANGE_ORDER_STATUSES.COMPLETED]: 'Заявка успешно выполнена!',
-      [EXCHANGE_ORDER_STATUSES.CANCELLED]: 'Заявка была отменена',
+    const statusMessages: Record<OrderStatus, string> = {
+      [ORDER_STATUSES.PENDING]: 'Заявка ожидает оплаты',
+      [ORDER_STATUSES.PAID]: 'Заявка оплачена',
+      [ORDER_STATUSES.PROCESSING]: 'Заявка поступила в обработку',
+      [ORDER_STATUSES.COMPLETED]: 'Заявка успешно выполнена!',
+      [ORDER_STATUSES.CANCELLED]: 'Заявка была отменена',
+      [ORDER_STATUSES.FAILED]: 'Заявка завершилась неудачно',
     };
 
-    const message = statusMessages[order.status as keyof typeof statusMessages];
+    const message = statusMessages[order.status as OrderStatus];
 
     if (message) {
       notifyStatusChange(order.status, message, notifications);
@@ -118,10 +119,11 @@ function notifyStatusChange(
   notifications: UseNotificationsReturn
 ) {
   switch (status) {
-    case EXCHANGE_ORDER_STATUSES.COMPLETED:
+    case ORDER_STATUSES.COMPLETED:
       notifications.success(STATUS_CHANGE_MESSAGE, message);
       break;
-    case EXCHANGE_ORDER_STATUSES.CANCELLED:
+    case ORDER_STATUSES.CANCELLED:
+    case ORDER_STATUSES.FAILED:
       notifications.error(STATUS_CHANGE_MESSAGE, message);
       break;
     default:

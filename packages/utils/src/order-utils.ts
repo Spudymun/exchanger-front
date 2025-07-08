@@ -1,4 +1,5 @@
 import type { OrderStatus } from '@repo/constants';
+import { ORDER_STATUSES } from '@repo/constants';
 import type { Order } from '@repo/exchange-core';
 
 /**
@@ -235,7 +236,7 @@ export function getOrdersStatistics(orders: Order[]): {
     {} as Record<OrderStatus, number>
   );
 
-  const completedOrders = orders.filter(order => order.status === 'completed');
+  const completedOrders = orders.filter(order => order.status === ORDER_STATUSES.COMPLETED);
   const totalVolume = completedOrders.reduce((sum, order) => sum + order.uahAmount, 0);
   const averageAmount = completedOrders.length > 0 ? totalVolume / completedOrders.length : 0;
 

@@ -1,3 +1,4 @@
+import { BUSINESS_LIMITS } from '@repo/constants';
 import { nanoid } from 'nanoid';
 import { create } from 'zustand';
 import { devtools, subscribeWithSelector } from 'zustand/middleware';
@@ -58,11 +59,11 @@ export interface NotificationStore {
   defaultDuration: number;
 }
 
-// Дефолтные значения
-const DEFAULT_DURATION = 5000; // 5 секунд
-const MAX_NOTIFICATIONS = 8;
-const ERROR_DURATION = 8000; // 8 секунд для ошибок
-const WARNING_DURATION = 7000; // 7 секунд для предупреждений
+// Дефолтные значения из централизованных констант
+const DEFAULT_DURATION = BUSINESS_LIMITS.DEFAULT_NOTIFICATION_DURATION_MS;
+const MAX_NOTIFICATIONS = BUSINESS_LIMITS.MAX_NOTIFICATIONS;
+const ERROR_DURATION = BUSINESS_LIMITS.ERROR_NOTIFICATION_DURATION_MS;
+const WARNING_DURATION = BUSINESS_LIMITS.WARNING_NOTIFICATION_DURATION_MS;
 
 // Функция для создания основных действий (разделена для соблюдения max-lines-per-function)
 const createAddNotificationAction =

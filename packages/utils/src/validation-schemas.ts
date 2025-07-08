@@ -1,12 +1,29 @@
-import { VALIDATION_LIMITS, CRYPTOCURRENCIES } from '@repo/constants';
+import {
+  VALIDATION_LIMITS,
+  CRYPTOCURRENCIES,
+  UI_NUMERIC_CONSTANTS,
+  VALIDATION_BOUNDS,
+  MAX_CRYPTO_AMOUNT,
+  ORDER_STATUS_VALUES,
+  TICKET_STATUS_VALUES,
+  ORDER_STATUSES,
+} from '@repo/constants';
 import { z } from 'zod';
 
 // === КОНСТАНТЫ ===
 const POSITIVE_AMOUNT_MESSAGE = 'Сумма должна быть положительной';
-const MAX_CRYPTO_AMOUNT = 1000000;
-const MAX_UAH_AMOUNT = 100000000;
-const DEFAULT_PAGINATION_LIMIT = 20;
-const MIN_DESCRIPTION_LENGTH = 10;
+// Centralized constants from @repo/constants
+const MAX_UAH_AMOUNT = VALIDATION_BOUNDS.MAX_UAH_AMOUNT;
+const DEFAULT_PAGINATION_LIMIT = UI_NUMERIC_CONSTANTS.MAX_PAGE_SIZE_SMALL;
+const MIN_DESCRIPTION_LENGTH = UI_NUMERIC_CONSTANTS.MIN_DESCRIPTION_LENGTH;
+
+// Subset statuses for specific use cases (derived from centralized ORDER_STATUS_VALUES)
+const OPERATOR_VIEWABLE_STATUSES = [ORDER_STATUSES.PENDING, ORDER_STATUSES.PROCESSING] as const;
+const OPERATOR_CHANGEABLE_STATUSES = [
+  ORDER_STATUSES.PROCESSING,
+  ORDER_STATUSES.COMPLETED,
+  ORDER_STATUSES.CANCELLED,
+] as const;
 
 /**
  * Централизованные Zod схемы валидации для tRPC роутеров
@@ -118,12 +135,9 @@ export const currencySchema = z.enum(CRYPTOCURRENCIES as unknown as [string, ...
 /**
  * Статусы заказов
  */
-export const orderStatusSchema = z.enum(
-  ['pending', 'paid', 'processing', 'completed', 'cancelled'],
-  {
-    errorMap: () => ({ message: 'Некорректный статус заказа' }),
-  }
-);
+export const orderStatusSchema = z.enum(ORDER_STATUS_VALUES as [string, ...string[]], {
+  errorMap: () => ({ message: 'Некорректный статус заказа' }),
+});
 
 /**
  * Базовая схема для создания заказа
@@ -147,7 +161,7 @@ export const orderHistorySchema = z.object({
  */
 export const operatorOrdersSchema = z.object({
   ...cursorPaginationSchema.shape,
-  status: z.enum(['pending', 'processing']).optional(),
+  status: z.enum(OPERATOR_VIEWABLE_STATUSES).optional(),
 });
 
 /**
@@ -155,7 +169,7 @@ export const operatorOrdersSchema = z.object({
  */
 export const updateOrderStatusSchema = z.object({
   orderId: idSchema,
-  status: z.enum(['processing', 'completed', 'cancelled']),
+  status: z.enum(OPERATOR_CHANGEABLE_STATUSES),
   comment: z.string().optional(),
 });
 
@@ -313,7 +327,7 @@ export const ticketPrioritySchema = z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT'], 
 /**
  * Статусы тикетов поддержки
  */
-export const ticketStatusSchema = z.enum(['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'], {
+export const ticketStatusSchema = z.enum(TICKET_STATUS_VALUES as [string, ...string[]], {
   errorMap: () => ({ message: 'Некорректный статус тикета' }),
 });
 

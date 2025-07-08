@@ -1,4 +1,4 @@
-import { EXCHANGE_ORDER_STATUS_CONFIG, VALIDATION_LIMITS } from '@repo/constants';
+import { ORDER_STATUS_CONFIG, VALIDATION_LIMITS } from '@repo/constants';
 import { orderManager } from '@repo/exchange-core';
 import {
   paginateOrders,
@@ -51,9 +51,7 @@ export const operatorRouter = createTRPCRouter({
         items: result.items.map(order => ({
           ...order,
           config:
-            EXCHANGE_ORDER_STATUS_CONFIG[
-              order.status.toLowerCase() as keyof typeof EXCHANGE_ORDER_STATUS_CONFIG
-            ],
+            ORDER_STATUS_CONFIG[order.status.toLowerCase() as keyof typeof ORDER_STATUS_CONFIG],
         })),
         nextCursor: result.nextCursor,
         hasMore: result.hasMore,

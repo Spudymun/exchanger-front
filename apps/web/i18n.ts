@@ -1,8 +1,9 @@
+import { SUPPORTED_LOCALES } from '@repo/constants';
 import { notFound } from 'next/navigation';
 import { getRequestConfig } from 'next-intl/server';
 
 // Can be imported from a shared config
-const locales = ['en', 'ru'] as const;
+const locales = SUPPORTED_LOCALES;
 
 export default getRequestConfig(async ({ locale }) => {
   // Validate that the incoming `locale` parameter is valid

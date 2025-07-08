@@ -6,6 +6,8 @@
  * @since 2024
  */
 
+import type { TRANSACTION_TYPES, TRANSACTION_STATUSES } from '@repo/constants';
+
 export interface Transaction {
   /** Unique transaction identifier */
   id: string;
@@ -20,10 +22,10 @@ export interface Transaction {
   currency: string;
 
   /** Transaction type */
-  type: 'deposit' | 'withdrawal' | 'exchange';
+  type: (typeof TRANSACTION_TYPES)[keyof typeof TRANSACTION_TYPES];
 
   /** Current transaction status */
-  status: 'pending' | 'completed' | 'failed';
+  status: (typeof TRANSACTION_STATUSES)[keyof typeof TRANSACTION_STATUSES];
 
   /** Creation timestamp */
   createdAt: Date;

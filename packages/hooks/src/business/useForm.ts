@@ -1,3 +1,4 @@
+import { VALIDATION_PATTERNS } from '@repo/constants';
 import { useCallback, useMemo, useState } from 'react';
 import { z } from 'zod';
 
@@ -323,7 +324,6 @@ function useFormFieldProps<T extends Record<string, unknown>>(params: {
 }
 
 const MIN_PASSWORD_LENGTH = 8;
-const DECIMAL_REGEX = /^\d+\.?\d{0,8}$/;
 
 // Validation schemas
 export const FORM_VALIDATION_SCHEMAS = {
@@ -336,7 +336,7 @@ export const FORM_VALIDATION_SCHEMAS = {
     .regex(/[0-9]/, 'Пароль должен содержать цифру'),
   amount: z
     .string()
-    .regex(DECIMAL_REGEX, 'Введите корректную сумму')
+    .regex(VALIDATION_PATTERNS.CRYPTO_AMOUNT_STRING, 'Введите корректную сумму')
     .refine(val => Number(val) > 0, 'Сумма должна быть больше 0'),
   phone: z.string().regex(/^\+380\d{9}$/, 'Введите номер телефона в формате +380XXXXXXXXX'),
 };

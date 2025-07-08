@@ -1,6 +1,6 @@
-import { useNotifications } from '../useNotifications.js';
+import { UI_NUMERIC_CONSTANTS, BUSINESS_LIMITS } from '@repo/constants';
 
-const DEFAULT_ERROR_MESSAGE = 'Неизвестная ошибка';
+import { useNotifications } from '../useNotifications.js';
 
 interface AuthUser {
   id: string;
@@ -32,7 +32,8 @@ export function useEnhancedAuth(baseAuth: AuthContextType) {
       await baseAuth.login(email, password);
       notifications.success('Добро пожаловать!', `Вы вошли как ${email}`);
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE;
+      const errorMessage =
+        error instanceof Error ? error.message : UI_NUMERIC_CONSTANTS.DEFAULT_ERROR_MESSAGE;
       notifications.error('Ошибка входа', errorMessage);
       throw error;
     }
@@ -43,10 +44,11 @@ export function useEnhancedAuth(baseAuth: AuthContextType) {
     try {
       await baseAuth.register(email, password);
       notifications.success('Регистрация успешна!', 'Проверьте email для подтверждения аккаунта', {
-        duration: 10000,
+        duration: BUSINESS_LIMITS.ERROR_NOTIFICATION_DURATION_MS,
       });
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE;
+      const errorMessage =
+        error instanceof Error ? error.message : UI_NUMERIC_CONSTANTS.DEFAULT_ERROR_MESSAGE;
       notifications.error('Ошибка регистрации', errorMessage);
       throw error;
     }
@@ -58,7 +60,8 @@ export function useEnhancedAuth(baseAuth: AuthContextType) {
       await baseAuth.logout();
       notifications.info('Выход выполнен', 'До свидания!');
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE;
+      const errorMessage =
+        error instanceof Error ? error.message : UI_NUMERIC_CONSTANTS.DEFAULT_ERROR_MESSAGE;
       notifications.error('Ошибка выхода', errorMessage);
     }
   };

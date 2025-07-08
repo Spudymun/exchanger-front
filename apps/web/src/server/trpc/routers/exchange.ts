@@ -3,6 +3,8 @@ import {
   API_DELAY_MS,
   ORDER_CREATION_DELAY_MS,
   CURRENCY_NAMES,
+  UI_NUMERIC_CONSTANTS,
+  PERCENTAGE_CALCULATIONS,
 } from '@repo/constants';
 import {
   validateCreateOrder,
@@ -150,7 +152,8 @@ export const exchangeRouter = createTRPCRouter({
           uahAmount,
           rate: rate.uahRate,
           commission: rate.commission,
-          commissionAmount: amount * rate.uahRate * (rate.commission / 100),
+          commissionAmount:
+            amount * rate.uahRate * (rate.commission / PERCENTAGE_CALCULATIONS.PERCENT_BASE),
         };
       } else {
         const cryptoAmount = calculateCryptoAmount(amount, currency);
@@ -161,7 +164,7 @@ export const exchangeRouter = createTRPCRouter({
           uahAmount: amount,
           rate: rate.uahRate,
           commission: rate.commission,
-          commissionAmount: amount * (rate.commission / 100),
+          commissionAmount: amount * (rate.commission / PERCENTAGE_CALCULATIONS.PERCENT_BASE),
         };
       }
     } catch {
@@ -245,7 +248,10 @@ export const exchangeRouter = createTRPCRouter({
     const orders = orderManager.findByEmail(sanitizedEmail);
 
     // Используем централизованные утилиты для сортировки и ограничения
-    const result = paginateOrders(sortOrders(orders), { limit: input.limit, offset: 0 });
+    const result = paginateOrders(sortOrders(orders), {
+      limit: input.limit,
+      offset: UI_NUMERIC_CONSTANTS.INITIAL_OFFSET,
+    });
 
     return {
       orders: result.items.map(order => ({

@@ -1,4 +1,4 @@
-import { UI_NUMERIC_CONSTANTS } from '@repo/constants';
+import { UI_NUMERIC_CONSTANTS, TRANSACTION_TYPES } from '@repo/constants';
 import type { ApiUser as User, Transaction } from '@repo/exchange-core';
 
 import { initTRPC } from '@trpc/server';
@@ -40,7 +40,7 @@ const mockTransactions: Transaction[] = [
     userId: '1',
     amount: 1000,
     currency: 'USD',
-    type: 'deposit',
+    type: TRANSACTION_TYPES.DEPOSIT,
     status: 'completed',
     createdAt: new Date('2024-01-10'),
     updatedAt: new Date('2024-01-10'),
@@ -50,7 +50,7 @@ const mockTransactions: Transaction[] = [
     userId: '2',
     amount: 500,
     currency: 'EUR',
-    type: 'exchange',
+    type: TRANSACTION_TYPES.EXCHANGE,
     status: 'pending',
     createdAt: new Date('2024-01-12'),
     updatedAt: new Date('2024-01-12'),
@@ -220,7 +220,11 @@ export const appRouter = router({
             .string()
             .min(UI_NUMERIC_CONSTANTS.CURRENCY_CODE_LENGTH)
             .max(UI_NUMERIC_CONSTANTS.CURRENCY_CODE_LENGTH),
-          type: z.enum(['deposit', 'withdrawal', 'exchange']),
+          type: z.enum([
+            TRANSACTION_TYPES.DEPOSIT,
+            TRANSACTION_TYPES.WITHDRAWAL,
+            TRANSACTION_TYPES.EXCHANGE,
+          ]),
         })
       )
       .mutation(({ input }) => {

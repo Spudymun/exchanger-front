@@ -1,4 +1,10 @@
-import { CRYPTOCURRENCIES, VALIDATION_LIMITS, AUTH_CONSTANTS } from '@repo/constants';
+import {
+  CRYPTOCURRENCIES,
+  VALIDATION_LIMITS,
+  AUTH_CONSTANTS,
+  DATE_FORMAT_CONSTANTS,
+  UI_NUMERIC_CONSTANTS,
+} from '@repo/constants';
 import { orderManager, userManager, type Order } from '@repo/exchange-core';
 import {
   paginateOrders,
@@ -30,7 +36,11 @@ export const sharedRouter = createTRPCRouter({
 
     const matchesDate = (order: Order) => {
       if (!dateFrom && !dateTo) return true;
-      const orderDate = order.createdAt.toISOString().split('T')[0];
+      const orderDate = order.createdAt
+        .toISOString()
+        .split(DATE_FORMAT_CONSTANTS.ISO_DATE_TIME_SEPARATOR)[
+        DATE_FORMAT_CONSTANTS.DATE_PART_INDEX
+      ];
       if (!orderDate) return false;
       if (dateFrom && orderDate < dateFrom) return false;
       if (dateTo && orderDate > dateTo) return false;
@@ -44,7 +54,10 @@ export const sharedRouter = createTRPCRouter({
       .filter(order => matchesQuery(order) && matchesDate(order) && matchesStatus(order));
 
     // Используем централизованную утилиту для сортировки и ограничения
-    const result = paginateOrders(sortOrders(orders), { limit, offset: 0 });
+    const result = paginateOrders(sortOrders(orders), {
+      limit,
+      offset: UI_NUMERIC_CONSTANTS.INITIAL_OFFSET,
+    });
 
     return result.items;
   }),

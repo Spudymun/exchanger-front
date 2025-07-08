@@ -23,6 +23,9 @@ export const UI_NUMERIC_CONSTANTS = {
   MAX_PAGE_SIZE_SMALL: 20,
   MAX_PAGE_SIZE_LARGE: 50,
   MAX_ITEMS_PER_PAGE: 100,
+  /** Maximum pagination limit for API queries */
+  MAX_PAGINATION_LIMIT: 100,
+  INITIAL_OFFSET: 0,
 
   // Table rendering
   SKELETON_ROWS_COUNT: 5,
@@ -62,6 +65,9 @@ export const UI_NUMERIC_CONSTANTS = {
   WEB_BUTTON_PADDING: '12px 24px',
   WEB_CARD_BORDER_RADIUS: '8px',
   WEB_GRID_GAP: '20px',
+
+  // UI строковые константы
+  DEFAULT_ERROR_MESSAGE: 'Неизвестная ошибка',
 } as const;
 
 // ============================================================================
@@ -195,7 +201,7 @@ export const COLOR_SCALE_KEYS = {
 // ============================================================================
 
 // Order status configuration moved to exchange.ts (Rule 20 - no redundancy)
-// Use EXCHANGE_ORDER_STATUS_CONFIG for all order status UI needs
+// Use ORDER_STATUS_CONFIG for all order status UI needs
 
 export const TRANSACTION_STATUS_CONFIG = {
   pending: {
@@ -229,6 +235,22 @@ export const TRANSACTION_STATUS_CONFIG = {
 // TYPE EXPORTS
 // ============================================================================
 
+/**
+ * Поддерживаемые локали приложения
+ */
+export const SUPPORTED_LOCALES = ['en', 'ru'] as const;
+
+/**
+ * Конфигурация интернационализации
+ */
+export const I18N_CONFIG = {
+  DEFAULT_LOCALE: 'ru' as const,
+  FALLBACK_LOCALE: 'en' as const,
+  SUPPORTED_LOCALES,
+} as const;
+
+// ============================================================================
+
 // Type exports
 export type AlertVariant = (typeof ALERT_VARIANTS)[keyof typeof ALERT_VARIANTS];
 export type ButtonVariant = (typeof BUTTON_VARIANTS)[keyof typeof BUTTON_VARIANTS];
@@ -242,3 +264,4 @@ export type ChartInterval = (typeof CHART_INTERVALS)[keyof typeof CHART_INTERVAL
 export type TableDensity = (typeof TABLE_DENSITIES)[keyof typeof TABLE_DENSITIES];
 export type IconSize = (typeof ICON_SIZES)[keyof typeof ICON_SIZES];
 export type ColorScaleKey = (typeof COLOR_SCALE_KEYS)[keyof typeof COLOR_SCALE_KEYS];
+export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];

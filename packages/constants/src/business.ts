@@ -33,6 +33,7 @@ export const TRANSACTION_TYPES = {
   DEPOSIT: 'deposit',
   WITHDRAWAL: 'withdrawal',
   TRANSFER: 'transfer',
+  EXCHANGE: 'exchange',
 } as const;
 
 export const TRANSACTION_STATUSES = {
@@ -83,13 +84,11 @@ export const NOTIFICATION_TYPES = {
   SECURITY_ALERT: 'security_alert',
 } as const;
 
-// Type exports
+// Type exports (типы TransactionType и TransactionStatus перенесены в @repo/exchange-core/types)
 export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 export type UserStatus = (typeof USER_STATUS)[keyof typeof USER_STATUS];
 export type OrderType = (typeof ORDER_TYPES)[keyof typeof ORDER_TYPES];
 // OrderStatus type moved to exchange.ts to eliminate redundancy (Rule 20)
-export type TransactionType = (typeof TRANSACTION_TYPES)[keyof typeof TRANSACTION_TYPES];
-export type TransactionStatus = (typeof TRANSACTION_STATUSES)[keyof typeof TRANSACTION_STATUSES];
 export type CurrencyType = (typeof CURRENCY_TYPES)[keyof typeof CURRENCY_TYPES];
 export type SupportedCurrency = (typeof SUPPORTED_CURRENCIES)[keyof typeof SUPPORTED_CURRENCIES];
 export type KycLevel = (typeof KYC_LEVELS)[keyof typeof KYC_LEVELS];

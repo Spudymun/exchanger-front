@@ -1,4 +1,9 @@
-import { UI_NUMERIC_CONSTANTS, TIME_CONSTANTS } from '@repo/constants';
+import {
+  UI_NUMERIC_CONSTANTS,
+  TIME_CONSTANTS,
+  TICKET_STATUSES,
+  type TicketStatus,
+} from '@repo/constants';
 import { userManager, orderManager } from '@repo/exchange-core';
 import {
   searchKnowledgeSchema,
@@ -49,7 +54,7 @@ const supportTickets: Array<{
   description: string;
   priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
   category: string;
-  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED';
+  status: TicketStatus;
   createdBy: string;
   createdAt: Date;
   updatedBy?: string;
@@ -107,7 +112,7 @@ export const supportRouter = createTRPCRouter({
       description: input.description,
       priority: input.priority,
       category: input.category,
-      status: 'OPEN' as const,
+      status: TICKET_STATUSES.OPEN,
       createdBy: ctx.user.email,
       createdAt: new Date(),
       messages: [],
@@ -162,7 +167,7 @@ export const supportRouter = createTRPCRouter({
         });
       }
 
-      ticket.status = input.status;
+      ticket.status = input.status as TicketStatus;
       ticket.updatedBy = ctx.user.email;
       ticket.updatedAt = new Date();
 
@@ -240,9 +245,9 @@ export const supportRouter = createTRPCRouter({
     return {
       totalTickets: myTickets.length,
       todayTickets: todayTickets.length,
-      openTickets: myTickets.filter(t => t.status === 'OPEN').length,
-      resolvedTickets: myTickets.filter(t => t.status === 'RESOLVED').length,
-      inProgressTickets: myTickets.filter(t => t.status === 'IN_PROGRESS').length,
+      openTickets: myTickets.filter(t => t.status === TICKET_STATUSES.OPEN).length,
+      resolvedTickets: myTickets.filter(t => t.status === TICKET_STATUSES.RESOLVED).length,
+      inProgressTickets: myTickets.filter(t => t.status === TICKET_STATUSES.IN_PROGRESS).length,
       avgResponseTime: '2 часа', // Заглушка
       knowledgeBaseArticles: KNOWLEDGE_BASE.length,
     };

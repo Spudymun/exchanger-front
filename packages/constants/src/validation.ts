@@ -1,4 +1,5 @@
-import { TIME_CONSTANTS } from './time-constants';
+import { REQUEST_TIMEOUT_CONSTANTS } from './time-constants';
+import { VALIDATION_BOUNDS } from './validation-bounds';
 
 /**
  * Validation rules and limits - ОБЩИЕ для всех приложений
@@ -23,8 +24,8 @@ export const VALIDATION_LIMITS = {
   LAST_NAME_MAX_LENGTH: 50,
 
   // Financial
-  MIN_ORDER_AMOUNT: 0.01,
-  MAX_ORDER_AMOUNT: 1000000,
+  MIN_ORDER_AMOUNT: VALIDATION_BOUNDS.MIN_ORDER_AMOUNT,
+  MAX_ORDER_AMOUNT: VALIDATION_BOUNDS.MAX_ORDER_AMOUNT,
   MIN_WITHDRAWAL_AMOUNT: 10,
   MAX_WITHDRAWAL_AMOUNT: 100000,
 
@@ -45,7 +46,7 @@ export const VALIDATION_LIMITS = {
   SUPPORTED_DOCUMENT_FORMATS: ['pdf', 'doc', 'docx'],
 
   // API
-  REQUEST_TIMEOUT_MS: 30000,
+  REQUEST_TIMEOUT_MS: REQUEST_TIMEOUT_CONSTANTS.DEFAULT_API_TIMEOUT,
   MAX_REQUESTS_PER_MINUTE: 100,
 
   // Pagination
@@ -93,6 +94,10 @@ export const VALIDATION_PATTERNS = {
   // Numbers (safe regex patterns to prevent ReDoS attacks)
   POSITIVE_NUMBER: /^\d+\.?\d*$/,
   INTEGER: /^\d+$/,
+
+  // Amount format validation (centralized from exchange.ts and useForm.ts)
+  CRYPTO_AMOUNT_STRING: /^\d+\.?\d{0,8}$/,
+  UAH_AMOUNT_STRING: /^\d+\.?\d{0,2}$/,
 
   // Alphanumeric only
   ALPHANUMERIC: /^[a-zA-Z0-9]+$/,
@@ -147,12 +152,8 @@ export const VALIDATION_MESSAGES = {
 
 // Authentication constants
 export const AUTH_CONSTANTS = {
-  // Session durations
-  SESSION_MAX_AGE_SECONDS:
-    TIME_CONSTANTS.DAYS_IN_WEEK *
-    TIME_CONSTANTS.HOURS_IN_DAY *
-    TIME_CONSTANTS.MINUTES_IN_HOUR *
-    TIME_CONSTANTS.SECONDS_IN_MINUTE, // 7 дней
+  // Session durations (предвычисленные значения - no calculations in constants)
+  SESSION_MAX_AGE_SECONDS: 604800, // 7 дней (7 * 24 * 60 * 60)
   SESSION_COOKIE_NAME: 'sessionId',
 
   // Request delays (milliseconds)

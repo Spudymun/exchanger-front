@@ -1,4 +1,5 @@
 import type { OrderStatus } from '@repo/constants';
+import { ORDER_STATUSES } from '@repo/constants';
 import type { Order } from '@repo/exchange-core';
 
 /**
@@ -10,21 +11,21 @@ import type { Order } from '@repo/exchange-core';
  * Проверяет, является ли заказ активным (требует обработки)
  */
 export function isActiveOrder(order: Order): boolean {
-  return order.status === 'pending' || order.status === 'processing';
+  return order.status === ORDER_STATUSES.PENDING || order.status === ORDER_STATUSES.PROCESSING;
 }
 
 /**
  * Проверяет, завершен ли заказ
  */
 export function isCompletedOrder(order: Order): boolean {
-  return order.status === 'completed';
+  return order.status === ORDER_STATUSES.COMPLETED;
 }
 
 /**
  * Проверяет, отменен ли заказ
  */
 export function isCancelledOrder(order: Order): boolean {
-  return order.status === 'cancelled';
+  return order.status === ORDER_STATUSES.CANCELLED;
 }
 
 /**
@@ -46,14 +47,18 @@ export function canChangeOrderStatus(order: Order): boolean {
  */
 export function canTransitionStatus(fromStatus: OrderStatus, toStatus: OrderStatus): boolean {
   switch (fromStatus) {
-    case 'pending':
-      return ['processing', 'cancelled'].includes(toStatus);
-    case 'processing':
-      return ['completed', 'cancelled'].includes(toStatus);
-    case 'paid':
-      return ['processing'].includes(toStatus);
-    case 'completed':
-    case 'cancelled':
+    case ORDER_STATUSES.PENDING:
+      return ([ORDER_STATUSES.PROCESSING, ORDER_STATUSES.CANCELLED] as OrderStatus[]).includes(
+        toStatus
+      );
+    case ORDER_STATUSES.PROCESSING:
+      return ([ORDER_STATUSES.COMPLETED, ORDER_STATUSES.CANCELLED] as OrderStatus[]).includes(
+        toStatus
+      );
+    case ORDER_STATUSES.PAID:
+      return ([ORDER_STATUSES.PROCESSING] as OrderStatus[]).includes(toStatus);
+    case ORDER_STATUSES.COMPLETED:
+    case ORDER_STATUSES.CANCELLED:
       return false;
     default:
       return false;
@@ -65,14 +70,14 @@ export function canTransitionStatus(fromStatus: OrderStatus, toStatus: OrderStat
  */
 export function getAvailableTransitions(currentStatus: OrderStatus): OrderStatus[] {
   switch (currentStatus) {
-    case 'pending':
-      return ['processing', 'cancelled'];
-    case 'processing':
-      return ['completed', 'cancelled'];
-    case 'paid':
-      return ['processing'];
-    case 'completed':
-    case 'cancelled':
+    case ORDER_STATUSES.PENDING:
+      return [ORDER_STATUSES.PROCESSING, ORDER_STATUSES.CANCELLED];
+    case ORDER_STATUSES.PROCESSING:
+      return [ORDER_STATUSES.COMPLETED, ORDER_STATUSES.CANCELLED];
+    case ORDER_STATUSES.PAID:
+      return [ORDER_STATUSES.PROCESSING];
+    case ORDER_STATUSES.COMPLETED:
+    case ORDER_STATUSES.CANCELLED:
       return [];
     default:
       return [];
@@ -188,15 +193,15 @@ export function validateStatusTransition(
  */
 export function getStatusDisplayName(status: OrderStatus): string {
   switch (status) {
-    case 'pending':
+    case ORDER_STATUSES.PENDING:
       return 'Ожидает обработки';
-    case 'processing':
+    case ORDER_STATUSES.PROCESSING:
       return 'В обработке';
-    case 'completed':
+    case ORDER_STATUSES.COMPLETED:
       return 'Завершен';
-    case 'cancelled':
+    case ORDER_STATUSES.CANCELLED:
       return 'Отменен';
-    case 'paid':
+    case ORDER_STATUSES.PAID:
       return 'Оплачен';
     default:
       return status;
@@ -208,15 +213,15 @@ export function getStatusDisplayName(status: OrderStatus): string {
  */
 export function getStatusColorClass(status: OrderStatus): string {
   switch (status) {
-    case 'pending':
+    case ORDER_STATUSES.PENDING:
       return 'text-yellow-600 bg-yellow-50';
-    case 'processing':
+    case ORDER_STATUSES.PROCESSING:
       return 'text-blue-600 bg-blue-50';
-    case 'completed':
+    case ORDER_STATUSES.COMPLETED:
       return 'text-green-600 bg-green-50';
-    case 'cancelled':
+    case ORDER_STATUSES.CANCELLED:
       return 'text-red-600 bg-red-50';
-    case 'paid':
+    case ORDER_STATUSES.PAID:
       return 'text-purple-600 bg-purple-50';
     default:
       return 'text-gray-600 bg-gray-50';

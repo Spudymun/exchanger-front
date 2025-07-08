@@ -12,6 +12,17 @@ export const VALIDATION_BOUNDS = {
   NOT_FOUND: -1,
   /** Максимальное количество частей при разделении строки */
   MAX_SPLIT_PARTS: 2,
+  /** Максимальная сумма в UAH */
+  MAX_UAH_AMOUNT: 100000000,
+
+  // Order amount limits (централизованные для устранения дубликатов)
+  /** Минимальная сумма заказа/обмена */
+  MIN_ORDER_AMOUNT: 0.01,
+  /** Максимальная сумма заказа/обмена (используется во всех местах) */
+  MAX_ORDER_AMOUNT: 1000000,
 } as const;
+
+// Derived constants для обратной совместимости
+export const MAX_CRYPTO_AMOUNT = VALIDATION_BOUNDS.MAX_ORDER_AMOUNT;
 
 export type ValidationBounds = typeof VALIDATION_BOUNDS;

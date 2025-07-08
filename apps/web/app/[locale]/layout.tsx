@@ -1,9 +1,10 @@
+import { SUPPORTED_LOCALES } from '@repo/constants';
 import { notFound } from 'next/navigation';
 import React from 'react';
 
 import { ClientProviders } from './providers';
 
-const locales = ['en', 'ru'] as const;
+const locales = SUPPORTED_LOCALES;
 
 interface LocaleLayoutProps {
   children: React.ReactNode;

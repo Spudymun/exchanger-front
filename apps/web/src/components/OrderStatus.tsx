@@ -1,13 +1,10 @@
 'use client';
 
-import { EXCHANGE_ORDER_STATUS_CONFIG } from '@repo/constants';
+import { ORDER_STATUS_CONFIG, UI_REFRESH_INTERVALS } from '@repo/constants';
 import { CheckCircle, Clock, Loader2, XCircle } from 'lucide-react';
 import { useMemo } from 'react';
 
 import { trpc } from '../../lib/trpc';
-
-// Константы для компонента
-const ORDER_STATUS_REFRESH_INTERVAL = 30000; // 30 секунд
 
 interface OrderStatusProps {
   orderId: string;
@@ -162,15 +159,13 @@ export function OrderStatus({ orderId, showDetails = true }: OrderStatusProps) {
     { orderId },
     {
       enabled: !!orderId,
-      refetchInterval: ORDER_STATUS_REFRESH_INTERVAL,
+      refetchInterval: UI_REFRESH_INTERVALS.ORDER_STATUS_REFRESH,
     }
   );
 
   const statusConfig = useMemo(() => {
     if (!orderData?.status) return null;
-    return EXCHANGE_ORDER_STATUS_CONFIG[
-      orderData.status as keyof typeof EXCHANGE_ORDER_STATUS_CONFIG
-    ];
+    return ORDER_STATUS_CONFIG[orderData.status as keyof typeof ORDER_STATUS_CONFIG];
   }, [orderData?.status]);
 
   if (isLoading) {
