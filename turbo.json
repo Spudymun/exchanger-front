@@ -6,7 +6,7 @@
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"],
-      "env": ["VERCEL_URL", "PORT", "NODE_ENV"]
+      "env": ["VERCEL_URL", "PORT", "NODE_ENV", "ANALYZE"]
     },
     "lint": {
       "dependsOn": ["^lint"]

@@ -3,7 +3,7 @@
 import { HTTP_STATUS } from '@repo/constants';
 import toast from 'react-hot-toast';
 
-import { trpc } from '../../lib/trpc';
+import { trpc } from '../../lib/trpc-provider';
 
 // Хук для входа в систему
 function useLoginMutation() {

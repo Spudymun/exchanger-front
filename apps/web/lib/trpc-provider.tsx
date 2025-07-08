@@ -1,11 +1,20 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { httpBatchLink } from '@trpc/client';
 import { createTRPCReact, type CreateTRPCReact } from '@trpc/react-query';
-import { useState } from 'react';
+import { useState, Suspense, lazy } from 'react';
 import superjson from 'superjson';
+
+// Dynamic import for React Query DevTools - only in development
+const ReactQueryDevtools =
+  process.env.NODE_ENV === 'development'
+    ? lazy(() =>
+        import('@tanstack/react-query-devtools').then(module => ({
+          default: module.ReactQueryDevtools,
+        }))
+      )
+    : null;
 
 import type { AppRouter } from '../src/server/trpc';
 
@@ -36,7 +45,11 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         {children}
-        {process.env.NODE_ENV === 'development' && <ReactQueryDevtools initialIsOpen={false} />}
+        {process.env.NODE_ENV === 'development' && ReactQueryDevtools && (
+          <Suspense fallback={null}>
+            <ReactQueryDevtools initialIsOpen={false} />
+          </Suspense>
+        )}
       </QueryClientProvider>
     </trpc.Provider>
   );

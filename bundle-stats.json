@@ -1,6 +1,6 @@
 {
-  "timestamp": "2025-07-08T19:53:08.734Z",
-  "totalSizeKB": 1022,
+  "timestamp": "2025-07-08T20:32:17.961Z",
+  "totalSizeKB": 1019,
   "limit": 800,
   "chunks": [
     {
@@ -28,16 +28,12 @@
       "sizeKB": 110
     },
     {
-      "name": "910-fcdfa242d7433fb8.js",
-      "sizeKB": 76
+      "name": "948-6d4de3e814d31a2d.js",
+      "sizeKB": 92
     },
     {
       "name": "64-f4ff4b2004348543.js",
       "sizeKB": 47
-    },
-    {
-      "name": "223-26bf3920212a9550.js",
-      "sizeKB": 19
     },
     {
       "name": "261-4c74a3bd4e96ce93.js",

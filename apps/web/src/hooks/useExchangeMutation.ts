@@ -4,7 +4,7 @@ import type { CreateOrderRequest } from '@repo/exchange-core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { TRPCError } from '@trpc/server';
 
-import { trpc } from '../../lib/trpc';
+import { trpc } from '../../lib/trpc-provider';
 
 interface CreateOrderResponse {
   orderId: string;
