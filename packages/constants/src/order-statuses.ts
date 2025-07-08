@@ -81,19 +81,4 @@ export type TicketStatus = (typeof TICKET_STATUSES)[keyof typeof TICKET_STATUSES
 export const ORDER_STATUS_VALUES = Object.values(ORDER_STATUSES);
 export const TICKET_STATUS_VALUES = Object.values(TICKET_STATUSES);
 
-// Утилитарные функции для работы со статусами
-export function isActiveOrderStatus(status: OrderStatus): boolean {
-  return (ORDER_STATUS_GROUPS.ACTIVE as readonly OrderStatus[]).includes(status);
-}
-
-export function isFinalOrderStatus(status: OrderStatus): boolean {
-  return (ORDER_STATUS_GROUPS.FINAL as readonly OrderStatus[]).includes(status);
-}
-
-export function isSuccessfulOrderStatus(status: OrderStatus): boolean {
-  return (ORDER_STATUS_GROUPS.COMPLETED as readonly OrderStatus[]).includes(status);
-}
-
-export function isFailedOrderStatus(status: OrderStatus): boolean {
-  return (ORDER_STATUS_GROUPS.FAILED as readonly OrderStatus[]).includes(status);
-}
+// Status groups remain in constants as they are configuration data

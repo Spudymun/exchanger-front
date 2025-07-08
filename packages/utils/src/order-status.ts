@@ -1,5 +1,5 @@
 import type { OrderStatus } from '@repo/constants';
-import { ORDER_STATUSES } from '@repo/constants';
+import { ORDER_STATUSES, ORDER_STATUS_GROUPS, ORDER_STATUS_CONFIG } from '@repo/constants';
 import type { Order } from '@repo/exchange-core';
 
 /**
@@ -190,40 +190,66 @@ export function validateStatusTransition(
 
 /**
  * Возвращает человекочитаемое описание статуса
+ * Использует централизованную конфигурацию ORDER_STATUS_CONFIG (Rule 20)
  */
 export function getStatusDisplayName(status: OrderStatus): string {
-  switch (status) {
-    case ORDER_STATUSES.PENDING:
-      return 'Ожидает обработки';
-    case ORDER_STATUSES.PROCESSING:
-      return 'В обработке';
-    case ORDER_STATUSES.COMPLETED:
-      return 'Завершен';
-    case ORDER_STATUSES.CANCELLED:
-      return 'Отменен';
-    case ORDER_STATUSES.PAID:
-      return 'Оплачен';
-    default:
-      return status;
-  }
+  const config = ORDER_STATUS_CONFIG[status as keyof typeof ORDER_STATUS_CONFIG];
+  return config ? config.label : status;
 }
 
 /**
  * Возвращает CSS класс для статуса (для UI)
+ * Использует централизованную конфигурацию ORDER_STATUS_CONFIG (Rule 20)
  */
 export function getStatusColorClass(status: OrderStatus): string {
-  switch (status) {
-    case ORDER_STATUSES.PENDING:
-      return 'text-yellow-600 bg-yellow-50';
-    case ORDER_STATUSES.PROCESSING:
-      return 'text-blue-600 bg-blue-50';
-    case ORDER_STATUSES.COMPLETED:
+  const config = ORDER_STATUS_CONFIG[status as keyof typeof ORDER_STATUS_CONFIG];
+  if (!config) {
+    return 'text-gray-600 bg-gray-50';
+  }
+
+  switch (config.color) {
+    case 'success':
       return 'text-green-600 bg-green-50';
-    case ORDER_STATUSES.CANCELLED:
+    case 'warning':
+      return 'text-yellow-600 bg-yellow-50';
+    case 'info':
+      return 'text-blue-600 bg-blue-50';
+    case 'destructive':
       return 'text-red-600 bg-red-50';
-    case ORDER_STATUSES.PAID:
-      return 'text-purple-600 bg-purple-50';
     default:
       return 'text-gray-600 bg-gray-50';
   }
+}
+
+/**
+ * Утилитарные функции для работы со статусами - перемещены из constants (Rule 20)
+ * Constants должен содержать только константы, не бизнес-логику
+ */
+
+/**
+ * Проверяет, является ли статус активным (требует обработки)
+ */
+export function isActiveOrderStatus(status: OrderStatus): boolean {
+  return (ORDER_STATUS_GROUPS.ACTIVE as readonly OrderStatus[]).includes(status);
+}
+
+/**
+ * Проверяет, является ли статус финальным
+ */
+export function isFinalOrderStatus(status: OrderStatus): boolean {
+  return (ORDER_STATUS_GROUPS.FINAL as readonly OrderStatus[]).includes(status);
+}
+
+/**
+ * Проверяет, является ли статус успешным
+ */
+export function isSuccessfulOrderStatus(status: OrderStatus): boolean {
+  return (ORDER_STATUS_GROUPS.COMPLETED as readonly OrderStatus[]).includes(status);
+}
+
+/**
+ * Проверяет, является ли статус неудачным
+ */
+export function isFailedOrderStatus(status: OrderStatus): boolean {
+  return (ORDER_STATUS_GROUPS.FAILED as readonly OrderStatus[]).includes(status);
 }
