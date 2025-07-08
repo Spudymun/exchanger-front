@@ -2,8 +2,6 @@ import {
   CRYPTOCURRENCIES,
   API_DELAY_MS,
   ORDER_CREATION_DELAY_MS,
-  DEFAULT_ORDER_LIMIT,
-  MAX_ORDER_LIMIT,
   CURRENCY_NAMES,
 } from '@repo/constants';
 import {
@@ -16,12 +14,34 @@ import {
   sanitizeEmail,
   orderManager,
   userManager,
+  type CryptoCurrency,
 } from '@repo/exchange-core';
-import { TRPCError } from '@trpc/server';
+import {
+  paginateOrders,
+  sortOrders,
+  createBadRequestError,
+  createOrderError,
+  getCurrencyRateSchema,
+  calculateAmountSchema,
+  createExchangeOrderSchema,
+  orderByIdSchema,
+  getOrderHistoryByEmailSchema,
+} from '@repo/utils';
 import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '../init';
 import { rateLimitMiddleware } from '../middleware/rateLimit';
+
+// === TYPE GUARDS ===
+
+/**
+ * Type guard для проверки валидности криптовалюты
+ */
+function assertValidCurrency(currency: string): asserts currency is CryptoCurrency {
+  if (!CRYPTOCURRENCIES.includes(currency as CryptoCurrency)) {
+    throw createBadRequestError(`Неподдерживаемая криптовалюта: ${currency}`);
+  }
+}
 
 // === HELPER FUNCTIONS FOR BUSINESS LOGIC ===
 
@@ -100,77 +120,59 @@ export const exchangeRouter = createTRPCRouter({
   }),
 
   // Получить лимиты для криптовалюты
-  getLimits: publicProcedure
-    .input(
-      z.object({
-        currency: z.enum(CRYPTOCURRENCIES),
-      })
-    )
-    .query(async ({ input }) => {
-      const limits = getCurrencyLimits(input.currency);
-      const rate = getExchangeRate(input.currency);
+  getLimits: publicProcedure.input(getCurrencyRateSchema).query(async ({ input }) => {
+    assertValidCurrency(input.currency);
+    const limits = getCurrencyLimits(input.currency);
+    const rate = getExchangeRate(input.currency);
 
-      return {
-        currency: input.currency,
-        limits,
-        rate: {
-          uahRate: rate.uahRate,
-          commission: rate.commission,
-        },
-      };
-    }),
+    return {
+      currency: input.currency,
+      limits,
+      rate: {
+        uahRate: rate.uahRate,
+        commission: rate.commission,
+      },
+    };
+  }),
 
   // Рассчитать сумму обмена
-  calculateExchange: publicProcedure
-    .input(
-      z.object({
-        amount: z.number().positive(),
-        currency: z.enum(CRYPTOCURRENCIES),
-        direction: z.enum(['crypto-to-uah', 'uah-to-crypto']),
-      })
-    )
-    .query(async ({ input }) => {
-      const { amount, currency, direction } = input;
+  calculateExchange: publicProcedure.input(calculateAmountSchema).query(async ({ input }) => {
+    const { amount, currency, direction } = input;
+    assertValidCurrency(currency);
 
-      try {
-        if (direction === 'crypto-to-uah') {
-          const uahAmount = calculateUahAmount(amount, currency);
-          const rate = getExchangeRate(currency);
+    try {
+      if (direction === 'crypto-to-uah') {
+        const uahAmount = calculateUahAmount(amount, currency);
+        const rate = getExchangeRate(currency);
 
-          return {
-            cryptoAmount: amount,
-            uahAmount,
-            rate: rate.uahRate,
-            commission: rate.commission,
-            commissionAmount: amount * rate.uahRate * (rate.commission / 100),
-          };
-        } else {
-          const cryptoAmount = calculateCryptoAmount(amount, currency);
-          const rate = getExchangeRate(currency);
+        return {
+          cryptoAmount: amount,
+          uahAmount,
+          rate: rate.uahRate,
+          commission: rate.commission,
+          commissionAmount: amount * rate.uahRate * (rate.commission / 100),
+        };
+      } else {
+        const cryptoAmount = calculateCryptoAmount(amount, currency);
+        const rate = getExchangeRate(currency);
 
-          return {
-            cryptoAmount,
-            uahAmount: amount,
-            rate: rate.uahRate,
-            commission: rate.commission,
-            commissionAmount: amount * (rate.commission / 100),
-          };
-        }
-      } catch {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Ошибка расчета суммы обмена',
-        });
+        return {
+          cryptoAmount,
+          uahAmount: amount,
+          rate: rate.uahRate,
+          commission: rate.commission,
+          commissionAmount: amount * (rate.commission / 100),
+        };
       }
-    }),
+    } catch {
+      throw createBadRequestError('Ошибка расчета суммы обмена');
+    }
+  }),
 
   // Создать заявку на обмен
   createOrder: rateLimitMiddleware.createOrder
     .input(
-      z.object({
-        email: z.string().email(),
-        cryptoAmount: z.number().positive(),
-        currency: z.enum(CRYPTOCURRENCIES),
+      createExchangeOrderSchema.extend({
         recipientData: z
           .object({
             cardNumber: z.string().optional(),
@@ -183,16 +185,19 @@ export const exchangeRouter = createTRPCRouter({
       // Имитация задержки
       await new Promise(resolve => setTimeout(resolve, ORDER_CREATION_DELAY_MS));
 
-      // Подготавливаем данные заявки
-      const orderRequest = prepareOrderRequest(input);
+      // Валидация типа валюты
+      assertValidCurrency(input.currency);
+
+      // Подготавливаем данные заявки с правильным типом
+      const orderRequest = prepareOrderRequest({
+        ...input,
+        currency: input.currency as CryptoCurrency,
+      });
 
       // Валидация заявки
       const validation = validateCreateOrder(orderRequest);
       if (!validation.isValid) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: validation.errors[0],
-        });
+        throw createBadRequestError(validation.errors[0] || 'Ошибка валидации заявки');
       }
 
       // Обеспечиваем существование пользователя
@@ -213,66 +218,48 @@ export const exchangeRouter = createTRPCRouter({
     }),
 
   // Получить статус заявки
-  getOrderStatus: publicProcedure
-    .input(
-      z.object({
-        orderId: z.string(),
-      })
-    )
-    .query(async ({ input }) => {
-      const order = orderManager.findById(input.orderId);
+  getOrderStatus: publicProcedure.input(orderByIdSchema).query(async ({ input }) => {
+    const order = orderManager.findById(input.orderId);
 
-      if (!order) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Заявка не найдена',
-        });
-      }
+    if (!order) {
+      throw createOrderError('not_found', input.orderId);
+    }
 
-      return {
+    return {
+      id: order.id,
+      status: order.status,
+      cryptoAmount: order.cryptoAmount,
+      uahAmount: order.uahAmount,
+      currency: order.currency,
+      depositAddress: order.depositAddress,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+      processedAt: order.processedAt,
+      txHash: order.txHash,
+    };
+  }),
+
+  // Получить историю заявок для email
+  getOrderHistory: publicProcedure.input(getOrderHistoryByEmailSchema).query(async ({ input }) => {
+    const sanitizedEmail = sanitizeEmail(input.email);
+    const orders = orderManager.findByEmail(sanitizedEmail);
+
+    // Используем централизованные утилиты для сортировки и ограничения
+    const result = paginateOrders(sortOrders(orders), { limit: input.limit, offset: 0 });
+
+    return {
+      orders: result.items.map(order => ({
         id: order.id,
         status: order.status,
         cryptoAmount: order.cryptoAmount,
         uahAmount: order.uahAmount,
         currency: order.currency,
-        depositAddress: order.depositAddress,
         createdAt: order.createdAt,
         updatedAt: order.updatedAt,
-        processedAt: order.processedAt,
-        txHash: order.txHash,
-      };
-    }),
-
-  // Получить историю заявок для email
-  getOrderHistory: publicProcedure
-    .input(
-      z.object({
-        email: z.string().email(),
-        limit: z.number().min(1).max(MAX_ORDER_LIMIT).default(DEFAULT_ORDER_LIMIT),
-      })
-    )
-    .query(async ({ input }) => {
-      const sanitizedEmail = sanitizeEmail(input.email);
-      const orders = orderManager.findByEmail(sanitizedEmail);
-
-      // Сортируем по дате создания (новые первыми)
-      const sortedOrders = orders
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-        .slice(0, input.limit);
-
-      return {
-        orders: sortedOrders.map(order => ({
-          id: order.id,
-          status: order.status,
-          cryptoAmount: order.cryptoAmount,
-          uahAmount: order.uahAmount,
-          currency: order.currency,
-          createdAt: order.createdAt,
-          updatedAt: order.updatedAt,
-        })),
-        total: orders.length,
-      };
-    }),
+      })),
+      total: result.total,
+    };
+  }),
 
   // Получить поддерживаемые криптовалюты
   getSupportedCurrencies: publicProcedure.query(async () => {

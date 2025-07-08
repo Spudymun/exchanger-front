@@ -11,6 +11,7 @@ import {
   validateUserAccess,
   generateVerificationCode,
 } from '@repo/exchange-core';
+import { changePasswordSchema, passwordSchema } from '@repo/utils';
 
 import { TRPCError } from '@trpc/server';
 import bcrypt from 'bcryptjs';
@@ -22,12 +23,7 @@ import { protectedProcedure } from '../../middleware/auth';
 export const securityRouter = createTRPCRouter({
   // Изменить пароль
   changePassword: protectedProcedure
-    .input(
-      z.object({
-        currentPassword: z.string(),
-        newPassword: z.string().min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH),
-      })
-    )
+    .input(changePasswordSchema)
     .mutation(async ({ input, ctx }) => {
       const user = validateUserAccess(ctx.user.id);
 
@@ -103,7 +99,7 @@ export const securityRouter = createTRPCRouter({
   deleteAccount: protectedProcedure
     .input(
       z.object({
-        password: z.string(),
+        password: passwordSchema,
         confirmation: z.literal('DELETE_MY_ACCOUNT'),
       })
     )

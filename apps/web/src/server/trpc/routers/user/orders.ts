@@ -1,12 +1,7 @@
-import {
-  USER_MESSAGES,
-  USER_SUCCESS_MESSAGES,
-  USER_CONFIG,
-  CANCELLABLE_ORDER_STATUSES,
-} from '@repo/constants';
+import { USER_SUCCESS_MESSAGES, USER_CONFIG, CANCELLABLE_ORDER_STATUSES } from '@repo/constants';
 import { orderManager, validateUserAccess, validateOrderAccess } from '@repo/exchange-core';
+import { sortOrders, filterOrders, paginateOrders, createOrderError } from '@repo/utils';
 
-import { TRPCError } from '@trpc/server';
 import { z } from 'zod';
 
 import { createTRPCRouter } from '../../init';
@@ -28,21 +23,16 @@ export const ordersRouter = createTRPCRouter({
     )
     .query(async ({ input, ctx }) => {
       const user = validateUserAccess(ctx.user.id);
-      let orders = orderManager.findByEmail(user.email);
+      const allOrders = orderManager.findByEmail(user.email);
 
-      // Фильтрация по статусу
-      if (input.status) {
-        orders = orders.filter(order => order.status === input.status);
-      }
-
-      // Сортировка по дате создания (новые первыми)
-      orders.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-
-      // Пагинация
-      const paginatedOrders = orders.slice(input.offset, input.offset + input.limit);
+      // Используем централизованные утилиты для фильтрации, сортировки и пагинации
+      const result = paginateOrders(sortOrders(filterOrders(allOrders, { status: input.status })), {
+        limit: input.limit,
+        offset: input.offset,
+      });
 
       return {
-        orders: paginatedOrders.map(order => ({
+        orders: result.items.map(order => ({
           id: order.id,
           status: order.status,
           cryptoAmount: order.cryptoAmount,
@@ -54,8 +44,8 @@ export const ordersRouter = createTRPCRouter({
           processedAt: order.processedAt,
           txHash: order.txHash,
         })),
-        total: orders.length,
-        hasMore: input.offset + input.limit < orders.length,
+        total: result.total,
+        hasMore: result.hasMore,
       };
     }),
 
@@ -107,10 +97,7 @@ export const ordersRouter = createTRPCRouter({
           order.status as (typeof CANCELLABLE_ORDER_STATUSES)[number]
         )
       ) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: USER_MESSAGES.CANNOT_CANCEL,
-        });
+        throw createOrderError('cannot_cancel');
       }
 
       // Отменяем заявку
@@ -119,10 +106,7 @@ export const ordersRouter = createTRPCRouter({
       });
 
       if (!updatedOrder) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: USER_MESSAGES.UPDATE_ERROR,
-        });
+        throw createOrderError('update_failed');
       }
 
       console.log(`❌ Заявка ${order.id} отменена пользователем ${user.email}`);

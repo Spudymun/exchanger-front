@@ -1,6 +1,15 @@
 import { EXCHANGE_ORDER_STATUS_CONFIG, VALIDATION_LIMITS } from '@repo/constants';
 import { orderManager } from '@repo/exchange-core';
-import { TRPCError } from '@trpc/server';
+import {
+  paginateOrders,
+  filterOrders,
+  sortOrders,
+  getOrdersStatistics,
+  createOrderError,
+  createBadRequestError,
+  filterOrdersForOperator,
+  canTransitionStatus,
+} from '@repo/utils';
 import { z } from 'zod';
 
 import { createTRPCRouter } from '../init';
@@ -27,30 +36,27 @@ export const operatorRouter = createTRPCRouter({
     )
     .query(async ({ input }) => {
       const { limit, cursor, status } = input;
+      const allOrders = orderManager.getAll();
 
-      const orders = orderManager
-        .getAll()
-        .filter(order => {
-          if (status) return order.status === status;
-          return order.status === 'pending' || order.status === 'processing';
-        })
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+      // Используем централизованные утилиты для фильтрации, сортировки и пагинации
+      const filteredOrders = status
+        ? filterOrders(allOrders, { status })
+        : filterOrdersForOperator(allOrders);
 
-      // Пагинация
-      const startIndex = cursor ? orders.findIndex(o => o.id === cursor) + 1 : 0;
-      const items = orders.slice(startIndex, startIndex + limit);
-      const nextCursor = items.length === limit ? items[items.length - 1]?.id : undefined;
+      const sortedOrders = sortOrders(filteredOrders);
+
+      const result = paginateOrders(sortedOrders, { limit, cursor }, order => order.id);
 
       return {
-        items: items.map(order => ({
+        items: result.items.map(order => ({
           ...order,
           config:
             EXCHANGE_ORDER_STATUS_CONFIG[
               order.status.toLowerCase() as keyof typeof EXCHANGE_ORDER_STATUS_CONFIG
             ],
         })),
-        nextCursor,
-        hasMore: !!nextCursor,
+        nextCursor: result.nextCursor,
+        hasMore: result.hasMore,
       };
     }),
 
@@ -61,17 +67,11 @@ export const operatorRouter = createTRPCRouter({
       const order = orderManager.findById(input.orderId);
 
       if (!order) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Заявка не найдена',
-        });
+        throw createOrderError('not_found', input.orderId);
       }
 
       if (order.status !== 'pending') {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Заявка уже обрабатывается или завершена',
-        });
+        throw createBadRequestError('Заявка уже обрабатывается или завершена');
       }
 
       // Обновляем статус заявки на processing
@@ -80,10 +80,7 @@ export const operatorRouter = createTRPCRouter({
       });
 
       if (!updatedOrder) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Ошибка при обновлении заявки',
-        });
+        throw createOrderError('update_failed');
       }
 
       console.log(`📋 Заявка ${input.orderId} взята в обработку оператором ${ctx.user.email}`);
@@ -108,24 +105,14 @@ export const operatorRouter = createTRPCRouter({
       const order = orderManager.findById(input.orderId);
 
       if (!order) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Заявка не найдена',
-        });
+        throw createOrderError('not_found', input.orderId);
       }
 
       // Проверка валидных переходов статусов
-      const validTransitions: Record<string, string[]> = {
-        PENDING: ['PROCESSING', 'CANCELLED'],
-        PROCESSING: ['COMPLETED', 'CANCELLED'],
-      };
-
-      const allowedStatuses = validTransitions[order.status] || [];
-      if (!allowedStatuses.includes(input.status)) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: `Невозможно изменить статус с ${order.status} на ${input.status}`,
-        });
+      if (!canTransitionStatus(order.status, input.status)) {
+        throw createBadRequestError(
+          `Невозможно изменить статус с ${order.status} на ${input.status}`
+        );
       }
 
       const updatedOrder = orderManager.update(input.orderId, {
@@ -134,10 +121,7 @@ export const operatorRouter = createTRPCRouter({
       });
 
       if (!updatedOrder) {
-        throw new TRPCError({
-          code: 'INTERNAL_SERVER_ERROR',
-          message: 'Ошибка при обновлении заявки',
-        });
+        throw createOrderError('update_failed');
       }
 
       console.log(
@@ -157,20 +141,16 @@ export const operatorRouter = createTRPCRouter({
   getMyStats: operatorOnly.query(async () => {
     const orders = orderManager.getAll();
 
-    // В реальном приложении будет фильтрация по operatorId
-    // Сейчас возвращаем общую статистику для демонстрации
-    const today = new Date().toDateString();
-    const todayOrders = orders.filter(order => order.createdAt.toDateString() === today);
+    // Используем централизованную утилиту для получения статистики
+    const stats = getOrdersStatistics(orders);
 
     return {
-      total: orders.length,
-      today: todayOrders.length,
-      completed: orders.filter(o => o.status === 'completed').length,
-      processing: orders.filter(o => o.status === 'processing').length,
-      pending: orders.filter(o => o.status === 'pending').length,
-      totalVolume: orders
-        .filter(o => o.status === 'completed')
-        .reduce((sum, o) => sum + o.uahAmount, 0),
+      total: stats.total,
+      today: stats.today,
+      completed: stats.byStatus.completed || 0,
+      processing: stats.byStatus.processing || 0,
+      pending: stats.byStatus.pending || 0,
+      totalVolume: stats.totalVolume,
       avgProcessingTime: '15 мин', // Заглушка, в реальности расчет из логов
     };
   }),

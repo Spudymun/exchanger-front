@@ -7,9 +7,15 @@ import {
   userManager,
   isAuthenticatedUser,
 } from '@repo/exchange-core';
+import {
+  registerApiSchema,
+  loginSchema,
+  resetPasswordSchema,
+  confirmResetPasswordSchema,
+  confirmEmailSchema,
+} from '@repo/utils';
 import { TRPCError } from '@trpc/server';
 import bcrypt from 'bcryptjs';
-import { z } from 'zod';
 
 import { createTRPCRouter, publicProcedure } from '../init';
 import { rateLimitMiddleware } from '../middleware/rateLimit';
@@ -17,12 +23,7 @@ import { rateLimitMiddleware } from '../middleware/rateLimit';
 export const authRouter = createTRPCRouter({
   // Регистрация нового пользователя
   register: rateLimitMiddleware.register
-    .input(
-      z.object({
-        email: z.string().email(),
-        password: z.string().min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH),
-      })
-    )
+    .input(registerApiSchema)
     .mutation(async ({ input, ctx }) => {
       // Имитация задержки
       await new Promise(resolve => setTimeout(resolve, AUTH_CONSTANTS.AUTH_REQUEST_DELAY_MS));
@@ -93,61 +94,54 @@ export const authRouter = createTRPCRouter({
     }),
 
   // Вход в систему
-  login: rateLimitMiddleware.login
-    .input(
-      z.object({
-        email: z.string().email(),
-        password: z.string(),
-      })
-    )
-    .mutation(async ({ input, ctx }) => {
-      // Имитация задержки
-      await new Promise(resolve => setTimeout(resolve, AUTH_CONSTANTS.LOGIN_REQUEST_DELAY_MS));
+  login: rateLimitMiddleware.login.input(loginSchema).mutation(async ({ input, ctx }) => {
+    // Имитация задержки
+    await new Promise(resolve => setTimeout(resolve, AUTH_CONSTANTS.LOGIN_REQUEST_DELAY_MS));
 
-      const sanitizedEmail = sanitizeEmail(input.email);
+    const sanitizedEmail = sanitizeEmail(input.email);
 
-      // Поиск пользователя
-      const user = userManager.findByEmail(sanitizedEmail);
-      if (!user || !user.hashedPassword) {
-        throw new TRPCError({
-          code: 'UNAUTHORIZED',
-          message: 'Неверный email или пароль',
-        });
-      }
-
-      // Проверка пароля
-      const isValidPassword = await bcrypt.compare(input.password, user.hashedPassword);
-      if (!isValidPassword) {
-        throw new TRPCError({
-          code: 'UNAUTHORIZED',
-          message: 'Неверный email или пароль',
-        });
-      }
-
-      // Генерируем новый session ID
-      const sessionId = generateSessionId();
-      userManager.update(user.id, {
-        sessionId,
-        lastLoginAt: new Date(),
+    // Поиск пользователя
+    const user = userManager.findByEmail(sanitizedEmail);
+    if (!user || !user.hashedPassword) {
+      throw new TRPCError({
+        code: 'UNAUTHORIZED',
+        message: 'Неверный email или пароль',
       });
+    }
 
-      // Устанавливаем cookie
-      ctx.res.setHeader(
-        AUTH_CONSTANTS.SET_COOKIE_HEADER,
-        `sessionId=${sessionId}; HttpOnly; Path=/; Max-Age=${AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS}; SameSite=Lax`
-      );
+    // Проверка пароля
+    const isValidPassword = await bcrypt.compare(input.password, user.hashedPassword);
+    if (!isValidPassword) {
+      throw new TRPCError({
+        code: 'UNAUTHORIZED',
+        message: 'Неверный email или пароль',
+      });
+    }
 
-      console.log(`🔐 Пользователь вошел в систему: ${sanitizedEmail}`);
+    // Генерируем новый session ID
+    const sessionId = generateSessionId();
+    userManager.update(user.id, {
+      sessionId,
+      lastLoginAt: new Date(),
+    });
 
-      return {
-        user: {
-          id: user.id,
-          email: user.email,
-          isVerified: user.isVerified,
-        },
-        sessionId,
-      };
-    }),
+    // Устанавливаем cookie
+    ctx.res.setHeader(
+      AUTH_CONSTANTS.SET_COOKIE_HEADER,
+      `sessionId=${sessionId}; HttpOnly; Path=/; Max-Age=${AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS}; SameSite=Lax`
+    );
+
+    console.log(`🔐 Пользователь вошел в систему: ${sanitizedEmail}`);
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        isVerified: user.isVerified,
+      },
+      sessionId,
+    };
+  }),
 
   // Выход из системы
   logout: publicProcedure.mutation(async ({ ctx }) => {
@@ -182,11 +176,7 @@ export const authRouter = createTRPCRouter({
 
   // Восстановление пароля (шаг 1 - отправка кода)
   requestPasswordReset: rateLimitMiddleware.resetPassword
-    .input(
-      z.object({
-        email: z.string().email(),
-      })
-    )
+    .input(resetPasswordSchema)
     .mutation(async ({ input }) => {
       // Имитация задержки
       await new Promise(resolve => setTimeout(resolve, AUTH_CONSTANTS.LOGIN_REQUEST_DELAY_MS));
@@ -217,13 +207,7 @@ export const authRouter = createTRPCRouter({
 
   // Восстановление пароля (шаг 2 - сброс с кодом)
   resetPassword: publicProcedure
-    .input(
-      z.object({
-        email: z.string().email(),
-        resetCode: z.string(),
-        newPassword: z.string().min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH),
-      })
-    )
+    .input(confirmResetPasswordSchema)
     .mutation(async ({ input, ctx }) => {
       // Имитация задержки
       await new Promise(resolve => setTimeout(resolve, AUTH_CONSTANTS.LOGIN_REQUEST_DELAY_MS));
@@ -283,42 +267,35 @@ export const authRouter = createTRPCRouter({
     }),
 
   // Подтверждение email (упрощенная версия)
-  verifyEmail: publicProcedure
-    .input(
-      z.object({
-        email: z.string().email(),
-        verificationCode: z.string(),
-      })
-    )
-    .mutation(async ({ input }) => {
-      const sanitizedEmail = sanitizeEmail(input.email);
+  verifyEmail: publicProcedure.input(confirmEmailSchema).mutation(async ({ input }) => {
+    const sanitizedEmail = sanitizeEmail(input.email);
 
-      const user = userManager.findByEmail(sanitizedEmail);
-      if (!user) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Пользователь не найден',
-        });
-      }
-
-      if (user.isVerified) {
-        return {
-          message: 'Email уже подтвержден',
-          isVerified: true,
-        };
-      }
-
-      // В реальном приложении здесь была бы проверка кода
-      // Для мока подтверждаем всех
-      userManager.update(user.id, {
-        isVerified: true,
+    const user = userManager.findByEmail(sanitizedEmail);
+    if (!user) {
+      throw new TRPCError({
+        code: 'NOT_FOUND',
+        message: 'Пользователь не найден',
       });
+    }
 
-      console.log(`✅ Email подтвержден для пользователя: ${sanitizedEmail}`);
-
+    if (user.isVerified) {
       return {
-        message: 'Email успешно подтвержден',
+        message: 'Email уже подтвержден',
         isVerified: true,
       };
-    }),
+    }
+
+    // В реальном приложении здесь была бы проверка кода
+    // Для мока подтверждаем всех
+    userManager.update(user.id, {
+      isVerified: true,
+    });
+
+    console.log(`✅ Email подтвержден для пользователя: ${sanitizedEmail}`);
+
+    return {
+      message: 'Email успешно подтвержден',
+      isVerified: true,
+    };
+  }),
 });
