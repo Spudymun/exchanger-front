@@ -97,7 +97,7 @@ export function createRateLimitError(limit: string): TRPCError {
  * Создает ошибку для заказа
  */
 export function createOrderError(
-  type: 'not_found' | 'cannot_cancel' | 'update_failed',
+  type: 'not_found' | 'cannot_cancel' | 'update_failed' | 'access_denied',
   orderId?: string
 ): TRPCError {
   switch (type) {
@@ -107,6 +107,8 @@ export function createOrderError(
       return createBadRequestError('Заявку нельзя отменить в текущем статусе');
     case 'update_failed':
       return createInternalServerError('обновление заявки');
+    case 'access_denied':
+      return createForbiddenError('доступ к заявке');
     default:
       return createInternalServerError('работа с заявкой');
   }

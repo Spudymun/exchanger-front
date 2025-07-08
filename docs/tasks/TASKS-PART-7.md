@@ -332,7 +332,7 @@ describe('useExchangeCalculator', () => {
 #### API Client Testing
 
 ```typescript
-// packages/api-client/__tests__/exchange.test.ts
+// apps/web/src/server/trpc/routers/__tests__/exchange.test.ts
 import { createTRPCMsw } from 'msw-trpc';
 import { rest } from 'msw';
 import { setupServer } from 'msw/node';

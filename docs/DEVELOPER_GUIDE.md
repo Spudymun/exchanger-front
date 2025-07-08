@@ -540,7 +540,7 @@ export const useUserStore = create<UserState>()(
 
 ### tRPC - End-to-end типизация
 
-**Расположение**: `packages/api-client/src/server.ts`
+**Расположение**: `apps/web/src/server/trpc/`
 
 #### Архитектура API:
 
@@ -551,7 +551,7 @@ export const useUserStore = create<UserState>()(
 #### Определение процедур:
 
 ```typescript
-// packages/api-client/src/server.ts
+// apps/web/src/server/trpc/routers/index.ts
 import { z } from 'zod';
 import { initTRPC } from '@trpc/server';
 
@@ -1623,7 +1623,7 @@ cd packages/ui
 npm run generate:component
 
 # 2. API процедуры (если нужны)
-# Добавить в packages/api-client/src/server.ts
+# Добавить в packages/exchange-core/src/server.ts
 
 # 3. Состояние (если нужно)
 # Создать новый store в packages/hooks/src/state/
@@ -1835,7 +1835,7 @@ export { MyComponent } from './components/my-component';
 
 ```typescript
 // Проверить настройку клиента
-import type { AppRouter } from '@repo/api-client';
+import type { AppRouter } from '../src/server/trpc';
 
 const trpc = createTRPCReact<AppRouter>();
 ```

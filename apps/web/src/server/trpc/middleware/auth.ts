@@ -1,16 +1,13 @@
 import { USER_ROLES } from '@repo/constants';
 import { isAuthenticatedUser } from '@repo/exchange-core';
-import { TRPCError } from '@trpc/server';
+import { createUnauthorizedError, createForbiddenError } from '@repo/utils';
 
 import { publicProcedure } from '../init';
 
 // Базовый middleware для проверки аутентификации
 export const authMiddleware = publicProcedure.use(({ ctx, next }) => {
   if (!isAuthenticatedUser(ctx.user)) {
-    throw new TRPCError({
-      code: 'UNAUTHORIZED',
-      message: 'Необходима аутентификация',
-    });
+    throw createUnauthorizedError('Необходима аутентификация');
   }
 
   return next({
@@ -25,17 +22,11 @@ export const authMiddleware = publicProcedure.use(({ ctx, next }) => {
 export const roleMiddleware = (allowedRoles: string[]) => {
   return authMiddleware.use(({ ctx, next }) => {
     if (!ctx.user.role) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'Роль пользователя не определена',
-      });
+      throw createForbiddenError('определение роли пользователя');
     }
 
     if (!allowedRoles.includes(ctx.user.role)) {
-      throw new TRPCError({
-        code: 'FORBIDDEN',
-        message: 'Недостаточно прав доступа',
-      });
+      throw createForbiddenError('выполнение действия с текущей ролью');
     }
 
     return next();

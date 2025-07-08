@@ -1,6 +1,5 @@
 import { RATE_LIMITS, RATE_LIMIT_MESSAGES, TIME_CONSTANTS } from '@repo/constants';
-
-import { TRPCError } from '@trpc/server';
+import { createRateLimitError } from '@repo/utils';
 
 import { publicProcedure } from '../init';
 
@@ -67,11 +66,8 @@ export function createRateLimiter(action: keyof typeof RATE_LIMITS) {
 
     // Если превышен лимит
     if (current.count >= config.points) {
-      throw new TRPCError({
-        code: 'TOO_MANY_REQUESTS',
-        // eslint-disable-next-line security/detect-object-injection
-        message: RATE_LIMIT_MESSAGES[action],
-      });
+      // eslint-disable-next-line security/detect-object-injection
+      throw createRateLimitError(RATE_LIMIT_MESSAGES[action]);
     }
 
     // Увеличиваем счетчик

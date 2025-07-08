@@ -11,7 +11,7 @@
 ```
 packages/
 ├── ui/                    # React компоненты (shadcn/ui)
-├── api-client/           # tRPC client/server setup
+├── exchange-core/        # Core business logic
 ├── hooks/                # Zustand stores + custom hooks
 ├── constants/            # Бизнес-константы и конфигурация
 ├── utils/                # Утилитарные функции
@@ -583,7 +583,7 @@ if (order.status === ORDER_STATUSES.PENDING) {
 
 - [ ] UI компоненты не содержат бизнес-логику
 - [ ] Hooks/stores изолированы от UI деталей
-- [ ] Зависимости направлены правильно (UI → hooks → api-client)
+- [ ] Зависимости направлены правильно (UI → hooks → exchange-core)
 
 ### TypeScript
 

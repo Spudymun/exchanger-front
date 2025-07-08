@@ -11,9 +11,14 @@ import {
   validateUserAccess,
   generateVerificationCode,
 } from '@repo/exchange-core';
-import { changePasswordSchema, passwordSchema } from '@repo/utils';
+import {
+  changePasswordSchema,
+  passwordSchema,
+  createUserError,
+  createSecurityError,
+  createBadRequestError,
+} from '@repo/utils';
 
-import { TRPCError } from '@trpc/server';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 
@@ -28,10 +33,7 @@ export const securityRouter = createTRPCRouter({
       const user = validateUserAccess(ctx.user.id);
 
       if (!user.hashedPassword) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: USER_MESSAGES.NOT_FOUND,
-        });
+        throw createUserError('not_found');
       }
 
       // Проверяем текущий пароль
@@ -40,19 +42,13 @@ export const securityRouter = createTRPCRouter({
         user.hashedPassword
       );
       if (!isValidCurrentPassword) {
-        throw new TRPCError({
-          code: 'UNAUTHORIZED',
-          message: USER_MESSAGES.INVALID_PASSWORD,
-        });
+        throw createSecurityError('invalid_password');
       }
 
       // Валидация нового пароля
       const passwordValidation = validatePassword(input.newPassword);
       if (!passwordValidation.isValid) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: passwordValidation.errors[0],
-        });
+        throw createBadRequestError(passwordValidation.errors[0] || 'Ошибка валидации пароля');
       }
 
       // Хешируем новый пароль
@@ -107,19 +103,13 @@ export const securityRouter = createTRPCRouter({
       const user = validateUserAccess(ctx.user.id);
 
       if (!user.hashedPassword) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: USER_MESSAGES.NOT_FOUND,
-        });
+        throw createUserError('not_found');
       }
 
       // Проверяем пароль
       const isValidPassword = await bcrypt.compare(input.password, user.hashedPassword);
       if (!isValidPassword) {
-        throw new TRPCError({
-          code: 'UNAUTHORIZED',
-          message: USER_MESSAGES.WRONG_PASSWORD,
-        });
+        throw createSecurityError('invalid_password');
       }
 
       // Проверяем активные заявки
@@ -128,10 +118,7 @@ export const securityRouter = createTRPCRouter({
         .filter(order => ['pending', 'processing'].includes(order.status));
 
       if (activeOrders.length > 0) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: USER_MESSAGES.ACTIVE_ORDERS_EXIST(activeOrders.length),
-        });
+        throw createBadRequestError(USER_MESSAGES.ACTIVE_ORDERS_EXIST(activeOrders.length));
       }
 
       // В текущей реализации нет метода delete для userManager

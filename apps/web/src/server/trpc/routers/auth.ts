@@ -13,8 +13,10 @@ import {
   resetPasswordSchema,
   confirmResetPasswordSchema,
   confirmEmailSchema,
+  createUserError,
+  createValidationError,
+  createBadRequestError,
 } from '@repo/utils';
-import { TRPCError } from '@trpc/server';
 import bcrypt from 'bcryptjs';
 
 import { createTRPCRouter, publicProcedure } from '../init';
@@ -35,26 +37,20 @@ export const authRouter = createTRPCRouter({
       const passwordValidation = validatePassword(input.password);
 
       if (!emailValidation.isValid) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: emailValidation.errors[0],
-        });
+        throw createValidationError('email', emailValidation.errors[0] || 'Неверный формат email');
       }
 
       if (!passwordValidation.isValid) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: passwordValidation.errors[0],
-        });
+        throw createValidationError(
+          'password',
+          passwordValidation.errors[0] || 'Неверный формат пароля'
+        );
       }
 
       // Проверяем, не существует ли уже пользователь
       const existingUser = userManager.findByEmail(sanitizedEmail);
       if (existingUser) {
-        throw new TRPCError({
-          code: 'CONFLICT',
-          message: 'Пользователь с таким email уже существует',
-        });
+        throw createUserError('already_exists');
       }
 
       // Хешируем пароль
@@ -103,19 +99,13 @@ export const authRouter = createTRPCRouter({
     // Поиск пользователя
     const user = userManager.findByEmail(sanitizedEmail);
     if (!user || !user.hashedPassword) {
-      throw new TRPCError({
-        code: 'UNAUTHORIZED',
-        message: 'Неверный email или пароль',
-      });
+      throw createUserError('invalid_credentials');
     }
 
     // Проверка пароля
     const isValidPassword = await bcrypt.compare(input.password, user.hashedPassword);
     if (!isValidPassword) {
-      throw new TRPCError({
-        code: 'UNAUTHORIZED',
-        message: 'Неверный email или пароль',
-      });
+      throw createUserError('invalid_credentials');
     }
 
     // Генерируем новый session ID
@@ -217,20 +207,17 @@ export const authRouter = createTRPCRouter({
       // Валидация нового пароля
       const passwordValidation = validatePassword(input.newPassword);
       if (!passwordValidation.isValid) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: passwordValidation.errors[0],
-        });
+        throw createValidationError(
+          'password',
+          passwordValidation.errors[0] || 'Неверный формат пароля'
+        );
       }
 
       // В реальном приложении здесь была бы проверка кода из базы/Redis
       // Для мока просто проверяем существование пользователя
       const user = userManager.findByEmail(sanitizedEmail);
       if (!user) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: 'Неверный код восстановления',
-        });
+        throw createBadRequestError('Неверный код восстановления');
       }
 
       // Хешируем новый пароль
@@ -272,10 +259,7 @@ export const authRouter = createTRPCRouter({
 
     const user = userManager.findByEmail(sanitizedEmail);
     if (!user) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'Пользователь не найден',
-      });
+      throw createUserError('not_found');
     }
 
     if (user.isVerified) {

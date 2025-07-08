@@ -11,8 +11,9 @@ import {
   getTicketsSchema,
   updateTicketStatusSchema,
   getByIdSchema,
+  createSupportError,
+  createNotFoundError,
 } from '@repo/utils';
-import { TRPCError } from '@trpc/server';
 
 import { createTRPCRouter } from '../init';
 import { supportOnly } from '../middleware/auth';
@@ -98,10 +99,7 @@ export const supportRouter = createTRPCRouter({
     const user = userManager.findById(input.userId);
 
     if (!user) {
-      throw new TRPCError({
-        code: 'NOT_FOUND',
-        message: 'Пользователь не найден',
-      });
+      throw createNotFoundError('Пользователь');
     }
 
     const ticket = {
@@ -153,18 +151,12 @@ export const supportRouter = createTRPCRouter({
       const ticketIndex = supportTickets.findIndex(t => t.id === input.ticketId);
 
       if (ticketIndex === -1) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Тикет не найден',
-        });
+        throw createSupportError('ticket_not_found', input.ticketId);
       }
 
       const ticket = supportTickets.at(ticketIndex);
       if (!ticket) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Тикет не найден',
-        });
+        throw createSupportError('ticket_not_found', input.ticketId);
       }
 
       ticket.status = input.status as TicketStatus;
@@ -199,10 +191,7 @@ export const supportRouter = createTRPCRouter({
       const user = userManager.findById(input.userId);
 
       if (!user) {
-        throw new TRPCError({
-          code: 'NOT_FOUND',
-          message: 'Пользователь не найден',
-        });
+        throw createNotFoundError('Пользователь');
       }
 
       const userOrders = orderManager.getAll().filter(order => order.email === user.email);

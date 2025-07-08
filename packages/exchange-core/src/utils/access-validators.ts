@@ -1,5 +1,4 @@
-import { USER_MESSAGES } from '@repo/constants';
-import { TRPCError } from '@trpc/server';
+import { createUserError, createOrderError } from '@repo/utils';
 
 import { userManager, orderManager } from '../data';
 import type { User, Order } from '../types';
@@ -18,10 +17,7 @@ import type { User, Order } from '../types';
 export function validateUserAccess(userId: string): User {
   const user = userManager.findById(userId);
   if (!user) {
-    throw new TRPCError({
-      code: 'NOT_FOUND',
-      message: USER_MESSAGES.NOT_FOUND,
-    });
+    throw createUserError('not_found', userId);
   }
   return user;
 }
@@ -36,17 +32,11 @@ export function validateUserAccess(userId: string): User {
 export function validateOrderAccess(orderId: string, userEmail: string): Order {
   const order = orderManager.findById(orderId);
   if (!order) {
-    throw new TRPCError({
-      code: 'NOT_FOUND',
-      message: USER_MESSAGES.ORDER_NOT_FOUND,
-    });
+    throw createOrderError('not_found', orderId);
   }
 
   if (order.email !== userEmail) {
-    throw new TRPCError({
-      code: 'FORBIDDEN',
-      message: USER_MESSAGES.NO_ORDER_ACCESS,
-    });
+    throw createOrderError('access_denied');
   }
 
   return order;

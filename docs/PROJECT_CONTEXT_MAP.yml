@@ -87,7 +87,7 @@ dependency_system:
   critical_note: 'НЕ ИСПОЛЬЗОВАТЬ workspace:* синтаксис (не работает с npm)'
 
   dependency_flow:
-    - 'UI компоненты → hooks → api-client'
+    - 'UI компоненты → hooks → exchange-core'
     - 'Constants → все пакеты (централизованные константы)'
     - 'Utils → все пакеги (утилитарные функции)'
 
@@ -130,13 +130,13 @@ quality_system:
 file_structure:
   total_files: 314
   file_types_count: 20
-  
+
   key_directories:
     apps_web: 'apps/web/ - Основное Next.js приложение'
     apps_admin: 'apps/admin-panel/ - Админ панель'
     apps_docs: 'apps/docs/ - Документация'
     packages_ui: 'packages/ui/ - UI компоненты'
-    packages_api: 'packages/api-client/ - API клиент'
+    packages_core: 'packages/exchange-core/ - Core business logic'
     packages_hooks: 'packages/hooks/ - React хуки и состояние'
     packages_constants: 'packages/constants/ - Константы проекта'
     packages_utils: 'packages/utils/ - Утилитарные функции'
@@ -163,25 +163,25 @@ file_structure:
     roles_architecture: 'docs/ROLES_ARCHИТЕКТУРЕ.md'
 
   file_types_breakdown:
-    tsx: 46  # React компоненты
-    ts: 85   # TypeScript файлы
-    md: 37   # Документация
+    tsx: 46 # React компоненты
+    ts: 85 # TypeScript файлы
+    md: 37 # Документация
     json: 35 # Конфигурация и данные
-    js: 26   # JavaScript файлы
-    mjs: 10  # ESM модули
-    svg: 17  # Иконки и изображения
-    css: 5   # Стили
-    woff: 4  # Шрифты
-    yml: 2   # YAML конфигурация
+    js: 26 # JavaScript файлы
+    mjs: 10 # ESM модули
+    svg: 17 # Иконки и изображения
+    css: 5 # Стили
+    woff: 4 # Шрифты
+    yml: 2 # YAML конфигурация
     others: 42 # Прочие файлы
 
   directory_structure:
-    apps: 3   # web, admin-panel, docs
-    packages: 10  # ui, api-client, hooks, constants, utils, exchange-core, design-tokens, providers, eslint-config, typescript-config
-    docs_files: 37  # Включая tasks/
-    test_files: 11  # E2E тесты + конфигурация
-    config_files: 25  # Различные конфигурации
-    build_files: 8   # Сборка и CI/CD
+    apps: 3 # web, admin-panel, docs
+    packages: 9 # ui, hooks, constants, utils, exchange-core, design-tokens, providers, eslint-config, typescript-config
+    docs_files: 37 # Включая tasks/
+    test_files: 11 # E2E тесты + конфигурация
+    config_files: 25 # Различные конфигурации
+    build_files: 8 # Сборка и CI/CD
 
 # 🎨 UI СИСТЕМА
 ui_system:
@@ -280,14 +280,14 @@ api_system:
 # 🎯 ЦЕНТРАЛИЗОВАННЫЕ СИСТЕМЫ (Правило 19)
 centralized_systems:
   critical_rule: 'ОБЯЗАТЕЛЬНО использовать централизованные системы - НЕ создавать локальные дубликаты'
-  
+
   systems_map:
     constants: 'packages/constants/ - ВСЕ константы проекта'
     types: 'packages/exchange-core/types/ - ВСЕ типы данных'
     utils: 'packages/utils/ - ВСЕ утилитарные функции'
     ui_components: 'packages/ui/ - ВСЕ переиспользуемые UI компоненты'
     hooks: 'packages/hooks/ - ВСЕ кастомные хуки и состояние'
-    api_client: 'packages/api-client/ - ВСЕ API интерфейсы'
+    exchange_core: 'packages/exchange-core/ - ВСЕ бизнес-логика'
     design_tokens: 'packages/design-tokens/ - ВСЕ дизайн-токены'
     providers: 'packages/providers/ - ВСЕ провайдеры контекста'
 
@@ -317,14 +317,14 @@ centralized_systems:
 # 🔄 РОЛИ И АРХИТЕКТУРА ДОСТУПА
 roles_architecture:
   overview: 'Комплексная система ролей с разделением по приложениям'
-  
+
   applications_mapping:
     admin_panel: 'apps/admin-panel/ - Только админы'
     web_app: 'apps/web/ - Операторы и саппорт'
     docs_app: 'apps/docs/ - Документация (публичная)'
 
   roles_definition:
-    admin: 
+    admin:
       app: 'apps/admin-panel'
       permissions: 'Полное управление системой, пользователями, настройками'
     operator:
@@ -358,12 +358,12 @@ i18n_system:
       ru: 'ru.json - Русский язык'
 
   routing_pattern: 'apps/web/app/[locale]/ - локализованные маршруты'
-  
+
   features:
     pluralization: 'ICU syntax - {count, plural, =0 {...} other {...}}'
     interpolation: "t('key', { name: 'John' })"
     nested_keys: 'HomePage.title, dashboard.welcome'
-    
+
   message_categories:
     navigation: 'Элементы навигации'
     dashboard: 'Дашборд интерфейс'
@@ -375,8 +375,8 @@ i18n_system:
 testing_system_extended:
   unit_tests:
     framework: 'Jest 29.x + Testing Library'
-    locations: 
-      - 'packages/ui/src/__tests__/
+    locations:
+      - 'packages/ui/src/__tests__/**/*.test.{ts,tsx}'
       - 'packages/hooks/src/**/*.test.{ts,tsx}'
       - 'packages/exchange-core/**/*.test.{ts,tsx}'
     setup: 'jest.setup.js'
@@ -444,12 +444,12 @@ apps_architecture:
       messages_dir: 'messages/ - i18n переводы'
       pages_dir: 'pages/ - API routes'
       public_dir: 'public/ - Статические файлы'
-    
+
     routing:
       locale_pages: 'app/[locale]/ - Локализованные страницы'
       dashboard_parallel: 'app/(dashboard)/ - Параллельные роуты'
       api_trpc: 'pages/api/trpc/[trpc].ts - tRPC handler'
-      
+
     features:
       i18n: 'Полная поддержка интернационализации'
       trpc: 'End-to-end типизация API'
@@ -472,7 +472,7 @@ apps_architecture:
 api_architecture_extended:
   primary_framework: 'tRPC 11.x с end-to-end типизацией'
   location: 'apps/web/src/server/trpc/'
-  
+
   file_structure:
     init: 'init.ts - Инициализация tRPC'
     context: 'context.ts - Контекст для процедур'
@@ -508,7 +508,7 @@ api_architecture_extended:
 # 🎨 РАСШИРЕННАЯ ДИЗАЙН СИСТЕМА
 design_system_extended:
   base_framework: 'shadcn/ui + Tailwind CSS 3.4'
-  
+
   tokens_system:
     location: 'packages/design-tokens/'
     files:

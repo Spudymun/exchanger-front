@@ -28,7 +28,7 @@ The project is structured into three main top-level directories: `apps`, `docs`,
 - **`docs` (top-level)**: This directory contains various markdown documents related to project tasks, architecture, API documentation, and development guides. This suggests a strong emphasis on documentation and structured development processes.
 
 - **`packages`**: This directory houses shared libraries and components used across the different applications, promoting code reusability and consistency.
-  - **`api-client`**: Contains the client-side code for interacting with the backend API, likely generated or manually crafted for `tRPC`.
+  - **`exchange-core`**: Contains the core business logic and domain-specific functionality.
   - **`constants`**: Defines shared constants for API endpoints, business logic, exchange rates, UI elements, and validation rules.
   - **`design-tokens`**: Likely holds design system tokens such as colors, spacing, and typography, ensuring a consistent visual language across applications.
   - **`eslint-config`**: Provides custom ESLint configurations for consistent code style and quality across the monorepo.
@@ -121,7 +121,7 @@ This project appears to be a robust and well-organized frontend system for a cur
    The top-level `docs` directory contains various markdown documents, emphasizing a strong focus on documentation and structured development processes. These documents cover project tasks, architecture, API documentation, and development guides.
 
 4. **Delving into Shared Packages (`packages`)**
-   The `packages` directory is crucial for code reusability, containing shared libraries and components. Key packages include `api-client` for backend API interaction, `constants` for shared definitions, `design-tokens` for consistent styling, `eslint-config` for code quality, `exchange-core` for core business logic, `hooks` for custom React hooks, `providers` for global state management, `typescript-config` for consistent type checking, `ui` for a shared component library, and `utils` for general utility functions.
+   The `packages` directory is crucial for code reusability, containing shared libraries and components. Key packages include `exchange-core` for core business logic, `constants` for shared definitions, `design-tokens` for consistent styling, `eslint-config` for code quality, `hooks` for custom React hooks, `providers` for global state management, `typescript-config` for consistent type checking, `ui` for a shared component library, and `utils` for general utility functions.
 
 5. **Focusing on the Main Web Application (`apps/web`)**
    The `web` application is the main user-facing interface. It uses Next.js for routing, integrates with `tRPC` for API communication, leverages custom hooks from `packages/hooks` for state management, utilizes the shared `packages/ui` library for its user interface, and supports internationalization through dedicated message files.

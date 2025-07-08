@@ -10,8 +10,7 @@ exchanger-front/
 │   └── docs/                      # Documentation (localhost:3001)
 ├── packages/                      # Shared packages
 │   ├── ui/                        # UI components (shadcn/ui)
-│   ├── api-client/                # tRPC client/server setup
-│   ├── providers/                 # React providers
+│   ├── providers/                 # React providers + tRPC setup
 │   ├── hooks/                     # Shared hooks + Zustand stores
 │   ├── design-tokens/             # Design system tokens
 │   └── utils/                     # Utility functions
@@ -174,7 +173,7 @@ const Button = styled.button`
 ### API Client
 
 ```typescript
-import { trpc } from '@repo/api-client'
+import { trpc } from '@repo/providers'
 
 // In components
 function UserList() {

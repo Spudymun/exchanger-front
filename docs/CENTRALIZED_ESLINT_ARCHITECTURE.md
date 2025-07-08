@@ -17,7 +17,7 @@ eslint.config.mjs
 apps/web/eslint.config.mjs
 apps/admin-panel/eslint.config.mjs
 packages/ui/eslint.config.mjs
-packages/api-client/eslint.config.mjs
+
 packages/hooks/eslint.config.mjs
 packages/utils/eslint.config.mjs
 packages/constants/eslint.config.mjs

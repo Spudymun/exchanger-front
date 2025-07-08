@@ -82,7 +82,7 @@ exchanger-front/
 │   └── docs/              # Техническая документация
 ├── packages/
 │   ├── ui/                # Компоненты ExchangeGO
-│   ├── api-client/        # tRPC клиент
+│   ├── exchange-core/     # Core business logic
 +   ├── exchange-core/     # НОВЫЙ: Логика обменов, расчеты
 │   ├── providers/         # Провайдеры приложения
 │   ├── hooks/             # Хуки + Zustand stores

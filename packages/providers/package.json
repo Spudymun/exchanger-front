@@ -21,7 +21,6 @@
     "typescript": "5.8.2"
   },
   "dependencies": {
-    "@repo/api-client": "*",
     "@repo/constants": "*",
     "@trpc/react-query": "^11.0.0",
     "@tanstack/react-query": "^5.45.0",

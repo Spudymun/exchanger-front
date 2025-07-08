@@ -186,7 +186,7 @@
 └── packages/hooks/src/state/[domain]-store.ts
 
 📦 Новые API процедуры
-└── packages/api-client/src/server.ts
+└── apps/web/src/server/trpc/routers/[domain].ts
 
 📦 Новая страница
 └── apps/[app]/app/[route]/page.tsx
@@ -259,7 +259,7 @@ export interface TaskData {
   createdAt: Date;
 }
 
-// packages/api-client/src/schemas.ts
+// packages/exchange-core/src/schemas.ts
 import { z } from 'zod';
 
 export const CreateTaskSchema = z.object({
@@ -279,7 +279,7 @@ export type CreateTaskInput = z.infer<typeof CreateTaskSchema>;
 3. **Протестировать в браузере**
 
 ```typescript
-// packages/api-client/src/server.ts
+// apps/web/src/server/trpc/routers/[domain].ts
 import { CreateTaskSchema } from './schemas';
 
 export const appRouter = t.router({
@@ -743,7 +743,7 @@ export const useMyStore = create<MyState>(set => ({
 ### Новая tRPC процедура
 
 ```typescript
-// В packages/api-client/src/server.ts
+// В apps/web/src/server/trpc/routers/[domain].ts
 myProcedure: t.procedure
   .input(z.object({
     id: z.string(),

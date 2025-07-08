@@ -2160,7 +2160,7 @@ export function CommissionSettings({ settings, onChange }: CommissionSettingsPro
 ## 🔧 Admin tRPC Routes
 
 ```typescript
-// packages/api-client/src/admin.ts
+// apps/web/src/server/trpc/routers/admin.ts
 import { z } from 'zod';
 import { router, adminProcedure } from '../trpc';
 
