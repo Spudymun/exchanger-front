@@ -1,20 +1,20 @@
 'use client';
 
 import { CURRENCY_NAMES } from '@repo/constants';
+import type { ExchangeRate } from '@repo/exchange-core';
 import { cardStyles, textStyles, loadingStyles, gridStyles, combineStyles } from '@repo/ui';
 import { Loader2, TrendingUp } from 'lucide-react';
 
-import { trpc } from '../../lib/trpc';
+import { useExchangeRates } from '../hooks/useExchangeMutation';
 
-// Интерфейс для данных курса валют
-interface RateData {
-  currency: string;
-  uahRate: number;
-  commission: number;
+// Интерфейс для ответа API с курсами
+interface RatesResponse {
+  rates: ExchangeRate[];
+  timestamp: Date;
 }
 
 // Компонент для отображения карточки курса
-function RateCard({ rate }: { rate: RateData }) {
+function RateCard({ rate }: { rate: ExchangeRate }) {
   return (
     <div key={rate.currency} className={cardStyles.base}>
       <div className="flex items-center justify-between">
@@ -54,7 +54,10 @@ function LastUpdateInfo({ timestamp }: { timestamp?: Date }) {
 }
 
 export function ExchangeRates() {
-  const { data: ratesData, isLoading, error } = trpc.exchange.getRates.useQuery();
+  const { data: ratesData, isLoading, error } = useExchangeRates();
+
+  // Type assertion для правильной типизации данных
+  const typedRatesData = ratesData as RatesResponse | undefined;
 
   if (isLoading) {
     return (
@@ -75,7 +78,7 @@ export function ExchangeRates() {
     );
   }
 
-  if (!ratesData?.rates) {
+  if (!typedRatesData?.rates) {
     return (
       <div className="rounded-lg bg-gray-50 p-4">
         <p className={combineStyles(textStyles.body.md, 'text-gray-600')}>Курсы не доступны</p>
@@ -91,12 +94,12 @@ export function ExchangeRates() {
       </div>
 
       <div className={gridStyles.responsive}>
-        {ratesData.rates.map(rate => (
+        {typedRatesData.rates.map((rate: ExchangeRate) => (
           <RateCard key={rate.currency} rate={rate} />
         ))}
       </div>
 
-      <LastUpdateInfo timestamp={ratesData.timestamp} />
+      <LastUpdateInfo timestamp={typedRatesData.timestamp} />
     </div>
   );
 }

@@ -1,11 +1,12 @@
 'use client';
 
-import { ORDER_STATUS_CONFIG, UI_REFRESH_INTERVALS } from '@repo/constants';
+import { ORDER_STATUS_CONFIG, ORDER_STATUSES, UI_REFRESH_INTERVALS } from '@repo/constants';
+import type { Order } from '@repo/exchange-core';
 import { statusStyles, textStyles, cardStyles, combineStyles } from '@repo/ui';
 import { CheckCircle, Clock, Loader2, XCircle } from 'lucide-react';
 import { useMemo } from 'react';
 
-import { trpc } from '../../lib/trpc';
+import { useOrderStatus } from '../hooks/useExchangeMutation';
 
 interface OrderStatusProps {
   orderId: string;
@@ -17,19 +18,6 @@ interface StatusConfig {
   color: 'success' | 'warning' | 'info' | 'destructive';
   icon: string;
   description: string;
-}
-
-interface OrderData {
-  id: string;
-  status: string;
-  cryptoAmount: number;
-  uahAmount: number;
-  currency: string;
-  depositAddress: string;
-  createdAt: Date;
-  updatedAt: Date;
-  processedAt?: Date;
-  txHash?: string;
 }
 
 const STATUS_ICONS = {
@@ -55,11 +43,11 @@ function OrderStatusHeader({
   orderData,
   statusConfig,
 }: {
-  orderData: OrderData;
+  orderData: Order;
   statusConfig: StatusConfig;
 }) {
   const StatusIcon = STATUS_ICONS[orderData.status as keyof typeof STATUS_ICONS] || Clock;
-  const isProcessing = orderData.status === 'PROCESSING';
+  const isProcessing = orderData.status === ORDER_STATUSES.PROCESSING;
 
   return (
     <div className="flex items-center space-x-3">
@@ -80,7 +68,7 @@ function OrderStatusDetails({
   orderData,
   statusConfig,
 }: {
-  orderData: OrderData;
+  orderData: Order;
   statusConfig: StatusConfig;
 }) {
   return (
@@ -144,18 +132,18 @@ export function OrderStatus({ orderId, showDetails = true }: OrderStatusProps) {
     data: orderData,
     isLoading,
     error,
-  } = trpc.exchange.getOrderStatus.useQuery(
-    { orderId },
-    {
-      enabled: !!orderId,
-      refetchInterval: UI_REFRESH_INTERVALS.ORDER_STATUS_REFRESH,
-    }
-  );
+  } = useOrderStatus(orderId, {
+    enabled: !!orderId,
+    refetchInterval: UI_REFRESH_INTERVALS.ORDER_STATUS_REFRESH,
+  });
+
+  // Type assertion для правильной типизации данных
+  const typedOrderData = orderData as Order | undefined;
 
   const statusConfig = useMemo(() => {
-    if (!orderData?.status) return null;
-    return ORDER_STATUS_CONFIG[orderData.status as keyof typeof ORDER_STATUS_CONFIG];
-  }, [orderData?.status]);
+    if (!typedOrderData?.status) return null;
+    return ORDER_STATUS_CONFIG[typedOrderData.status as keyof typeof ORDER_STATUS_CONFIG];
+  }, [typedOrderData?.status]);
 
   if (isLoading) {
     return (
@@ -174,7 +162,7 @@ export function OrderStatus({ orderId, showDetails = true }: OrderStatusProps) {
     );
   }
 
-  if (!orderData || !statusConfig) {
+  if (!typedOrderData || !statusConfig) {
     return (
       <div className={combineStyles(cardStyles.base, statusStyles.neutral)}>
         <p className={textStyles.body.md}>Заказ не найден</p>
@@ -184,8 +172,8 @@ export function OrderStatus({ orderId, showDetails = true }: OrderStatusProps) {
 
   return (
     <div className="space-y-4">
-      <OrderStatusHeader orderData={orderData} statusConfig={statusConfig} />
-      {showDetails && <OrderStatusDetails orderData={orderData} statusConfig={statusConfig} />}
+      <OrderStatusHeader orderData={typedOrderData} statusConfig={statusConfig} />
+      {showDetails && <OrderStatusDetails orderData={typedOrderData} statusConfig={statusConfig} />}
     </div>
   );
 }

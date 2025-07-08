@@ -82,4 +82,26 @@ export function useExchangeMutation(options?: UseExchangeMutationOptions) {
   };
 }
 
+// Centralized hook for getting exchange rates
+export function useExchangeRates(): ReturnType<typeof trpc.exchange.getRates.useQuery> {
+  return trpc.exchange.getRates.useQuery(undefined, {
+    refetchInterval: 30000, // Update every 30 seconds
+    staleTime: 30000, // Consider data stale after 30 seconds
+  });
+}
+
+// Centralized hook for getting order status
+export function useOrderStatus(
+  orderId: string,
+  options?: { enabled?: boolean; refetchInterval?: number }
+): ReturnType<typeof trpc.exchange.getOrderStatus.useQuery> {
+  return trpc.exchange.getOrderStatus.useQuery(
+    { orderId },
+    {
+      enabled: options?.enabled ?? !!orderId,
+      refetchInterval: options?.refetchInterval,
+    }
+  );
+}
+
 export type UseExchangeMutationReturn = ReturnType<typeof useExchangeMutation>;

@@ -107,3 +107,55 @@ export function useAuthMutation(): {
 
   return { login, register, logout, requestPasswordReset, resetPassword, verifyEmail };
 }
+
+// Centralized auth mutations hook for components
+export function useAuthMutations(): {
+  login: ReturnType<typeof trpc.auth.login.useMutation>;
+  register: ReturnType<typeof trpc.auth.register.useMutation>;
+  logout: ReturnType<typeof trpc.auth.logout.useMutation>;
+} {
+  const utils = trpc.useUtils();
+
+  const login = trpc.auth.login.useMutation({
+    onSuccess: () => {
+      toast.success('Вход выполнен успешно');
+      utils.auth.getSession.invalidate();
+    },
+    onError: error => {
+      if (error.data?.httpStatus === HTTP_STATUS.TOO_MANY_REQUESTS) {
+        toast.error('Слишком много попыток входа. Попробуйте позже');
+      } else if (error.data?.httpStatus === HTTP_STATUS.UNAUTHORIZED) {
+        toast.error('Неверный email или пароль');
+      } else {
+        toast.error('Ошибка входа в систему');
+      }
+    },
+  });
+
+  const register = trpc.auth.register.useMutation({
+    onSuccess: () => {
+      toast.success('Регистрация успешна. Проверьте email для подтверждения');
+    },
+    onError: error => {
+      if (error.data?.httpStatus === HTTP_STATUS.TOO_MANY_REQUESTS) {
+        toast.error('Слишком много попыток регистрации. Попробуйте позже');
+      } else if (error.data?.httpStatus === HTTP_STATUS.CONFLICT) {
+        toast.error('Пользователь с таким email уже существует');
+      } else {
+        toast.error('Ошибка при регистрации');
+      }
+    },
+  });
+
+  const logout = trpc.auth.logout.useMutation({
+    onSuccess: () => {
+      toast.success('Вы успешно вышли из системы');
+      utils.auth.getSession.invalidate();
+    },
+    onError: () => {
+      toast.error('Ошибка при выходе из системы');
+    },
+  });
+
+  return { login, register, logout };
+}

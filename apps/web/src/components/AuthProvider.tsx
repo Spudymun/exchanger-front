@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState } from 'react';
 
-import { trpc } from '../../lib/trpc.js';
+import { useAuthMutations } from '../hooks/useAuthMutation';
 
 interface AuthUser {
   id: string;
@@ -29,9 +29,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const loginMutation = trpc.auth.login.useMutation();
-  const logoutMutation = trpc.auth.logout.useMutation();
-  const registerMutation = trpc.auth.register.useMutation();
+  const {
+    login: loginMutation,
+    logout: logoutMutation,
+    register: registerMutation,
+  } = useAuthMutations();
 
   const login = async (email: string, password: string): Promise<void> => {
     setIsLoading(true);
