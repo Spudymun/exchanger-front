@@ -219,10 +219,24 @@ export default [
   // === ROOT CONFIG FILES ===
   {
     name: 'root-configs',
-    files: ['*.config.{js,mjs,ts}', 'jest.config.js'],
+    files: ['*.config.{js,mjs,ts,cjs}', 'jest.config.{js,cjs}'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        require: 'readonly',
+        module: 'readonly',
+        exports: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        global: 'readonly',
+        process: 'readonly',
+      },
+    },
     rules: lazyLoadConfig('root-config-rules', () => ({
       'no-console': 'off', // Разрешено в конфигурационных файлах
       'sonarjs/no-duplicate-string': 'off', // Разрешено дублирование в конфигах
+      '@typescript-eslint/no-require-imports': 'off', // Разрешено require в CJS конфигах
+      'unicorn/prefer-module': 'off', // Разрешено CommonJS в конфиг файлах
     })),
   },
 
@@ -262,6 +276,62 @@ export default [
       'max-lines': ['error', { max: FILE_SIZE_LIMITS.UI_LIBRARY }],
       'max-lines-per-function': ['error', { max: FUNCTION_SIZE_LIMITS.UI_COMPONENTS }],
       'no-console': 'off', // Разрешено для demo функций в UI компонентах
+    })),
+  },
+
+  // === COMMONJS FILES CONFIGURATION ===
+  {
+    name: 'commonjs-config-files',
+    files: ['**/*.cjs'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        require: 'readonly',
+        module: 'readonly',
+        exports: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        global: 'readonly',
+        process: 'readonly',
+      },
+    },
+    rules: lazyLoadConfig('commonjs-rules', () => ({
+      '@typescript-eslint/no-require-imports': 'off',
+      'unicorn/prefer-module': 'off',
+      'sonarjs/no-duplicate-string': 'off', // Конфиг файлы могут иметь повторения
+    })),
+  },
+
+  // === JEST SETUP FILES ===
+  {
+    name: 'jest-setup-files',
+    files: ['jest.setup.{js,cjs}', '**/jest.setup.{js,cjs}'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        require: 'readonly',
+        module: 'readonly',
+        exports: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        global: 'readonly',
+        process: 'readonly',
+        jest: 'readonly',
+        describe: 'readonly',
+        it: 'readonly',
+        test: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        beforeAll: 'readonly',
+        afterAll: 'readonly',
+        URLSearchParams: 'readonly',
+      },
+    },
+    rules: lazyLoadConfig('jest-setup-rules', () => ({
+      '@typescript-eslint/no-require-imports': 'off',
+      'unicorn/prefer-module': 'off',
+      'no-console': 'off',
     })),
   },
 ];

@@ -1,11 +1,15 @@
 {
   "name": "exchanger-monorepo",
+  "type": "module",
   "private": true,
   "scripts": {
     "build": "turbo run build",
     "build:clean": "turbo run build:clean",
     "build:force": "turbo run build:force",
     "build:rebuild": "turbo run build:rebuild",
+    "build:analyze": "turbo run build:analyze",
+    "analyze:bundle": "turbo run analyze:bundle",
+    "bundle-size": "turbo run bundle-size",
     "dev": "turbo run dev",
     "lint": "eslint \"**/*.{js,jsx,ts,tsx}\" --fix",
     "lint:check": "eslint \"**/*.{js,jsx,ts,tsx}\"",
@@ -49,7 +53,6 @@
     "eslint-plugin-storybook": "^9.0.14",
     "eslint-plugin-unicorn": "^59.0.1",
     "eslint-plugin-unused-imports": "^4.1.4",
-    "gitignore": "^0.7.0",
     "husky": "^9.1.7",
     "jest": "^30.0.3",
     "jest-environment-jsdom": "^30.0.2",

@@ -31,6 +31,18 @@
       "dependsOn": ["^build:rebuild"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
+    "build:analyze": {
+      "dependsOn": ["^build"],
+      "outputs": [".next/analyze/**", "dist/analyze/**"]
+    },
+    "analyze:bundle": {
+      "dependsOn": ["build:analyze"],
+      "outputs": ["bundle-report/**"]
+    },
+    "bundle-size": {
+      "dependsOn": ["build"],
+      "outputs": ["bundle-stats.json"]
+    },
     "test": {
       "dependsOn": ["^test"],
       "inputs": ["$TURBO_DEFAULT$"]
