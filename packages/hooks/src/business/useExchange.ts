@@ -1,8 +1,9 @@
+import { UI_DEBOUNCE_CONSTANTS } from '@repo/constants';
 import type { CryptoCurrency } from '@repo/exchange-core';
 import { validateEmail } from '@repo/exchange-core';
+
 import React from 'react';
 
-import { DEBOUNCE_DELAY } from '../state/exchange-constants.js';
 import type { ExchangeStore } from '../state/exchange-store.js';
 import { useExchangeStore } from '../useExchangeStore.js';
 
@@ -24,7 +25,7 @@ export function useExchange() {
     if (fromAmount && !isNaN(Number(fromAmount)) && Number(fromAmount) > 0) {
       const debounceTimeout = setTimeout(() => {
         exchangeStore.calculateExchange();
-      }, DEBOUNCE_DELAY);
+      }, UI_DEBOUNCE_CONSTANTS.EXCHANGE_CALCULATION_DELAY);
 
       return () => clearTimeout(debounceTimeout);
     }

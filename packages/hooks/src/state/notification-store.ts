@@ -1,7 +1,6 @@
 import { BUSINESS_LIMITS } from '@repo/constants';
+import { createStore, createTimerActions, type TimerState } from '@repo/utils';
 import { nanoid } from 'nanoid';
-import { create } from 'zustand';
-import { devtools, subscribeWithSelector } from 'zustand/middleware';
 
 // Типы уведомлений
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
@@ -23,9 +22,8 @@ export interface Notification {
   createdAt: number;
 }
 
-export interface NotificationStore {
+export interface NotificationStore extends TimerState {
   notifications: Notification[];
-  notificationTimers: Map<string, NodeJS.Timeout>; // Добавляем для cleanup
 
   // Actions
   addNotification: (notification: Omit<Notification, 'id' | 'createdAt'>) => string;
@@ -98,12 +96,9 @@ const createAddNotificationAction =
         get().removeNotification(id);
       }, newNotification.duration);
 
-      // Сохраняем timerId для возможности cleanup
-      set(state => {
-        const newTimers = new Map(state.notificationTimers);
-        newTimers.set(id, timerId);
-        return { notificationTimers: newTimers };
-      });
+      // Используем централизованный timer management
+      const timerActions = createTimerActions(set, get);
+      timerActions.setTimer(id, timerId);
     }
 
     return id;
@@ -115,33 +110,22 @@ const createCleanupActions = (
   get: () => NotificationStore
 ) => ({
   removeNotification: (id: string) => {
-    // Очищаем таймер при ручном удалении
-    const timers = get().notificationTimers;
-    const timerId = timers.get(id);
-    if (timerId) {
-      clearTimeout(timerId);
-    }
+    // Используем централизованный timer cleanup
+    const timerActions = createTimerActions(set, get);
+    timerActions.clearTimer(id);
 
-    set(state => {
-      const newTimers = new Map(state.notificationTimers);
-      newTimers.delete(id);
-      return {
-        notifications: state.notifications.filter(n => n.id !== id),
-        notificationTimers: newTimers,
-      };
-    });
+    set(state => ({
+      notifications: state.notifications.filter(n => n.id !== id),
+    }));
   },
 
   clearNotifications: () => {
-    // Очищаем все таймеры
-    const timers = get().notificationTimers;
-    for (const timerId of timers.values()) {
-      clearTimeout(timerId);
-    }
+    // Используем централизованный timer cleanup
+    const timerActions = createTimerActions(set, get);
+    timerActions.clearAllTimers();
 
     set(() => ({
       notifications: [],
-      notificationTimers: new Map(),
     }));
   },
 });
@@ -203,24 +187,19 @@ const createConvenienceMethods = (get: () => NotificationStore) => ({
   },
 });
 
-export const useNotificationStore = create<NotificationStore>()(
-  devtools(
-    subscribeWithSelector((set, get) => ({
-      notifications: [],
-      notificationTimers: new Map(),
-      maxNotifications: MAX_NOTIFICATIONS,
-      defaultDuration: DEFAULT_DURATION,
+export const useNotificationStore = createStore<NotificationStore>(
+  'notification-store',
+  (set, get) => ({
+    notifications: [],
+    timers: new Map(),
+    maxNotifications: MAX_NOTIFICATIONS,
+    defaultDuration: DEFAULT_DURATION,
 
-      // Actions
-      addNotification: createAddNotificationAction(set, get),
-      ...createCleanupActions(set, get),
-      ...createConvenienceMethods(get),
-    })),
-    {
-      name: 'notification-store',
-      version: 1,
-    }
-  )
+    // Actions
+    addNotification: createAddNotificationAction(set, get),
+    ...createCleanupActions(set, get),
+    ...createConvenienceMethods(get),
+  })
 );
 
 // Селекторы для оптимизации

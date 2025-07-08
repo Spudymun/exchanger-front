@@ -1,7 +1,6 @@
 import { calculateUahAmount, calculateCommission } from '@repo/exchange-core';
 import type { ExchangeRate } from '@repo/exchange-core';
 
-import { DEBOUNCE_DELAY } from './exchange-constants.js';
 import type { ExchangeCalculation, ExchangeFormData } from './exchange-store.js';
 
 // Вспомогательные функции для расчетов using centralized utilities
@@ -70,6 +69,3 @@ export const getPrevStepIndex = (currentStep: number): number => {
 export const clampStepIndex = (stepIndex: number, totalSteps: number): number => {
   return Math.max(0, Math.min(stepIndex, totalSteps - 1));
 };
-
-// Константы для debounce
-export const CALCULATION_DEBOUNCE_DELAY = DEBOUNCE_DELAY;

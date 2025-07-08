@@ -49,5 +49,3 @@ export const DEFAULT_STEPS: ExchangeStep[] = [
     canSkip: false,
   },
 ];
-
-export const DEBOUNCE_DELAY = 300; // миллисекунды для debounce пересчета

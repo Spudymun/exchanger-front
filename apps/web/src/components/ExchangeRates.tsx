@@ -1,6 +1,7 @@
 'use client';
 
 import { CURRENCY_NAMES } from '@repo/constants';
+import { cardStyles, textStyles, loadingStyles, gridStyles, combineStyles } from '@repo/ui';
 import { Loader2, TrendingUp } from 'lucide-react';
 
 import { trpc } from '../../lib/trpc';
@@ -15,27 +16,26 @@ interface RateData {
 // Компонент для отображения карточки курса
 function RateCard({ rate }: { rate: RateData }) {
   return (
-    <div
-      key={rate.currency}
-      className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow"
-    >
+    <div key={rate.currency} className={cardStyles.base}>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-900">{rate.currency}</p>
-          <p className="text-xs text-gray-500">
+          <p className={textStyles.heading.sm}>{rate.currency}</p>
+          <p className={textStyles.body.sm}>
             {CURRENCY_NAMES[rate.currency as keyof typeof CURRENCY_NAMES]}
           </p>
         </div>
         <div className="text-right">
-          <p className="text-lg font-semibold text-gray-900">
-            {rate.uahRate.toLocaleString('ru-RU')} ₴
-          </p>
-          <p className="text-xs text-gray-500">за 1 {rate.currency}</p>
+          <p className={textStyles.heading.md}>{rate.uahRate.toLocaleString('ru-RU')} ₴</p>
+          <p className={textStyles.body.sm}>за 1 {rate.currency}</p>
         </div>
       </div>
       <div className="mt-2 flex items-center justify-between">
-        <span className="text-xs text-gray-500">Комиссия:</span>
-        <span className="text-xs font-medium text-orange-600">{rate.commission}%</span>
+        <span className={textStyles.body.sm}>Комиссия:</span>
+        <span
+          className={combineStyles(textStyles.body.sm, 'font-medium', textStyles.accent.secondary)}
+        >
+          {rate.commission}%
+        </span>
       </div>
     </div>
   );
@@ -45,7 +45,7 @@ function RateCard({ rate }: { rate: RateData }) {
 function LastUpdateInfo({ timestamp }: { timestamp?: Date }) {
   return (
     <div className="rounded-lg bg-blue-50 p-3">
-      <p className="text-xs text-blue-600">
+      <p className={combineStyles(textStyles.body.sm, textStyles.accent.primary)}>
         Курсы обновляются каждые 5 минут. Последнее обновление:{' '}
         {timestamp ? new Date(timestamp).toLocaleString('ru-RU') : 'Неизвестно'}
       </p>
@@ -58,9 +58,9 @@ export function ExchangeRates() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-        <span className="ml-2 text-sm text-gray-600">Загрузка курсов...</span>
+      <div className={loadingStyles.container}>
+        <Loader2 className={combineStyles(loadingStyles.spinner, textStyles.accent.primary)} />
+        <span className={loadingStyles.text}>Загрузка курсов...</span>
       </div>
     );
   }
@@ -68,7 +68,9 @@ export function ExchangeRates() {
   if (error) {
     return (
       <div className="rounded-lg bg-red-50 p-4">
-        <p className="text-sm text-red-600">Ошибка загрузки курсов: {error.message}</p>
+        <p className={combineStyles(textStyles.body.md, textStyles.accent.error)}>
+          Ошибка загрузки курсов: {error.message}
+        </p>
       </div>
     );
   }
@@ -76,7 +78,7 @@ export function ExchangeRates() {
   if (!ratesData?.rates) {
     return (
       <div className="rounded-lg bg-gray-50 p-4">
-        <p className="text-sm text-gray-600">Курсы не доступны</p>
+        <p className={combineStyles(textStyles.body.md, 'text-gray-600')}>Курсы не доступны</p>
       </div>
     );
   }
@@ -84,11 +86,11 @@ export function ExchangeRates() {
   return (
     <div className="space-y-4">
       <div className="flex items-center space-x-2">
-        <TrendingUp className="h-5 w-5 text-green-600" />
-        <h3 className="text-lg font-semibold text-gray-900">Актуальные курсы обмена</h3>
+        <TrendingUp className={combineStyles('h-5 w-5', textStyles.accent.success)} />
+        <h3 className={textStyles.heading.md}>Актуальные курсы обмена</h3>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className={gridStyles.responsive}>
         {ratesData.rates.map(rate => (
           <RateCard key={rate.currency} rate={rate} />
         ))}

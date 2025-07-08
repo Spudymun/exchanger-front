@@ -1,9 +1,14 @@
 import type { OrderStatus } from '@repo/constants';
+import { UI_DEBOUNCE_CONSTANTS } from '@repo/constants';
 import type { CryptoCurrency, ExchangeRate, ExchangeRecipientData } from '@repo/exchange-core';
-import { create } from 'zustand';
-import { devtools, subscribeWithSelector } from 'zustand/middleware';
+import {
+  createStore,
+  createDebounceAction,
+  createTimerActions,
+  type TimerState,
+} from '@repo/utils';
 
-import { DEFAULT_FORM_DATA, DEFAULT_STEPS, DEBOUNCE_DELAY } from './exchange-constants.js';
+import { DEFAULT_FORM_DATA, DEFAULT_STEPS } from './exchange-constants.js';
 import {
   calculateExchangeRate,
   getNextStepIndex,
@@ -52,7 +57,7 @@ export interface ExchangeOrderData {
   updatedAt: Date;
 }
 
-export interface ExchangeStore {
+export interface ExchangeStore extends TimerState {
   // Form data
   formData: ExchangeFormData;
 
@@ -70,9 +75,6 @@ export interface ExchangeStore {
 
   // Available data
   availableRates: ExchangeRate[];
-
-  // Timer cleanup для debounce
-  debounceTimerId: NodeJS.Timeout | null;
 
   // Actions
   updateFormData: (data: Partial<ExchangeFormData>) => void;
@@ -108,28 +110,16 @@ const createFormActions = (
       formData: { ...state.formData, ...data },
     }));
 
-    // Автоматический пересчет при изменении валюты или суммы с cleanup
+    // Автоматический пересчет при изменении валюты или суммы с debounce
     if (data.fromCurrency || data.fromAmount) {
-      const state = get();
-
-      // Очищаем предыдущий таймер
-      if (state.debounceTimerId) {
-        clearTimeout(state.debounceTimerId);
-      }
-
-      // Устанавливаем новый таймер
-      const timerId = setTimeout(() => {
-        get().calculateExchange();
-        set(currentState => ({
-          ...currentState,
-          debounceTimerId: null,
-        }));
-      }, DEBOUNCE_DELAY);
-
-      set(currentState => ({
-        ...currentState,
-        debounceTimerId: timerId,
-      }));
+      const debouncedCalculate = createDebounceAction({
+        set,
+        get,
+        action: () => get().calculateExchange(),
+        delay: UI_DEBOUNCE_CONSTANTS.EXCHANGE_CALCULATION_DELAY,
+        key: 'exchange-calculation',
+      });
+      debouncedCalculate();
     }
   },
 
@@ -272,11 +262,9 @@ const createResetActions = (
   get: () => ExchangeStore
 ) => ({
   resetForm: () => {
-    // Очищаем debounce таймер при сбросе формы
-    const state = get();
-    if (state.debounceTimerId) {
-      clearTimeout(state.debounceTimerId);
-    }
+    // Используем централизованный timer cleanup
+    const timerActions = createTimerActions(set, get);
+    timerActions.clearAllTimers();
 
     set(() => ({
       formData: DEFAULT_FORM_DATA,
@@ -284,16 +272,13 @@ const createResetActions = (
       currentStep: 0,
       steps: DEFAULT_STEPS,
       currentOrder: null,
-      debounceTimerId: null,
     }));
   },
 
   resetStore: () => {
-    // Очищаем debounce таймер при полном сбросе
-    const state = get();
-    if (state.debounceTimerId) {
-      clearTimeout(state.debounceTimerId);
-    }
+    // Используем централизованный timer cleanup
+    const timerActions = createTimerActions(set, get);
+    timerActions.clearAllTimers();
 
     set(() => ({
       formData: DEFAULT_FORM_DATA,
@@ -304,36 +289,30 @@ const createResetActions = (
       isSubmitting: false,
       currentOrder: null,
       availableRates: [],
-      debounceTimerId: null,
     }));
   },
 });
 
-export const useExchangeStore = create<ExchangeStore>()(
-  devtools(
-    subscribeWithSelector((set, get) => ({
-      // Initial state
-      formData: DEFAULT_FORM_DATA,
-      calculation: null,
-      currentStep: 0,
-      steps: DEFAULT_STEPS,
-      isCalculating: false,
-      isSubmitting: false,
-      currentOrder: null,
-      availableRates: [],
-      debounceTimerId: null,
+export const useExchangeStore = createStore<ExchangeStore>(
+  { name: 'exchange-store', version: 1 },
+  (set, get) => ({
+    // Initial state
+    formData: DEFAULT_FORM_DATA,
+    calculation: null,
+    currentStep: 0,
+    steps: DEFAULT_STEPS,
+    isCalculating: false,
+    isSubmitting: false,
+    currentOrder: null,
+    availableRates: [],
+    timers: new Map(),
 
-      // Actions
-      ...createFormActions(set, get),
-      ...createCalculationActions(set, get),
-      ...createStepActions(set),
-      ...createOrderActions(set),
-      ...createRatesActions(set, get),
-      ...createResetActions(set, get),
-    })),
-    {
-      name: 'exchange-store',
-      version: 1,
-    }
-  )
+    // Actions
+    ...createFormActions(set, get),
+    ...createCalculationActions(set, get),
+    ...createStepActions(set),
+    ...createOrderActions(set),
+    ...createRatesActions(set, get),
+    ...createResetActions(set, get),
+  })
 );

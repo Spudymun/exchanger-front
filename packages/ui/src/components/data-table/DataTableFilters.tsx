@@ -1,6 +1,7 @@
 import { Search, Filter } from 'lucide-react';
 import React from 'react';
 
+import { tableStyles } from '../../lib/shared-styles';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 
@@ -18,23 +19,23 @@ export const DataTableFilters: React.FC<DataTableFiltersProps> = ({
   onToggleFilters,
 }) => {
   return (
-    <div className="flex items-center gap-2 mb-4">
-      <div className="relative flex-1">
-        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+    <div className={tableStyles.filters.container}>
+      <div className={tableStyles.filters.searchWrapper}>
+        <Search className={tableStyles.filters.searchIcon} />
         <Input
           placeholder="Поиск..."
           value={searchTerm}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-8"
+          onChange={e => onSearchChange(e.target.value)}
+          className={tableStyles.filters.searchInput}
         />
       </div>
       <Button
         variant="outline"
         size="sm"
         onClick={onToggleFilters}
-        className="whitespace-nowrap"
+        className={tableStyles.filters.filterButton}
       >
-        <Filter className="h-4 w-4 mr-2" />
+        <Filter className={tableStyles.filters.filterIcon} />
         {showFilters ? 'Скрыть фильтры' : 'Показать фильтры'}
       </Button>
     </div>

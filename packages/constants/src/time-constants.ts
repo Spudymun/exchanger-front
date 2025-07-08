@@ -17,6 +17,18 @@ export const TIME_CONSTANTS = {
 } as const;
 
 /**
+ * Константы для отладки UI (debounce, throttle)
+ */
+export const UI_DEBOUNCE_CONSTANTS = {
+  /** Debounce задержка для пересчета обмена (300ms) */
+  EXCHANGE_CALCULATION_DELAY: 300,
+  /** Debounce задержка для поиска (150ms) */
+  SEARCH_INPUT_DELAY: 150,
+  /** Debounce задержка для автосохранения формы (500ms) */
+  FORM_AUTOSAVE_DELAY: 500,
+} as const;
+
+/**
  * Интервалы обновления UI компонентов
  */
 export const UI_REFRESH_INTERVALS = {

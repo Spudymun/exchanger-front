@@ -1,8 +1,9 @@
 // UI Components
-export * from './components'
+export * from './components';
 
 // Utils
-export * from './lib/utils'
+export * from './lib/utils';
+export * from './lib/shared-styles';
 
 // Styles
-import './styles/globals.css'
+import './styles/globals.css';

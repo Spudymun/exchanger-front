@@ -1,6 +1,8 @@
-"use client";
+'use client';
 
 import React, { useState, useMemo } from 'react';
+
+import { tableStyles, combineStyles } from '../lib/shared-styles';
 
 import { DataTableBody } from './data-table/DataTableBody';
 import { DataTableFilters } from './data-table/DataTableFilters';
@@ -24,7 +26,9 @@ export interface DataTableProps<T> {
 // Хуки для управления состоянием таблицы
 const useTableState = <T extends Record<string, unknown>>(initialItemsPerPage: number) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortConfig, setSortConfig] = useState<{ key: keyof T; direction: 'asc' | 'desc' } | null>(null);
+  const [sortConfig, setSortConfig] = useState<{ key: keyof T; direction: 'asc' | 'desc' } | null>(
+    null
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(initialItemsPerPage);
   const [showFilters, setShowFilters] = useState(false);
@@ -51,9 +55,9 @@ const useFilteredData = <T extends Record<string, unknown>>(
 ) => {
   return useMemo(() => {
     if (!searchTerm) return data;
-    
-    return data.filter((item) =>
-      columns.some((column) => {
+
+    return data.filter(item =>
+      columns.some(column => {
         const value = item[column.key];
         return String(value).toLowerCase().includes(searchTerm.toLowerCase());
       })
@@ -101,9 +105,7 @@ const getNextSortConfig = <T extends Record<string, unknown>>(
   current: { key: keyof T; direction: 'asc' | 'desc' } | null
 ): { key: keyof T; direction: 'asc' | 'desc' } | null => {
   if (current?.key === key) {
-    return current.direction === 'asc' 
-      ? { key, direction: 'desc' }
-      : null;
+    return current.direction === 'asc' ? { key, direction: 'desc' } : null;
   }
   return { key, direction: 'asc' };
 };
@@ -111,7 +113,9 @@ const getNextSortConfig = <T extends Record<string, unknown>>(
 // Функция для создания обработчиков
 const createHandlers = <T extends Record<string, unknown>>(params: {
   sortable: boolean;
-  setSortConfig: React.Dispatch<React.SetStateAction<{ key: keyof T; direction: 'asc' | 'desc' } | null>>;
+  setSortConfig: React.Dispatch<
+    React.SetStateAction<{ key: keyof T; direction: 'asc' | 'desc' } | null>
+  >;
   setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
   setItemsPerPage: React.Dispatch<React.SetStateAction<number>>;
   totalPages: number;
@@ -121,7 +125,7 @@ const createHandlers = <T extends Record<string, unknown>>(params: {
   const handleSort = (key: keyof T) => {
     if (!sortable) return;
 
-    setSortConfig((current) => getNextSortConfig(key, current));
+    setSortConfig(current => getNextSortConfig(key, current));
   };
 
   const handlePageChange = (page: number) => {
@@ -236,16 +240,12 @@ export const DataTable = <T extends Record<string, unknown>>({
   });
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={combineStyles(tableStyles.container, className)}>
       {renderFilters({ searchable, searchTerm, setSearchTerm, showFilters, setShowFilters })}
 
-      <div className="rounded-md border">
+      <div className={tableStyles.wrapper}>
         <Table>
-          <DataTableHeader<T>
-            columns={columns}
-            _sortConfig={sortConfig}
-            onSort={handleSort}
-          />
+          <DataTableHeader<T> columns={columns} _sortConfig={sortConfig} onSort={handleSort} />
           <DataTableBody<T>
             paginatedData={paginatedData}
             columns={columns}

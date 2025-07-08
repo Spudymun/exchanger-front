@@ -1,6 +1,7 @@
 'use client';
 
 import { ORDER_STATUS_CONFIG, UI_REFRESH_INTERVALS } from '@repo/constants';
+import { statusStyles, textStyles, cardStyles, combineStyles } from '@repo/ui';
 import { CheckCircle, Clock, Loader2, XCircle } from 'lucide-react';
 import { useMemo } from 'react';
 
@@ -39,34 +40,15 @@ const STATUS_ICONS = {
   CANCELLED: XCircle,
 } as const;
 
-const getStatusColorClass = (color: string): string => {
-  switch (color) {
-    case 'success':
-      return 'text-green-600 bg-green-50';
-    case 'warning':
-      return 'text-yellow-600 bg-yellow-50';
-    case 'info':
-      return 'text-blue-600 bg-blue-50';
-    case 'destructive':
-      return 'text-red-600 bg-red-50';
-    default:
-      return 'text-gray-600 bg-gray-50';
-  }
-};
-
 const getIconColorClass = (color: string): string => {
-  switch (color) {
-    case 'success':
-      return 'text-green-600';
-    case 'warning':
-      return 'text-yellow-600';
-    case 'info':
-      return 'text-blue-600';
-    case 'destructive':
-      return 'text-red-600';
-    default:
-      return 'text-gray-600';
-  }
+  const colorMap = {
+    success: textStyles.accent.success.split(' ')[0], // Extract color class
+    warning: textStyles.accent.warning.split(' ')[0],
+    info: textStyles.accent.primary.split(' ')[0],
+    destructive: textStyles.accent.error.split(' ')[0],
+  } as const;
+
+  return colorMap[color as keyof typeof colorMap] || 'text-gray-600';
 };
 
 function OrderStatusHeader({
@@ -87,8 +69,8 @@ function OrderStatusHeader({
         }`}
       />
       <div>
-        <p className="text-lg font-semibold text-gray-900">{statusConfig.label}</p>
-        <p className="text-sm text-gray-600">{statusConfig.description}</p>
+        <p className={textStyles.heading.md}>{statusConfig.label}</p>
+        <p className={textStyles.body.md}>{statusConfig.description}</p>
       </div>
     </div>
   );
@@ -102,47 +84,54 @@ function OrderStatusDetails({
   statusConfig: StatusConfig;
 }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
+    <div className={cardStyles.base}>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <p className="text-sm font-medium text-gray-900">ID заказа</p>
-          <p className="text-sm text-gray-600">{orderData.id}</p>
+          <p className={textStyles.heading.sm}>ID заказа</p>
+          <p className={textStyles.body.md}>{orderData.id}</p>
         </div>
         <div>
-          <p className="text-sm font-medium text-gray-900">Статус</p>
+          <p className={textStyles.heading.sm}>Статус</p>
           <span
-            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColorClass(statusConfig.color)}`}
+            className={combineStyles(
+              'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
+              statusStyles[statusConfig.color as keyof typeof statusStyles] || statusStyles.neutral
+            )}
           >
             {statusConfig.label}
           </span>
         </div>
         <div>
-          <p className="text-sm font-medium text-gray-900">Сумма</p>
-          <p className="text-sm text-gray-600">
+          <p className={textStyles.heading.sm}>Сумма</p>
+          <p className={textStyles.body.md}>
             {orderData.cryptoAmount} {orderData.currency} →{' '}
             {orderData.uahAmount.toLocaleString('ru-RU')} ₴
           </p>
         </div>
         <div>
-          <p className="text-sm font-medium text-gray-900">Адрес депозита</p>
-          <p className="text-sm text-gray-600 font-mono break-all">{orderData.depositAddress}</p>
+          <p className={textStyles.heading.sm}>Адрес депозита</p>
+          <p className={combineStyles(textStyles.body.md, 'font-mono break-all')}>
+            {orderData.depositAddress}
+          </p>
         </div>
         <div>
-          <p className="text-sm font-medium text-gray-900">Создано</p>
-          <p className="text-sm text-gray-600">
+          <p className={textStyles.heading.sm}>Создано</p>
+          <p className={textStyles.body.md}>
             {new Date(orderData.createdAt).toLocaleString('ru-RU')}
           </p>
         </div>
         <div>
-          <p className="text-sm font-medium text-gray-900">Обновлено</p>
-          <p className="text-sm text-gray-600">
+          <p className={textStyles.heading.sm}>Обновлено</p>
+          <p className={textStyles.body.md}>
             {new Date(orderData.updatedAt).toLocaleString('ru-RU')}
           </p>
         </div>
         {orderData.txHash && (
           <div className="sm:col-span-2">
-            <p className="text-sm font-medium text-gray-900">Хеш транзакции</p>
-            <p className="text-sm text-gray-600 font-mono break-all">{orderData.txHash}</p>
+            <p className={textStyles.heading.sm}>Хеш транзакции</p>
+            <p className={combineStyles(textStyles.body.md, 'font-mono break-all')}>
+              {orderData.txHash}
+            </p>
           </div>
         )}
       </div>
@@ -170,25 +159,25 @@ export function OrderStatus({ orderId, showDetails = true }: OrderStatusProps) {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-4">
+      <div className={combineStyles(cardStyles.base, 'flex items-center justify-center')}>
         <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-        <span className="ml-2 text-sm text-gray-600">Загрузка статуса...</span>
+        <span className={combineStyles(textStyles.body.md, 'ml-2')}>Загрузка статуса...</span>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="rounded-lg bg-red-50 p-4">
-        <p className="text-sm text-red-600">Ошибка загрузки статуса: {error.message}</p>
+      <div className={combineStyles(cardStyles.base, statusStyles.error)}>
+        <p className={textStyles.body.md}>Ошибка загрузки статуса: {error.message}</p>
       </div>
     );
   }
 
   if (!orderData || !statusConfig) {
     return (
-      <div className="rounded-lg bg-gray-50 p-4">
-        <p className="text-sm text-gray-600">Заказ не найден</p>
+      <div className={combineStyles(cardStyles.base, statusStyles.neutral)}>
+        <p className={textStyles.body.md}>Заказ не найден</p>
       </div>
     );
   }

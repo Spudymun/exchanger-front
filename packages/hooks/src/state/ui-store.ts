@@ -1,5 +1,4 @@
-import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
+import { createStore } from '@repo/utils';
 
 /**
  * Global UI State Store
@@ -84,42 +83,35 @@ const createConfigActions = (set: (partial: Partial<UIState>) => void) => ({
   setLayout: (layout: UIState['layout']) => set({ layout }),
 });
 
-export const useUIStore = create<UIState>()(
-  devtools(
-    (set, _get) => ({
-      // Sidebar
-      sidebarOpen: true,
-      ...createSidebarActions(set),
+export const useUIStore = createStore<UIState>('ui-store', (set, _get) => ({
+  // Sidebar
+  sidebarOpen: true,
+  ...createSidebarActions(set),
 
-      // Modals
-      activeModal: null,
-      modals: {
-        settings: false,
-        trade: false,
-        deposit: false,
-        withdraw: false,
-      },
-      ...createModalActions(set),
+  // Modals
+  activeModal: null,
+  modals: {
+    settings: false,
+    trade: false,
+    deposit: false,
+    withdraw: false,
+  },
+  ...createModalActions(set),
 
-      // Notifications - УДАЛЕНЫ (используем notification-store.ts)
+  // Notifications - УДАЛЕНЫ (используем notification-store.ts)
 
-      // Loading
-      globalLoading: false,
+  // Loading
+  globalLoading: false,
 
-      // Theme
-      theme: 'system',
+  // Theme
+  theme: 'system',
 
-      // Layout
-      layout: 'default',
+  // Layout
+  layout: 'default',
 
-      // Config actions
-      ...createConfigActions(set),
-    }),
-    {
-      name: 'ui-store',
-    }
-  )
-);
+  // Config actions
+  ...createConfigActions(set),
+}));
 
 // Persist theme to localStorage
 if (typeof window !== 'undefined') {

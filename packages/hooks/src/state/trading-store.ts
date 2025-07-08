@@ -1,6 +1,5 @@
 import { TRANSACTION_TYPES } from '@repo/constants';
-import { create } from 'zustand';
-import { devtools, subscribeWithSelector } from 'zustand/middleware';
+import { createStore } from '@repo/utils';
 
 /**
  * Trading State Types
@@ -78,49 +77,44 @@ interface TradingState {
  * }
  * ```
  */
-export const useTradingStore = create<TradingState>()(
-  devtools(
-    subscribeWithSelector((set, get) => ({
-      // Initial state
-      portfolio: null,
-      isPortfolioLoading: false,
-      activeTrades: [],
-      selectedTrade: null,
-      tradingPair: { base: 'BTC', quote: 'USD' },
-      tradeAmount: 0,
-      tradeSide: TRANSACTION_TYPES.BUY,
-      sidebarCollapsed: false,
-      activeTab: 'overview',
+export const useTradingStore = createStore<TradingState>('trading-store', (set, get) => ({
+  // Initial state
+  portfolio: null,
+  isPortfolioLoading: false,
+  activeTrades: [],
+  selectedTrade: null,
+  tradingPair: { base: 'BTC', quote: 'USD' },
+  tradeAmount: 0,
+  tradeSide: TRANSACTION_TYPES.BUY,
+  sidebarCollapsed: false,
+  activeTab: 'overview',
 
-      // Actions
-      setPortfolio: portfolio => set({ portfolio }),
-      setPortfolioLoading: loading => set({ isPortfolioLoading: loading }),
-      setActiveTrades: trades => set({ activeTrades: trades }),
-      setSelectedTrade: trade => set({ selectedTrade: trade }),
-      setTradingPair: pair => set({ tradingPair: pair }),
-      setTradeAmount: amount => set({ tradeAmount: amount }),
-      setTradeSide: side => set({ tradeSide: side }),
-      toggleSidebar: () => set(state => ({ sidebarCollapsed: !state.sidebarCollapsed })),
-      setActiveTab: tab => set({ activeTab: tab }),
+  // Actions
+  setPortfolio: (portfolio: Portfolio) => set({ portfolio }),
+  setPortfolioLoading: (loading: boolean) => set({ isPortfolioLoading: loading }),
+  setActiveTrades: (trades: Trade[]) => set({ activeTrades: trades }),
+  setSelectedTrade: (trade: Trade | null) => set({ selectedTrade: trade }),
+  setTradingPair: (pair: { base: string; quote: string }) => set({ tradingPair: pair }),
+  setTradeAmount: (amount: number) => set({ tradeAmount: amount }),
+  setTradeSide: (side: typeof TRANSACTION_TYPES.BUY | typeof TRANSACTION_TYPES.SELL) =>
+    set({ tradeSide: side }),
+  toggleSidebar: () => set(state => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+  setActiveTab: (tab: 'overview' | 'trading' | 'portfolio' | 'transactions') =>
+    set({ activeTab: tab }),
 
-      // Computed values
-      getAssetBalance: symbol => {
-        const { portfolio } = get();
-        if (!portfolio) return 0;
-        const asset = portfolio.assets.find(a => a.symbol === symbol);
-        return asset ? asset.amount : 0;
-      },
+  // Computed values
+  getAssetBalance: (symbol: string) => {
+    const { portfolio } = get();
+    if (!portfolio) return 0;
+    const asset = portfolio.assets.find(a => a.symbol === symbol);
+    return asset ? asset.amount : 0;
+  },
 
-      getTotalPortfolioValue: () => {
-        const { portfolio } = get();
-        return portfolio ? portfolio.totalValue : 0;
-      },
-    })),
-    {
-      name: 'trading-store',
-    }
-  )
-);
+  getTotalPortfolioValue: () => {
+    const { portfolio } = get();
+    return portfolio ? portfolio.totalValue : 0;
+  },
+}));
 
 // Persist trading pair to localStorage
 if (typeof window !== 'undefined') {
