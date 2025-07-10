@@ -491,6 +491,36 @@ rules:
         implementation_phase: 'Следование запланированной архитектуре'
         verification_phase: 'UNIVERSAL_AUDIT_SYSTEM.md - поиск фактической избыточности'
       
+      workflow_enforcement:
+        title: 'ОБЯЗАТЕЛЬНОЕ выполнение всех фаз workflow'
+        purpose: 'Предотвращение пропуска verification_phase'
+        
+        mandatory_transitions:
+          planning_to_implementation: 'planning_phase ДОЛЖЕН быть завершен перед началом implementation_phase'
+          implementation_to_verification: 'implementation_phase ДОЛЖЕН автоматически активировать verification_phase'
+          verification_to_completion: 'verification_phase ДОЛЖЕН быть завершен перед task_completion'
+        
+        checkpoint_triggers:
+          after_code_creation: 'ТРИГГЕР: немедленная активация verification_phase после завершения создания кода'
+          before_task_completion: 'ТРИГГЕР: блокировка task_completion без прохождения verification_phase'
+          workflow_validation: 'ТРИГГЕР: проверка выполнения всех mandatory_transitions'
+        
+        enforcement_rules:
+          no_skip_phases: 'ЗАПРЕЩЕНО пропускать любую фазу workflow_connection'
+          mandatory_audit: 'verification_phase является ОБЯЗАТЕЛЬНЫМ для любого созданного кода'
+          completion_blocker: 'task_completion БЛОКИРУЕТСЯ до завершения verification_phase'
+        
+        auto_activation_conditions:
+          code_files_created: 'Создание новых файлов с кодом → автоматическая активация verification_phase'
+          significant_changes: 'Значительные изменения кода → автоматическая активация verification_phase'
+          task_scope_completion: 'Завершение scope задачи → автоматическая активация verification_phase'
+        
+        failure_prevention:
+          explicit_checkpoints: 'Явные контрольные точки между фазами с обязательным подтверждением'
+          workflow_state_tracking: 'Отслеживание текущей фазы workflow для предотвращения пропусков'
+          mandatory_announcements: 'ОБЯЗАТЕЛЬНЫЕ объявления о переходах между фазами'
+          completion_prerequisites: 'Четкие prerequisites для завершения каждой фазы'
+      
       complementary_approach:
         rule_20_scope: 'Предотвращение на этапе планирования и создания'
         audit_system_scope: 'Обнаружение в уже созданном коде'
@@ -735,10 +765,62 @@ trigger_system:
         - 'Измерение качества (Rule 3)'
         - 'Документирование результатов (Rule 18)'
         - 'Финальная проверка избыточности (Rule 20)'
+        - '✅ ОБЯЗАТЕЛЬНО: verification_phase завершен'
+        - '✅ ОБЯЗАТЕЛЬНО: UNIVERSAL_AUDIT_SYSTEM.md применен'
+        - '✅ ОБЯЗАТЕЛЬНО: workflow_connection полностью пройден'
       automatic_actions:
-        - 'Финальное тестирование'
+        - 'БЛОКИРОВКА: проверка завершения verification_phase'
+        - 'БЛОКИРОВКА: подтверждение прохождения всех фаз workflow'
+        - 'Финальное тестирование ТОЛЬКО после verification_phase'
         - 'Проверка всех requirements'
         - 'Создание summary изменений'
+      
+      workflow_prerequisites:
+        verification_phase_completed: 'verification_phase ДОЛЖЕН быть завершен'
+        audit_results_documented: 'Результаты аудита ДОЛЖНЫ быть документированы'
+        no_redundundancy_confirmed: 'Отсутствие избыточности ДОЛЖНО быть подтверждено'
+        workflow_state_valid: 'Состояние workflow ДОЛЖНО быть валидным'
+
+    workflow_phase_transition:
+      description: 'НОВЫЙ ТРИГГЕР: Переход между фазами workflow Rule 20'
+      mandatory_rules: [20, 3, 18]
+      purpose: 'Обеспечение обязательного выполнения всех фаз workflow_connection'
+      
+      phase_checkpoints:
+        planning_completion:
+          trigger_condition: 'Завершение анализа и планирования по Rule 20'
+          mandatory_actions: 
+            - 'Документирование результатов planning_phase'
+            - 'Подтверждение готовности к implementation_phase'
+            - 'Активация implementation_phase триггера'
+        
+        implementation_completion:
+          trigger_condition: 'Создание/изменение любого кода'
+          mandatory_actions:
+            - 'НЕМЕДЛЕННАЯ активация verification_phase'
+            - 'БЛОКИРОВКА любых завершающих действий'
+            - 'ОБЪЯВЛЕНИЕ: "Переход к verification_phase - применение UNIVERSAL_AUDIT_SYSTEM.md"'
+            - 'Автоматический запуск аудита избыточности'
+        
+        verification_completion:
+          trigger_condition: 'Завершение аудита по UNIVERSAL_AUDIT_SYSTEM.md'
+          mandatory_actions:
+            - 'Документирование результатов аудита'
+            - 'Подтверждение отсутствия избыточности'
+            - 'РАЗБЛОКИРОВКА task_completion триггера'
+            - 'Разрешение на финальные отчеты'
+      
+      enforcement_mechanisms:
+        automatic_blocking: 'Автоматическая блокировка завершения без verification_phase'
+        explicit_announcements: 'Обязательные объявления о переходах между фазами'
+        state_validation: 'Проверка корректности текущего состояния workflow'
+        prerequisite_checking: 'Проверка выполнения prerequisites перед переходом к следующей фазе'
+      
+      failure_detection:
+        - 'Попытка завершения task без verification_phase'
+        - 'Пропуск объявления о переходе к verification_phase'
+        - 'Создание отчета о завершении без результатов аудита'
+        - 'Нарушение последовательности фаз workflow'
 
   trigger_activation:
     automatic_detection:
