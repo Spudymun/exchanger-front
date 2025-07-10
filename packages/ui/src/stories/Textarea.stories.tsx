@@ -4,7 +4,7 @@ import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 
 const meta: Meta<typeof Textarea> = {
-  title: 'UI/Textarea',
+  title: 'UI/Components/Textarea',
   component: Textarea,
   parameters: {
     layout: 'centered',
@@ -48,12 +48,27 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Базовое многострочное поле ввода с placeholder-подсказкой.',
+      },
+    },
+  },
   args: {
     placeholder: 'Введите ваш текст...',
   },
 };
 
 export const WithLabel: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Многострочное поле с подписью для обеспечения правильной доступности и связи элементов.',
+      },
+    },
+  },
   render: () => (
     <div className="space-y-2 w-80">
       <Label htmlFor="message">Сообщение</Label>
@@ -63,6 +78,13 @@ export const WithLabel: Story = {
 };
 
 export const WithRows: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Многострочное поле с фиксированным количеством строк для контроля высоты.',
+      },
+    },
+  },
   render: () => (
     <div className="space-y-2 w-80">
       <Label htmlFor="description">Описание</Label>
@@ -72,6 +94,13 @@ export const WithRows: Story = {
 };
 
 export const WithMaxLength: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Многострочное поле с ограничением максимального количества символов.',
+      },
+    },
+  },
   render: () => (
     <div className="space-y-2 w-80">
       <Label htmlFor="bio">Биография (до 200 символов)</Label>
@@ -81,6 +110,13 @@ export const WithMaxLength: Story = {
 };
 
 export const Required: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Обязательное многострочное поле с визуальным индикатором (звездочка).',
+      },
+    },
+  },
   render: () => (
     <div className="space-y-2 w-80">
       <Label htmlFor="feedback">
@@ -92,6 +128,13 @@ export const Required: Story = {
 };
 
 export const WithError: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Многострочное поле в состоянии ошибки с соответствующим индикатором и сообщением.',
+      },
+    },
+  },
   render: () => (
     <div className="space-y-2 w-80">
       <Label htmlFor="error-field">Поле с ошибкой</Label>
@@ -107,6 +150,13 @@ export const WithError: Story = {
 };
 
 export const Disabled: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Отключенное многострочное поле, недоступное для редактирования пользователем.',
+      },
+    },
+  },
   render: () => (
     <div className="space-y-2 w-80">
       <Label htmlFor="disabled-field">Отключенное поле</Label>
@@ -121,6 +171,13 @@ export const Disabled: Story = {
 };
 
 export const ResizableStates: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Демонстрация различных режимов изменения размера многострочного поля.',
+      },
+    },
+  },
   render: () => (
     <div className="space-y-6 w-80">
       <div className="space-y-2">
@@ -141,7 +198,14 @@ export const ResizableStates: Story = {
   ),
 };
 
-export const Different_Sizes: Story = {
+export const DifferentSizes: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Демонстрация различных размеров многострочного поля по количеству строк.',
+      },
+    },
+  },
   render: () => (
     <div className="space-y-6 w-80">
       <div className="space-y-2">

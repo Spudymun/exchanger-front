@@ -4,7 +4,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 
 const meta: Meta<typeof Label> = {
-  title: 'UI/Label',
+  title: 'UI/Components/Label',
   component: Label,
   parameters: {
     layout: 'centered',
@@ -31,12 +31,27 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Базовая подпись для элементов формы.',
+      },
+    },
+  },
   args: {
     children: 'Название поля',
   },
 };
 
 export const WithInput: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Подпись в связке с полем ввода для обеспечения правильной доступности и связи элементов.',
+      },
+    },
+  },
   render: () => (
     <div className="space-y-2">
       <Label htmlFor="username">Имя пользователя</Label>
@@ -46,6 +61,13 @@ export const WithInput: Story = {
 };
 
 export const Required: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Подпись для обязательного поля с визуальным индикатором (звездочка).',
+      },
+    },
+  },
   render: () => (
     <div className="space-y-2">
       <Label htmlFor="email-required">
@@ -58,6 +80,13 @@ export const Required: Story = {
 };
 
 export const WithDescription: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Подпись с дополнительным описанием для объяснения требований к полю.',
+      },
+    },
+  },
   render: () => (
     <div className="space-y-2">
       <Label htmlFor="password-desc">Пароль</Label>
@@ -70,6 +99,13 @@ export const WithDescription: Story = {
 };
 
 export const Disabled: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Подпись для отключенного поля с соответствующим визуальным состоянием.',
+      },
+    },
+  },
   render: () => (
     <div className="group" data-disabled="true">
       <div className="space-y-2">
@@ -81,6 +117,13 @@ export const Disabled: Story = {
 };
 
 export const ErrorState: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Подпись для поля в состоянии ошибки с соответствующим цветовым индикатором.',
+      },
+    },
+  },
   render: () => (
     <div className="space-y-2">
       <Label htmlFor="error-field" className="text-destructive">
@@ -93,6 +136,14 @@ export const ErrorState: Story = {
 };
 
 export const FormLabels: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Комплексный пример использования подписей в форме с различными типами полей и состояниями.',
+      },
+    },
+  },
   render: () => (
     <div className="space-y-6 w-80">
       <div className="space-y-2">

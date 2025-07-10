@@ -23,7 +23,7 @@ const REGISTRATION_DAY = 15;
 const LAST_LOGIN_DAY = 10;
 
 const meta: Meta<typeof Table> = {
-  title: 'UI/Table',
+  title: 'UI/Components/Table',
   component: Table,
   parameters: {
     layout: 'padded',

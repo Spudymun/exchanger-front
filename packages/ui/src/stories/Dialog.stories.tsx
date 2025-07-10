@@ -16,7 +16,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 
 const meta: Meta<typeof Dialog> = {
-  title: 'UI/Dialog',
+  title: 'UI/Components/Dialog',
   component: Dialog,
   parameters: {
     layout: 'centered',

@@ -1,0 +1,54 @@
+/* Storybook specific styles */
+.storybook-wrapper {
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    'Fira Sans',
+    'Droid Sans',
+    'Helvetica Neue',
+    sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ensure consistent spacing for stories */
+.storybook-wrapper > div {
+  max-width: 100%;
+}
+
+/* Custom scrollbar for better UX */
+.storybook-wrapper::-webkit-scrollbar {
+  width: 8px;
+}
+
+.storybook-wrapper::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+.storybook-wrapper::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 4px;
+}
+
+.storybook-wrapper::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
+}
+
+/* Enhanced focus states for accessibility */
+.storybook-wrapper *:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Dark mode specific adjustments */
+.dark .storybook-wrapper {
+  color-scheme: dark;
+}

@@ -4,7 +4,7 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 
 const meta: Meta<typeof Input> = {
-  title: 'UI/Input',
+  title: 'UI/Components/Input',
   component: Input,
   parameters: {
     layout: 'centered',
@@ -44,12 +44,26 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Базовое поле ввода текста с placeholder-подсказкой.',
+      },
+    },
+  },
   args: {
     placeholder: 'Введите текст...',
   },
 };
 
 export const WithLabel: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Поле ввода с подписью для лучшей доступности и понимания назначения поля.',
+      },
+    },
+  },
   render: () => (
     <div className="space-y-2">
       <Label htmlFor="email">Email адрес</Label>
@@ -59,6 +73,13 @@ export const WithLabel: Story = {
 };
 
 export const Password: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Поле ввода пароля с автоматическим скрытием символов для безопасности.',
+      },
+    },
+  },
   args: {
     type: 'password',
     placeholder: 'Введите пароль',
@@ -66,6 +87,14 @@ export const Password: Story = {
 };
 
 export const Number: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story:
+          'Числовое поле ввода с возможностью установки минимального и максимального значений.',
+      },
+    },
+  },
   args: {
     type: 'number',
     placeholder: '0',
@@ -75,6 +104,13 @@ export const Number: Story = {
 };
 
 export const Error: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Поле ввода в состоянии ошибки с соответствующим индикатором и сообщением.',
+      },
+    },
+  },
   render: () => (
     <div className="space-y-2">
       <Label htmlFor="error-input">Поле с ошибкой</Label>
@@ -85,6 +121,13 @@ export const Error: Story = {
 };
 
 export const Disabled: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Отключенное поле ввода, недоступное для редактирования пользователем.',
+      },
+    },
+  },
   args: {
     placeholder: 'Отключенное поле',
     disabled: true,
@@ -93,6 +136,13 @@ export const Disabled: Story = {
 };
 
 export const Search: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Поле поиска с соответствующим типом и семантикой для поисковых запросов.',
+      },
+    },
+  },
   args: {
     type: 'search',
     placeholder: 'Поиск...',
@@ -100,6 +150,13 @@ export const Search: Story = {
 };
 
 export const FileUpload: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Поле загрузки файлов с соответствующим типом и подписью.',
+      },
+    },
+  },
   render: () => (
     <div className="space-y-2">
       <Label htmlFor="file">Загрузить файл</Label>
@@ -109,6 +166,13 @@ export const FileUpload: Story = {
 };
 
 export const FormGroup: Story = {
+  parameters: {
+    docs: {
+      description: {
+        story: 'Группа полей формы, демонстрирующая различные типы полей ввода в едином контексте.',
+      },
+    },
+  },
   render: () => (
     <div className="space-y-4 w-80">
       <div className="space-y-2">

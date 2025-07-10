@@ -5,7 +5,7 @@ import { FormField, FormLabel, FormControl, FormMessage } from '../components/ui
 import { Input } from '../components/ui/input';
 
 const meta: Meta<typeof FormField> = {
-  title: 'UI/Form',
+  title: 'UI/Components/Form',
   component: FormField,
   parameters: {
     layout: 'centered',

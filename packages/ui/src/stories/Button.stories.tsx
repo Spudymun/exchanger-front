@@ -4,7 +4,7 @@ import { ChevronDown, Download, Heart, Mail, Plus, Search, Settings, Trash2 } fr
 import { Button } from '../components/ui/button';
 
 const meta: Meta<typeof Button> = {
-  title: 'UI/Button',
+  title: 'UI/Components/Button',
   component: Button,
   parameters: {
     layout: 'centered',
