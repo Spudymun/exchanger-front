@@ -1,8 +1,8 @@
 # 🚀 ExchangeGO Development Tasks - Part 4: UI Components & Forms
 
-**Дата создания:** 29 июня 2025  
-**Статус:** В разработке  
-**Покрытие:** UI библиотека, формы, компоненты, дизайн-система
+**Дата обновления:** 10 июля 2025  
+**Статус:** Актуализирован по реальной кодовой базе  
+**Покрытие:** UI библиотека, формы, компоненты, дизайн-система, Storybook
 
 ---
 
@@ -15,962 +15,365 @@
 - ✅ Применяет State Management и хуки (Part 3)
 - ✅ Реализует валидацию форм (Part 3)
 
-### Архитектурный подход:
+### Реальная архитектура (по состоянию кодовой базы):
 
-- **Design System** с Tailwind CSS
-- **Compound Components** для сложных UI
-- **Form Components** с интеграцией валидации
-- **Responsive Design** mobile-first
+- **✅ Design System** с Tailwind CSS (`@repo/design-tokens`)
+- **✅ UI Library** на базе Radix UI (`@repo/ui`)
+- **✅ Form Hooks** с Zod валидацией (`@repo/hooks`)
+- **✅ Storybook** для документации компонентов
+- **Responsive Design** mobile-first с design-tokens
 
 ---
 
 ## 🎨 PHASE 4: UI COMPONENTS & FORMS
 
-### TASK 4.1: Создать UI библиотеку с дизайн-системой
-
-**Время:** 3 часа  
-**Приоритет:** 🔴 Критический
-
-#### Описание
-
-Создать переиспользуемую UI библиотеку с компонентами, основанную на дизайн-токенах и Tailwind CSS.
-
-#### Технические требования
-
-```
-packages/ui/
-├── src/
-│   ├── index.ts              # Главный экспорт
-│   ├── components/           # UI компоненты
-│   │   ├── Button/
-│   │   │   ├── Button.tsx
-│   │   │   ├── Button.stories.tsx
-│   │   │   └── index.ts
-│   │   ├── Input/
-│   │   │   ├── Input.tsx
-│   │   │   ├── InputGroup.tsx
-│   │   │   └── index.ts
-│   │   ├── Card/
-│   │   ├── Modal/
-│   │   ├── Notification/
-│   │   └── Layout/
-│   ├── hooks/                # UI-specific хуки
-│   │   ├── useClickOutside.ts
-│   │   ├── useKeyboard.ts
-│   │   └── useMediaQuery.ts
-│   └── utils/                # UI утилиты
-│       ├── cn.ts             # classnames utility
-│       └── variants.ts       # variant helpers
-```
-
-#### Реализация
-
-1. **packages/ui/src/utils/cn.ts**
-
-```typescript
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-
-/**
- * Utility для объединения классов с поддержкой Tailwind CSS
- */
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-```
-
-2. **packages/ui/src/utils/variants.ts**
-
-```typescript
-import { type VariantProps, cva } from 'class-variance-authority';
-
-// Helper для создания вариантов компонентов
-export { cva, type VariantProps };
-
-// Общие варианты размеров
-export const sizeVariants = cva('', {
-  variants: {
-    size: {
-      xs: 'text-xs px-2 py-1',
-      sm: 'text-sm px-3 py-1.5',
-      md: 'text-sm px-4 py-2',
-      lg: 'text-base px-6 py-3',
-      xl: 'text-lg px-8 py-4',
-    },
-  },
-  defaultVariants: {
-    size: 'md',
-  },
-});
-
-// Общие варианты цветов
-export const colorVariants = {
-  primary: 'bg-blue-600 text-white hover:bg-blue-700',
-  secondary: 'bg-gray-600 text-white hover:bg-gray-700',
-  success: 'bg-green-600 text-white hover:bg-green-700',
-  warning: 'bg-yellow-600 text-white hover:bg-yellow-700',
-  error: 'bg-red-600 text-white hover:bg-red-700',
-  ghost: 'bg-transparent hover:bg-gray-100',
-  outline: 'border border-gray-300 bg-transparent hover:bg-gray-50',
-};
-```
-
-3. **packages/ui/src/components/Button/Button.tsx**
-
-```typescript
-import React from 'react';
-import { Slot } from '@radix-ui/react-slot';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '../../utils/cn';
-
-const buttonVariants = cva(
-  'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background',
-  {
-    variants: {
-      variant: {
-        primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
-        secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500',
-        success: 'bg-green-600 text-white hover:bg-green-700 focus:ring-green-500',
-        warning: 'bg-yellow-600 text-white hover:bg-yellow-700 focus:ring-yellow-500',
-        error: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
-        outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
-        link: 'text-primary underline-offset-4 hover:underline',
-      },
-      size: {
-        xs: 'h-7 px-2 text-xs',
-        sm: 'h-8 px-3 text-xs',
-        md: 'h-10 px-4 py-2',
-        lg: 'h-11 px-6',
-        xl: 'h-12 px-8',
-        icon: 'h-10 w-10',
-      },
-    },
-    defaultVariants: {
-      variant: 'primary',
-      size: 'md',
-    },
-  }
-);
-
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
-  loading?: boolean;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
-}
-
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, loading, leftIcon, rightIcon, children, disabled, ...props }, ref) => {
-    const Comp = asChild ? Slot : 'button';
-
-    const isDisabled = disabled || loading;
-
-    return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        disabled={isDisabled}
-        {...props}
-      >
-        {loading && (
-          <svg
-            className="mr-2 h-4 w-4 animate-spin"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            />
-          </svg>
-        )}
-        {!loading && leftIcon && <span className="mr-2">{leftIcon}</span>}
-        {children}
-        {!loading && rightIcon && <span className="ml-2">{rightIcon}</span>}
-      </Comp>
-    );
-  }
-);
-
-Button.displayName = 'Button';
-
-export { Button, buttonVariants };
-```
-
-4. **packages/ui/src/components/Input/Input.tsx**
-
-```typescript
-import React from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '../../utils/cn';
-
-const inputVariants = cva(
-  'flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
-  {
-    variants: {
-      variant: {
-        default: 'border-gray-300 focus:border-blue-500 focus:ring-blue-500',
-        error: 'border-red-500 focus:border-red-500 focus:ring-red-500',
-        success: 'border-green-500 focus:border-green-500 focus:ring-green-500',
-      },
-      size: {
-        sm: 'h-8 px-2 text-xs',
-        md: 'h-10 px-3',
-        lg: 'h-12 px-4 text-base',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-      size: 'md',
-    },
-  }
-);
-
-export interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement>,
-    VariantProps<typeof inputVariants> {
-  label?: string;
-  error?: string;
-  hint?: string;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
-  rightElement?: React.ReactNode;
-}
-
-const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, variant, size, label, error, hint, leftIcon, rightIcon, rightElement, id, ...props }, ref) => {
-    const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
-    const errorId = `${inputId}-error`;
-    const hintId = `${inputId}-hint`;
-
-    // Устанавливаем variant в error если есть ошибка
-    const currentVariant = error ? 'error' : variant;
-
-    return (
-      <div className="w-full">
-        {label && (
-          <label
-            htmlFor={inputId}
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            {label}
-          </label>
-        )}
-
-        <div className="relative">
-          {leftIcon && (
-            <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-              {leftIcon}
-            </div>
-          )}
-
-          <input
-            id={inputId}
-            className={cn(
-              inputVariants({ variant: currentVariant, size, className }),
-              leftIcon && 'pl-10',
-              (rightIcon || rightElement) && 'pr-10'
-            )}
-            ref={ref}
-            aria-invalid={!!error}
-            aria-describedby={cn(
-              error && errorId,
-              hint && hintId
-            )}
-            {...props}
-          />
-
-          {(rightIcon || rightElement) && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              {rightElement || rightIcon}
-            </div>
-          )}
-        </div>
-
-        {error && (
-          <p id={errorId} className="mt-1 text-sm text-red-600">
-            {error}
-          </p>
-        )}
-
-        {hint && !error && (
-          <p id={hintId} className="mt-1 text-sm text-gray-500">
-            {hint}
-          </p>
-        )}
-      </div>
-    );
-  }
-);
-
-Input.displayName = 'Input';
-
-export { Input, inputVariants };
-```
-
-5. **packages/ui/src/components/Input/InputGroup.tsx**
-
-```typescript
-import React from 'react';
-import { cn } from '../../utils/cn';
-
-interface InputGroupProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-export function InputGroup({ children, className }: InputGroupProps) {
-  return (
-    <div className={cn('flex', className)}>
-      {React.Children.map(children, (child, index) => {
-        if (!React.isValidElement(child)) return child;
-
-        const isFirst = index === 0;
-        const isLast = index === React.Children.count(children) - 1;
-
-        return React.cloneElement(child as React.ReactElement<any>, {
-          className: cn(
-            child.props.className,
-            !isFirst && '-ml-px',
-            !isFirst && !isLast && 'rounded-none',
-            isFirst && !isLast && 'rounded-r-none',
-            isLast && !isFirst && 'rounded-l-none'
-          ),
-        });
-      })}
-    </div>
-  );
-}
-```
-
-6. **packages/ui/src/components/Select/Select.tsx**
-
-```typescript
-import React from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '../../utils/cn';
-import { ChevronDownIcon } from '@heroicons/react/24/outline';
-
-const selectVariants = cva(
-  'flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
-  {
-    variants: {
-      variant: {
-        default: 'border-gray-300 focus:border-blue-500 focus:ring-blue-500',
-        error: 'border-red-500 focus:border-red-500 focus:ring-red-500',
-      },
-      size: {
-        sm: 'h-8 px-2 text-xs',
-        md: 'h-10 px-3',
-        lg: 'h-12 px-4 text-base',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-      size: 'md',
-    },
-  }
-);
-
-export interface SelectOption {
-  value: string;
-  label: string;
-  disabled?: boolean;
-}
-
-export interface SelectProps
-  extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'size'>,
-    VariantProps<typeof selectVariants> {
-  label?: string;
-  error?: string;
-  hint?: string;
-  options?: SelectOption[];
-  placeholder?: string;
-}
-
-const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, variant, size, label, error, hint, options, placeholder, id, children, ...props }, ref) => {
-    const selectId = id || `select-${Math.random().toString(36).substr(2, 9)}`;
-    const errorId = `${selectId}-error`;
-    const hintId = `${selectId}-hint`;
-
-    const currentVariant = error ? 'error' : variant;
-
-    return (
-      <div className="w-full">
-        {label && (
-          <label
-            htmlFor={selectId}
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            {label}
-          </label>
-        )}
-
-        <div className="relative">
-          <select
-            id={selectId}
-            className={cn(
-              selectVariants({ variant: currentVariant, size, className }),
-              'appearance-none pr-10 cursor-pointer'
-            )}
-            ref={ref}
-            aria-invalid={!!error}
-            aria-describedby={cn(
-              error && errorId,
-              hint && hintId
-            )}
-            {...props}
-          >
-            {placeholder && (
-              <option value="" disabled>
-                {placeholder}
-              </option>
-            )}
-
-            {options?.map((option) => (
-              <option
-                key={option.value}
-                value={option.value}
-                disabled={option.disabled}
-              >
-                {option.label}
-              </option>
-            ))}
-
-            {children}
-          </select>
-
-          <ChevronDownIcon className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-        </div>
-
-        {error && (
-          <p id={errorId} className="mt-1 text-sm text-red-600">
-            {error}
-          </p>
-        )}
-
-        {hint && !error && (
-          <p id={hintId} className="mt-1 text-sm text-gray-500">
-            {hint}
-          </p>
-        )}
-      </div>
-    );
-  }
-);
-
-Select.displayName = 'Select';
-
-export { Select, selectVariants };
-```
-
-7. **packages/ui/src/components/Card/Card.tsx**
-
-```typescript
-import React from 'react';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '../../utils/cn';
-
-const cardVariants = cva(
-  'rounded-lg border bg-card text-card-foreground shadow-sm',
-  {
-    variants: {
-      variant: {
-        default: 'border-gray-200 bg-white',
-        outlined: 'border-gray-300 bg-white',
-        elevated: 'border-gray-200 bg-white shadow-md',
-        ghost: 'border-transparent bg-transparent shadow-none',
-      },
-      padding: {
-        none: '',
-        sm: 'p-4',
-        md: 'p-6',
-        lg: 'p-8',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-      padding: 'md',
-    },
-  }
-);
-
-export interface CardProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof cardVariants> {}
-
-const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant, padding, ...props }, ref) => (
-    <div
-      ref={ref}
-      className={cn(cardVariants({ variant, padding, className }))}
-      {...props}
-    />
-  )
-);
-
-Card.displayName = 'Card';
-
-// Card sub-components
-const CardHeader = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn('flex flex-col space-y-1.5 p-6', className)}
-    {...props}
-  />
-));
-
-CardHeader.displayName = 'CardHeader';
-
-const CardTitle = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLHeadingElement>
->(({ className, children, ...props }, ref) => (
-  <h3
-    ref={ref}
-    className={cn('text-lg font-semibold leading-none tracking-tight', className)}
-    {...props}
-  >
-    {children}
-  </h3>
-));
-
-CardTitle.displayName = 'CardTitle';
-
-const CardDescription = React.forwardRef<
-  HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
->(({ className, ...props }, ref) => (
-  <p
-    ref={ref}
-    className={cn('text-sm text-muted-foreground', className)}
-    {...props}
-  />
-));
-
-CardDescription.displayName = 'CardDescription';
-
-const CardContent = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn('p-6 pt-0', className)} {...props} />
-));
-
-CardContent.displayName = 'CardContent';
-
-const CardFooter = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn('flex items-center p-6 pt-0', className)}
-    {...props}
-  />
-));
-
-CardFooter.displayName = 'CardFooter';
-
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent };
-```
-
-8. **packages/ui/src/components/Modal/Modal.tsx**
-
-```typescript
-import React from 'react';
-import { createPortal } from 'react-dom';
-import { XMarkIcon } from '@heroicons/react/24/outline';
-import { cn } from '../../utils/cn';
-import { Button } from '../Button';
-
-interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title?: string;
-  description?: string;
-  children: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
-  closeOnOverlayClick?: boolean;
-  closeOnEscape?: boolean;
-  showCloseButton?: boolean;
-  className?: string;
-}
-
-const sizeClasses = {
-  sm: 'max-w-md',
-  md: 'max-w-lg',
-  lg: 'max-w-2xl',
-  xl: 'max-w-4xl',
-  full: 'max-w-full',
-};
-
-export function Modal({
-  isOpen,
-  onClose,
-  title,
-  description,
-  children,
-  size = 'md',
-  closeOnOverlayClick = true,
-  closeOnEscape = true,
-  showCloseButton = true,
-  className,
-}: ModalProps) {
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
-
-  React.useEffect(() => {
-    if (!isOpen || !closeOnEscape) return;
-
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, closeOnEscape, onClose]);
-
-  React.useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-
-    return () => {
-      document.body.style.overflow = 'unset';
-    };
-  }, [isOpen]);
-
-  if (!mounted || !isOpen) return null;
-
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget && closeOnOverlayClick) {
-      onClose();
-    }
-  };
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
-      onClick={handleOverlayClick}
-    >
-      <div
-        className={cn(
-          'relative w-full bg-white rounded-lg shadow-xl',
-          sizeClasses[size],
-          className
-        )}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={title ? 'modal-title' : undefined}
-        aria-describedby={description ? 'modal-description' : undefined}
-      >
-        {/* Header */}
-        {(title || showCloseButton) && (
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <div>
-              {title && (
-                <h2 id="modal-title" className="text-lg font-semibold text-gray-900">
-                  {title}
-                </h2>
-              )}
-              {description && (
-                <p id="modal-description" className="mt-1 text-sm text-gray-500">
-                  {description}
-                </p>
-              )}
-            </div>
-            {showCloseButton && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <XMarkIcon className="h-5 w-5" />
-              </Button>
-            )}
-          </div>
-        )}
-
-        {/* Content */}
-        <div className="p-6">
-          {children}
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
-}
-
-// Modal compound components
-interface ModalHeaderProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-export function ModalHeader({ children, className }: ModalHeaderProps) {
-  return (
-    <div className={cn('p-6 border-b border-gray-200', className)}>
-      {children}
-    </div>
-  );
-}
-
-interface ModalBodyProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-export function ModalBody({ children, className }: ModalBodyProps) {
-  return (
-    <div className={cn('p-6', className)}>
-      {children}
-    </div>
-  );
-}
-
-interface ModalFooterProps {
-  children: React.ReactNode;
-  className?: string;
-}
-
-export function ModalFooter({ children, className }: ModalFooterProps) {
-  return (
-    <div className={cn('flex justify-end gap-3 p-6 border-t border-gray-200', className)}>
-      {children}
-    </div>
-  );
-}
-```
-
-9. **packages/ui/src/hooks/useClickOutside.ts**
-
-```typescript
-import React from 'react';
-
-/**
- * Hook для обработки кликов вне элемента
- */
-export function useClickOutside<T extends HTMLElement = HTMLElement>(handler: () => void) {
-  const ref = React.useRef<T>(null);
-
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        handler();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [handler]);
-
-  return ref;
-}
-```
-
-10. **packages/ui/src/hooks/useMediaQuery.ts**
-
-```typescript
-import React from 'react';
-
-/**
- * Hook для работы с media queries
- */
-export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = React.useState(false);
-
-  React.useEffect(() => {
-    const media = window.matchMedia(query);
-    if (media.matches !== matches) {
-      setMatches(media.matches);
-    }
-
-    const listener = () => setMatches(media.matches);
-    media.addEventListener('change', listener);
-
-    return () => media.removeEventListener('change', listener);
-  }, [matches, query]);
-
-  return matches;
-}
-
-// Предопределенные breakpoints
-export const useBreakpoint = () => {
-  const isSm = useMediaQuery('(min-width: 640px)');
-  const isMd = useMediaQuery('(min-width: 768px)');
-  const isLg = useMediaQuery('(min-width: 1024px)');
-  const isXl = useMediaQuery('(min-width: 1280px)');
-  const is2Xl = useMediaQuery('(min-width: 1536px)');
-
-  return {
-    isSm,
-    isMd,
-    isLg,
-    isXl,
-    is2Xl,
-    isMobile: !isSm,
-    isTablet: isSm && !isLg,
-    isDesktop: isLg,
-  };
-};
-```
-
-11. **packages/ui/src/index.ts**
-
-```typescript
-// Components
-export * from './components/Button';
-export * from './components/Input';
-export * from './components/Select';
-export * from './components/Card';
-export * from './components/Modal';
-
-// Hooks
-export * from './hooks/useClickOutside';
-export * from './hooks/useMediaQuery';
-
-// Utils
-export * from './utils/cn';
-export * from './utils/variants';
-```
-
-12. **packages/ui/package.json**
-
-```json
-{
-  "name": "@repo/ui",
-  "version": "0.0.1",
-  "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
-  "sideEffects": false,
-  "files": ["dist"],
-  "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts --external react",
-    "dev": "tsup src/index.ts --format esm,cjs --dts --external react --watch",
-    "lint": "eslint src/",
-    "clean": "rm -rf dist"
-  },
-  "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
-    "@types/react": "^18.2.61",
-    "@types/react-dom": "^18.2.19",
-    "eslint": "^8.57.0",
-    "react": "^18.2.0",
-    "tsup": "^8.0.2",
-    "typescript": "^5.3.3"
-  },
-  "dependencies": {
-    "@heroicons/react": "^2.0.18",
-    "@radix-ui/react-slot": "^1.0.2",
-    "class-variance-authority": "^0.7.0",
-    "clsx": "^2.1.0",
-    "tailwind-merge": "^2.2.1"
-  },
-  "peerDependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
-  }
-}
-```
-
-#### Юзкейсы и Edge Cases
-
-1. **Accessibility**
-   - ✅ ARIA attributes для всех компонентов
-   - ✅ Keyboard navigation поддержка
-   - ✅ Focus management в модалках
-   - ✅ Screen reader compatibility
-
-2. **Responsive Design**
-   - ✅ Mobile-first подход
-   - ✅ Breakpoint hooks
-   - ✅ Adaptive компоненты
-   - ✅ Touch-friendly размеры
-
-3. **Variant System**
-   - ✅ Consistent design tokens
-   - ✅ Type-safe variants
-   - ✅ Customizable themes
-   - ✅ Easy extension
-
-4. **Developer Experience**
-   - ✅ TypeScript типизация
-   - ✅ Compound components
-   - ✅ Ref forwarding
-   - ✅ Storybook stories
-
-#### Чек-лист готовности
-
-- [ ] Все базовые компоненты созданы
-- [ ] TypeScript типизация корректна
-- [ ] Accessibility требования выполнены
-- [ ] Responsive design работает
-- [ ] Variant system настроен
-- [ ] Package.json настроен правильно
-
----
-
-### TASK 4.2: Создать компоненты форм с валидацией
+### TASK 4.1: Расширить существующую UI библиотеку
 
 **Время:** 2.5 часа  
 **Приоритет:** 🔴 Критический
 
 #### Описание
 
-Создать специализированные форм-компоненты для ExchangeGO с интеграцией валидации и бизнес-логики.
+Дополнить существующую UI библиотеку `@repo/ui` недостающими компонентами для криптообменника, используя уже настроенную архитектуру на базе Radix UI.
 
-#### Реализация
+#### Текущее состояние UI библиотеки
 
-1. **apps/web/src/components/forms/ExchangeForm/ExchangeForm.tsx**
+```
+packages/ui/
+├── src/
+│   ├── index.ts              # ✅ Главный экспорт
+│   ├── components/           # ✅ UI компоненты
+│   │   ├── ui/               # ✅ Базовые Radix UI компоненты
+│   │   │   ├── button.tsx    # ✅ ГОТОВ
+│   │   │   ├── card.tsx      # ✅ ГОТОВ
+│   │   │   ├── input.tsx     # ✅ ГОТОВ
+│   │   │   ├── select.tsx    # ✅ ГОТОВ
+│   │   │   ├── dialog.tsx    # ✅ ГОТОВ
+│   │   │   ├── table.tsx     # ✅ ГОТОВ
+│   │   │   └── ...           # ✅ Другие компоненты
+│   │   ├── data-table.tsx    # ✅ ГОТОВ
+│   │   ├── tree-view.tsx     # ✅ ГОТОВ
+│   │   └── theme-toggle.tsx  # ✅ ГОТОВ
+│   ├── lib/
+│   │   └── utils.ts          # ✅ cn() функция готова
+│   ├── stories/              # ✅ Storybook stories
+│   │   ├── Button.stories.ts # ✅ ГОТОВ
+│   │   └── ...               # ✅ Другие stories
+│   └── styles/               # ✅ Глобальные стили
+└── package.json              # ✅ НАСТРОЕН (Radix UI deps)
+```
+
+#### Необходимые дополнения
+
+1. **packages/ui/src/components/ui/notification.tsx**
 
 ```typescript
-import React from 'react';
-import { z } from 'zod';
-import { Button, Input, Select, Card, CardHeader, CardTitle, CardContent } from '@repo/ui';
-import { useForm } from '~/hooks/useForm';
-import { useExchange } from '~/hooks/useExchange';
-import { CRYPTOCURRENCIES, CURRENCY_LIMITS } from '@repo/constants';
-import { ArrowsUpDownIcon, CalculatorIcon } from '@heroicons/react/24/outline';
+import * as React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from 'lucide-react';
+import { cn } from '../../lib/utils';
 
-// Валидация схема
+const notificationVariants = cva(
+  'relative w-full rounded-lg border p-4 [&>svg~*]:pl-7 [&>svg+div]:translate-y-[-3px] [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg]:text-foreground',
+  {
+    variants: {
+      variant: {
+        default: 'bg-background text-foreground',
+        destructive: 'border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive',
+        success: 'border-green-500/50 text-green-700 dark:border-green-500 [&>svg]:text-green-600',
+        warning: 'border-yellow-500/50 text-yellow-700 dark:border-yellow-500 [&>svg]:text-yellow-600',
+        info: 'border-blue-500/50 text-blue-700 dark:border-blue-500 [&>svg]:text-blue-600',
+      },
+    },
+    defaultVariants: {
+      variant: 'default',
+    },
+  }
+);
+
+const Notification = React.forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof notificationVariants> & {
+    onClose?: () => void;
+    title?: string;
+    description?: string;
+  }
+>(({ className, variant, onClose, title, description, children, ...props }, ref) => {
+  const Icon = {
+    success: CheckCircle,
+    destructive: AlertCircle,
+    warning: AlertTriangle,
+    info: Info,
+    default: Info,
+  }[variant || 'default'];
+
+  return (
+    <div
+      ref={ref}
+      role="alert"
+      className={cn(notificationVariants({ variant }), className)}
+      {...props}
+    >
+      <Icon className="h-4 w-4" />
+      {onClose && (
+        <button
+          onClick={onClose}
+          className="absolute right-2 top-2 rounded-md p-1 opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+        >
+          <X className="h-3 w-3" />
+          <span className="sr-only">Закрыть</span>
+        </button>
+      )}
+      <div>
+        {title && <div className="mb-1 font-medium leading-none tracking-tight">{title}</div>}
+        {description && <div className="text-sm [&_p]:leading-relaxed">{description}</div>}
+        {children}
+      </div>
+    </div>
+  );
+});
+
+Notification.displayName = 'Notification';
+
+export { Notification, notificationVariants };
+```
+
+2. **packages/ui/src/components/ui/form.tsx**
+
+```typescript
+import * as React from 'react';
+import { Slot } from '@radix-ui/react-slot';
+import { cn } from '../../lib/utils';
+
+// Form Field Context
+const FormFieldContext = React.createContext<{
+  name: string;
+  error?: string;
+  required?: boolean;
+}>({} as any);
+
+// Form Field Component
+export interface FormFieldProps {
+  name: string;
+  error?: string;
+  required?: boolean;
+  children: React.ReactNode;
+}
+
+export const FormField = ({ name, error, required, children }: FormFieldProps) => {
+  return (
+    <FormFieldContext.Provider value={{ name, error, required }}>
+      <div className="space-y-2">
+        {children}
+      </div>
+    </FormFieldContext.Provider>
+  );
+};
+
+// Form Label
+export const FormLabel = React.forwardRef<
+  HTMLLabelElement,
+  React.ComponentPropsWithoutRef<'label'>
+>(({ className, ...props }, ref) => {
+  const { required } = React.useContext(FormFieldContext);
+
+  return (
+    <label
+      ref={ref}
+      className={cn(
+        'text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70',
+        className
+      )}
+      {...props}
+    >
+      {props.children}
+      {required && <span className="ml-1 text-destructive">*</span>}
+    </label>
+  );
+});
+
+FormLabel.displayName = 'FormLabel';
+
+// Form Message
+export const FormMessage = React.forwardRef<
+  HTMLParagraphElement,
+  React.ComponentPropsWithoutRef<'p'>
+>(({ className, children, ...props }, ref) => {
+  const { error } = React.useContext(FormFieldContext);
+  const body = error || children;
+
+  if (!body) return null;
+
+  return (
+    <p
+      ref={ref}
+      className={cn(
+        'text-sm font-medium',
+        error ? 'text-destructive' : 'text-muted-foreground',
+        className
+      )}
+      {...props}
+    >
+      {body}
+    </p>
+  );
+});
+
+FormMessage.displayName = 'FormMessage';
+
+// Form Control (wrapper for inputs)
+export const FormControl = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentPropsWithoutRef<'div'>
+>(({ ...props }, ref) => {
+  const { error, name } = React.useContext(FormFieldContext);
+
+  return (
+    <Slot
+      ref={ref}
+      id={name}
+      aria-describedby={error ? `${name}-error` : undefined}
+      aria-invalid={!!error}
+      {...props}
+    />
+  );
+});
+
+FormControl.displayName = 'FormControl';
+```
+
+3. **packages/ui/src/components/ui/spinner.tsx**
+
+```typescript
+import * as React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '../../lib/utils';
+
+const spinnerVariants = cva(
+  'animate-spin rounded-full border-solid border-current border-r-transparent',
+  {
+    variants: {
+      size: {
+        sm: 'h-4 w-4 border-2',
+        md: 'h-6 w-6 border-2',
+        lg: 'h-8 w-8 border-[3px]',
+        xl: 'h-12 w-12 border-4',
+      },
+    },
+    defaultVariants: {
+      size: 'md',
+    },
+  }
+);
+
+export interface SpinnerProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof spinnerVariants> {}
+
+const Spinner = React.forwardRef<HTMLDivElement, SpinnerProps>(
+  ({ className, size, ...props }, ref) => {
+    return (
+      <div
+        ref={ref}
+        className={cn(spinnerVariants({ size }), className)}
+        role="status"
+        aria-label="Загрузка"
+        {...props}
+      >
+        <span className="sr-only">Загрузка...</span>
+      </div>
+    );
+  }
+);
+
+Spinner.displayName = 'Spinner';
+
+export { Spinner, spinnerVariants };
+```
+
+#### Обновление экспортов
+
+4. **packages/ui/src/components/index.ts** (дополнить существующий)
+
+```typescript
+// ...existing exports...
+
+// Новые компоненты
+export { Notification, notificationVariants } from './ui/notification';
+export { FormField, FormLabel, FormMessage, FormControl } from './ui/form';
+export { Spinner, spinnerVariants } from './ui/spinner';
+```
+
+#### Чек-лист готовности
+
+- [ ] Notification компонент добавлен
+- [ ] Form компоненты добавлены
+- [ ] Spinner компонент добавлен
+- [ ] Экспорты обновлены
+- [ ] TypeScript типизация корректна
+- [ ] Интеграция с существующей архитектурой Radix UI
+
+---
+
+### TASK 4.2: Создать форм-компоненты для web-приложения
+
+**Время:** 2.5 часа  
+**Приоритет:** 🔴 Критический
+
+#### Описание
+
+Создать специализированные форм-компоненты для ExchangeGO web-приложения с интеграцией с существующими хуками `useForm` и `useExchange`.
+
+#### Текущее состояние
+
+```
+apps/web/src/components/
+├── AuthProvider.tsx        # ✅ ГОТОВ
+├── ExchangeRates.tsx       # ✅ ГОТОВ - показ курсов
+└── OrderStatus.tsx         # ✅ ГОТОВ
+
+packages/hooks/src/business/
+├── useForm.ts              # ✅ ГОТОВ - с Zod валидацией
+├── useExchange.ts          # ✅ ГОТОВ - бизнес-логика обмена
+└── useAuth.ts              # ✅ ГОТОВ - аутентификация
+```
+
+#### Необходимые компоненты
+
+1. **apps/web/src/components/forms/ExchangeForm.tsx**
+
+```typescript
+'use client';
+
+import { useState } from 'react';
+import { z } from 'zod';
+import {
+  Button,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Notification,
+  Spinner
+} from '@repo/ui';
+import { useForm, useExchange } from '@repo/hooks';
+import { CRYPTOCURRENCIES } from '@repo/constants';
+import { ArrowLeftRightIcon, CalculatorIcon } from 'lucide-react';
+
+// Схема валидации для формы обмена
 const exchangeFormSchema = z.object({
-  amount: z.string()
+  fromAmount: z.string()
     .min(1, 'Введите сумму')
     .regex(/^\d+(\.\d{1,8})?$/, 'Некорректный формат суммы'),
-  currency: z.enum(CRYPTOCURRENCIES),
-  direction: z.enum(['crypto-to-uah', 'uah-to-crypto']),
-  recipientEmail: z.string().email('Введите корректный email'),
+  fromCurrency: z.enum(CRYPTOCURRENCIES),
+  direction: z.enum(['buy', 'sell']),
+  userEmail: z.string().email('Введите корректный email'),
 });
 
 type ExchangeFormData = z.infer<typeof exchangeFormSchema>;
@@ -981,57 +384,45 @@ interface ExchangeFormProps {
 
 export function ExchangeForm({ onSubmit }: ExchangeFormProps) {
   const exchange = useExchange();
+  const [showCalculation, setShowCalculation] = useState(false);
 
   const form = useForm<ExchangeFormData>({
     initialValues: {
-      amount: exchange.formData.amount,
-      currency: exchange.formData.currency,
-      direction: exchange.formData.direction,
-      recipientEmail: exchange.formData.recipientEmail,
+      fromAmount: exchange.formData.fromAmount || '',
+      fromCurrency: exchange.formData.fromCurrency || 'BTC',
+      direction: exchange.formData.direction || 'sell',
+      userEmail: exchange.formData.userEmail || '',
     },
     validationSchema: exchangeFormSchema,
     onSubmit: async (values) => {
-      // Синхронизируем с store
+      // Обновляем store
       exchange.updateFormData(values);
 
-      // Рассчитываем обмен
-      await exchange.calculateExchange();
+      // Создаем заявку
+      const result = await exchange.createOrder();
 
-      onSubmit?.();
+      if (result.success) {
+        onSubmit?.();
+      }
     },
   });
 
-  // Синхронизация с exchange store
-  React.useEffect(() => {
-    const { amount, currency, direction, recipientEmail } = form.values;
-    exchange.updateFormData({ amount, currency, direction, recipientEmail });
-  }, [form.values]);
+  // Автоматический расчет при изменении суммы
+  const handleAmountChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    form.setValue('fromAmount', e.target.value);
 
-  // Получаем лимиты для текущей валюты
-  const currentLimits = CURRENCY_LIMITS[form.values.currency];
-  const displayRate = exchange.getDisplayRate();
-
-  // Обработчики
-  const handleSwapDirection = () => {
-    const newDirection = form.values.direction === 'crypto-to-uah'
-      ? 'uah-to-crypto'
-      : 'crypto-to-uah';
-
-    form.setValue('direction', newDirection);
-
-    // Если есть расчет, используем полученную сумму
-    if (exchange.calculation) {
-      const newAmount = form.values.direction === 'crypto-to-uah'
-        ? exchange.calculation.uahAmount.toString()
-        : exchange.calculation.cryptoAmount.toString();
-      form.setValue('amount', newAmount);
+    if (e.target.value && !isNaN(Number(e.target.value))) {
+      await exchange.calculateExchange();
+      setShowCalculation(true);
+    } else {
+      setShowCalculation(false);
     }
   };
 
-  const handleCalculate = async () => {
-    if (form.validate()) {
-      await exchange.calculateExchange();
-    }
+  const handleDirectionSwap = () => {
+    const newDirection = form.values.direction === 'buy' ? 'sell' : 'buy';
+    form.setValue('direction', newDirection);
+    exchange.updateFormData({ ...form.values, direction: newDirection });
   };
 
   const currencyOptions = CRYPTOCURRENCIES.map(currency => ({
@@ -1041,11 +432,8 @@ export function ExchangeForm({ onSubmit }: ExchangeFormProps) {
                             currency === 'USDT' ? 'Tether' : 'Litecoin'}`,
   }));
 
-  const isFromCrypto = form.values.direction === 'crypto-to-uah';
-  const amountLabel = isFromCrypto ? `Отдаете (${form.values.currency})` : 'Отдаете (UAH)';
-  const amountHint = isFromCrypto
-    ? `Мин: ${currentLimits.minCrypto}, Макс: ${currentLimits.maxCrypto} ${form.values.currency}`
-    : `Мин: ${currentLimits.minUah}, Макс: ${currentLimits.maxUah} UAH`;
+  const isFromCrypto = form.values.direction === 'sell';
+  const amountLabel = isFromCrypto ? `Продаете (${form.values.fromCurrency})` : 'Покупаете (UAH)';
 
   return (
     <Card>
@@ -1058,95 +446,95 @@ export function ExchangeForm({ onSubmit }: ExchangeFormProps) {
           {/* Направление обмена */}
           <div className="flex items-center justify-center space-x-4 p-4 bg-gray-50 rounded-lg">
             <span className="text-sm font-medium">
-              {isFromCrypto ? 'Крипта → UAH' : 'UAH → Крипта'}
+              {isFromCrypto ? 'Продажа → UAH' : 'Покупка ← UAH'}
             </span>
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              onClick={handleSwapDirection}
-              leftIcon={<ArrowsUpDownIcon className="h-4 w-4" />}
+              onClick={handleDirectionSwap}
             >
-              Поменять
+              <ArrowLeftRightIcon className="h-4 w-4" />
             </Button>
           </div>
 
-          {/* Валюта */}
-          <Select
-            {...form.getFieldProps('currency')}
-            label="Криптовалюта"
-            options={currencyOptions}
-            error={form.getFieldError('currency')?.message}
-          />
+          {/* Выбор валюты */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Криптовалюта</label>
+            <Select
+              value={form.values.fromCurrency}
+              onValueChange={(value) => form.setValue('fromCurrency', value as any)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Выберите валюту" />
+              </SelectTrigger>
+              <SelectContent>
+                {currencyOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Текущий курс */}
-          {displayRate && (
+          {exchange.rates && (
             <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
               <div className="text-sm text-blue-800">
-                <div className="font-medium">{displayRate.formattedRate}</div>
-                <div className="text-xs mt-1">{displayRate.formattedCommission}</div>
+                <div className="font-medium">
+                  1 {form.values.fromCurrency} = {exchange.rates[form.values.fromCurrency]?.toLocaleString()} UAH
+                </div>
               </div>
             </div>
           )}
 
           {/* Сумма */}
           <Input
-            {...form.getFieldProps('amount')}
-            type="text"
             label={amountLabel}
+            type="text"
             placeholder="0.00"
-            hint={amountHint}
-            error={form.getFieldError('amount')?.message}
-            rightElement={
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleCalculate}
-                disabled={exchange.isCalculating}
-                loading={exchange.isCalculating}
-              >
-                <CalculatorIcon className="h-4 w-4" />
-              </Button>
-            }
+            value={form.values.fromAmount}
+            onChange={handleAmountChange}
+            error={form.errors.fromAmount}
           />
 
           {/* Результат расчета */}
-          {exchange.calculation && (
+          {showCalculation && exchange.calculation && (
             <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
               <div className="text-sm text-green-800">
                 <div className="flex justify-between items-center">
                   <span>Получите:</span>
                   <span className="font-bold text-lg">
                     {isFromCrypto
-                      ? `₴${exchange.calculation.uahAmount.toLocaleString()}`
-                      : `${exchange.calculation.cryptoAmount} ${form.values.currency}`
+                      ? `₴${exchange.calculation.toAmount.toLocaleString()}`
+                      : `${exchange.calculation.toAmount} ${form.values.fromCurrency}`
                     }
                   </span>
                 </div>
                 <div className="flex justify-between items-center mt-2 text-xs">
                   <span>Комиссия:</span>
-                  <span>₴{exchange.calculation.commissionAmount.toFixed(2)}</span>
+                  <span>₴{exchange.calculation.fee.toFixed(2)}</span>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Email получателя */}
+          {/* Email */}
           <Input
-            {...form.getFieldProps('recipientEmail')}
-            type="email"
             label="Email для уведомлений"
+            type="email"
             placeholder="example@email.com"
-            hint="На этот email будут отправлены детали заявки"
-            error={form.getFieldError('recipientEmail')?.message}
+            value={form.values.userEmail}
+            onChange={(e) => form.setValue('userEmail', e.target.value)}
+            error={form.errors.userEmail}
           />
 
           {/* Ошибки */}
           {exchange.error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-800">{exchange.error}</p>
-            </div>
+            <Notification variant="destructive" title="Ошибка">
+              {exchange.error}
+            </Notification>
           )}
 
           {/* Submit */}
@@ -1155,8 +543,8 @@ export function ExchangeForm({ onSubmit }: ExchangeFormProps) {
             size="lg"
             className="w-full"
             disabled={!exchange.calculation || form.isSubmitting}
-            loading={form.isSubmitting}
           >
+            {form.isSubmitting && <Spinner size="sm" className="mr-2" />}
             {exchange.calculation ? 'Создать заявку' : 'Рассчитать обмен'}
           </Button>
         </form>
@@ -1166,139 +554,31 @@ export function ExchangeForm({ onSubmit }: ExchangeFormProps) {
 }
 ```
 
-2. **apps/web/src/components/forms/AuthForms/LoginForm.tsx**
+2. **apps/web/src/components/forms/AuthForms.tsx**
 
 ```typescript
-import React from 'react';
-import { z } from 'zod';
-import { Button, Input, Card, CardHeader, CardTitle, CardContent } from '@repo/ui';
-import { useForm } from '~/hooks/useForm';
-import { useAuth } from '~/hooks/useAuth';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+'use client';
 
+import { useState } from 'react';
+import { z } from 'zod';
+import {
+  Button,
+  Input,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Notification,
+  Spinner
+} from '@repo/ui';
+import { useForm, useEnhancedAuth } from '@repo/hooks';
+import { EyeIcon, EyeOffIcon, CheckIcon, XIcon } from 'lucide-react';
+
+// Схемы валидации
 const loginSchema = z.object({
   email: z.string().email('Введите корректный email'),
   password: z.string().min(1, 'Введите пароль'),
 });
-
-type LoginFormData = z.infer<typeof loginSchema>;
-
-interface LoginFormProps {
-  onSuccess?: () => void;
-  onRegisterClick?: () => void;
-  onForgotPasswordClick?: () => void;
-}
-
-export function LoginForm({ onSuccess, onRegisterClick, onForgotPasswordClick }: LoginFormProps) {
-  const auth = useAuth();
-  const [showPassword, setShowPassword] = React.useState(false);
-
-  const form = useForm<LoginFormData>({
-    initialValues: {
-      email: '',
-      password: '',
-    },
-    validationSchema: loginSchema,
-    onSubmit: async (values) => {
-      try {
-        await auth.login(values.email, values.password);
-        onSuccess?.();
-      } catch (error) {
-        // Ошибка уже обработана в useAuth
-      }
-    },
-  });
-
-  return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>Вход в систему</CardTitle>
-      </CardHeader>
-
-      <CardContent>
-        <form onSubmit={form.handleSubmit} className="space-y-4">
-          <Input
-            {...form.getFieldProps('email')}
-            type="email"
-            label="Email"
-            placeholder="example@email.com"
-            error={form.getFieldError('email')?.message}
-            autoComplete="email"
-          />
-
-          <Input
-            {...form.getFieldProps('password')}
-            type={showPassword ? 'text' : 'password'}
-            label="Пароль"
-            placeholder="Введите пароль"
-            error={form.getFieldError('password')?.message}
-            autoComplete="current-password"
-            rightElement={
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                {showPassword ?
-                  <EyeSlashIcon className="h-4 w-4" /> :
-                  <EyeIcon className="h-4 w-4" />
-                }
-              </button>
-            }
-          />
-
-          {auth.error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-800">{auth.error}</p>
-            </div>
-          )}
-
-          <Button
-            type="submit"
-            size="lg"
-            className="w-full"
-            loading={form.isSubmitting || auth.isLoading}
-            disabled={!form.isValid}
-          >
-            Войти
-          </Button>
-
-          <div className="space-y-2 text-center">
-            <button
-              type="button"
-              onClick={onForgotPasswordClick}
-              className="text-sm text-blue-600 hover:text-blue-700 hover:underline"
-            >
-              Забыли пароль?
-            </button>
-
-            <div className="text-sm text-gray-600">
-              Нет аккаунта?{' '}
-              <button
-                type="button"
-                onClick={onRegisterClick}
-                className="text-blue-600 hover:text-blue-700 hover:underline font-medium"
-              >
-                Зарегистрироваться
-              </button>
-            </div>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
-  );
-}
-```
-
-3. **apps/web/src/components/forms/AuthForms/RegisterForm.tsx**
-
-```typescript
-import React from 'react';
-import { z } from 'zod';
-import { Button, Input, Card, CardHeader, CardTitle, CardContent } from '@repo/ui';
-import { useForm } from '~/hooks/useForm';
-import { useAuth } from '~/hooks/useAuth';
-import { EyeIcon, EyeSlashIcon, CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
 const registerSchema = z.object({
   email: z.string().email('Введите корректный email'),
@@ -1313,31 +593,117 @@ const registerSchema = z.object({
   path: ['confirmPassword'],
 });
 
+type LoginFormData = z.infer<typeof loginSchema>;
 type RegisterFormData = z.infer<typeof registerSchema>;
 
+// Login Form
+interface LoginFormProps {
+  onSuccess?: () => void;
+  onRegisterClick?: () => void;
+}
+
+export function LoginForm({ onSuccess, onRegisterClick }: LoginFormProps) {
+  const auth = useEnhancedAuth();
+  const [showPassword, setShowPassword] = useState(false);
+
+  const form = useForm<LoginFormData>({
+    initialValues: { email: '', password: '' },
+    validationSchema: loginSchema,
+    onSubmit: async (values) => {
+      const result = await auth.login(values.email, values.password);
+      if (result.success) {
+        onSuccess?.();
+      }
+    },
+  });
+
+  return (
+    <Card className="w-full max-w-md">
+      <CardHeader>
+        <CardTitle>Вход в систему</CardTitle>
+      </CardHeader>
+
+      <CardContent>
+        <form onSubmit={form.handleSubmit} className="space-y-4">
+          <Input
+            label="Email"
+            type="email"
+            placeholder="example@email.com"
+            value={form.values.email}
+            onChange={(e) => form.setValue('email', e.target.value)}
+            error={form.errors.email}
+            autoComplete="email"
+          />
+
+          <Input
+            label="Пароль"
+            type={showPassword ? 'text' : 'password'}
+            placeholder="Введите пароль"
+            value={form.values.password}
+            onChange={(e) => form.setValue('password', e.target.value)}
+            error={form.errors.password}
+            autoComplete="current-password"
+            rightElement={
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+              </button>
+            }
+          />
+
+          {auth.error && (
+            <Notification variant="destructive">
+              {auth.error}
+            </Notification>
+          )}
+
+          <Button
+            type="submit"
+            size="lg"
+            className="w-full"
+            disabled={!form.isValid}
+          >
+            {form.isSubmitting && <Spinner size="sm" className="mr-2" />}
+            Войти
+          </Button>
+
+          <div className="text-center text-sm text-gray-600">
+            Нет аккаунта?{' '}
+            <button
+              type="button"
+              onClick={onRegisterClick}
+              className="text-blue-600 hover:text-blue-700 hover:underline font-medium"
+            >
+              Зарегистрироваться
+            </button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Register Form
 interface RegisterFormProps {
   onSuccess?: () => void;
   onLoginClick?: () => void;
 }
 
 export function RegisterForm({ onSuccess, onLoginClick }: RegisterFormProps) {
-  const auth = useAuth();
-  const [showPassword, setShowPassword] = React.useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = React.useState(false);
+  const auth = useEnhancedAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm<RegisterFormData>({
-    initialValues: {
-      email: '',
-      password: '',
-      confirmPassword: '',
-    },
+    initialValues: { email: '', password: '', confirmPassword: '' },
     validationSchema: registerSchema,
     onSubmit: async (values) => {
-      try {
-        await auth.register(values.email, values.password);
+      const result = await auth.register(values.email, values.password);
+      if (result.success) {
         onSuccess?.();
-      } catch (error) {
-        // Ошибка уже обработана в useAuth
       }
     },
   });
@@ -1362,20 +728,22 @@ export function RegisterForm({ onSuccess, onLoginClick }: RegisterFormProps) {
       <CardContent>
         <form onSubmit={form.handleSubmit} className="space-y-4">
           <Input
-            {...form.getFieldProps('email')}
-            type="email"
             label="Email"
+            type="email"
             placeholder="example@email.com"
-            error={form.getFieldError('email')?.message}
+            value={form.values.email}
+            onChange={(e) => form.setValue('email', e.target.value)}
+            error={form.errors.email}
             autoComplete="email"
           />
 
           <Input
-            {...form.getFieldProps('password')}
-            type={showPassword ? 'text' : 'password'}
             label="Пароль"
+            type={showPassword ? 'text' : 'password'}
             placeholder="Создайте надежный пароль"
-            error={form.getFieldError('password')?.message}
+            value={form.values.password}
+            onChange={(e) => form.setValue('password', e.target.value)}
+            error={form.errors.password}
             autoComplete="new-password"
             rightElement={
               <button
@@ -1383,10 +751,7 @@ export function RegisterForm({ onSuccess, onLoginClick }: RegisterFormProps) {
                 onClick={() => setShowPassword(!showPassword)}
                 className="text-gray-400 hover:text-gray-600"
               >
-                {showPassword ?
-                  <EyeSlashIcon className="h-4 w-4" /> :
-                  <EyeIcon className="h-4 w-4" />
-                }
+                {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
               </button>
             }
           />
@@ -1401,7 +766,7 @@ export function RegisterForm({ onSuccess, onLoginClick }: RegisterFormProps) {
                     {isValid ? (
                       <CheckIcon className="h-3 w-3 text-green-500" />
                     ) : (
-                      <XMarkIcon className="h-3 w-3 text-gray-400" />
+                      <XIcon className="h-3 w-3 text-gray-400" />
                     )}
                     <span className={isValid ? 'text-green-600' : 'text-gray-500'}>
                       {req.label}
@@ -1413,11 +778,12 @@ export function RegisterForm({ onSuccess, onLoginClick }: RegisterFormProps) {
           )}
 
           <Input
-            {...form.getFieldProps('confirmPassword')}
-            type={showConfirmPassword ? 'text' : 'password'}
             label="Подтвердите пароль"
+            type={showConfirmPassword ? 'text' : 'password'}
             placeholder="Повторите пароль"
-            error={form.getFieldError('confirmPassword')?.message}
+            value={form.values.confirmPassword}
+            onChange={(e) => form.setValue('confirmPassword', e.target.value)}
+            error={form.errors.confirmPassword}
             autoComplete="new-password"
             rightElement={
               <button
@@ -1425,41 +791,36 @@ export function RegisterForm({ onSuccess, onLoginClick }: RegisterFormProps) {
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 className="text-gray-400 hover:text-gray-600"
               >
-                {showConfirmPassword ?
-                  <EyeSlashIcon className="h-4 w-4" /> :
-                  <EyeIcon className="h-4 w-4" />
-                }
+                {showConfirmPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
               </button>
             }
           />
 
           {auth.error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-800">{auth.error}</p>
-            </div>
+            <Notification variant="destructive">
+              {auth.error}
+            </Notification>
           )}
 
           <Button
             type="submit"
             size="lg"
             className="w-full"
-            loading={form.isSubmitting || auth.isLoading}
             disabled={!form.isValid}
           >
+            {form.isSubmitting && <Spinner size="sm" className="mr-2" />}
             Зарегистрироваться
           </Button>
 
-          <div className="text-center">
-            <div className="text-sm text-gray-600">
-              Уже есть аккаунт?{' '}
-              <button
-                type="button"
-                onClick={onLoginClick}
-                className="text-blue-600 hover:text-blue-700 hover:underline font-medium"
-              >
-                Войти
-              </button>
-            </div>
+          <div className="text-center text-sm text-gray-600">
+            Уже есть аккаунт?{' '}
+            <button
+              type="button"
+              onClick={onLoginClick}
+              className="text-blue-600 hover:text-blue-700 hover:underline font-medium"
+            >
+              Войти
+            </button>
           </div>
         </form>
       </CardContent>
@@ -1468,68 +829,376 @@ export function RegisterForm({ onSuccess, onLoginClick }: RegisterFormProps) {
 }
 ```
 
-4. **apps/web/src/components/forms/index.ts**
+3. **apps/web/src/components/forms/index.ts**
 
 ```typescript
 // Exchange Forms
-export { ExchangeForm } from './ExchangeForm/ExchangeForm';
+export { ExchangeForm } from './ExchangeForm';
 
 // Auth Forms
-export { LoginForm } from './AuthForms/LoginForm';
-export { RegisterForm } from './AuthForms/RegisterForm';
-
-// Form Components
-export { FormField } from './FormField/FormField';
-export { FormSection } from './FormSection/FormSection';
+export { LoginForm, RegisterForm } from './AuthForms';
 ```
-
-#### Юзкейсы и Edge Cases
-
-1. **Form Validation**
-   - ✅ Real-time валидация с debounce
-   - ✅ Server-side ошибки интеграция
-   - ✅ Conditional validation rules
-   - ✅ Custom validation messages
-
-2. **User Experience**
-   - ✅ Password strength indicators
-   - ✅ Show/hide password toggle
-   - ✅ Auto-calculation в exchange форме
-   - ✅ Loading states и disabled states
-
-3. **Accessibility**
-   - ✅ Proper form labeling
-   - ✅ Error announcements
-   - ✅ Keyboard navigation
-   - ✅ Focus management
-
-4. **Integration**
-   - ✅ Store synchronization
-   - ✅ API error handling
-   - ✅ Success callbacks
-   - ✅ Form reset logic
 
 #### Чек-лист готовности
 
-- [ ] Все формы созданы и типизированы
-- [ ] Валидация работает корректно
-- [ ] Интеграция с хуками настроена
-- [ ] UX элементы реализованы
-- [ ] Accessibility проверена
+- [ ] ExchangeForm создан с интеграцией useExchange
+- [ ] LoginForm и RegisterForm созданы с интеграцией useEnhancedAuth
+- [ ] Используются существующие UI компоненты из @repo/ui
+- [ ] Интеграция с хуками useForm настроена
+- [ ] Zod валидация работает корректно
+- [ ] UX элементы реализованы (показать/скрыть пароль, индикаторы)
 - [ ] Error handling настроен
+
+---
+
+### TASK 4.3: Расширить Storybook документацию
+
+**Время:** 1.5 часа  
+**Приоритет:** 🟡 Средний
+
+#### Описание
+
+Дополнить существующую Storybook конфигурацию stories для новых компонентов UI библиотеки.
+
+#### Текущее состояние Storybook
+
+```
+.storybook/
+├── main.ts              # ✅ НАСТРОЕН - Vite + Next.js
+├── preview.ts           # ✅ НАСТРОЕН
+└── vitest.setup.ts      # ✅ НАСТРОЕН
+
+packages/ui/src/stories/
+├── Button.stories.ts    # ✅ ГОТОВ
+├── DataTable.stories.tsx # ✅ ГОТОВ
+└── TreeView.stories.tsx  # ✅ ГОТОВ
+
+npm scripts:
+├── "storybook"          # ✅ НАСТРОЕН - storybook dev -p 6006
+└── "build-storybook"    # ✅ НАСТРОЕН
+```
+
+#### Необходимые дополнения
+
+1. **packages/ui/src/stories/Form.stories.tsx**
+
+```typescript
+import type { Meta, StoryObj } from '@storybook/react';
+import { z } from 'zod';
+import { FormField, FormLabel, FormControl, FormMessage } from '../components/ui/form';
+import { Input } from '../components/ui/input';
+import { Button } from '../components/ui/button';
+
+const meta: Meta<typeof FormField> = {
+  title: 'UI/Form',
+  component: FormField,
+  parameters: {
+    layout: 'centered',
+    docs: {
+      description: {
+        component: 'Комплект компонентов для построения форм с валидацией и доступностью.',
+      },
+    },
+  },
+  tags: ['autodocs'],
+};
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Basic: Story = {
+  render: () => (
+    <FormField name="email" required>
+      <FormLabel>Email</FormLabel>
+      <FormControl>
+        <Input placeholder="example@email.com" />
+      </FormControl>
+      <FormMessage>Введите корректный email адрес</FormMessage>
+    </FormField>
+  ),
+};
+
+export const WithError: Story = {
+  render: () => (
+    <FormField name="password" error="Пароль должен содержать минимум 8 символов" required>
+      <FormLabel>Пароль</FormLabel>
+      <FormControl>
+        <Input type="password" placeholder="Введите пароль" />
+      </FormControl>
+      <FormMessage />
+    </FormField>
+  ),
+};
+
+export const FormExample: Story = {
+  render: () => (
+    <form className="space-y-4 w-80">
+      <FormField name="name" required>
+        <FormLabel>Имя</FormLabel>
+        <FormControl>
+          <Input placeholder="Ваше имя" />
+        </FormControl>
+      </FormField>
+
+      <FormField name="email" required>
+        <FormLabel>Email</FormLabel>
+        <FormControl>
+          <Input type="email" placeholder="example@email.com" />
+        </FormControl>
+      </FormField>
+
+      <FormField name="password" required>
+        <FormLabel>Пароль</FormLabel>
+        <FormControl>
+          <Input type="password" placeholder="Создайте пароль" />
+        </FormControl>
+        <FormMessage>Минимум 8 символов, включая цифры и буквы</FormMessage>
+      </FormField>
+
+      <Button type="submit" className="w-full">
+        Зарегистрироваться
+      </Button>
+    </form>
+  ),
+};
+```
+
+2. **packages/ui/src/stories/Notification.stories.tsx**
+
+```typescript
+import type { Meta, StoryObj } from '@storybook/react';
+import { Notification } from '../components/ui/notification';
+
+const meta: Meta<typeof Notification> = {
+  title: 'UI/Notification',
+  component: Notification,
+  parameters: {
+    layout: 'centered',
+    docs: {
+      description: {
+        component: 'Компонент для отображения уведомлений, предупреждений и сообщений об ошибках.',
+      },
+    },
+  },
+  tags: ['autodocs'],
+  argTypes: {
+    variant: {
+      control: 'select',
+      options: ['default', 'destructive', 'success', 'warning', 'info'],
+    },
+    onClose: {
+      action: 'closed',
+    },
+  },
+};
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {
+  args: {
+    title: 'Информация',
+    description: 'Это обычное информационное уведомление.',
+  },
+};
+
+export const Success: Story = {
+  args: {
+    variant: 'success',
+    title: 'Успешно!',
+    description: 'Операция завершена успешно.',
+  },
+};
+
+export const Warning: Story = {
+  args: {
+    variant: 'warning',
+    title: 'Внимание',
+    description: 'Пожалуйста, проверьте введенные данные.',
+  },
+};
+
+export const Error: Story = {
+  args: {
+    variant: 'destructive',
+    title: 'Ошибка',
+    description: 'Произошла ошибка при обработке запроса.',
+  },
+};
+
+export const WithCloseButton: Story = {
+  args: {
+    variant: 'info',
+    title: 'Новое обновление',
+    description: 'Доступна новая версия приложения.',
+    onClose: () => alert('Уведомление закрыто'),
+  },
+};
+
+export const OnlyDescription: Story = {
+  args: {
+    variant: 'success',
+    description: 'Данные сохранены.',
+  },
+};
+```
+
+3. **packages/ui/src/stories/Spinner.stories.tsx**
+
+```typescript
+import type { Meta, StoryObj } from '@storybook/react';
+import { Spinner } from '../components/ui/spinner';
+
+const meta: Meta<typeof Spinner> = {
+  title: 'UI/Spinner',
+  component: Spinner,
+  parameters: {
+    layout: 'centered',
+    docs: {
+      description: {
+        component: 'Индикатор загрузки для отображения процесса выполнения операций.',
+      },
+    },
+  },
+  tags: ['autodocs'],
+  argTypes: {
+    size: {
+      control: 'select',
+      options: ['sm', 'md', 'lg', 'xl'],
+    },
+  },
+};
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Small: Story = {
+  args: {
+    size: 'sm',
+  },
+};
+
+export const Medium: Story = {
+  args: {
+    size: 'md',
+  },
+};
+
+export const Large: Story = {
+  args: {
+    size: 'lg',
+  },
+};
+
+export const ExtraLarge: Story = {
+  args: {
+    size: 'xl',
+  },
+};
+
+export const InButton: Story = {
+  render: () => (
+    <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md">
+      <Spinner size="sm" className="mr-2" />
+      Загрузка...
+    </button>
+  ),
+};
+
+export const Centered: Story = {
+  render: () => (
+    <div className="flex items-center justify-center h-32 w-64 border border-dashed border-gray-300 rounded-lg">
+      <Spinner size="lg" />
+    </div>
+  ),
+};
+```
+
+4. **packages/ui/src/stories/ExchangeForm.stories.tsx**
+
+```typescript
+import type { Meta, StoryObj } from '@storybook/react';
+import { ExchangeForm } from '../../apps/web/src/components/forms/ExchangeForm';
+
+const meta: Meta<typeof ExchangeForm> = {
+  title: 'Forms/ExchangeForm',
+  component: ExchangeForm,
+  parameters: {
+    layout: 'centered',
+    docs: {
+      description: {
+        component: 'Форма для обмена криптовалют с интегрированным расчетом и валидацией.',
+      },
+    },
+  },
+  tags: ['autodocs'],
+  decorators: [
+    (Story) => (
+      <div className="w-96">
+        <Story />
+      </div>
+    ),
+  ],
+};
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Default: Story = {
+  args: {
+    onSubmit: () => alert('Форма отправлена!'),
+  },
+};
+
+export const WithInitialData: Story = {
+  args: {
+    onSubmit: () => alert('Форма отправлена!'),
+  },
+  // Здесь бы использовались моки для демонстрации
+};
+```
+
+#### Обновление конфигурации
+
+5. **Обновить .storybook/main.ts для включения новых stories**
+
+```typescript
+// ...existing code...
+const config: StorybookConfig = {
+  stories: [
+    '../packages/ui/src/stories/**/*.stories.@(js|jsx|mjs|ts|tsx)',
+    '../apps/web/src/components/**/*.stories.@(js|jsx|mjs|ts|tsx)', // Добавить stories из web
+  ],
+  // ...rest of config
+};
+```
+
+#### Чек-лист готовности
+
+- [ ] Stories для новых UI компонентов созданы
+- [ ] Storybook конфигурация обновлена
+- [ ] Документация компонентов написана
+- [ ] Примеры использования добавлены
+- [ ] Storybook билдится без ошибок
 
 ---
 
 ## 📊 Статус Progress Part 4
 
-### Завершенные задачи: 0/2
+### Завершенные задачи: 0/3
 
-- [ ] TASK 4.1: Создать UI библиотеку с дизайн-системой
-- [ ] TASK 4.2: Создать компоненты форм с валидацией
+- [ ] TASK 4.1: Расширить существующую UI библиотеку
+- [ ] TASK 4.2: Создать форм-компоненты для web-приложения
+- [ ] TASK 4.3: Расширить Storybook документацию
 
-### Следующие задачи в Part 4:
+### Реальное архитектурное состояние:
 
-Часть 4 завершена. Готов к созданию Part 5.
+✅ **@repo/ui** - UI библиотека существует (Radix UI, CVA, Tailwind)  
+✅ **@repo/design-tokens** - дизайн-система готова  
+✅ **@repo/hooks** - хуки useForm, useExchange готовы  
+✅ **Storybook** - настроен и работает  
+🔄 **Формы** - нужны специализированные компоненты для web  
+🔄 **Stories** - нужны для новых компонентов
 
 ### Следующие части:
 
@@ -1540,17 +1209,16 @@ export { FormSection } from './FormSection/FormSection';
 
 ### Ключевые результаты Part 4:
 
-✅ **UI библиотека** с переиспользуемыми компонентами  
-✅ **Design System** на основе Tailwind CSS  
-✅ **Form Components** с валидацией и UX  
-✅ **Accessibility** во всех компонентах  
-✅ **TypeScript типизация** с variance authority  
-✅ **Responsive Design** с mobile-first подходом  
-✅ **Compound Components** для сложных UI  
-✅ **Integration Hooks** для бизнес-логики
+✅ **Архитектурная синхронизация** с реальной кодовой базой  
+✅ **Radix UI Integration** вместо самописных компонентов  
+✅ **Существующие хуки** интегрированы в план  
+✅ **Storybook** включен как часть задач  
+✅ **Web-focus** - задачи сфокусированы на приложении  
+🆕 **Notification, Form, Spinner** - новые недостающие компоненты  
+🆕 **Специализированные формы** - ExchangeForm, AuthForms для web
 
 ---
 
-**Дата создания:** 29 июня 2025  
-**Версия:** 1.0  
+**Дата обновления:** 10 июля 2025  
+**Версия:** 2.0 (Актуализирован по реальной кодовой базе)  
 **Следующая часть:** TASKS-PART-5.md
