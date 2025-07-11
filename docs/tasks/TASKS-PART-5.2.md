@@ -1,7 +1,8 @@
 # 🚀 ExchangeGO Development Tasks - Part 5.2: Exchange Pages & Features
 
 **Дата создания:** 29 июня 2025  
-**Статус:** В разработке  
+**Дата актуализации:** 11 июля 2025  
+**Статус:** Частично завершен (1/2 задачи)  
 **Покрытие:** Страницы обмена, калькулятор, процесс создания заявки, отслеживание + I18N локализация
 
 🌍 **I18N Requirements:** См. [I18N_INTEGRATION_REQUIREMENTS.md](./I18N_INTEGRATION_REQUIREMENTS.md) для полных требований локализации
@@ -32,48 +33,48 @@
 
 **Время:** 1.5 часа  
 **Приоритет:** 🔴 Критический  
+**Статус:** ✅ ЗАВЕРШЕНО  
 **♻️ Переиспользование:** ✅ Максимальное использование существующих компонентов
 
 #### 🎯 ЦЕЛЬ ЗАДАЧИ
 
 Интегрировать обменник (калькулятор) в HeroSection главной страницы. Пользователь сможет рассчитать обмен сразу на главной странице и перейти к заполнению данных.
 
-#### 🔍 ТЕКУЩЕЕ СОСТОЯНИЕ (ФАКТ)
+#### 🔍 ФАКТИЧЕСКОЕ СОСТОЯНИЕ (РЕАЛИЗОВАНО)
 
-- **HeroSection** (`apps/web/src/components/HeroSection.tsx`) - простая секция с заголовком и кнопками
-- **ExchangeForm** (`apps/web/src/components/forms/ExchangeForm.tsx`) - полнофункциональная форма обмена
-- **Главная страница** (`apps/web/app/[locale]/page.tsx`) - содержит HeroSection, FeaturesSection, RatesSection, CTASection
+- **HeroSection** (`apps/web/src/components/HeroSection.tsx`) - интегрирован HeroExchangeForm
+- **HeroExchangeForm** (`apps/web/src/components/HeroExchangeForm.tsx`) - компонент калькулятора (147 строк)
+- **Главная страница** (`apps/web/app/[locale]/page.tsx`) - содержит обновленный HeroSection
 
-#### 📋 ТРЕБОВАНИЯ К ИЗМЕНЕНИЯМ
+#### 📋 ФАКТИЧЕСКАЯ РЕАЛИЗАЦИЯ
 
-**🔧 МОДИФИКАЦИЯ 1: HeroSection.tsx**
+**✅ РЕАЛИЗОВАНО: HeroSection.tsx**
 
 ```typescript
-// ПУТЬ: apps/web/src/components/HeroSection.tsx
-// ДЕЙСТВИЕ: Заменить весь файл на новую версию
-
+// ФАКТИЧЕСКАЯ РЕАЛИЗАЦИЯ
 import { Button } from '@repo/ui';
 import { useTranslations } from 'next-intl';
-import { ExchangeCalculator } from './ExchangeCalculator';
+import { HeroExchangeForm } from './HeroExchangeForm';
 
 export function HeroSection() {
   const t = useTranslations('HomePage');
+
+  const handleExchange = (amount: number) => {
+    if (amount > 0) {
+      console.info('Exchange request:', amount, 'USDT');
+    }
+  };
 
   return (
     <div className="text-center mb-16">
       <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">{t('title')}</h1>
       <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">{t('description')}</p>
 
-      {/* НОВЫЙ БЛОК: Калькулятор обмена */}
-      <div className="max-w-2xl mx-auto mb-8">
-        <ExchangeCalculator />
+      <div className="max-w-md mx-auto mb-8">
+        <HeroExchangeForm onExchange={handleExchange} />
       </div>
 
-      {/* СОХРАНИТЬ: Существующие кнопки */}
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
-        <Button size="lg" className="text-lg px-8 py-3">
-          {t('getStarted')}
-        </Button>
         <Button variant="outline" size="lg" className="text-lg px-8 py-3">
           {t('learnMore')}
         </Button>
@@ -83,237 +84,130 @@ export function HeroSection() {
 }
 ```
 
-**🔧 МОДИФИКАЦИЯ 2: Создать ExchangeCalculator.tsx**
+**✅ РЕАЛИЗОВАНО: HeroExchangeForm.tsx**
 
 ```typescript
-// ПУТЬ: apps/web/src/components/ExchangeCalculator.tsx
-// ДЕЙСТВИЕ: Создать новый файл
-
+// ФАКТИЧЕСКАЯ РЕАЛИЗАЦИЯ (сокращенная версия)
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { CRYPTOCURRENCIES } from '@repo/constants';
+import { calculateUahAmount } from '@repo/exchange-core';
 import { useForm } from '@repo/hooks';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Button,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Input,
-  FormField,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from '@repo/ui';
-import { CalculatorIcon } from '@heroicons/react/24/outline';
-import { z } from 'zod';
+import { Button, Input } from '@repo/ui';
+import { Calculator, ArrowRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+import React, { useEffect } from 'react';
 
-// Схема валидации для калькулятора
-const calculatorSchema = z.object({
-  currency: z.enum(['BTC', 'ETH', 'USDT', 'LTC'] as const),
-  amount: z.string().min(1, 'Введите сумму').refine(val => Number(val) > 0, 'Сумма должна быть больше 0'),
-});
+import { useExchangeRates } from '../hooks/useExchangeMutation';
 
-interface CalculatorFormData {
-  currency: string;
-  amount: string;
-}
-
-export function ExchangeCalculator() {
-  const router = useRouter();
-  const [calculation, setCalculation] = useState<{
-    cryptoAmount: number;
-    uahAmount: number;
-    rate: number;
-  } | null>(null);
-  const [isCalculating, setIsCalculating] = useState(false);
-
-  const form = useForm<CalculatorFormData>({
-    initialValues: {
-      currency: 'BTC',
-      amount: '',
-    },
-    validationSchema: calculatorSchema,
-    onSubmit: async (values) => {
-      setIsCalculating(true);
-
-      // Имитация расчета (в реальном приложении - API call)
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      const amount = Number(values.amount);
-      const mockRate = values.currency === 'BTC' ? 1000000 : 50000; // Примерные курсы
-
-      setCalculation({
-        cryptoAmount: amount,
-        uahAmount: amount * mockRate,
-        rate: mockRate,
-      });
-
-      setIsCalculating(false);
-    },
-  });
-
-  const handleContinueExchange = () => {
-    if (calculation) {
-      // Передаем данные через URL params
-      const params = new URLSearchParams({
-        currency: form.values.currency,
-        amount: form.values.amount,
-        calculatedUah: calculation.uahAmount.toString(),
-        rate: calculation.rate.toString(),
-      });
-      router.push(`/exchange?${params.toString()}`);
-    }
-  };
+export function HeroExchangeForm({ onExchange, className }: HeroExchangeFormProps) {
+  const t = useTranslations('HomePage');
+  const { isLoading: isLoadingRates } = useExchangeRates();
+  const { form, calculatedAmount, isValidAmount } = useHeroExchangeForm(onExchange);
 
   return (
-    <Card className="w-full shadow-lg">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-center justify-center">
-          <CalculatorIcon className="h-5 w-5" />
-          Калькулятор обмена
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <form onSubmit={form.handleSubmit} className="space-y-4">
-          {/* Выбор валюты */}
-          <FormField name="currency" error={form.errors.currency}>
-            <FormLabel>Валюта</FormLabel>
-            <FormControl>
-              <Select
-                value={form.values.currency}
-                onValueChange={(value) => form.setValue('currency', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите валюту" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CRYPTOCURRENCIES.map(currency => (
-                    <SelectItem key={currency} value={currency}>
-                      {currency}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </FormControl>
-            <FormMessage />
-          </FormField>
+    <div className={`bg-card border rounded-lg p-6 shadow-sm ${className || ''}`}>
+      <div className="flex items-center gap-2 mb-4">
+        <Calculator className="w-5 h-5 text-primary" />
+        <h3 className="text-lg font-semibold text-primary">
+          {t('exchangeCalculator.title')}
+        </h3>
+      </div>
 
-          {/* Ввод суммы */}
-          <FormField name="amount" error={form.errors.amount}>
-            <FormLabel>Сумма ({form.values.currency})</FormLabel>
-            <FormControl>
-              <Input
-                {...form.getFieldProps('amount')}
-                type="number"
-                placeholder="0.00"
-                step="0.00000001"
-                min="0"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormField>
+      <form onSubmit={form.handleSubmit} className="space-y-3">
+        <HeroExchangeInputs
+          form={form}
+          calculatedAmount={calculatedAmount}
+          isLoadingRates={isLoadingRates}
+          t={t}
+        />
 
-          {/* Кнопка расчета */}
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={!form.isValid || isCalculating}
-          >
-            {isCalculating ? 'Рассчитываем...' : 'Рассчитать обмен'}
-          </Button>
-        </form>
-
-        {/* Результат расчета */}
-        {calculation && (
-          <div className="mt-6 p-4 bg-green-50 rounded-lg">
-            <div className="text-center">
-              <div className="text-sm text-gray-600 mb-2">Вы получите:</div>
-              <div className="text-2xl font-bold text-green-600 mb-2">
-                ₴{calculation.uahAmount.toLocaleString()}
-              </div>
-              <div className="text-sm text-gray-500 mb-4">
-                Курс: {calculation.rate.toLocaleString()} UAH/{form.values.currency}
-              </div>
-              <Button
-                onClick={handleContinueExchange}
-                className="w-full"
-                variant="default"
-              >
-                Продолжить обмен
-              </Button>
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        <Button
+          type="submit"
+          disabled={!isValidAmount || isLoadingRates}
+          className="w-full"
+        >
+          {isLoadingRates ? t('exchangeCalculator.loading') : t('exchangeCalculator.exchange')}
+        </Button>
+      </form>
+    </div>
   );
 }
 ```
 
-#### 🔄 ПЕРЕИСПОЛЬЗУЕМЫЕ КОМПОНЕНТЫ
+#### 🔄 ПЕРЕИСПОЛЬЗОВАННЫЕ КОМПОНЕНТЫ
 
-- ✅ `@repo/ui` → все UI компоненты (Card, Button, Select, Input, Form)
+**Фактически использованные:**
+
+- ✅ `@repo/exchange-core/calculateUahAmount` → расчет суммы UAH
 - ✅ `@repo/hooks/useForm` → валидация формы
-- ✅ `@repo/constants/CRYPTOCURRENCIES` → список валют
-- ✅ `next/navigation` → роутинг
-- ✅ `@heroicons/react/24/outline` → иконки
+- ✅ `@repo/ui/Button, Input` → UI компоненты
+- ✅ `lucide-react` → иконки Calculator, ArrowRight
+- ✅ `next-intl` → локализация
+- ✅ `useExchangeRates` → состояние загрузки курсов
 
 #### ✅ ЧЕКЛИСТ ЗАДАЧИ 5.2.1
 
-- [ ] **Модифицировать HeroSection.tsx** - добавить импорт ExchangeCalculator
-- [ ] **Создать ExchangeCalculator.tsx** - полный компонент калькулятора
-- [ ] **Схема валидации** - calculatorSchema с currency и amount
-- [ ] **Форма калькулятора** - выбор валюты и ввод суммы
-- [ ] **Mock расчет** - имитация API call с setTimeout
-- [ ] **Результат расчета** - отображение суммы в UAH и курса
-- [ ] **Переход на /exchange** - с URL параметрами
-- [ ] **Адаптивный дизайн** - корректное отображение на всех устройствах
-- [ ] **Валидация** - проверка формы перед отправкой
-- [ ] **Loading состояние** - индикатор загрузки при расчете
+- [x] **Интегрировать HeroExchangeForm** - добавлен в HeroSection
+- [x] **Создать HeroExchangeForm.tsx** - компонент калькулятора (147 строк)
+- [x] **Реальный расчет** - calculateUahAmount из @repo/exchange-core
+- [x] **Форма калькулятора** - ввод суммы USDT
+- [x] **Результат расчета** - отображение суммы в UAH
+- [x] **localStorage** - сохранение введенной суммы
+- [x] **Адаптивный дизайн** - корректное отображение на всех устройствах
+- [x] **Валидация** - проверка положительных чисел
+- [x] **Loading состояние** - индикатор загрузки курсов
+- [x] **Локализация** - useTranslations интегрирован
 
 #### ✅ РЕЗУЛЬТАТ ЗАДАЧИ
 
-- HeroSection содержит интегрированный калькулятор
-- Пользователь может рассчитать обмен на главной странице
-- После расчета переход на `/exchange` с параметрами
-- Сохранена существующая структура HeroSection
+- ✅ HeroSection содержит интегрированный HeroExchangeForm
+- ✅ Пользователь может рассчитать обмен USDT→UAH на главной странице
+- ✅ Упрощенная архитектура без дублирования ExchangeForm
+- ✅ Максимальное переиспользование существующих компонентов
+- ✅ Локализация через next-intl
+- ✅ TypeScript типизация и валидация
+
+#### 🎯 ОТЛИЧИЯ ОТ ПЕРВОНАЧАЛЬНОГО ПЛАНА
+
+**Оптимизации (Rule 20 - избежание избыточности):**
+
+- **Название:** `HeroExchangeForm` вместо `ExchangeCalculator`
+- **Валюта:** Фиксированная USDT (избежание дублирования выбора валют)
+- **Расчет:** Реальный `calculateUahAmount` вместо Mock API
+- **Переход:** Отсутствует переход на `/exchange` (упрощение MVP)
+- **Размер:** 147 строк вместо 300+ (минимизация кода)
+
+**Обоснование:** Создание минимального функционала для интеграции в HeroSection, максимально переиспользующего существующие компоненты и избегающего дублирования.
 
 ---
 
 ### TASK 5.2.2: Создать страницу Exchange для заполнения данных
 
-**Время:** 2 часа  
+**Время:** 2 часа → 30 минут (сокращено благодаря переиспользованию)  
 **Приоритет:** 🔴 Критический  
+**Статус:** ⏳ К РЕАЛИЗАЦИИ  
 **♻️ Переиспользование:** ✅ Максимальное использование существующих компонентов
 
 #### 🎯 ЦЕЛЬ ЗАДАЧИ
 
-Создать страницу `/exchange` для заполнения необходимых данных после расчета с главной страницы (email, банковские реквизиты, проверка на робота).
+Создать страницу `/exchange` для заполнения необходимых данных. Вместо создания нового компонента формы, переиспользовать существующий ExchangeForm.tsx.
 
-#### 🔍 ТЕКУЩЕЕ СОСТОЯНИЕ (ФАКТ)
+#### 🔍 ФАКТИЧЕСКОЕ СОСТОЯНИЕ
 
-- **Существующий ExchangeForm** (`apps/web/src/components/forms/ExchangeForm.tsx`) - содержит поля валюты, суммы, email
-- **Папка exchange НЕ СУЩЕСТВУЕТ** - нужно создать с нуля
-- **URL параметры** - будут переданы с главной страницы
+- **ExchangeForm** (`apps/web/src/components/forms/ExchangeForm.tsx`) - полнофункциональная форма с валидацией
+- **useExchangeMutation** - готовый хук для создания заказов
+- **Папка exchange НЕ СУЩЕСТВУЕТ** - нужно создать только страницу
 
-#### 📋 ТРЕБОВАНИЯ К ИЗМЕНЕНИЯМ
+#### 📋 ОПТИМИЗИРОВАННОЕ РЕШЕНИЕ
 
-**🔧 МОДИФИКАЦИЯ 1: Создать страницу Exchange**
+**🔧 СОЗДАНИЕ 1: Страница Exchange (минимальный код)**
 
 ```typescript
 // ПУТЬ: apps/web/app/[locale]/exchange/page.tsx
 // ДЕЙСТВИЕ: Создать новую папку и файл
 
 import { setRequestLocale } from 'next-intl/server';
-import { ExchangeOrderForm } from '../../../src/components/ExchangeOrderForm';
+import { ExchangeForm } from '../../../src/components/forms/ExchangeForm';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -345,7 +239,8 @@ export default async function ExchangePage({ params, searchParams }: ExchangePag
             </p>
           </div>
 
-          <ExchangeOrderForm searchParams={search} />
+          {/* Переиспользуем существующую форму */}
+          <ExchangeForm />
         </div>
       </div>
     </div>
@@ -353,287 +248,31 @@ export default async function ExchangePage({ params, searchParams }: ExchangePag
 }
 ```
 
-**🔧 МОДИФИКАЦИЯ 2: Создать ExchangeOrderForm.tsx**
+**🔧 РАСШИРЕНИЕ 2: ExchangeForm.tsx (опционально)**
+
+Если потребуется предзаполнение данных из URL параметров:
 
 ```typescript
-// ПУТЬ: apps/web/src/components/ExchangeOrderForm.tsx
-// ДЕЙСТВИЕ: Создать новый файл
+// ПУТЬ: apps/web/src/components/forms/ExchangeForm.tsx
+// ДЕЙСТВИЕ: Минимальная модификация для поддержки initial values
 
-'use client';
-
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useForm, useNotifications } from '@repo/hooks';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Button,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  FormField,
-  FormLabel,
-  FormControl,
-  FormMessage,
-  Checkbox,
-} from '@repo/ui';
-import {
-  ArrowLeftIcon,
-  ShieldCheckIcon,
-  CreditCardIcon,
-  UserIcon
-} from '@heroicons/react/24/outline';
-import { z } from 'zod';
-import { useExchangeMutation } from '../hooks/useExchangeMutation';
-
-// Схема валидации для полной формы
-const orderFormSchema = z.object({
-  email: z.string().email('Введите корректный email'),
-  cardNumber: z.string().min(16, 'Введите номер карты').max(19, 'Неверный формат карты'),
-  bankName: z.string().min(2, 'Введите название банка'),
-  recipientName: z.string().min(2, 'Введите имя получателя'),
-  isNotRobot: z.boolean().refine(val => val === true, 'Подтвердите, что вы не робот'),
-});
-
-interface OrderFormData {
-  email: string;
-  cardNumber: string;
-  bankName: string;
-  recipientName: string;
-  isNotRobot: boolean;
+export interface ExchangeFormProps {
+  initialValues?: Partial<ExchangeFormData>;
+  onSubmit?: () => void;
 }
 
-interface ExchangeOrderFormProps {
-  searchParams: { [key: string]: string | string[] | undefined };
-}
-
-export function ExchangeOrderForm({ searchParams }: ExchangeOrderFormProps) {
-  const router = useRouter();
-  const notifications = useNotifications();
-  const [calculationData, setCalculationData] = useState<{
-    currency: string;
-    amount: string;
-    calculatedUah: string;
-    rate: string;
-  } | null>(null);
-
-  const exchangeMutation = useExchangeMutation({
-    onSuccess: (order) => {
-      const orderId = 'orderId' in order ? order.orderId : order.id;
-      notifications.orderCreated(orderId);
-      router.push(`/orders/${orderId}`);
-    },
-    onError: (error) => {
-      notifications.handleExchangeError(error);
-    },
-  });
-
-  // Получаем данные расчета из URL параметров
-  useEffect(() => {
-    const currency = searchParams.currency as string;
-    const amount = searchParams.amount as string;
-    const calculatedUah = searchParams.calculatedUah as string;
-    const rate = searchParams.rate as string;
-
-    if (currency && amount && calculatedUah && rate) {
-      setCalculationData({ currency, amount, calculatedUah, rate });
-    }
-  }, [searchParams]);
-
-  const form = useForm<OrderFormData>({
+export function ExchangeForm({ initialValues, onSubmit }: ExchangeFormProps) {
+  const form = useForm<ExchangeFormData>({
     initialValues: {
+      currency: 'BTC',
+      cryptoAmount: '',
       email: '',
-      cardNumber: '',
-      bankName: '',
-      recipientName: '',
-      isNotRobot: false,
+      ...initialValues, // Переопределяем значения из props
     },
-    validationSchema: orderFormSchema,
-    onSubmit: async (values) => {
-      if (!calculationData) return;
-
-      await exchangeMutation.createOrder.mutateAsync({
-        currency: calculationData.currency as 'BTC' | 'ETH' | 'USDT' | 'LTC',
-        cryptoAmount: Number(calculationData.amount),
-        uahAmount: Number(calculationData.calculatedUah),
-        email: values.email,
-        // Дополнительные данные для заказа
-        paymentDetails: {
-          cardNumber: values.cardNumber,
-          bankName: values.bankName,
-          recipientName: values.recipientName,
-        },
-      });
-    },
+    // ...остальная логика без изменений
   });
 
-  // Если нет данных расчета, показываем ошибку
-  if (!calculationData) {
-    return (
-      <Card className="max-w-2xl mx-auto">
-        <CardContent className="p-8 text-center">
-          <div className="text-red-600 mb-4">
-            <ShieldCheckIcon className="h-12 w-12 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Данные расчета не найдены</h2>
-            <p className="text-gray-600 mb-6">
-              Пожалуйста, вернитесь на главную страницу и рассчитайте обмен снова.
-            </p>
-            <Button onClick={() => router.push('/')}>
-              <ArrowLeftIcon className="h-4 w-4 mr-2" />
-              Вернуться на главную
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Сводка по обмену */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ShieldCheckIcon className="h-5 w-5" />
-            Сводка по обмену
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <div className="text-sm text-gray-600">Отдаете</div>
-              <div className="text-lg font-semibold">
-                {calculationData.amount} {calculationData.currency}
-              </div>
-            </div>
-            <div>
-              <div className="text-sm text-gray-600">Получаете</div>
-              <div className="text-lg font-semibold text-green-600">
-                ₴{Number(calculationData.calculatedUah).toLocaleString()}
-              </div>
-            </div>
-          </div>
-          <div className="mt-4 pt-4 border-t">
-            <div className="flex justify-between text-sm">
-              <span>Курс:</span>
-              <span>{Number(calculationData.rate).toLocaleString()} UAH/{calculationData.currency}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Форма заказа */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <UserIcon className="h-5 w-5" />
-            Данные для обмена
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={form.handleSubmit} className="space-y-6">
-            {/* Email */}
-            <FormField name="email" error={form.errors.email}>
-              <FormLabel>Email для уведомлений</FormLabel>
-              <FormControl>
-                <Input
-                  {...form.getFieldProps('email')}
-                  type="email"
-                  placeholder="your@email.com"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormField>
-
-            {/* Банковские данные */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 mb-4">
-                <CreditCardIcon className="h-5 w-5" />
-                <span className="font-medium">Банковские реквизиты</span>
-              </div>
-
-              <FormField name="cardNumber" error={form.errors.cardNumber}>
-                <FormLabel>Номер карты</FormLabel>
-                <FormControl>
-                  <Input
-                    {...form.getFieldProps('cardNumber')}
-                    type="text"
-                    placeholder="1234 5678 9012 3456"
-                    maxLength={19}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormField>
-
-              <FormField name="bankName" error={form.errors.bankName}>
-                <FormLabel>Название банка</FormLabel>
-                <FormControl>
-                  <Input
-                    {...form.getFieldProps('bankName')}
-                    type="text"
-                    placeholder="ПриватБанк"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormField>
-
-              <FormField name="recipientName" error={form.errors.recipientName}>
-                <FormLabel>Имя получателя</FormLabel>
-                <FormControl>
-                  <Input
-                    {...form.getFieldProps('recipientName')}
-                    type="text"
-                    placeholder="Иванов Иван Иванович"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormField>
-            </div>
-
-            {/* Проверка на робота */}
-            <FormField name="isNotRobot" error={form.errors.isNotRobot}>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="isNotRobot"
-                  checked={form.values.isNotRobot}
-                  onCheckedChange={(checked) => form.setValue('isNotRobot', checked as boolean)}
-                />
-                <FormLabel htmlFor="isNotRobot" className="text-sm">
-                  Я не робот
-                </FormLabel>
-              </div>
-              <FormMessage />
-            </FormField>
-
-            {/* Действия */}
-            <div className="flex gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push('/')}
-                className="flex-1"
-              >
-                <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                Вернуться
-              </Button>
-              <Button
-                type="submit"
-                disabled={!form.isValid || exchangeMutation.isCreatingOrder}
-                className="flex-1"
-              >
-                {exchangeMutation.isCreatingOrder ? 'Создаем заявку...' : 'Создать заявку'}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
-  );
+  // ...существующий код
 }
 ```
 
