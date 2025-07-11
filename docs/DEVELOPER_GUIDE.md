@@ -850,104 +850,328 @@ module.exports = {
 
 ### next-intl - Типизированные переводы
 
-**Конфигурация**: Настроена в каждом приложении
+**Конфигурация**: Настроена в каждом приложении с использованием App Router
 
-#### Структура переводов:
+**🚨 ВАЖНО**: Используйте ТОЛЬКО официальную документацию next-intl и следуйте структуре файлов ниже.
+
+#### Правильная структура next-intl (Next.js 15 + App Router):
 
 ```
 apps/web/
+├── src/
+│   └── i18n/
+│       ├── routing.ts        # Конфигурация маршрутизации
+│       ├── navigation.ts     # Навигационные API
+│       └── request.ts        # Конфигурация запросов
 ├── messages/
 │   ├── en.json
 │   ├── ru.json
 │   └── [locale].json
-├── middleware.ts          # Роутинг локалей
-└── i18n.ts               # Конфигурация
+├── middleware.ts            # Использует createMiddleware
+├── next.config.js           # Указывает путь к request.ts
+└── app/
+    └── [locale]/
+        ├── layout.tsx       # С hasLocale, setRequestLocale
+        ├── page.tsx         # С setRequestLocale
+        └── not-found.tsx
 ```
 
-#### Файлы переводов:
-
-```json
-// apps/web/messages/en.json
-{
-  "common": {
-    "loading": "Loading...",
-    "error": "Something went wrong",
-    "save": "Save",
-    "cancel": "Cancel"
-  },
-  "navigation": {
-    "home": "Home",
-    "about": "About",
-    "contact": "Contact"
-  },
-  "pages": {
-    "home": {
-      "title": "Welcome to Exchanger",
-      "description": "Modern exchange platform"
-    }
-  }
-}
-```
-
-```json
-// apps/web/messages/ru.json
-{
-  "common": {
-    "loading": "Загрузка...",
-    "error": "Что-то пошло не так",
-    "save": "Сохранить",
-    "cancel": "Отмена"
-  },
-  "navigation": {
-    "home": "Главная",
-    "about": "О нас",
-    "contact": "Контакты"
-  },
-  "pages": {
-    "home": {
-      "title": "Добро пожаловать в Exchanger",
-      "description": "Современная биржевая платформа"
-    }
-  }
-}
-```
-
-#### Конфигурация i18n:
+#### 1. Конфигурация маршрутизации (`src/i18n/routing.ts`):
 
 ```typescript
-// apps/web/i18n.ts
-import { notFound } from 'next/navigation';
+import { SUPPORTED_LOCALES } from '@repo/constants';
+import { defineRouting } from 'next-intl/routing';
+
+export const routing = defineRouting({
+  // A list of all locales that are supported
+  locales: SUPPORTED_LOCALES,
+
+  // Used when no locale matches
+  defaultLocale: 'en',
+});
+```
+
+#### 2. Навигационные API (`src/i18n/navigation.ts`):
+
+```typescript
+import { createNavigation } from 'next-intl/navigation';
+
+import { routing } from './routing';
+
+// Lightweight wrappers around Next.js' navigation
+// APIs that consider the routing configuration
+export const { Link, redirect, usePathname, useRouter, getPathname } = createNavigation(routing);
+```
+
+#### 3. Конфигурация запросов (`src/i18n/request.ts`):
+
+```typescript
+import { hasLocale } from 'next-intl';
 import { getRequestConfig } from 'next-intl/server';
 
-const locales = ['en', 'ru'];
+import { routing } from './routing';
 
-export default getRequestConfig(async ({ locale }) => {
-  if (!locales.includes(locale as any)) notFound();
+export default getRequestConfig(async ({ requestLocale }) => {
+  // Typically corresponds to the `[locale]` segment
+  const requested = await requestLocale;
+  const locale = hasLocale(routing.locales, requested) ? requested : routing.defaultLocale;
 
   return {
-    messages: (await import(`./messages/${locale}.json`)).default,
+    locale,
+    messages: (await import(`../../messages/${locale}.json`)).default,
   };
 });
 ```
 
-#### Middleware для роутинга:
+#### 4. Middleware (`middleware.ts`):
 
 ```typescript
-// apps/web/middleware.ts
 import createMiddleware from 'next-intl/middleware';
 
-export default createMiddleware({
-  locales: ['en', 'ru'],
-  defaultLocale: 'en',
-  localePrefix: 'always', // /en/page, /ru/page
-});
+import { routing } from './src/i18n/routing';
+
+export default createMiddleware(routing);
 
 export const config = {
-  matcher: ['/', '/(ru|en)/:path*'],
+  // Match all pathnames except for
+  // - … if they start with `/api`, `/trpc`, `/_next` or `/_vercel`
+  // - … the ones containing a dot (e.g. `favicon.ico`)
+  matcher: '/((?!api|trpc|_next|_vercel|.*\\..*|favicon\\.ico).*)',
 };
 ```
 
-#### Использование в компонентах:
+#### 5. Next.js конфигурация (`next.config.js`):
+
+```javascript
+import createNextIntlPlugin from 'next-intl/plugin';
+
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  transpilePackages: ['@repo/exchange-core', '@repo/constants', '@repo/ui', '@repo/utils'],
+  serverExternalPackages: ['@trpc/server'],
+};
+
+export default withNextIntl(nextConfig);
+```
+
+#### 6. Layout с локалью (`app/[locale]/layout.tsx`):
+
+```typescript
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { hasLocale, NextIntlClientProvider } from "next-intl";
+import { setRequestLocale } from 'next-intl/server';
+
+import { routing } from '../../src/i18n/routing';
+
+export const metadata: Metadata = {
+  title: "ExchangeGO - Enterprise Crypto Exchange",
+  description: "Modern cryptocurrency exchange platform",
+};
+
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
+interface LocaleLayoutProps {
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
+}
+
+export default async function LocaleLayout({ children, params }: LocaleLayoutProps) {
+  const { locale } = await params;
+
+  // Validate locale
+  if (!hasLocale(routing.locales, locale)) {
+    notFound();
+  }
+
+  // Enable static rendering
+  setRequestLocale(locale);
+
+  return (
+    <html lang={locale} suppressHydrationWarning>
+      <head>
+        <meta name="color-scheme" content="light dark" />
+      </head>
+      <body>
+        <NextIntlClientProvider>
+          {children}
+        </NextIntlClientProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+#### 7. Страница с локалью (`app/[locale]/page.tsx`):
+
+```typescript
+import { useTranslations } from "next-intl";
+import { setRequestLocale } from 'next-intl/server';
+
+interface HomePageProps {
+  params: Promise<{ locale: string }>;
+}
+
+export default async function HomePage({ params }: HomePageProps) {
+  const { locale } = await params;
+
+  // Enable static rendering
+  setRequestLocale(locale);
+
+  const t = useTranslations('HomePage');
+
+  return (
+    <div>
+      <h1>{t('title')}</h1>
+      <p>{t('description')}</p>
+    </div>
+  );
+}
+```
+
+#### 8. Файлы переводов:
+
+```json
+// messages/en.json
+{
+  "HomePage": {
+    "title": "Exchanger",
+    "description": "Enterprise-ready cryptocurrency exchange platform",
+    "getStarted": "Get Started",
+    "learnMore": "Learn More",
+    "features": {
+      "title": "Enterprise Features",
+      "turborepo": {
+        "title": "Turborepo Monorepo",
+        "description": "Scalable monorepo architecture"
+      },
+      "trpc": {
+        "title": "tRPC API",
+        "description": "End-to-end typesafe APIs"
+      }
+    }
+  },
+  "NotFound": {
+    "title": "Page not found",
+    "description": "The page you are looking for doesn't exist.",
+    "goHome": "Go home"
+  }
+}
+```
+
+```json
+// messages/ru.json
+{
+  "HomePage": {
+    "title": "Exchanger",
+    "description": "Готовая к промышленному использованию платформа для торговли криптовалютой",
+    "getStarted": "Начать",
+    "learnMore": "Узнать больше",
+    "features": {
+      "title": "Корпоративные возможности",
+      "turborepo": {
+        "title": "Turborepo монорепозиторий",
+        "description": "Масштабируемая архитектура монорепозитория"
+      },
+      "trpc": {
+        "title": "tRPC API",
+        "description": "Сквозная типизация API"
+      }
+    }
+  },
+  "NotFound": {
+    "title": "Страница не найдена",
+    "description": "Страница, которую вы ищете, не существует.",
+    "goHome": "На главную"
+  }
+}
+```
+
+#### 9. Использование в компонентах:
+
+```typescript
+// В серверных компонентах
+import { useTranslations } from 'next-intl';
+
+export default function HomePage() {
+  const t = useTranslations('HomePage');
+
+  return (
+    <div>
+      <h1>{t('title')}</h1>
+      <p>{t('description')}</p>
+    </div>
+  );
+}
+
+// В клиентских компонентах
+'use client';
+import { useTranslations } from 'next-intl';
+
+export function LoadingButton() {
+  const t = useTranslations('common');
+  const [loading, setLoading] = useState(false);
+
+  return (
+    <button disabled={loading}>
+      {loading ? t('loading') : t('save')}
+    </button>
+  );
+}
+```
+
+#### 10. Навигация между страницами:
+
+```typescript
+// Используйте Link из src/i18n/navigation.ts, НЕ из next/link
+import { Link } from '@/src/i18n/navigation';
+
+export function Navigation() {
+  return (
+    <nav>
+      <Link href="/">{t('navigation.home')}</Link>
+      <Link href="/about">{t('navigation.about')}</Link>
+    </nav>
+  );
+}
+```
+
+### 🚨 КРИТИЧЕСКИЕ ПРАВИЛА I18N:
+
+1. **ВСЕГДА следуйте официальной документации** next-intl
+2. **НИКОГДА не создавайте собственную архитектуру** - используйте предложенную структуру
+3. **ОБЯЗАТЕЛЬНО используйте `setRequestLocale`** в layout.tsx и page.tsx
+4. **ВСЕГДА используйте `hasLocale` для валидации** локали
+5. **ИСПОЛЬЗУЙТЕ `Link` из `src/i18n/navigation.ts`**, НЕ из `next/link`
+6. **ПУТЬ к `request.ts` в `next.config.js`** должен быть точным
+
+### 📋 Чек-лист для добавления новых переводов:
+
+1. **Создать ключи в JSON файлах** (en.json, ru.json)
+2. **Добавить типизацию** (если используется TypeScript augmentation)
+3. **Использовать в компонентах** через `useTranslations`
+4. **Тестировать на обеих локалях** (/en и /ru)
+5. **Проверить статическое генерирование** с `generateStaticParams`
+
+### 🐛 Частые ошибки и решения:
+
+| Ошибка               | Причина                        | Решение                        |
+| -------------------- | ------------------------------ | ------------------------------ |
+| 404 на /en, /ru      | Неправильная структура файлов  | Следуйте структуре выше        |
+| Redirect loops       | Неправильный middleware        | Используйте `createMiddleware` |
+| "Cannot find module" | Неверный путь в next.config.js | Проверьте путь к request.ts    |
+| Missing translations | Отсутствие `setRequestLocale`  | Добавьте в layout и page       |
+| Hydration errors     | Неправильный ClientProvider    | Используйте без messages prop  |
+
+### 🔗 Полезные ссылки:
+
+- [next-intl Official Docs](https://next-intl-docs.vercel.app/)
+- [App Router Setup](https://next-intl-docs.vercel.app/docs/getting-started/app-router/with-i18n-routing)
+- [Static Rendering](https://next-intl-docs.vercel.app/docs/getting-started/app-router/with-i18n-routing#static-rendering)
 
 ```typescript
 // В серверных компонентах

@@ -1,51 +1,27 @@
-import {
-  layoutStyles,
-  pageStyles,
-  buttonStyles,
-  gridStyles,
-  cardStyles,
-  textStyles,
-  combineStyles,
-} from '@repo/ui';
+import { setRequestLocale } from 'next-intl/server';
 
-// Константы стилей для устранения дублирования
-const FEATURE_CARD_STYLES = combineStyles(cardStyles.base, 'text-center');
-const FEATURE_DESCRIPTION_STYLES = combineStyles(textStyles.body.lg, 'leading-relaxed');
-const FEATURE_TITLE_STYLES = combineStyles(textStyles.heading.lg, 'mb-3');
+import { CTASection } from '../../src/components/CTASection';
+import { FeaturesSection } from '../../src/components/FeaturesSection';
+import { HeroSection } from '../../src/components/HeroSection';
+import { RatesSection } from '../../src/components/RatesSection';
 
-export default function HomePage() {
+interface HomePageProps {
+  params: Promise<{ locale: string }>;
+}
+
+export default async function HomePage({ params }: HomePageProps) {
+  const { locale } = await params;
+
+  // Enable static rendering
+  setRequestLocale(locale);
+
   return (
-    <div className={combineStyles(layoutStyles.fullHeight, 'p-5 font-sans')}>
-      <h1 className={pageStyles.title.hero}>Exchanger - Работает!</h1>
-      <p className={pageStyles.description.hero}>
-        Enterprise-ready cryptocurrency exchange platform
-      </p>
-
-      <div className={buttonStyles.center}>
-        <button className={buttonStyles.primary}>Начать</button>
-
-        <button className={buttonStyles.secondary}>Узнать больше</button>
-      </div>
-
-      <div className={combineStyles(gridStyles.cards, 'gap-5 mt-15')}>
-        <div className={FEATURE_CARD_STYLES}>
-          <h3 className={FEATURE_TITLE_STYLES}>Turborepo Monorepo</h3>
-          <p className={FEATURE_DESCRIPTION_STYLES}>
-            Масштабируемая архитектура монорепозитория с общими пакетами
-          </p>
-        </div>
-
-        <div className={FEATURE_CARD_STYLES}>
-          <h3 className={FEATURE_TITLE_STYLES}>tRPC API</h3>
-          <p className={FEATURE_DESCRIPTION_STYLES}>
-            End-to-end типизация API с автоматическим выводом типов
-          </p>
-        </div>
-
-        <div className={FEATURE_CARD_STYLES}>
-          <h3 className={FEATURE_TITLE_STYLES}>Интернационализация</h3>
-          <p className={FEATURE_DESCRIPTION_STYLES}>Поддержка нескольких языков с next-intl</p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
+      <div className="container mx-auto px-4 py-16">
+        <HeroSection />
+        <FeaturesSection />
+        <RatesSection />
+        <CTASection />
       </div>
     </div>
   );

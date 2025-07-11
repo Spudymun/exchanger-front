@@ -2,7 +2,7 @@
 
 **Дата создания:** 29 июня 2025  
 **Статус:** В разработке  
-**Покрытие:** Базовые страницы, роутинг, layout system
+**Покрытие:** Базовые страницы, роутинг, layout system + I18N локализация (ru/en)
 
 ---
 
@@ -14,12 +14,14 @@
 - ✅ Интегрируется с tRPC API (Part 2)
 - ✅ Применяет State Management и хуки (Part 3)
 - ✅ Использует UI Components (Part 4)
+- 🌍 **NEW**: Интеграция next-intl для полной локализации
 
 ### Архитектурный подход:
 
-- **Next.js App Router** с file-based routing
+- **Next.js App Router** с file-based routing + **[locale] structure**
+- **next-intl** для локализации (ru/en)
 - **Responsive Layout** с mobile-first
-- **SEO-optimized** страницы с метаданными
+- **SEO-optimized** страницы с метаданными + **hreflang**
 - **Progressive Enhancement** для лучшего UX
 
 ---
@@ -37,32 +39,48 @@
 
 #### Технические требования
 
+🌍 **ВАЖНО**: Следует официальной next-intl архитектуре согласно DEVELOPER_GUIDE.md
+
 ```
-apps/web/src/app/
-├── layout.tsx                 # Root layout
-├── page.tsx                   # Home page
-├── loading.tsx                # Global loading UI
-├── error.tsx                  # Global error UI
-├── not-found.tsx              # 404 page
-├── globals.css                # Global styles
-├── exchange/
-│   ├── page.tsx               # Exchange page
-│   ├── loading.tsx            # Exchange loading
-│   └── [id]/
-│       └── page.tsx           # Exchange details
+apps/web/src/
+├── i18n/
+│   ├── routing.ts              # next-intl routing config
+│   ├── navigation.ts           # next-intl navigation API
+│   └── request.ts              # server-side config
+├── app/
+│   └── [locale]/               # Локализованные routes
+│       ├── layout.tsx          # Layout с NextIntlClientProvider
+│       ├── page.tsx            # Home page с setRequestLocale
+│       ├── loading.tsx         # Global loading UI
+│       ├── error.tsx           # Global error UI
+│       ├── not-found.tsx       # 404 page
+│       ├── exchange/
+│       │   ├── page.tsx        # Exchange page
+│       │   └── loading.tsx     # Exchange loading
+│       └── [other routes]/
+├── middleware.ts               # createMiddleware(routing)
+└── next.config.js             # withNextIntl('./src/i18n/request.ts')
+messages/
+├── en.json                     # English translations
+├── ru.json                     # Russian translations
+```
+
+│ └── [id]/
+│ └── page.tsx # Exchange details
 ├── auth/
-│   ├── login/
-│   │   └── page.tsx           # Login page
-│   └── register/
-│       └── page.tsx           # Register page
+│ ├── login/
+│ │ └── page.tsx # Login page
+│ └── register/
+│ └── page.tsx # Register page
 ├── profile/
-│   ├── page.tsx               # Profile page
-│   └── orders/
-│       └── page.tsx           # User orders
+│ ├── page.tsx # Profile page
+│ └── orders/
+│ └── page.tsx # User orders
 └── admin/
-    └── layout.tsx             # Admin layout
-    └── page.tsx               # Admin dashboard
-```
+└── layout.tsx # Admin layout
+└── page.tsx # Admin dashboard
+
+````
 
 #### Реализация
 
@@ -142,7 +160,7 @@ export default function RootLayout({
     </html>
   );
 }
-```
+````
 
 2. **apps/web/src/components/layout/Header/Header.tsx**
 
@@ -1081,14 +1099,42 @@ export function CTASection() {
 
 ### Ключевые результаты Part 5.1:
 
-✅ **Next.js App Router** с file-based routing  
-✅ **Responsive Layout** с Header/Footer  
-✅ **SEO Optimization** с метаданными  
+✅ **Next.js App Router** с file-based routing + **[locale] structure**  
+✅ **next-intl Integration** с поддержкой ru/en  
+✅ **Responsive Layout** с Header/Footer + **Language Switcher**  
+✅ **SEO Optimization** с метаданными + **hreflang links**  
 ✅ **Error Handling** с красивыми страницами  
-✅ **Hero Section** с real-time курсами  
-✅ **Features Section** с преимуществами  
-✅ **Rates Section** с API интеграцией  
-✅ **CTA Section** с призывом к действию
+✅ **Hero Section** с real-time курсами + **локализация**  
+✅ **Features Section** с преимуществами + **переводы**  
+✅ **Rates Section** с API интеграцией + **currency names**  
+✅ **CTA Section** с призывом к действию + **форма подписки**
+
+### 🌍 I18N Requirements для Part 5.1:
+
+#### Обязательные файлы и конфигурации:
+
+- [ ] `src/i18n/routing.ts` - конфигурация маршрутизации
+- [ ] `src/i18n/navigation.ts` - API навигации
+- [ ] `src/i18n/request.ts` - серверная конфигурация
+- [ ] `middleware.ts` - с `createMiddleware(routing)`
+- [ ] `next.config.js` - с `withNextIntl('./src/i18n/request.ts')`
+
+#### Обязательные переводы в messages/:
+
+- [ ] **Layout**: header navigation, footer links, language switcher
+- [ ] **HomePage**: hero title/description, features, CTA buttons
+- [ ] **Common**: loading, error messages, validation messages
+- [ ] **Numbers**: локализованное форматирование (toLocaleString)
+
+#### Критические проверки:
+
+- [ ] **NO 404 errors** на `/en` и `/ru` routes
+- [ ] **NO redirect loops** при навигации
+- [ ] **Корректные переводы** отображаются для каждой локали
+- [ ] **Working navigation** между локализованными страницами
+- [ ] **Language switcher** работает без перезагрузки страницы
+
+**🚨 ВАЖНО**: Следовать ТОЛЬКО официальной документации next-intl и структуре из DEVELOPER_GUIDE.md
 
 ---
 

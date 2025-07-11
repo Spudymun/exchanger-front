@@ -4,11 +4,12 @@
   "type": "module",
   "private": true,
   "exports": {
-    ".": "./src/index.ts",
-    "./ui": "./src/ui/index.ts",
-    "./state": "./src/state/index.ts"
+    ".": "./dist/index.js",
+    "./ui": "./dist/ui/index.js",
+    "./state": "./dist/state/index.js"
   },
   "scripts": {
+    "build": "tsc",
     "lint": "eslint . --max-warnings 0",
     "lint:strict": "eslint . --max-warnings 0",
     "lint:styles": "echo 'No CSS files to lint in @repo/hooks'",

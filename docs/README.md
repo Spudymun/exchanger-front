@@ -26,6 +26,7 @@
 - **[AUDIT_COMPLETION.md](AUDIT_COMPLETION.md)** - Результаты технического аудита и рефакторинга
 - **[CLEANUP_REPORT.md](CLEANUP_REPORT.md)** - Отчет по оптимизации кода и удалению неиспользуемых зависимостей
 - **[I18N_STATUS.md](I18N_STATUS.md)** - Текущее состояние интернационализации
+- **[I18N_TROUBLESHOOTING.md](I18N_TROUBLESHOOTING.md)** - **НОВОЕ** Руководство по устранению неполадок с интернационализацией (next-intl + Next.js 15)
 
 ## Навигация
 

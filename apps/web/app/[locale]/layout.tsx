@@ -1,10 +1,45 @@
-import { SUPPORTED_LOCALES } from '@repo/constants';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import React from 'react';
+import { hasLocale, NextIntlClientProvider } from 'next-intl';
+import { setRequestLocale } from 'next-intl/server';
 
-import { ClientProviders } from './providers';
+import { AppLayout } from '../../src/components/app-layout';
+import { routing } from '../../src/i18n/routing';
 
-const locales = SUPPORTED_LOCALES;
+const SITE_TITLE = 'ExchangeGO - Enterprise Crypto Exchange';
+const SITE_DESCRIPTION =
+  'Modern cryptocurrency exchange platform built with Next.js, tRPC, and enterprise-grade architecture';
+
+export const metadata: Metadata = {
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  keywords: 'crypto, exchange, trading, blockchain, nextjs, trpc, enterprise, exchangego',
+  openGraph: {
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    type: 'website',
+    locale: 'en_US',
+    siteName: 'ExchangeGO',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
+
+export function generateStaticParams() {
+  return routing.locales.map(locale => ({ locale }));
+}
 
 interface LocaleLayoutProps {
   children: React.ReactNode;
@@ -12,28 +47,27 @@ interface LocaleLayoutProps {
 }
 
 export default async function LocaleLayout({ children, params }: LocaleLayoutProps) {
-  // Await params to get the locale
   const { locale } = await params;
 
-  // Validate that the incoming `locale` parameter is valid
-  if (!locales.includes(locale as (typeof locales)[number])) {
+  // Validate locale
+  if (!hasLocale(routing.locales, locale)) {
     notFound();
   }
 
-  // Load messages for the current locale
-  let messages;
-  try {
-    messages = (await import(`../../messages/${locale}.json`)).default;
-  } catch {
-    messages = {};
-  }
+  // Enable static rendering
+  setRequestLocale(locale);
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body>
-        <ClientProviders locale={locale} messages={messages}>
-          <div className="min-h-screen">{children}</div>
-        </ClientProviders>
+      <head>
+        <meta name="color-scheme" content="light dark" />
+        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+      </head>
+      <body className="antialiased">
+        <NextIntlClientProvider>
+          <AppLayout>{children}</AppLayout>
+        </NextIntlClientProvider>
       </body>
     </html>
   );
