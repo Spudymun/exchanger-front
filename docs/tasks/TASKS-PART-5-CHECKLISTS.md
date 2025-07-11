@@ -9,13 +9,34 @@
 **Статус:** Готов к реализации с 95% переиспользованием существующих компонентов  
 🌍 **I18N:** Интегрирована поддержка локализации (ru/en) согласно DEVELOPER_GUIDE.md
 
+🎉 **НОВОСТЬ:** Part 5.1 (Core Pages & Layout) ПОЛНОСТЬЮ ЗАВЕРШЕНА! (11 июля 2025)
+
+**Что готово:**
+
+- ✅ Полная система i18n с next-intl (ru/en локализация)
+- ✅ Локализованный роутинг с middleware
+- ✅ Header/Footer компоненты с language switcher
+- ✅ Главная страница со всеми секциями (Hero, Features, Rates, CTA)
+- ✅ Loading, Error, Not-Found страницы
+- ✅ Responsive design + SEO оптимизация
+- ✅ Все тесты пройдены, 0 ошибок
+
+**Готовый фундамент для Parts 5.2-5.4!**
+
 ---
 
 ## 📋 ОБЩИЙ СТАТУС РЕАЛИЗАЦИИ
 
-**Общий прогресс:** 0/8 задач (0%)  
+**Общий прогресс:** 2/8 задач (25%) ✅  
 **Общее время:** 11 часов _(сокращено с 19.5 часов благодаря переиспользованию)_  
-**Статус:** ⏳ ГОТОВ К РЕАЛИЗАЦИИ
+**Статус:** 🚀 В РЕАЛИЗАЦИИ - Part 5.1 ЗАВЕРШЕНА!
+
+### 🎉 **PART 5.1 СТАТУС: ✅ ЗАВЕРШЕНА (2/2 задачи)**
+
+- ✅ **TASK 5.1.1:** Базовая структура роутинга и layout - **ВЫПОЛНЕНО**
+- ✅ **TASK 5.1.2:** Home Page с основными секциями - **ВЫПОЛНЕНО**
+
+**Результат:** Полноценная система i18n с next-intl, локализованный роутинг, Header/Footer компоненты, главная страница со всеми секциями
 
 🌍 **I18N REQUIREMENTS:** Все задачи Part 5 ОБЯЗАТЕЛЬНО включают полную локализацию (ru/en)
 
@@ -55,13 +76,13 @@
 
 ### ✅ TASK 5.1.1: Создать базовую структуру роутинга и layout
 
-**Время:** 2 часа | **Приоритет:** 🔴 Критический | **Статус:** ⏳ К РЕАЛИЗАЦИИ
+**Время:** 2 часа | **Приоритет:** 🔴 Критический | **Статус:** ✅ ЗАВЕРШЕНА
 
 #### 📋 Подготовка
 
-- [ ] Убедиться в работоспособности Next.js App Router
-- [ ] Проверить настройки TypeScript для app/ директории
-- [ ] Подготовить структуру файлов согласно Next.js 13+ conventions
+- [x] Убедиться в работоспособности Next.js App Router
+- [x] Проверить настройки TypeScript для app/ директории
+- [x] Подготовить структуру файлов согласно Next.js 13+ conventions
 
 #### 📁 Структура файлов
 
@@ -82,263 +103,264 @@ apps/web/src/app/
 
 **Root Layout (apps/web/src/app/layout.tsx):**
 
-- [ ] Next.js metadata configuration
-- [ ] HTML structure с правильными lang атрибутами
-- [ ] Global providers (AuthProvider, TRPCProvider)
-- [ ] Header и Footer компоненты
-- [ ] Error boundary интеграция
-- [ ] 🌍 **I18N Integration**: NextIntlClientProvider setup
-- [ ] 🌍 **I18N Integration**: Locale validation with hasLocale
-- [ ] 🌍 **I18N Integration**: Static params generation for /en и /ru
-- [ ] 🌍 **I18N Integration**: setRequestLocale for static rendering
+- [x] Next.js metadata configuration
+- [x] HTML structure с правильными lang атрибутами
+- [x] Global providers (AuthProvider, TRPCProvider)
+- [x] Header и Footer компоненты
+- [x] Error boundary интеграция
+- [x] 🌍 **I18N Integration**: NextIntlClientProvider setup
+- [x] 🌍 **I18N Integration**: Locale validation with hasLocale
+- [x] 🌍 **I18N Integration**: Static params generation for /en и /ru
+- [x] 🌍 **I18N Integration**: setRequestLocale for static rendering
 
 **Header компонент:**
 
-- [ ] Navigation menu с активными состояниями
-- [ ] User menu (auth state dependent)
-- [ ] Mobile hamburger menu
-- [ ] Logo с link на главную
-- [ ] Theme switcher интеграция
-- [ ] 🌍 **I18N Integration**: Language switcher (ru/en)
-- [ ] 🌍 **I18N Integration**: Локализованная навигация с Link из next-intl
-- [ ] 🌍 **I18N Integration**: Переводы для всех UI элементов
+- [x] Navigation menu с активными состояниями
+- [x] User menu (auth state dependent)
+- [x] Mobile hamburger menu
+- [x] Logo с link на главную
+- [x] Theme switcher интеграция
+- [x] 🌍 **I18N Integration**: Language switcher (ru/en)
+- [x] 🌍 **I18N Integration**: Локализованная навигация с Link из next-intl
+- [x] 🌍 **I18N Integration**: Переводы для всех UI элементов
 
 **Footer компонент:**
 
-- [ ] Company information и links
-- [ ] Social media links
-- [ ] Contact information
-- [ ] Legal pages links (Terms, Privacy)
-- [ ] 🌍 **I18N Integration**: Переводы для всех текстов
-- [ ] 🌍 **I18N Integration**: Локализованные ссылки на правовые страницы
+- [x] Company information и links
+- [x] Social media links
+- [x] Contact information
+- [x] Legal pages links (Terms, Privacy)
+- [x] 🌍 **I18N Integration**: Переводы для всех текстов
+- [x] 🌍 **I18N Integration**: Локализованные ссылки на правовые страницы
 
 #### 🎨 UI & UX
 
 **Responsive Design:**
 
-- [ ] Mobile-first approach (от 320px)
-- [ ] Tablet breakpoints (768px+)
-- [ ] Desktop breakpoints (1024px+)
-- [ ] Header collapse на мобильных
+- [x] Mobile-first approach (от 320px)
+- [x] Tablet breakpoints (768px+)
+- [x] Desktop breakpoints (1024px+)
+- [x] Header collapse на мобильных
 
 **SEO Optimization:**
 
-- [ ] Meta tags в layout.tsx
-- [ ] Open Graph tags
-- [ ] Structured data markup
-- [ ] Sitemap.xml generation
-- [ ] 🌍 **I18N Integration**: Locale-specific meta tags
-- [ ] 🌍 **I18N Integration**: hreflang links для SEO
-- [ ] 🌍 **I18N Integration**: Локализованные Open Graph данные
+- [x] Meta tags в layout.tsx
+- [x] Open Graph tags
+- [x] Structured data markup
+- [x] Sitemap.xml generation
+- [x] 🌍 **I18N Integration**: Locale-specific meta tags
+- [x] 🌍 **I18N Integration**: hreflang links для SEO
+- [x] 🌍 **I18N Integration**: Локализованные Open Graph данные
 
 #### 🔧 Функциональность
 
 **Navigation:**
 
-- [ ] Client-side routing с Next.js Link
-- [ ] Active states для текущей страницы
-- [ ] Breadcrumbs для глубоких страниц
-- [ ] Back to top functionality
-- [ ] 🌍 **I18N Integration**: Использование Link из src/i18n/navigation.ts
-- [ ] 🌍 **I18N Integration**: Локализованные URLs (/en/exchange, /ru/exchange)
-- [ ] 🌍 **I18N Integration**: Автоматическое определение языка браузера
+- [x] Client-side routing с Next.js Link
+- [x] Active states для текущей страницы
+- [x] Breadcrumbs для глубоких страниц
+- [x] Back to top functionality
+- [x] 🌍 **I18N Integration**: Использование Link из src/i18n/navigation.ts
+- [x] 🌍 **I18N Integration**: Локализованные URLs (/en/exchange, /ru/exchange)
+- [x] 🌍 **I18N Integration**: Автоматическое определение языка браузера
 
 #### 🌍 I18N Configuration & Testing
 
 **next-intl Setup (КРИТИЧЕСКИ ВАЖНО):**
 
-- [ ] Проверить структуру файлов `src/i18n/` (routing.ts, navigation.ts, request.ts)
-- [ ] Убедиться в правильности `middleware.ts` с `createMiddleware(routing)`
-- [ ] Проверить `next.config.js` путь к `./src/i18n/request.ts`
-- [ ] Тестировать доступность `/en` и `/ru` routes (должно быть 200 OK)
-- [ ] Проверить отсутствие redirect loops
+- [x] Проверить структуру файлов `src/i18n/` (routing.ts, navigation.ts, request.ts)
+- [x] Убедиться в правильности `middleware.ts` с `createMiddleware(routing)`
+- [x] Проверить `next.config.js` путь к `./src/i18n/request.ts`
+- [x] Тестировать доступность `/en` и `/ru` routes (должно быть 200 OK)
+- [x] Проверить отсутствие redirect loops
 
 **Translation Files:**
 
-- [ ] Создать/обновить `messages/en.json` с ключами для Layout
-- [ ] Создать/обновить `messages/ru.json` с переводами
-- [ ] Добавить переводы для Header: navigation, user menu, buttons
-- [ ] Добавить переводы для Footer: company info, links, legal
-- [ ] Добавить переводы для общих элементов: loading, errors, etc.
+- [x] Создать/обновить `messages/en.json` с ключами для Layout
+- [x] Создать/обновить `messages/ru.json` с переводами
+- [x] Добавить переводы для Header: navigation, user menu, buttons
+- [x] Добавить переводы для Footer: company info, links, legal
+- [x] Добавить переводы для общих элементов: loading, errors, etc.
 
 **Component Integration:**
 
-- [ ] Использовать `useTranslations('Layout')` в Header/Footer
-- [ ] Импортировать `Link` из `@/src/i18n/navigation`, НЕ из `next/link`
-- [ ] Добавить language switcher в Header
-- [ ] Тестировать переключение языков без перезагрузки
+- [x] Использовать `useTranslations('Layout')` в Header/Footer
+- [x] Импортировать `Link` из `@/src/i18n/navigation`, НЕ из `next/link`
+- [x] Добавить language switcher в Header
+- [x] Тестировать переключение языков без перезагрузки
 
 **Testing & Validation:**
 
-- [ ] Проверить работу на `/en` и `/ru` путях
-- [ ] Убедиться в корректности lang атрибута в `<html>`
-- [ ] Проверить отображение переводов в UI
-- [ ] Тестировать navigation между локализованными страницами
-- [ ] Проверить fallback на defaultLocale при неправильной локали
+- [x] Проверить работу на `/en` и `/ru` путях
+- [x] Убедиться в корректности lang атрибута в `<html>`
+- [x] Проверить отображение переводов в UI
+- [x] Тестировать navigation между локализованными страницами
+- [x] Проверить fallback на defaultLocale при неправильной локали
 
 **🚨 КРИТИЧЕСКИЕ ПРОВЕРКИ:**
 
-- [ ] **NO 404 errors** на /en и /ru
-- [ ] **NO redirect loops** при навигации
-- [ ] **NO "Cannot find module"** ошибок
-- [ ] **Правильные переводы** отображаются для каждой локали
-- [ ] **Работающие ссылки** между страницами разных локалей
-- [ ] Active page highlighting
-- [ ] Breadcrumbs для deep pages
-- [ ] Mobile menu toggle state
+- [x] **NO 404 errors** на /en и /ru
+- [x] **NO redirect loops** при навигации
+- [x] **NO "Cannot find module"** ошибок
+- [x] **Правильные переводы** отображаются для каждой локали
+- [x] **Работающие ссылки** между страницами разных локалей
+- [x] Active page highlighting
+- [x] Breadcrumbs для deep pages
+- [x] Mobile menu toggle state
 
 **Error Handling:**
 
-- [ ] Global error boundary в layout
-- [ ] Custom 404 page с navigation
-- [ ] Loading UI для всех routes
-- [ ] Error reporting integration
+- [x] Global error boundary в layout
+- [x] Custom 404 page с navigation
+- [x] Loading UI для всех routes
+- [x] Error reporting integration
 
 #### 🧪 Тестирование
 
 **Accessibility:**
 
-- [ ] Screen reader navigation
-- [ ] Keyboard navigation
-- [ ] Color contrast compliance (WCAG AA)
-- [ ] Focus management
+- [x] Screen reader navigation
+- [x] Keyboard navigation
+- [x] Color contrast compliance (WCAG AA)
+- [x] Focus management
 
 **Performance:**
 
-- [ ] Layout shift prevention
-- [ ] Image optimization
-- [ ] Font loading optimization
-- [ ] Critical CSS inlining
+- [x] Layout shift prevention
+- [x] Image optimization
+- [x] Font loading optimization
+- [x] Critical CSS inlining
 
 #### ✅ Критерии завершения
 
-- [ ] Базовая структура роутинга создана
-- [ ] Layout компоненты реализованы
-- [ ] Header с навигацией настроен
-- [ ] Footer с ссылками добавлен
-- [ ] Error handling настроен
-- [ ] SEO метаданные добавлены
-- [ ] TypeScript компилируется без ошибок
-- [ ] Responsive design работает на всех устройствах
-- [ ] Accessibility проверена
+- [x] Базовая структура роутинга создана
+- [x] Layout компоненты реализованы
+- [x] Header с навигацией настроен
+- [x] Footer с ссылками добавлен
+- [x] Error handling настроен
+- [x] SEO метаданные добавлены
+- [x] TypeScript компилируется без ошибок
+- [x] Responsive design работает на всех устройствах
+- [x] Accessibility проверена
+- [x] 🌍 **I18N COMPLETE**: Полная локализация реализована
 
 ---
 
 ### ✅ TASK 5.1.2: Создать Home Page с основными секциями
 
-**Время:** 3 часа | **Приоритет:** 🔴 Критический | **Статус:** ⏳ К РЕАЛИЗАЦИИ
+**Время:** 3 часа | **Приоритет:** 🔴 Критический | **Статус:** ✅ ЗАВЕРШЕНА
 
 #### 📋 Подготовка
 
-- [ ] Анализ дизайн-требований для главной страницы
-- [ ] Подготовка контента для всех секций
-- [ ] Проверка интеграции с API для real-time курсов
+- [x] Анализ дизайн-требований для главной страницы
+- [x] Подготовка контента для всех секций
+- [x] Проверка интеграции с API для real-time курсов
 
 #### 🏗️ Секции для реализации
 
 **Hero Section (HeroSection.tsx):**
 
-- [ ] Gradient background с брендингом
-- [ ] Заголовок и описание проекта
-- [ ] Real-time курсы валют
-- [ ] Primary CTA button "Начать обмен"
-- [ ] Quick stats (объем обменов, пользователи)
-- [ ] 🌍 **I18N Integration**: useTranslations('HomePage.hero') для всех текстов
-- [ ] 🌍 **I18N Integration**: Локализованный CTA button
-- [ ] 🌍 **I18N Integration**: Локализованные числовые форматы (toLocaleString)
+- [x] Gradient background с брендингом
+- [x] Заголовок и описание проекта
+- [x] Real-time курсы валют
+- [x] Primary CTA button "Начать обмен"
+- [x] Quick stats (объем обменов, пользователи)
+- [x] 🌍 **I18N Integration**: useTranslations('HomePage.hero') для всех текстов
+- [x] 🌍 **I18N Integration**: Локализованный CTA button
+- [x] 🌍 **I18N Integration**: Локализованные числовые форматы (toLocaleString)
 
 **Features Section (FeaturesSection.tsx):**
 
-- [ ] Grid layout преимуществ (3x2 или 2x3)
-- [ ] Icons для каждого преимущества
-- [ ] Заголовки и описания
-- [ ] Hover effects для интерактивности
-- [ ] 🌍 **I18N Integration**: useTranslations('HomePage.features') для каждой фичи
-- [ ] 🌍 **I18N Integration**: Переводы заголовков и описаний
+- [x] Grid layout преимуществ (3x2 или 2x3)
+- [x] Icons для каждого преимущества
+- [x] Заголовки и описания
+- [x] Hover effects для интерактивности
+- [x] 🌍 **I18N Integration**: useTranslations('HomePage.features') для каждой фичи
+- [x] 🌍 **I18N Integration**: Переводы заголовков и описаний
 
 **Rates Section:**
 
-- [ ] ♻️ **ПЕРЕИСПОЛЬЗОВАНИЕ:** ExchangeRates компонент
-- [ ] Real-time обновления курсов
-- [ ] Trend indicators (arrows up/down)
-- [ ] "Все курсы" link
-- [ ] 🌍 **I18N Integration**: Локализованные названия валют
-- [ ] 🌍 **I18N Integration**: Переводы для UI элементов (trend, "все курсы")
-- [ ] 🌍 **I18N Integration**: Локализованное форматирование чисел
+- [x] ♻️ **ПЕРЕИСПОЛЬЗОВАНИЕ:** ExchangeRates компонент
+- [x] Real-time обновления курсов
+- [x] Trend indicators (arrows up/down)
+- [x] "Все курсы" link
+- [x] 🌍 **I18N Integration**: Локализованные названия валют
+- [x] 🌍 **I18N Integration**: Переводы для UI элементов (trend, "все курсы")
+- [x] 🌍 **I18N Integration**: Локализованное форматирование чисел
 
 **CTA Section:**
 
-- [ ] Статистика проекта
-- [ ] Multiple CTA buttons
-- [ ] Newsletter signup form
-- [ ] Social proof elements
-- [ ] 🌍 **I18N Integration**: useTranslations('HomePage.cta') для всех текстов
-- [ ] 🌍 **I18N Integration**: Локализованная форма подписки
-- [ ] 🌍 **I18N Integration**: Переводы validation сообщений
+- [x] Статистика проекта
+- [x] Multiple CTA buttons
+- [x] Newsletter signup form
+- [x] Social proof elements
+- [x] 🌍 **I18N Integration**: useTranslations('HomePage.cta') для всех текстов
+- [x] 🌍 **I18N Integration**: Локализованная форма подписки
+- [x] 🌍 **I18N Integration**: Переводы validation сообщений
 
 #### 🎨 UI & UX
 
 **Design System:**
 
-- [ ] Консистентное использование @repo/ui компонентов
-- [ ] Brand colors и typography
-- [ ] Proper spacing using Tailwind classes
-- [ ] Shadow и border radius consistency
+- [x] Консистентное использование @repo/ui компонентов
+- [x] Brand colors и typography
+- [x] Proper spacing using Tailwind classes
+- [x] Shadow и border radius consistency
 
 **Mobile Optimization:**
 
-- [ ] Stack layout для мобильных
-- [ ] Touch-friendly button sizes
-- [ ] Readable font sizes
-- [ ] Optimized images для мобильных
+- [x] Stack layout для мобильных
+- [x] Touch-friendly button sizes
+- [x] Readable font sizes
+- [x] Optimized images для мобильных
 
 #### 🔧 Функциональность
 
 **API Integration:**
 
-- [ ] useRates hook для курсов валют
-- [ ] Loading states для async data
-- [ ] Error handling для API failures
-- [ ] Cache strategy для курсов
+- [x] useRates hook для курсов валют
+- [x] Loading states для async data
+- [x] Error handling для API failures
+- [x] Cache strategy для курсов
 
 **Interactive Elements:**
 
-- [ ] Smooth scrolling between sections
-- [ ] CTA buttons с proper routing
-- [ ] Form validation для newsletter
-- [ ] Analytics tracking для interactions
+- [x] Smooth scrolling between sections
+- [x] CTA buttons с proper routing
+- [x] Form validation для newsletter
+- [x] Analytics tracking для interactions
 
 #### 🧪 Тестирование
 
 **Content & Data:**
 
-- [ ] Real-time курсы отображаются корректно
-- [ ] Loading skeleton states
-- [ ] Error states для недоступных данных
-- [ ] Fallback content
+- [x] Real-time курсы отображаются корректно
+- [x] Loading skeleton states
+- [x] Error states для недоступных данных
+- [x] Fallback content
 
 **User Experience:**
 
-- [ ] Fast loading times (<3s)
-- [ ] Smooth animations
-- [ ] Intuitive navigation flow
-- [ ] Clear call-to-actions
+- [x] Fast loading times (<3s)
+- [x] Smooth animations
+- [x] Intuitive navigation flow
+- [x] Clear call-to-actions
 
 #### ✅ Критерии завершения
 
-- [ ] Hero section с курсами создана
-- [ ] Features section реализована
-- [ ] Rates section с API интеграцией
-- [ ] CTA section с статистикой
-- [ ] Responsive design проверен
-- [ ] Loading states добавлены
-- [ ] API интеграция работает корректно
-- [ ] Performance оптимизирована
-- [ ] 🌍 **I18N COMPLETE**: Все секции локализованы
-- [ ] 🌍 **I18N COMPLETE**: Тестирование на /en и /ru
-- [ ] 🌍 **I18N COMPLETE**: Переводы JSON файлов обновлены
-- [ ] 🌍 **I18N COMPLETE**: setRequestLocale добавлен в page.tsx
-- [ ] Content проверен на корректность
+- [x] Hero section с курсами создана
+- [x] Features section реализована
+- [x] Rates section с API интеграцией
+- [x] CTA section с статистикой
+- [x] Responsive design проверен
+- [x] Loading states добавлены
+- [x] API интеграция работает корректно
+- [x] Performance оптимизирована
+- [x] 🌍 **I18N COMPLETE**: Все секции локализованы
+- [x] 🌍 **I18N COMPLETE**: Тестирование на /en и /ru
+- [x] 🌍 **I18N COMPLETE**: Переводы JSON файлов обновлены
+- [x] 🌍 **I18N COMPLETE**: setRequestLocale добавлен в page.tsx
+- [x] Content проверен на корректность
 
 ---
 
@@ -1199,7 +1221,7 @@ apps/web/src/app/auth/
 
 ### 📈 Переиспользование по частям
 
-- **Part 5.1:** Новые компоненты (layout system) - 0% переиспользование
+- **Part 5.1:** ✅ ЗАВЕРШЕНА - Новые компоненты (layout system) - 0% переиспользование
 - **Part 5.2:** 70% переиспользование (ExchangeForm, ExchangeRates, OrderStatus)
 - **Part 5.3:** 85% переиспользование (типы, формы, UI компоненты)
 - **Part 5.4:** 90% переиспользование (OrderStatus, AuthForms, useAuth)
@@ -1212,13 +1234,15 @@ apps/web/src/app/auth/
 - ✅ Типизация использует централизованные @repo/exchange-core типы
 - ✅ UI consistency через @repo/ui компоненты
 - ✅ State management через существующие hooks и stores
+- ✅ **Part 5.1 РЕЗУЛЬТАТ:** Полная система i18n + локализованные Layout компоненты
 
 ### 📋 Финальный статус готовности
 
 **Готов к реализации:** ✅ ВСЕ задачи детализированы с учетом переиспользования  
 **Документация:** ✅ ПОЛНАЯ - каждая задача имеет детальный чеклист  
 **Зависимости:** ✅ ВСЕ существующие компоненты проанализированы  
-**Архитектура:** ✅ СОХРАНЕНА - новые компоненты дополняют, не нарушают
+**Архитектура:** ✅ СОХРАНЕНА - новые компоненты дополняют, не нарушают  
+**Part 5.1 Status:** ✅ ЗАВЕРШЕНА - Основа для всех остальных частей готова!
 
 ---
 
