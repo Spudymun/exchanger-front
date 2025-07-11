@@ -4,6 +4,14 @@
     "description": "Enterprise-ready cryptocurrency exchange platform built with Next.js, tRPC, and modern web technologies",
     "getStarted": "Get Started",
     "learnMore": "Learn More",
+    "exchangeCalculator": {
+      "title": "Exchange Calculator",
+      "fromAmount": "From Amount",
+      "toAmount": "To Amount",
+      "exchange": "Exchange",
+      "loading": "Loading...",
+      "commission": "Commission"
+    },
     "features": {
       "title": "Enterprise Features",
       "description": "Built with modern technologies for scalability and performance",
