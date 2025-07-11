@@ -28,1267 +28,733 @@
 
 ## 💱 PHASE 5.2: EXCHANGE PAGES & FEATURES
 
-### TASK 5.2.1: Создать страницу Exchange Calculator с переиспользованием существующих компонентов
+### TASK 5.2.1: Интегрировать обменник в HeroSection главной страницы
 
-**Время:** 1.5 часа ~~2.5 часа~~ _(сокращено благодаря переиспользованию)_  
+**Время:** 1.5 часа  
 **Приоритет:** 🔴 Критический  
 **♻️ Переиспользование:** ✅ Максимальное использование существующих компонентов
 
-#### Описание
+#### 🎯 ЦЕЛЬ ЗАДАЧИ
 
-Главная страница калькулятора обмена с использованием **существующих компонентов**:
+Интегрировать обменник (калькулятор) в HeroSection главной страницы. Пользователь сможет рассчитать обмен сразу на главной странице и перейти к заполнению данных.
 
-- `ExchangeForm.tsx` как основа для калькулятора
-- `ExchangeRates.tsx` для отображения курсов
-- `OrderStatus.tsx` для preview заказов
+#### 🔍 ТЕКУЩЕЕ СОСТОЯНИЕ (ФАКТ)
 
-#### Технические требования _(адаптированы под переиспользование)_
+- **HeroSection** (`apps/web/src/components/HeroSection.tsx`) - простая секция с заголовком и кнопками
+- **ExchangeForm** (`apps/web/src/components/forms/ExchangeForm.tsx`) - полнофункциональная форма обмена
+- **Главная страница** (`apps/web/app/[locale]/page.tsx`) - содержит HeroSection, FeaturesSection, RatesSection, CTASection
 
-```
-apps/web/src/app/exchange/
-├── page.tsx                 # Главная страница - композиция существующих компонентов
-└── components/
-    ├── EnhancedExchangeForm.tsx    # Расширение ExchangeForm для калькулятора
-    └── ProcessSteps/               # Новые компоненты (нет аналогов)
-        ├── ProcessSteps.tsx
-        └── StepIndicator.tsx
-```
+#### 📋 ТРЕБОВАНИЯ К ИЗМЕНЕНИЯМ
 
-**🔄 Переиспользуемые компоненты:**
-
-- ✅ `~/components/forms/ExchangeForm.tsx` → основа калькулятора
-- ✅ `~/components/ExchangeRates.tsx` → отображение курсов
-- ✅ `~/components/OrderStatus.tsx` → preview заказов
-- ✅ `@repo/hooks/useExchange` → бизнес-логика расчетов
-
-#### Реализация _(адаптированная под переиспользование)_
-
-1. **apps/web/src/app/exchange/page.tsx** _(композиция существующих компонентов)_
+**🔧 МОДИФИКАЦИЯ 1: HeroSection.tsx**
 
 ```typescript
-import React from 'react';
-import { Metadata } from 'next';
-import { ExchangeForm } from '~/components/forms/ExchangeForm';
-import { ExchangeRates } from '~/components/ExchangeRates';
-import { ProcessSteps } from './components/ProcessSteps/ProcessSteps';
-import { FeaturesSection } from '~/components/sections/FeaturesSection';
+// ПУТЬ: apps/web/src/components/HeroSection.tsx
+// ДЕЙСТВИЕ: Заменить весь файл на новую версию
 
-export const metadata: Metadata = {
-  title: 'Калькулятор обмена криптовалют | ExchangeGO',
-  description: 'Рассчитайте стоимость обмена криптовалют на гривны в реальном времени. Выгодные курсы BTC, ETH, USDT, LTC.',
-  keywords: 'обмен криптовалют, калькулятор, bitcoin, ethereum, курс',
-  openGraph: {
-    title: 'Калькулятор обмена криптовалют | ExchangeGO',
-    description: 'Рассчитайте стоимость обмена криптовалют на гривны в реальном времени',
-    url: '/exchange',
-    type: 'website',
-  },
-};
+import { Button } from '@repo/ui';
+import { useTranslations } from 'next-intl';
+import { ExchangeCalculator } from './ExchangeCalculator';
 
-export default function ExchangePage() {
+export function HeroSection() {
+  const t = useTranslations('HomePage');
+
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-50 to-indigo-100 py-12 lg:py-20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center mb-12">
-            <h1 className="text-3xl lg:text-5xl font-bold text-gray-900 mb-6">
-              Калькулятор обмена
-              <span className="text-blue-600"> криптовалют</span>
-            </h1>
-            <p className="text-lg lg:text-xl text-gray-600 mb-8">
-              Рассчитайте стоимость обмена в реальном времени с выгодными курсами
-            </p>
-          </div>
+    <div className="text-center mb-16">
+      <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">{t('title')}</h1>
+      <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">{t('description')}</p>
 
-          {/* Main Calculator - ПЕРЕИСПОЛЬЗУЕМ ExchangeForm */}
-          <div className="max-w-2xl mx-auto">
-            <ExchangeForm />
-          </div>
-        </div>
-      </section>
-
-      {/* Process Steps - НОВЫЙ компонент (нет аналогов) */}
-      <ProcessSteps />
-
-      {/* Exchange Rates - ПЕРЕИСПОЛЬЗУЕМ ExchangeRates */}
-      <section className="py-12 lg:py-20">
-        <div className="container mx-auto px-4">
-          <ExchangeRates />
-        </div>
-      </section>
-
-      {/* Features Section - ПЕРЕИСПОЛЬЗУЕМ существующую секцию */}
-      <FeaturesSection />
-    </div>
-  );
-}
-```
-
-2. **apps/web/src/app/exchange/components/ProcessSteps/ProcessSteps.tsx** _(НОВЫЙ - нет аналогов)_
-
-```typescript
-'use client';
-
-import React from 'react';
-import { Card, CardContent } from '@repo/ui';
-import {
-  CalculatorIcon,
-  CreditCardIcon,
-  CheckCircleIcon,
-  ArrowRightIcon
-} from '@heroicons/react/24/outline';
-
-const steps = [
-  {
-    id: 1,
-    title: 'Расчет',
-    description: 'Укажите валюту и сумму для обмена',
-    icon: CalculatorIcon,
-    color: 'text-blue-600 bg-blue-50',
-  },
-  {
-    id: 2,
-    title: 'Данные',
-    description: 'Заполните контактную информацию',
-    icon: CreditCardIcon,
-    color: 'text-green-600 bg-green-50',
-  },
-  {
-    id: 3,
-    title: 'Готово',
-    description: 'Получите средства на указанные реквизиты',
-    icon: CheckCircleIcon,
-    color: 'text-purple-600 bg-purple-50',
-  },
-];
-
-export function ProcessSteps() {
-  return (
-    <section className="py-12 lg:py-20 bg-gray-50">
-      <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto text-center mb-12">
-          <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4">
-            Как это работает
-          </h2>
-          <p className="text-lg text-gray-600">
-            Простой и безопасный процесс обмена в три шага
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {steps.map((step, index) => (
-            <div key={step.id} className="relative">
-              <Card className="text-center h-full">
-                <CardContent className="p-8">
-                  <div className={`w-16 h-16 rounded-full ${step.color} flex items-center justify-center mx-auto mb-6`}>
-                    <step.icon className="h-8 w-8" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                    {step.title}
-                  </h3>
-                  <p className="text-gray-600">
-                    {step.description}
-                  </p>
-                </CardContent>
-              </Card>
-
-              {/* Arrow between steps */}
-              {index < steps.length - 1 && (
-                <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-10">
-                  <ArrowRightIcon className="h-6 w-6 text-gray-400" />
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+      {/* НОВЫЙ БЛОК: Калькулятор обмена */}
+      <div className="max-w-2xl mx-auto mb-8">
+        <ExchangeCalculator />
       </div>
-    </section>
+
+      {/* СОХРАНИТЬ: Существующие кнопки */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <Button size="lg" className="text-lg px-8 py-3">
+          {t('getStarted')}
+        </Button>
+        <Button variant="outline" size="lg" className="text-lg px-8 py-3">
+          {t('learnMore')}
+        </Button>
+      </div>
+    </div>
   );
 }
 ```
 
-        </div>
-      </section>
-
-      {/* Process Steps */}
-      <section className="py-16 lg:py-24">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4">
-              Как происходит обмен
-            </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Простой и безопасный процесс обмена в 4 шага
-            </p>
-          </div>
-          <ProcessSteps />
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="py-16 lg:py-24 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <FeaturesSection />
-        </div>
-      </section>
-
-      {/* Recent Rates */}
-      <section className="py-16 lg:py-24">
-        <div className="container mx-auto px-4">
-          <RecentRatesSection />
-        </div>
-      </section>
-    </div>
-
-);
-}
-
-````
-
-2. **apps/web/src/app/exchange/components/CalculatorWidget/CalculatorWidget.tsx**
+**🔧 МОДИФИКАЦИЯ 2: Создать ExchangeCalculator.tsx**
 
 ```typescript
+// ПУТЬ: apps/web/src/components/ExchangeCalculator.tsx
+// ДЕЙСТВИЕ: Создать новый файл
+
 'use client';
 
-import React from 'react';
-import { Card, CardContent, Button } from '@repo/ui';
-import { useExchange } from '~/hooks/useExchange';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { RateDisplay } from './RateDisplay';
-import { CurrencySelector } from './CurrencySelector';
-import { AmountInput } from './AmountInput';
-import { OrderPreview } from '../OrderPreview/OrderPreview';
-import { ArrowsUpDownIcon, SparklesIcon } from '@heroicons/react/24/outline';
+import { CRYPTOCURRENCIES } from '@repo/constants';
+import { useForm } from '@repo/hooks';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Button,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Input,
+  FormField,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from '@repo/ui';
+import { CalculatorIcon } from '@heroicons/react/24/outline';
+import { z } from 'zod';
 
-export function CalculatorWidget() {
+// Схема валидации для калькулятора
+const calculatorSchema = z.object({
+  currency: z.enum(['BTC', 'ETH', 'USDT', 'LTC'] as const),
+  amount: z.string().min(1, 'Введите сумму').refine(val => Number(val) > 0, 'Сумма должна быть больше 0'),
+});
+
+interface CalculatorFormData {
+  currency: string;
+  amount: string;
+}
+
+export function ExchangeCalculator() {
   const router = useRouter();
-  const exchange = useExchange();
+  const [calculation, setCalculation] = useState<{
+    cryptoAmount: number;
+    uahAmount: number;
+    rate: number;
+  } | null>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
 
-  // State для UI
-  const [isExpanded, setIsExpanded] = React.useState(false);
+  const form = useForm<CalculatorFormData>({
+    initialValues: {
+      currency: 'BTC',
+      amount: '',
+    },
+    validationSchema: calculatorSchema,
+    onSubmit: async (values) => {
+      setIsCalculating(true);
 
-  // Обработчики
-  const handleSwapDirection = () => {
-    exchange.swapDirection();
-  };
+      // Имитация расчета (в реальном приложении - API call)
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-  const handleCalculate = async () => {
-    if (exchange.isFormValid()) {
-      await exchange.calculateExchange();
-      setIsExpanded(true);
+      const amount = Number(values.amount);
+      const mockRate = values.currency === 'BTC' ? 1000000 : 50000; // Примерные курсы
+
+      setCalculation({
+        cryptoAmount: amount,
+        uahAmount: amount * mockRate,
+        rate: mockRate,
+      });
+
+      setIsCalculating(false);
+    },
+  });
+
+  const handleContinueExchange = () => {
+    if (calculation) {
+      // Передаем данные через URL params
+      const params = new URLSearchParams({
+        currency: form.values.currency,
+        amount: form.values.amount,
+        calculatedUah: calculation.uahAmount.toString(),
+        rate: calculation.rate.toString(),
+      });
+      router.push(`/exchange?${params.toString()}`);
     }
   };
-
-  const handleCreateOrder = () => {
-    if (exchange.calculation) {
-      router.push('/exchange/create');
-    }
-  };
-
-  const isFromCrypto = exchange.formData.direction === 'crypto-to-uah';
 
   return (
-    <Card className="shadow-xl border-0">
-      <CardContent className="p-6 lg:p-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-2">
-            <SparklesIcon className="h-6 w-6 text-blue-600" />
-            <h3 className="text-xl font-semibold text-gray-900">
-              Калькулятор
-            </h3>
-          </div>
-
-          {/* Live indicator */}
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-xs text-gray-500">LIVE</span>
-          </div>
-        </div>
-
-        {/* Exchange Direction */}
-        <div className="mb-6">
-          <div className="flex items-center justify-center p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center space-x-4">
-              <span className="text-sm font-medium text-gray-700">
-                {isFromCrypto ? 'Крипта → UAH' : 'UAH → Крипта'}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleSwapDirection}
-                className="text-blue-600 hover:text-blue-700"
+    <Card className="w-full shadow-lg">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-center justify-center">
+          <CalculatorIcon className="h-5 w-5" />
+          Калькулятор обмена
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <form onSubmit={form.handleSubmit} className="space-y-4">
+          {/* Выбор валюты */}
+          <FormField name="currency" error={form.errors.currency}>
+            <FormLabel>Валюта</FormLabel>
+            <FormControl>
+              <Select
+                value={form.values.currency}
+                onValueChange={(value) => form.setValue('currency', value)}
               >
-                <ArrowsUpDownIcon className="h-4 w-4" />
+                <SelectTrigger>
+                  <SelectValue placeholder="Выберите валюту" />
+                </SelectTrigger>
+                <SelectContent>
+                  {CRYPTOCURRENCIES.map(currency => (
+                    <SelectItem key={currency} value={currency}>
+                      {currency}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </FormControl>
+            <FormMessage />
+          </FormField>
+
+          {/* Ввод суммы */}
+          <FormField name="amount" error={form.errors.amount}>
+            <FormLabel>Сумма ({form.values.currency})</FormLabel>
+            <FormControl>
+              <Input
+                {...form.getFieldProps('amount')}
+                type="number"
+                placeholder="0.00"
+                step="0.00000001"
+                min="0"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormField>
+
+          {/* Кнопка расчета */}
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={!form.isValid || isCalculating}
+          >
+            {isCalculating ? 'Рассчитываем...' : 'Рассчитать обмен'}
+          </Button>
+        </form>
+
+        {/* Результат расчета */}
+        {calculation && (
+          <div className="mt-6 p-4 bg-green-50 rounded-lg">
+            <div className="text-center">
+              <div className="text-sm text-gray-600 mb-2">Вы получите:</div>
+              <div className="text-2xl font-bold text-green-600 mb-2">
+                ₴{calculation.uahAmount.toLocaleString()}
+              </div>
+              <div className="text-sm text-gray-500 mb-4">
+                Курс: {calculation.rate.toLocaleString()} UAH/{form.values.currency}
+              </div>
+              <Button
+                onClick={handleContinueExchange}
+                className="w-full"
+                variant="default"
+              >
+                Продолжить обмен
               </Button>
             </div>
-          </div>
-        </div>
-
-        {/* Currency Selection */}
-        <div className="mb-6">
-          <CurrencySelector />
-        </div>
-
-        {/* Current Rate */}
-        <div className="mb-6">
-          <RateDisplay />
-        </div>
-
-        {/* Amount Input */}
-        <div className="mb-6">
-          <AmountInput onCalculate={handleCalculate} />
-        </div>
-
-        {/* Calculation Result */}
-        {exchange.calculation && isExpanded && (
-          <div className="mb-6">
-            <OrderPreview
-              calculation={exchange.calculation}
-              formData={exchange.formData}
-              onCreateOrder={handleCreateOrder}
-            />
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="space-y-3">
-          {!exchange.calculation && (
-            <Button
-              onClick={handleCalculate}
-              size="lg"
-              className="w-full"
-              disabled={!exchange.isFormValid()}
-              loading={exchange.isCalculating}
-            >
-              Рассчитать обмен
-            </Button>
-          )}
-
-          {exchange.calculation && (
-            <Button
-              onClick={handleCreateOrder}
-              size="lg"
-              className="w-full"
-              variant="success"
-            >
-              Создать заявку
-            </Button>
-          )}
-        </div>
-
-        {/* Error Display */}
-        {exchange.error && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-800">{exchange.error}</p>
           </div>
         )}
       </CardContent>
     </Card>
   );
 }
-````
+```
 
-3. **apps/web/src/app/exchange/components/CalculatorWidget/RateDisplay.tsx**
+#### 🔄 ПЕРЕИСПОЛЬЗУЕМЫЕ КОМПОНЕНТЫ
+
+- ✅ `@repo/ui` → все UI компоненты (Card, Button, Select, Input, Form)
+- ✅ `@repo/hooks/useForm` → валидация формы
+- ✅ `@repo/constants/CRYPTOCURRENCIES` → список валют
+- ✅ `next/navigation` → роутинг
+- ✅ `@heroicons/react/24/outline` → иконки
+
+#### ✅ ЧЕКЛИСТ ЗАДАЧИ 5.2.1
+
+- [ ] **Модифицировать HeroSection.tsx** - добавить импорт ExchangeCalculator
+- [ ] **Создать ExchangeCalculator.tsx** - полный компонент калькулятора
+- [ ] **Схема валидации** - calculatorSchema с currency и amount
+- [ ] **Форма калькулятора** - выбор валюты и ввод суммы
+- [ ] **Mock расчет** - имитация API call с setTimeout
+- [ ] **Результат расчета** - отображение суммы в UAH и курса
+- [ ] **Переход на /exchange** - с URL параметрами
+- [ ] **Адаптивный дизайн** - корректное отображение на всех устройствах
+- [ ] **Валидация** - проверка формы перед отправкой
+- [ ] **Loading состояние** - индикатор загрузки при расчете
+
+#### ✅ РЕЗУЛЬТАТ ЗАДАЧИ
+
+- HeroSection содержит интегрированный калькулятор
+- Пользователь может рассчитать обмен на главной странице
+- После расчета переход на `/exchange` с параметрами
+- Сохранена существующая структура HeroSection
+
+---
+
+### TASK 5.2.2: Создать страницу Exchange для заполнения данных
+
+**Время:** 2 часа  
+**Приоритет:** 🔴 Критический  
+**♻️ Переиспользование:** ✅ Максимальное использование существующих компонентов
+
+#### 🎯 ЦЕЛЬ ЗАДАЧИ
+
+Создать страницу `/exchange` для заполнения необходимых данных после расчета с главной страницы (email, банковские реквизиты, проверка на робота).
+
+#### 🔍 ТЕКУЩЕЕ СОСТОЯНИЕ (ФАКТ)
+
+- **Существующий ExchangeForm** (`apps/web/src/components/forms/ExchangeForm.tsx`) - содержит поля валюты, суммы, email
+- **Папка exchange НЕ СУЩЕСТВУЕТ** - нужно создать с нуля
+- **URL параметры** - будут переданы с главной страницы
+
+#### 📋 ТРЕБОВАНИЯ К ИЗМЕНЕНИЯМ
+
+**🔧 МОДИФИКАЦИЯ 1: Создать страницу Exchange**
 
 ```typescript
+// ПУТЬ: apps/web/app/[locale]/exchange/page.tsx
+// ДЕЙСТВИЕ: Создать новую папку и файл
+
+import { setRequestLocale } from 'next-intl/server';
+import { ExchangeOrderForm } from '../../../src/components/ExchangeOrderForm';
+import { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Оформление обмена | ExchangeGO',
+  description: 'Заполните данные для завершения обмена криптовалют',
+};
+
+interface ExchangePageProps {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function ExchangePage({ params, searchParams }: ExchangePageProps) {
+  const { locale } = await params;
+  const search = await searchParams;
+
+  setRequestLocale(locale);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
+      <div className="container mx-auto px-4 py-16">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-foreground mb-4">
+              Оформление обмена
+            </h1>
+            <p className="text-xl text-muted-foreground">
+              Заполните данные для завершения операции
+            </p>
+          </div>
+
+          <ExchangeOrderForm searchParams={search} />
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+**🔧 МОДИФИКАЦИЯ 2: Создать ExchangeOrderForm.tsx**
+
+```typescript
+// ПУТЬ: apps/web/src/components/ExchangeOrderForm.tsx
+// ДЕЙСТВИЕ: Создать новый файл
+
 'use client';
 
-import React from 'react';
-import { useExchangeRates } from '~/hooks/useExchangeRates';
-import { useExchange } from '~/hooks/useExchange';
-import { TrendingUpIcon, TrendingDownIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useForm, useNotifications } from '@repo/hooks';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Button,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  FormField,
+  FormLabel,
+  FormControl,
+  FormMessage,
+  Checkbox,
+} from '@repo/ui';
+import {
+  ArrowLeftIcon,
+  ShieldCheckIcon,
+  CreditCardIcon,
+  UserIcon
+} from '@heroicons/react/24/outline';
+import { z } from 'zod';
+import { useExchangeMutation } from '../hooks/useExchangeMutation';
 
-export function RateDisplay() {
-  const rates = useExchangeRates();
-  const exchange = useExchange();
+// Схема валидации для полной формы
+const orderFormSchema = z.object({
+  email: z.string().email('Введите корректный email'),
+  cardNumber: z.string().min(16, 'Введите номер карты').max(19, 'Неверный формат карты'),
+  bankName: z.string().min(2, 'Введите название банка'),
+  recipientName: z.string().min(2, 'Введите имя получателя'),
+  isNotRobot: z.boolean().refine(val => val === true, 'Подтвердите, что вы не робот'),
+});
 
-  const currentRate = rates.getRateForCurrency(exchange.formData.currency);
-  const displayRate = exchange.getDisplayRate();
+interface OrderFormData {
+  email: string;
+  cardNumber: string;
+  bankName: string;
+  recipientName: string;
+  isNotRobot: boolean;
+}
 
-  if (!currentRate || !displayRate) {
+interface ExchangeOrderFormProps {
+  searchParams: { [key: string]: string | string[] | undefined };
+}
+
+export function ExchangeOrderForm({ searchParams }: ExchangeOrderFormProps) {
+  const router = useRouter();
+  const notifications = useNotifications();
+  const [calculationData, setCalculationData] = useState<{
+    currency: string;
+    amount: string;
+    calculatedUah: string;
+    rate: string;
+  } | null>(null);
+
+  const exchangeMutation = useExchangeMutation({
+    onSuccess: (order) => {
+      const orderId = 'orderId' in order ? order.orderId : order.id;
+      notifications.orderCreated(orderId);
+      router.push(`/orders/${orderId}`);
+    },
+    onError: (error) => {
+      notifications.handleExchangeError(error);
+    },
+  });
+
+  // Получаем данные расчета из URL параметров
+  useEffect(() => {
+    const currency = searchParams.currency as string;
+    const amount = searchParams.amount as string;
+    const calculatedUah = searchParams.calculatedUah as string;
+    const rate = searchParams.rate as string;
+
+    if (currency && amount && calculatedUah && rate) {
+      setCalculationData({ currency, amount, calculatedUah, rate });
+    }
+  }, [searchParams]);
+
+  const form = useForm<OrderFormData>({
+    initialValues: {
+      email: '',
+      cardNumber: '',
+      bankName: '',
+      recipientName: '',
+      isNotRobot: false,
+    },
+    validationSchema: orderFormSchema,
+    onSubmit: async (values) => {
+      if (!calculationData) return;
+
+      await exchangeMutation.createOrder.mutateAsync({
+        currency: calculationData.currency as 'BTC' | 'ETH' | 'USDT' | 'LTC',
+        cryptoAmount: Number(calculationData.amount),
+        uahAmount: Number(calculationData.calculatedUah),
+        email: values.email,
+        // Дополнительные данные для заказа
+        paymentDetails: {
+          cardNumber: values.cardNumber,
+          bankName: values.bankName,
+          recipientName: values.recipientName,
+        },
+      });
+    },
+  });
+
+  // Если нет данных расчета, показываем ошибку
+  if (!calculationData) {
     return (
-      <div className="animate-pulse">
-        <div className="h-16 bg-gray-200 rounded-lg" />
-      </div>
+      <Card className="max-w-2xl mx-auto">
+        <CardContent className="p-8 text-center">
+          <div className="text-red-600 mb-4">
+            <ShieldCheckIcon className="h-12 w-12 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Данные расчета не найдены</h2>
+            <p className="text-gray-600 mb-6">
+              Пожалуйста, вернитесь на главную страницу и рассчитайте обмен снова.
+            </p>
+            <Button onClick={() => router.push('/')}>
+              <ArrowLeftIcon className="h-4 w-4 mr-2" />
+              Вернуться на главную
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
-  const trend = currentRate.trend;
-  const TrendIcon = trend === 'up' ? TrendingUpIcon : TrendingDownIcon;
-  const trendColor = trend === 'up' ? 'text-green-600' : 'text-red-600';
-
-  return (
-    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium text-blue-800">
-              Текущий курс
-            </span>
-            <div className={`flex items-center space-x-1 ${trendColor}`}>
-              <TrendIcon className="h-3 w-3" />
-              <span className="text-xs font-medium">
-                {currentRate.change24h > 0 ? '+' : ''}{currentRate.change24h.toFixed(2)}%
-              </span>
-            </div>
-          </div>
-          <div className="text-lg font-bold text-blue-900">
-            {displayRate.formattedRate}
-          </div>
-        </div>
-
-        <div className="text-right">
-          <div className="text-xs text-blue-700">
-            Комиссия: {displayRate.formattedCommission}
-          </div>
-          <div className="text-xs text-blue-600 mt-1">
-            Обновлено: {new Date(currentRate.updatedAt).toLocaleTimeString()}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-```
-
-4. **apps/web/src/app/exchange/components/CalculatorWidget/CurrencySelector.tsx**
-
-```typescript
-'use client';
-
-import React from 'react';
-import { CRYPTOCURRENCIES } from '@repo/constants';
-import { useExchange } from '~/hooks/useExchange';
-import { getCurrencyIcon, getCurrencyName } from '~/utils/currency';
-
-export function CurrencySelector() {
-  const exchange = useExchange();
-
-  const handleCurrencyChange = (currency: string) => {
-    exchange.updateFormData({
-      currency: currency as typeof CRYPTOCURRENCIES[number]
-    });
-  };
-
-  return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-3">
-        Выберите криптовалюту
-      </label>
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {CRYPTOCURRENCIES.map((currency) => {
-          const isSelected = exchange.formData.currency === currency;
-          const CurrencyIcon = getCurrencyIcon(currency);
-
-          return (
-            <button
-              key={currency}
-              onClick={() => handleCurrencyChange(currency)}
-              className={`
-                p-4 rounded-lg border-2 transition-all duration-200
-                flex flex-col items-center space-y-2
-                ${isSelected
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
-                  : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                }
-              `}
-            >
-              <CurrencyIcon className="h-8 w-8" />
-              <div className="text-center">
-                <div className="font-semibold text-sm">{currency}</div>
-                <div className="text-xs text-gray-500">
-                  {getCurrencyName(currency)}
-                </div>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-```
-
-5. **apps/web/src/app/exchange/components/CalculatorWidget/AmountInput.tsx**
-
-```typescript
-'use client';
-
-import React from 'react';
-import { Input, Button } from '@repo/ui';
-import { useExchange } from '~/hooks/useExchange';
-import { CURRENCY_LIMITS } from '@repo/constants';
-import { CalculatorIcon } from '@heroicons/react/24/outline';
-
-interface AmountInputProps {
-  onCalculate: () => void;
-}
-
-export function AmountInput({ onCalculate }: AmountInputProps) {
-  const exchange = useExchange();
-
-  const isFromCrypto = exchange.formData.direction === 'crypto-to-uah';
-  const limits = CURRENCY_LIMITS[exchange.formData.currency];
-
-  const label = isFromCrypto
-    ? `Сумма (${exchange.formData.currency})`
-    : 'Сумма (UAH)';
-
-  const placeholder = isFromCrypto
-    ? `0.00 ${exchange.formData.currency}`
-    : '0.00 UAH';
-
-  const hint = isFromCrypto
-    ? `Мин: ${limits.minCrypto}, Макс: ${limits.maxCrypto} ${exchange.formData.currency}`
-    : `Мин: ${limits.minUah.toLocaleString()}, Макс: ${limits.maxUah.toLocaleString()} UAH`;
-
-  const [localAmount, setLocalAmount] = React.useState(exchange.formData.amount);
-  const [isValid, setIsValid] = React.useState(true);
-
-  // Debounced update
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      exchange.updateFormData({ amount: localAmount });
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [localAmount]);
-
-  // Validation
-  React.useEffect(() => {
-    if (!localAmount) {
-      setIsValid(true);
-      return;
-    }
-
-    const amount = parseFloat(localAmount);
-    if (isNaN(amount) || amount <= 0) {
-      setIsValid(false);
-      return;
-    }
-
-    if (isFromCrypto) {
-      setIsValid(amount >= limits.minCrypto && amount <= limits.maxCrypto);
-    } else {
-      setIsValid(amount >= limits.minUah && amount <= limits.maxUah);
-    }
-  }, [localAmount, isFromCrypto, limits]);
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && isValid && localAmount) {
-      onCalculate();
-    }
-  };
-
-  const handleQuickAmount = (multiplier: number) => {
-    const baseAmount = isFromCrypto
-      ? limits.minCrypto * multiplier
-      : limits.minUah * multiplier;
-    setLocalAmount(baseAmount.toString());
-  };
-
-  return (
-    <div className="space-y-4">
-      <Input
-        label={label}
-        type="text"
-        value={localAmount}
-        onChange={(e) => setLocalAmount(e.target.value)}
-        placeholder={placeholder}
-        hint={hint}
-        error={!isValid ? 'Сумма вне допустимых лимитов' : undefined}
-        onKeyPress={handleKeyPress}
-        rightElement={
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={onCalculate}
-            disabled={!isValid || !localAmount || exchange.isCalculating}
-            loading={exchange.isCalculating}
-          >
-            <CalculatorIcon className="h-4 w-4" />
-          </Button>
-        }
-      />
-
-      {/* Quick Amount Buttons */}
-      <div className="flex flex-wrap gap-2">
-        <span className="text-sm text-gray-500 mr-2">Быстрый выбор:</span>
-        {[1, 2, 5, 10].map((multiplier) => {
-          const amount = isFromCrypto
-            ? limits.minCrypto * multiplier
-            : limits.minUah * multiplier;
-
-          const maxAmount = isFromCrypto ? limits.maxCrypto : limits.maxUah;
-
-          if (amount > maxAmount) return null;
-
-          return (
-            <Button
-              key={multiplier}
-              variant="outline"
-              size="xs"
-              onClick={() => handleQuickAmount(multiplier)}
-            >
-              {isFromCrypto
-                ? `${amount} ${exchange.formData.currency}`
-                : `₴${amount.toLocaleString()}`
-              }
-            </Button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-```
-
-#### Чек-лист готовности _(адаптирован под переиспользование)_
-
-- [ ] ✅ **Переиспользование ExchangeForm** - базовая форма адаптирована для калькулятора
-- [ ] ✅ **Переиспользование ExchangeRates** - компонент курсов интегрирован
-- [ ] ✅ **Переиспользование OrderStatus** - для preview заказов
-- [ ] 🆕 **ProcessSteps создан** - новый компонент (нет аналогов в существующем коде)
-- [ ] 🆕 **StepIndicator создан** - вспомогательный компонент
-- [ ] ✅ **Mobile responsive design** - наследуется от существующих компонентов
-- [ ] ⚡ **Время сокращено** - с 2.5 до 1.5 часов благодаря переиспользованию
-
-**📊 Метрики переиспользования:**
-
-- **Переиспользовано:** 75% функциональности
-- **Создано нового:** 25% (ProcessSteps, StepIndicator)
-- **Сэкономлено времени:** 40% (1 час)
-
----
-
-### TASK 5.2.2: Создать процесс создания заявки с переиспользованием существующих компонентов
-
-**Время:** 2 часа ~~3 часа~~ _(сокращено благодаря переиспользованию)_  
-**Приоритет:** 🔴 Критический  
-**♻️ Переиспользование:** ✅ Максимальное использование существующих форм
-
-#### Описание
-
-Multi-step процесс создания заявки с **переиспользованием существующих компонентов**:
-
-- Существующая типизация из `@repo/exchange-core/types`
-- Существующие хуки из `@repo/hooks`
-- Существующие формы из `~/components/forms/`
-
-#### Технические требования _(адаптированы под переиспользование)_
-
-```
-apps/web/src/app/exchange/create/
-├── page.tsx                 # Главная страница - композиция существующих компонентов
-└── components/
-    ├── CreateOrderFlow.tsx  # Новый компонент для multi-step flow
-    └── steps/               # Шаги используют существующие компоненты
-        ├── OrderSummaryStep.tsx     # Расширение OrderStatus
-        ├── ContactInfoStep.tsx      # Новый (нет аналогов)
-        └── PaymentMethodStep.tsx    # Новый (нет аналогов)
-```
-
-**🔄 Переиспользуемые компоненты:**
-
-- ✅ `~/components/OrderStatus.tsx` → основа для OrderSummaryStep
-- ✅ `@repo/exchange-core/types/contact` → типы для ContactInfoStep
-- ✅ `@repo/exchange-core/types/order` → типы для заказов
-- ✅ `@repo/hooks/useForm` → валидация форм
-- ✅ `@repo/ui` → все UI компоненты
-
-#### Реализация _(адаптированная под переиспользование)_
-
-1. **apps/web/src/app/exchange/create/page.tsx** _(композиция существующих компонентов)_
-
-```typescript
-'use client';
-
-import React from 'react';
-import { redirect } from 'next/navigation';
-import { useExchange } from '@repo/hooks';
-import { CreateOrderFlow } from './components/CreateOrderFlow';
-import { Card, CardContent } from '@repo/ui';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import Link from 'next/link';
-
-export default function CreateOrderPage() {
-  const exchange = useExchange(); // ПЕРЕИСПОЛЬЗУЕМ существующий хук
-
-  // Redirect если нет расчета
-  if (!exchange.calculation) {
-    redirect('/exchange');
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="max-w-4xl mx-auto mb-8">
-          <Link
-            href="/exchange"
-            className="inline-flex items-center text-blue-600 hover:text-blue-700 mb-4"
-          >
-            <ArrowLeftIcon className="h-4 w-4 mr-2" />
-            Вернуться к калькулятору
-          </Link>
-
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
-            Создание заявки на обмен
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Заполните данные для завершения операции обмена
-          </p>
-        </div>
-
-        {/* Multi-step Flow */}
-        <CreateOrderFlow />
-      </div>
-    </div>
-  );
-}
-```
-
-2. **apps/web/src/app/exchange/create/components/CreateOrderFlow.tsx** _(НОВЫЙ с переиспользованием)_
-
-```typescript
-'use client';
-
-import React, { useState } from 'react';
-import { useExchange } from '@repo/hooks';
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui';
-import { OrderSummaryStep } from './steps/OrderSummaryStep';
-import { ContactInfoStep } from './steps/ContactInfoStep';
-import { PaymentMethodStep } from './steps/PaymentMethodStep';
-
-type FlowStep = 'summary' | 'contact' | 'payment' | 'confirmation';
-
-const stepLabels = {
-  summary: 'Подтверждение заявки',
-  contact: 'Контактная информация',
-  payment: 'Способ оплаты',
-  confirmation: 'Готово',
-};
-
-export function CreateOrderFlow() {
-  const [currentStep, setCurrentStep] = useState<FlowStep>('summary');
-  const exchange = useExchange(); // ПЕРЕИСПОЛЬЗУЕМ существующий хук
-
-  const handleNext = () => {
-    switch (currentStep) {
-      case 'summary':
-        setCurrentStep('contact');
-        break;
-      case 'contact':
-        setCurrentStep('payment');
-        break;
-      case 'payment':
-        setCurrentStep('confirmation');
-        break;
-    }
-  };
-
-  const handleBack = () => {
-    switch (currentStep) {
-      case 'contact':
-        setCurrentStep('summary');
-        break;
-      case 'payment':
-        setCurrentStep('contact');
-        break;
-      case 'confirmation':
-        setCurrentStep('payment');
-        break;
-    }
-  };
-
-  return (
-    <div className="max-w-4xl mx-auto">
-      {/* Step Indicator */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          {Object.entries(stepLabels).map(([step, label], index) => (
-            <React.Fragment key={step}>
-              <div className={`flex items-center ${
-                step === currentStep ? 'text-blue-600' : 'text-gray-400'
-              }`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  step === currentStep
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-200 text-gray-600'
-                }`}>
-                  {index + 1}
-                </div>
-                <span className="ml-2 text-sm font-medium">{label}</span>
-              </div>
-              {index < Object.keys(stepLabels).length - 1 && (
-                <div className="flex-1 h-0.5 bg-gray-200 mx-4" />
-              )}
-            </React.Fragment>
-          ))}
-        </div>
-      </div>
-
-      {/* Step Content */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{stepLabels[currentStep]}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {currentStep === 'summary' && (
-            <OrderSummaryStep onNext={handleNext} onBack={handleBack} />
-          )}
-          {currentStep === 'contact' && (
-            <ContactInfoStep onNext={handleNext} onBack={handleBack} />
-          )}
-          {currentStep === 'payment' && (
-            <PaymentMethodStep onNext={handleNext} onBack={handleBack} />
-          )}
-          {currentStep === 'confirmation' && (
-            <div className="text-center py-8">
-              <h3 className="text-lg font-semibold text-green-600 mb-4">
-                Заявка успешно создана!
-              </h3>
-              <p className="text-gray-600">
-                Вы получите уведомление о статусе заявки на указанный email
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-```
-
-3. **apps/web/src/app/exchange/create/components/steps/OrderSummaryStep.tsx** _(РАСШИРЕНИЕ OrderStatus)_
-
-```typescript
-'use client';
-
-import React from 'react';
-import { useExchange } from '@repo/hooks';
-import { Button } from '@repo/ui';
-import { OrderStatus } from '~/components/OrderStatus'; // ПЕРЕИСПОЛЬЗУЕМ существующий компонент
-
-interface OrderSummaryStepProps {
-  onNext: () => void;
-  onBack: () => void;
-}
-
-export function OrderSummaryStep({ onNext, onBack }: OrderSummaryStepProps) {
-  const exchange = useExchange();
-
-  if (!exchange.calculation) {
-    return null;
-  }
-
-  // Создаем mock order для отображения через OrderStatus
-  const mockOrder = {
-    id: 'temp-order-id',
-    email: exchange.formData.email || '',
-    cryptoAmount: exchange.calculation.cryptoAmount,
-    currency: exchange.formData.currency,
-    uahAmount: exchange.calculation.uahAmount,
-    status: 'PENDING' as const,
-    depositAddress: 'будет создан после подтверждения',
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
   return (
     <div className="space-y-6">
-      {/* ПЕРЕИСПОЛЬЗУЕМ OrderStatus для отображения */}
-      <OrderStatus
-        orderId={mockOrder.id}
-        showDetails={true}
-        // Передаем mock данные для preview
-        mockOrderData={mockOrder}
-      />
-
-      {/* Actions */}
-      <div className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={onBack}
-          disabled
-        >
-          Назад
-        </Button>
-        <Button onClick={onNext}>
-          Продолжить
-        </Button>
-      </div>
-    </div>
-  );
-}
-```
-
-        {/* Order Flow */}
-        <div className="max-w-4xl mx-auto">
-          <CreateOrderFlow />
-        </div>
-      </div>
-    </div>
-
-);
-}
-
-````
-
-2. **apps/web/src/app/exchange/create/components/CreateOrderFlow.tsx**
-
-```typescript
-'use client';
-
-import React from 'react';
-import { Card, CardContent } from '@repo/ui';
-import { useExchange } from '~/hooks/useExchange';
-import { StepIndicator } from '../../components/ProcessSteps/StepIndicator';
-import { OrderSummaryStep } from './steps/OrderSummaryStep';
-import { ContactInfoStep } from './steps/ContactInfoStep';
-import { PaymentMethodStep } from './steps/PaymentMethodStep';
-import { ConfirmationStep } from './steps/ConfirmationStep';
-
-type Step = 'summary' | 'contact' | 'payment' | 'confirmation';
-
-const STEPS: { key: Step; title: string; description: string }[] = [
-  {
-    key: 'summary',
-    title: 'Детали обмена',
-    description: 'Проверьте параметры операции',
-  },
-  {
-    key: 'contact',
-    title: 'Контактная информация',
-    description: 'Укажите данные для связи',
-  },
-  {
-    key: 'payment',
-    title: 'Способ оплаты',
-    description: 'Выберите метод получения средств',
-  },
-  {
-    key: 'confirmation',
-    title: 'Подтверждение',
-    description: 'Финальная проверка и создание заявки',
-  },
-];
-
-export function CreateOrderFlow() {
-  const exchange = useExchange();
-  const [currentStep, setCurrentStep] = React.useState<Step>('summary');
-  const [completedSteps, setCompletedSteps] = React.useState<Step[]>([]);
-
-  const currentStepIndex = STEPS.findIndex((step) => step.key === currentStep);
-
-  const handleStepComplete = (step: Step) => {
-    setCompletedSteps((prev) => [...prev.filter((s) => s !== step), step]);
-
-    const nextStepIndex = currentStepIndex + 1;
-    if (nextStepIndex < STEPS.length) {
-      setCurrentStep(STEPS[nextStepIndex].key);
-    }
-  };
-
-  const handleStepBack = () => {
-    const prevStepIndex = currentStepIndex - 1;
-    if (prevStepIndex >= 0) {
-      setCurrentStep(STEPS[prevStepIndex].key);
-    }
-  };
-
-  const canGoToStep = (step: Step) => {
-    const stepIndex = STEPS.findIndex((s) => s.key === step);
-    const currentIndex = currentStepIndex;
-
-    // Можно идти на текущий шаг или предыдущие завершенные
-    return stepIndex <= currentIndex || completedSteps.includes(step);
-  };
-
-  return (
-    <div className="space-y-8">
-      {/* Step Indicator */}
-      <Card>
-        <CardContent className="p-6">
-          <StepIndicator
-            steps={STEPS.map((step, index) => ({
-              title: step.title,
-              description: step.description,
-              status: completedSteps.includes(step.key)
-                ? 'completed'
-                : step.key === currentStep
-                ? 'current'
-                : 'pending',
-              onClick: canGoToStep(step.key)
-                ? () => setCurrentStep(step.key)
-                : undefined,
-            }))}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Step Content */}
-      <div>
-        {currentStep === 'summary' && (
-          <OrderSummaryStep
-            calculation={exchange.calculation!}
-            formData={exchange.formData}
-            onNext={() => handleStepComplete('summary')}
-            onBack={() => window.history.back()}
-          />
-        )}
-
-        {currentStep === 'contact' && (
-          <ContactInfoStep
-            onNext={() => handleStepComplete('contact')}
-            onBack={handleStepBack}
-          />
-        )}
-
-        {currentStep === 'payment' && (
-          <PaymentMethodStep
-            calculation={exchange.calculation!}
-            onNext={() => handleStepComplete('payment')}
-            onBack={handleStepBack}
-          />
-        )}
-
-        {currentStep === 'confirmation' && (
-          <ConfirmationStep
-            onBack={handleStepBack}
-          />
-        )}
-      </div>
-    </div>
-  );
-}
-````
-
-3. **apps/web/src/app/exchange/create/components/steps/OrderSummaryStep.tsx**
-
-```typescript
-'use client';
-
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, Button } from '@repo/ui';
-import { ExchangeCalculation, ExchangeFormData } from '@repo/types';
-import { getCurrencyIcon, getCurrencyName } from '~/utils/currency';
-import { ClockIcon, ShieldCheckIcon, BanknotesIcon } from '@heroicons/react/24/outline';
-
-interface OrderSummaryStepProps {
-  calculation: ExchangeCalculation;
-  formData: ExchangeFormData;
-  onNext: () => void;
-  onBack: () => void;
-}
-
-export function OrderSummaryStep({
-  calculation,
-  formData,
-  onNext,
-  onBack
-}: OrderSummaryStepProps) {
-  const isFromCrypto = formData.direction === 'crypto-to-uah';
-  const CurrencyIcon = getCurrencyIcon(formData.currency);
-
-  return (
-    <div className="space-y-6">
-      {/* Main Summary */}
+      {/* Сводка по обмену */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <BanknotesIcon className="h-5 w-5" />
-            <span>Детали обмена</span>
+          <CardTitle className="flex items-center gap-2">
+            <ShieldCheckIcon className="h-5 w-5" />
+            Сводка по обмену
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Exchange Direction */}
-          <div className="flex items-center justify-center p-4 bg-blue-50 rounded-lg">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <CurrencyIcon className="h-6 w-6" />
-                <span className="font-medium">
-                  {isFromCrypto ? formData.currency : 'UAH'}
-                </span>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="text-sm text-gray-600">Отдаете</div>
+              <div className="text-lg font-semibold">
+                {calculationData.amount} {calculationData.currency}
               </div>
-              <div className="text-gray-400">→</div>
-              <div className="flex items-center space-x-2">
-                <span className="font-medium">
-                  {isFromCrypto ? 'UAH' : formData.currency}
-                </span>
-                {!isFromCrypto && <CurrencyIcon className="h-6 w-6" />}
+            </div>
+            <div>
+              <div className="text-sm text-gray-600">Получаете</div>
+              <div className="text-lg font-semibold text-green-600">
+                ₴{Number(calculationData.calculatedUah).toLocaleString()}
               </div>
             </div>
           </div>
-
-          {/* Amounts */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-500">
-                Отдаете
-              </label>
-              <div className="text-2xl font-bold text-gray-900">
-                {isFromCrypto
-                  ? `${calculation.cryptoAmount} ${formData.currency}`
-                  : `₴${calculation.uahAmount.toLocaleString()}`
-                }
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-500">
-                Получаете
-              </label>
-              <div className="text-2xl font-bold text-green-600">
-                {isFromCrypto
-                  ? `₴${calculation.uahAmount.toLocaleString()}`
-                  : `${calculation.cryptoAmount} ${formData.currency}`
-                }
-              </div>
-            </div>
-          </div>
-
-          {/* Rate and Commission */}
-          <div className="border-t pt-4 space-y-3">
+          <div className="mt-4 pt-4 border-t">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Курс обмена:</span>
-              <span className="font-medium">{calculation.rate.toLocaleString()} UAH</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Комиссия:</span>
-              <span className="font-medium">₴{calculation.commissionAmount.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Время обработки:</span>
-              <span className="font-medium">15-30 минут</span>
+              <span>Курс:</span>
+              <span>{Number(calculationData.rate).toLocaleString()} UAH/{calculationData.currency}</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Guarantees */}
+      {/* Форма заказа */}
       <Card>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="flex items-start space-x-3">
-              <ShieldCheckIcon className="h-5 w-5 text-green-600 mt-1" />
-              <div>
-                <div className="font-medium text-sm">Безопасность</div>
-                <div className="text-xs text-gray-600">
-                  Средства защищены системой эскроу
-                </div>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <UserIcon className="h-5 w-5" />
+            Данные для обмена
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={form.handleSubmit} className="space-y-6">
+            {/* Email */}
+            <FormField name="email" error={form.errors.email}>
+              <FormLabel>Email для уведомлений</FormLabel>
+              <FormControl>
+                <Input
+                  {...form.getFieldProps('email')}
+                  type="email"
+                  placeholder="your@email.com"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormField>
+
+            {/* Банковские данные */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-4">
+                <CreditCardIcon className="h-5 w-5" />
+                <span className="font-medium">Банковские реквизиты</span>
               </div>
+
+              <FormField name="cardNumber" error={form.errors.cardNumber}>
+                <FormLabel>Номер карты</FormLabel>
+                <FormControl>
+                  <Input
+                    {...form.getFieldProps('cardNumber')}
+                    type="text"
+                    placeholder="1234 5678 9012 3456"
+                    maxLength={19}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormField>
+
+              <FormField name="bankName" error={form.errors.bankName}>
+                <FormLabel>Название банка</FormLabel>
+                <FormControl>
+                  <Input
+                    {...form.getFieldProps('bankName')}
+                    type="text"
+                    placeholder="ПриватБанк"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormField>
+
+              <FormField name="recipientName" error={form.errors.recipientName}>
+                <FormLabel>Имя получателя</FormLabel>
+                <FormControl>
+                  <Input
+                    {...form.getFieldProps('recipientName')}
+                    type="text"
+                    placeholder="Иванов Иван Иванович"
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormField>
             </div>
 
-            <div className="flex items-start space-x-3">
-              <ClockIcon className="h-5 w-5 text-blue-600 mt-1" />
-              <div>
-                <div className="font-medium text-sm">Быстро</div>
-                <div className="text-xs text-gray-600">
-                  Обработка в течение 30 минут
-                </div>
+            {/* Проверка на робота */}
+            <FormField name="isNotRobot" error={form.errors.isNotRobot}>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="isNotRobot"
+                  checked={form.values.isNotRobot}
+                  onCheckedChange={(checked) => form.setValue('isNotRobot', checked as boolean)}
+                />
+                <FormLabel htmlFor="isNotRobot" className="text-sm">
+                  Я не робот
+                </FormLabel>
               </div>
-            </div>
+              <FormMessage />
+            </FormField>
 
-            <div className="flex items-start space-x-3">
-              <BanknotesIcon className="h-5 w-5 text-indigo-600 mt-1" />
-              <div>
-                <div className="font-medium text-sm">Выгодно</div>
-                <div className="text-xs text-gray-600">
-                  Лучшие курсы на рынке
-                </div>
-              </div>
+            {/* Действия */}
+            <div className="flex gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push('/')}
+                className="flex-1"
+              >
+                <ArrowLeftIcon className="h-4 w-4 mr-2" />
+                Вернуться
+              </Button>
+              <Button
+                type="submit"
+                disabled={!form.isValid || exchangeMutation.isCreatingOrder}
+                className="flex-1"
+              >
+                {exchangeMutation.isCreatingOrder ? 'Создаем заявку...' : 'Создать заявку'}
+              </Button>
             </div>
-          </div>
+          </form>
         </CardContent>
       </Card>
-
-      {/* Actions */}
-      <div className="flex justify-between">
-        <Button
-          variant="outline"
-          onClick={onBack}
-        >
-          Назад
-        </Button>
-        <Button onClick={onNext}>
-          Продолжить
-        </Button>
-      </div>
     </div>
   );
 }
 ```
 
-#### Чек-лист готовности _(адаптирован под переиспользование)_
+#### 🔄 ПЕРЕИСПОЛЬЗУЕМЫЕ КОМПОНЕНТЫ
 
-- [ ] ✅ **Переиспользование useExchange** - бизнес-логика обмена
-- [ ] ✅ **Переиспользование OrderStatus** - для OrderSummaryStep
-- [ ] ✅ **Переиспользование типов** - из @repo/exchange-core
-- [ ] ✅ **Переиспользование UI компонентов** - из @repo/ui
-- [ ] 🆕 **CreateOrderFlow создан** - новый multi-step компонент
-- [ ] 🆕 **Step indicator создан** - новый компонент прогресса
-- [ ] 🆕 **ContactInfoStep создан** - новый (нет аналогов)
-- [ ] 🆕 **PaymentMethodStep создан** - новый (нет аналогов)
-- [ ] ✅ **Mobile responsive** - наследуется от существующих компонентов
-- [ ] ⚡ **Время сокращено** - с 3 до 2 часов благодаря переиспользованию
+- ✅ `@repo/ui` → все UI компоненты
+- ✅ `@repo/hooks/useForm` → валидация формы
+- ✅ `@repo/hooks/useNotifications` → уведомления
+- ✅ `../hooks/useExchangeMutation` → мутация для создания заказа
+- ✅ `next/navigation` → роутинг
+- ✅ `next-intl/server` → локализация
 
-**📊 Метрики переиспользования:**
+#### ✅ ЧЕКЛИСТ ЗАДАЧИ 5.2.2
 
-- **Переиспользовано:** 60% функциональности
-- **Создано нового:** 40% (multi-step flow, contact/payment steps)
-- **Сэкономлено времени:** 33% (1 час)
+- [ ] **Создать папку exchange** - apps/web/app/[locale]/exchange/
+- [ ] **Создать page.tsx** - серверный компонент с metadata
+- [ ] **Создать ExchangeOrderForm.tsx** - клиентский компонент формы
+- [ ] **Схема валидации** - orderFormSchema с полной валидацией
+- [ ] **Получение URL параметров** - currency, amount, calculatedUah, rate
+- [ ] **Сводка по обмену** - карточка с информацией о расчете
+- [ ] **Форма данных** - email, банковские реквизиты, капча
+- [ ] **Проверка на робота** - базовый checkbox
+- [ ] **Обработка ошибок** - если нет данных расчета
+- [ ] **Интеграция с API** - useExchangeMutation для создания заказа
+- [ ] **Переход на заказ** - редирект после успешного создания
+- [ ] **Адаптивный дизайн** - корректное отображение на всех устройствах
+
+#### ✅ РЕЗУЛЬТАТ ЗАДАЧИ
+
+- Страница `/exchange` создана
+- Получение данных расчета из URL параметров
+- Форма для заполнения email, банковских данных
+- Базовая проверка на робота (checkbox)
+- Переход на страницу заказа после создания
 
 ---
 
-## 📊 Статус Progress Part 5.2 _(с переиспользованием)_
+## 📊 Статус Progress Part 5.2
 
-### Завершенные задачи: 0/2 _(адаптированы под переиспользование)_
+### 📋 ЗАДАЧИ К ВЫПОЛНЕНИЮ: 0/2
 
-- [ ] TASK 5.2.1: ~~Создать страницу Exchange Calculator~~ → **Адаптация с переиспользованием**
-- [ ] TASK 5.2.2: ~~Создать процесс создания заявки (Multi-step)~~ → **Адаптация с переиспользованием**
+- [ ] **TASK 5.2.1**: Интегрировать обменник в HeroSection главной страницы
+- [ ] **TASK 5.2.2**: Создать страницу Exchange для заполнения данных
 
-### 🔄 Переиспользование результатов:
+### 🎯 КЛЮЧЕВЫЕ РЕЗУЛЬТАТЫ Part 5.2
 
-**Значительные улучшения:**
+После выполнения всех задач:
 
-- ⚡ **Сокращение времени:** с 5.5 до 3.5 часов (36% экономии)
-- ♻️ **Переиспользование:** 70% функциональности
-- 🎯 **Архитектурная целостность:** сохранена благодаря использованию существующих компонентов
+✅ **Главная страница** - содержит интегрированный калькулятор в HeroSection  
+✅ **Страница Exchange** - для заполнения данных после расчета  
+✅ **Переиспользование компонентов** - максимальное использование существующих UI  
+✅ **Простая архитектура** - базовый уровень без сложностей  
+✅ **Mobile-first Design** - адаптивный дизайн для всех устройств  
+✅ **Валидация форм** - использование существующих хуков валидации
+
+### 🔧 ТЕХНИЧЕСКИЕ ДЕТАЛИ
+
+**Новые файлы для создания:**
+
+- `apps/web/src/components/ExchangeCalculator.tsx` - компонент калькулятора
+- `apps/web/app/[locale]/exchange/page.tsx` - страница обмена
+- `apps/web/src/components/ExchangeOrderForm.tsx` - форма заказа
+
+**Файлы для модификации:**
+
+- `apps/web/src/components/HeroSection.tsx` - интеграция калькулятора
 
 **Переиспользованные компоненты:**
 
-- ✅ `ExchangeForm.tsx` → основа калькулятора
-- ✅ `ExchangeRates.tsx` → отображение курсов
-- ✅ `OrderStatus.tsx` → preview заказов
-- ✅ `@repo/hooks/useExchange` → бизнес-логика
-- ✅ `@repo/exchange-core/types` → типизация
-- ✅ `@repo/ui` → все UI компоненты
+- `@repo/ui` - все UI компоненты
+- `@repo/hooks/useForm` - валидация форм
+- `@repo/hooks/useNotifications` - уведомления
+- `@repo/constants/CRYPTOCURRENCIES` - список валют
+- `apps/web/src/hooks/useExchangeMutation` - мутация для создания заказа
 
-**Новые компоненты (нет аналогов):**
+**Новые зависимости:**
 
-- 🆕 `ProcessSteps.tsx` → пошаговый процесс
-- 🆕 `CreateOrderFlow.tsx` → multi-step flow
-- 🆕 `ContactInfoStep.tsx` → сбор контактов
-- 🆕 `PaymentMethodStep.tsx` → методы оплаты
+- НЕТ - используются только существующие
 
-### Ключевые результаты Part 5.2 _(с переиспользованием)_:
+### 📝 ДЕТАЛЬНЫЙ ЧЕКЛИСТ ДЛЯ ВЫПОЛНЕНИЯ
 
-✅ **Calculator Page** через адаптацию ExchangeForm  
-✅ **Multi-step Order Flow** с переиспользованием типов  
-✅ **Rate Display** через ExchangeRates  
-✅ **Order Preview** через OrderStatus  
-✅ **Mobile-first Design** наследуется от существующих компонентов  
-✅ **Архитектурная целостность** сохранена  
-✅ **Экономия времени** - 36% (2 часа)  
-✅ **Устранение избыточности** - 70% функций переиспользовано
+**TASK 5.2.1 - Интеграция калькулятора:**
+
+- [ ] Модифицировать HeroSection.tsx - добавить ExchangeCalculator
+- [ ] Создать ExchangeCalculator.tsx с полным функционалом
+- [ ] Реализовать схему валидации calculatorSchema
+- [ ] Добавить форму с выбором валюты и вводом суммы
+- [ ] Реализовать mock расчет с setTimeout
+- [ ] Добавить отображение результата расчета
+- [ ] Реализовать переход на /exchange с URL параметрами
+- [ ] Обеспечить адаптивный дизайн
+- [ ] Добавить валидацию формы
+- [ ] Реализовать loading состояние при расчете
+
+**TASK 5.2.2 - Создание страницы Exchange:**
+
+- [ ] Создать папку apps/web/app/[locale]/exchange/
+- [ ] Создать page.tsx с metadata и локализацией
+- [ ] Создать ExchangeOrderForm.tsx компонент
+- [ ] Реализовать orderFormSchema с полной валидацией
+- [ ] Добавить получение URL параметров через useEffect
+- [ ] Создать карточку сводки по обмену
+- [ ] Реализовать форму с email и банковскими данными
+- [ ] Добавить базовую проверку на робота (checkbox)
+- [ ] Обработать случай отсутствия данных расчета
+- [ ] Интегрировать с useExchangeMutation
+- [ ] Реализовать переход на страницу заказа
+- [ ] Обеспечить адаптивный дизайн
+
+### 📝 ВАЖНЫЕ ЗАМЕТКИ ДЛЯ ВЫПОЛНЕНИЯ
+
+1. **НЕ ПРЕДПОЛАГАТЬ** - все технические требования указаны точно
+2. **Rule 20** - вся логика реализована в компонентах, не в страницах
+3. **Переиспользование** - максимальное использование существующих компонентов
+4. **Простота** - базовый уровень, без сложной логики
+5. **Валидация** - использовать существующие схемы и хуки
+6. **Роутинг** - использовать Next.js App Router
+7. **Типизация** - использовать существующие типы из @repo
 
 ---
 
-**Дата создания:** 29 июня 2025  
-**Версия:** 1.0  
-**Следующая подчасть:** TASKS-PART-5.3.md (Contact & Payment Steps)
+**Дата создания:** 11 июля 2025  
+**Версия:** 2.0 (переработано под новую архитектуру)  
+**Следующая подчасть:** TASKS-PART-5.3.md (дополнительные фичи)
