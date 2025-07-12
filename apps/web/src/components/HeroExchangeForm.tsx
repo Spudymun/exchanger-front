@@ -6,6 +6,9 @@ import {
   FIAT_CURRENCIES,
   getBanksForCurrency,
   type FiatCurrency,
+  isMultiNetworkToken,
+  getTokenStandards,
+  getDefaultTokenStandard,
 } from '@repo/constants';
 import { validateCryptoAmount, type CryptoCurrency } from '@repo/exchange-core';
 import { useForm } from '@repo/hooks';
@@ -35,6 +38,7 @@ import { z } from 'zod';
 export interface HeroExchangeFormData extends Record<string, unknown> {
   fromAmount: string;
   fromCurrency: string;
+  tokenStandard?: string; // Новое поле для стандарта токена
   toCurrency: string;
   selectedBankId: string;
 }
@@ -50,6 +54,7 @@ const createSchema = (t: (key: string) => string) =>
   z.object({
     fromAmount: z.string().min(1, t('validation.enterAmount')),
     fromCurrency: z.enum(CRYPTOCURRENCIES),
+    tokenStandard: z.string().optional(), // Опциональное поле для стандарта
     toCurrency: z.enum(FIAT_CURRENCIES),
     selectedBankId: z.string().min(1, t('validation.selectBank')),
   });
@@ -60,7 +65,13 @@ function useHeroExchangeForm(
   onExchange?: (data: HeroExchangeFormData) => void
 ) {
   const form = useForm<HeroExchangeFormData>({
-    initialValues: { fromAmount: '', fromCurrency: 'USDT', toCurrency: 'UAH', selectedBankId: '' },
+    initialValues: {
+      fromAmount: '',
+      fromCurrency: 'USDT',
+      tokenStandard: getDefaultTokenStandard('USDT') || '',
+      toCurrency: 'UAH',
+      selectedBankId: '',
+    },
     validationSchema: createSchema(t),
     onSubmit: async values => onExchange?.(values),
   });
@@ -160,6 +171,108 @@ function AmountInput({
   );
 }
 
+function TokenStandardSelector({
+  form,
+  t,
+}: {
+  form: ReturnType<typeof useForm<HeroExchangeFormData>>;
+  t: (key: string) => string;
+}) {
+  const currency = form.values.fromCurrency as string;
+  const isMultiNetwork = isMultiNetworkToken(currency);
+
+  if (!isMultiNetwork) {
+    return null; // Не показываем селектор для single-network токенов
+  }
+
+  const standards = getTokenStandards(currency);
+
+  return (
+    <FormField name="tokenStandard" error={form.errors.tokenStandard}>
+      <FormLabel>{t('sending.tokenStandard')}</FormLabel>
+      <FormControl>
+        <Select
+          value={form.values.tokenStandard as string}
+          onValueChange={v => form.setValue('tokenStandard', v)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder={t('sending.selectStandard')} />
+          </SelectTrigger>
+          <SelectContent>
+            {standards.map(standard => (
+              <SelectItem key={standard} value={standard}>
+                {standard}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FormControl>
+      <FormMessage />
+    </FormField>
+  );
+}
+
+function CurrencySelector({
+  form,
+  t,
+}: {
+  form: ReturnType<typeof useForm<HeroExchangeFormData>>;
+  t: (key: string) => string;
+}) {
+  return (
+    <FormField name="fromCurrency" error={form.errors.fromCurrency}>
+      <FormLabel>{t('sending.cryptocurrency')}</FormLabel>
+      <FormControl>
+        <Select
+          value={form.values.fromCurrency as string}
+          onValueChange={v => {
+            form.setValue('fromCurrency', v);
+            // Автоматически устанавливаем дефолтный стандарт для multi-network токенов
+            const defaultStandard = getDefaultTokenStandard(v);
+            if (defaultStandard) {
+              form.setValue('tokenStandard', defaultStandard);
+            } else {
+              form.setValue('tokenStandard', '');
+            }
+          }}
+        >
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {CRYPTOCURRENCIES.map(c => (
+              <SelectItem key={c} value={c}>
+                {c}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FormControl>
+      <FormMessage />
+    </FormField>
+  );
+}
+
+function SendingInfo({
+  form,
+  t,
+}: {
+  form: ReturnType<typeof useForm<HeroExchangeFormData>>;
+  t: (key: string) => string;
+}) {
+  return (
+    <div className="text-sm text-muted-foreground space-y-1">
+      <div>
+        {t('sending.min')}: {MIN_AMOUNTS.from} {form.values.fromCurrency as string}
+      </div>
+      <div>
+        {t('sending.rate')}: 1 {form.values.fromCurrency as string} = {EXCHANGE_RATE}{' '}
+        {form.values.toCurrency as string}
+      </div>
+    </div>
+  );
+}
+
 function SendingCard({
   form,
   t,
@@ -173,45 +286,16 @@ function SendingCard({
         <CardTitle>{t('sending.title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <FormField name="fromCurrency" error={form.errors.fromCurrency}>
-          <FormLabel>{t('sending.cryptocurrency')}</FormLabel>
-          <FormControl>
-            <Select
-              value={form.values.fromCurrency as string}
-              onValueChange={v => form.setValue('fromCurrency', v)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CRYPTOCURRENCIES.map(c => (
-                  <SelectItem key={c} value={c}>
-                    {c}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </FormControl>
-          <FormMessage />
-        </FormField>
-
+        <CurrencySelector form={form} t={t} />
         <AmountInput form={form} t={t} />
-
-        <div className="text-sm text-muted-foreground space-y-1">
-          <div>
-            {t('sending.min')}: {MIN_AMOUNTS.from} {form.values.fromCurrency as string}
-          </div>
-          <div>
-            {t('sending.rate')}: 1 {form.values.fromCurrency as string} = {EXCHANGE_RATE}{' '}
-            {form.values.toCurrency as string}
-          </div>
-        </div>
+        <TokenStandardSelector form={form} t={t} />
+        <SendingInfo form={form} t={t} />
       </CardContent>
     </Card>
   );
 }
 
-function CurrencySelector({
+function FiatCurrencySelector({
   form,
   t,
 }: {
@@ -291,7 +375,7 @@ function ReceivingSelectors({
 }) {
   return (
     <>
-      <CurrencySelector form={form} t={t} />
+      <FiatCurrencySelector form={form} t={t} />
       <BankSelector form={form} banks={banks} t={t} />
     </>
   );

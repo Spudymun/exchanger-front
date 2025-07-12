@@ -1,7 +1,7 @@
 {
   "HomePage": {
-    "title": "Exchanger",
-    "description": "Готовая к промышленному использованию платформа для торговли криптовалютой, построенная на Next.js, tRPC и современных веб-технологиях",
+    "title": "ExchangeGO",
+    "description": "Обмен криптовалют",
     "getStarted": "Начать",
     "learnMore": "Узнать больше",
     "exchangeCalculator": {
@@ -187,6 +187,8 @@
     "sending": {
       "title": "Вы отправляете",
       "cryptocurrency": "Криптовалюта",
+      "tokenStandard": "Стандарт токена",
+      "selectStandard": "Выберите стандарт",
       "amount": "Сумма",
       "placeholder": "0.00",
       "min": "min",

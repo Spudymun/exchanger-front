@@ -1,7 +1,7 @@
 {
   "HomePage": {
-    "title": "Exchanger",
-    "description": "Enterprise-ready cryptocurrency exchange platform built with Next.js, tRPC, and modern web technologies",
+    "title": "ExchangeGO",
+    "description": "Cryptocurrency Exchange",
     "getStarted": "Get Started",
     "learnMore": "Learn More",
     "exchangeCalculator": {
@@ -187,6 +187,8 @@
     "sending": {
       "title": "You send",
       "cryptocurrency": "Cryptocurrency",
+      "tokenStandard": "Token standard",
+      "selectStandard": "Select standard",
       "amount": "Amount",
       "placeholder": "0.00",
       "min": "min",

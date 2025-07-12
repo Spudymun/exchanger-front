@@ -69,6 +69,61 @@ export const CURRENCY_NAMES = {
   LTC: 'Litecoin',
 } as const;
 
+// Multi-network token standards (только для токенов с несколькими сетями)
+export const MULTI_NETWORK_TOKENS = ['USDT'] as const;
+
+// Доступные стандарты для multi-network токенов
+export const TOKEN_STANDARDS = {
+  USDT: ['ERC-20', 'TRC-20', 'BEP-20'],
+} as const;
+
+// Дефолтные стандарты для каждого multi-network токена
+export const DEFAULT_TOKEN_STANDARDS = {
+  USDT: 'TRC-20',
+} as const;
+
+// Детальная информация о стандартах (для отображения)
+export const TOKEN_STANDARD_DETAILS = {
+  'ERC-20': {
+    network: 'Ethereum',
+    shortName: 'ERC-20',
+    confirmations: 12,
+  },
+  'TRC-20': {
+    network: 'Tron',
+    shortName: 'TRC-20',
+    confirmations: 20,
+  },
+  'BEP-20': {
+    network: 'BSC',
+    shortName: 'BEP-20',
+    confirmations: 15,
+  },
+} as const;
+
+// Helper function для проверки является ли токен multi-network
+export function isMultiNetworkToken(
+  currency: string
+): currency is (typeof MULTI_NETWORK_TOKENS)[number] {
+  return MULTI_NETWORK_TOKENS.includes(currency as (typeof MULTI_NETWORK_TOKENS)[number]);
+}
+
+// Helper function для получения стандартов токена
+export function getTokenStandards(currency: string) {
+  if (!isMultiNetworkToken(currency)) {
+    return [];
+  }
+  return TOKEN_STANDARDS[currency as keyof typeof TOKEN_STANDARDS] || [];
+}
+
+// Helper function для получения дефолтного стандарта
+export function getDefaultTokenStandard(currency: string): string | null {
+  if (!isMultiNetworkToken(currency)) {
+    return null;
+  }
+  return DEFAULT_TOKEN_STANDARDS[currency as keyof typeof DEFAULT_TOKEN_STANDARDS] || null;
+}
+
 // Mock exchange rates (в реальном приложении будут браться с API)
 export const MOCK_EXCHANGE_RATES = {
   BTC: {
