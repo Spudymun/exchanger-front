@@ -15,7 +15,7 @@ packages/
 ├── hooks/                # Zustand stores + custom hooks
 ├── constants/            # Бизнес-константы и конфигурация
 ├── utils/                # Утилитарные функции
-└── design-tokens/        # Design system tokens
+└── design-tokens/        # Design system tokens + CSS Variables v2.1
 ```
 
 ### Принципы зависимостей

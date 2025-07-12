@@ -6,9 +6,18 @@
 export { colors } from './colors.js';
 export { typography } from './typography.js';
 export { spacing, borderRadius, boxShadow, container, zIndex, semanticSpacing } from './spacing.js';
+export {
+  formContainers,
+  visualConnectors,
+  componentGroups,
+  enhancedCards,
+  layoutPatterns,
+  formSpacing,
+} from './form-patterns.js';
 
 // === COMBINED DEFAULT EXPORT ===
 import { colors } from './colors.js';
+import formPatterns from './form-patterns.js';
 import spacingTokens from './spacing.js';
 import { typography } from './typography.js';
 
@@ -22,6 +31,9 @@ const designSystem = {
 
   // Пространственная система
   ...spacingTokens,
+
+  // Паттерны форм и группировки компонентов
+  ...formPatterns,
 
   // Мета-информация о дизайн-системе
   meta: {

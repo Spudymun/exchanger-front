@@ -742,54 +742,206 @@ module.exports = {
 
 #### CSS Variables для темизации:
 
+**🎯 Обновлено в дизайн-системе v2.1 - Улучшенная визуальная иерархия**
+
 ```css
 /* packages/ui/src/styles/globals.css */
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    /* LIGHT THEME - Обновленная цветовая иерархия v2.1 */
+    --background: 220 14% 98%; /* Более контрастный фон */
     --foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
+
+    --card: 0 0% 100%; /* Белые карточки для контраста */
+    --card-foreground: 222.2 84% 4.9%;
+
+    --border: 220 13% 85%; /* Более видимые границы */
+    --input: 220 13% 91%;
+
+    --primary: 220 90% 50%; /* Яркий синий для акцентов */
     --primary-foreground: 210 40% 98%;
-    /* ... остальные переменные */
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 220 14% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --ring: 220 90% 50%;
+    --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    /* DARK THEME - 6-уровневая иерархия для четкого разделения */
+    --background: 222.2 84% 2%; /* Уровень 1: Глубокий фон */
     --foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
+
+    --card: 222.2 84% 4%; /* Уровень 2: Карточки */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 5%; /* Уровень 3: Поповеры */
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%; /* Уровень 4: Интерактивные элементы */
     --primary-foreground: 222.2 47.4% 11.2%;
-    /* ... темная тема */
+
+    --secondary: 217.2 32.6% 10%; /* Уровень 5: Вторичные элементы */
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 8%; /* Уровень 6: Приглушенные элементы */
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 10%;
+    --accent-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 12%; /* Четкие границы */
+    --input: 217.2 32.6% 10%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --ring: 212.7 26.8% 83.9%;
+    --radius: 0.5rem;
   }
 }
 ```
 
-#### Theme Provider:
+### 🎨 Дизайн-система v2.1 - Централизованные паттерны
+
+**Обновлено:** Июль 2025 - Улучшенная визуальная иерархия и адаптивность
+
+#### Централизованные стили в form-patterns.js
+
+Для обеспечения консистентности используется централизованная система стилей:
+
+```javascript
+// packages/ui/src/styles/form-patterns.js
+export const DESIGN_SYSTEM_V2_1 = {
+  elevation: {
+    // Адаптивные тени с учетом темы
+    card: 'shadow-sm shadow-black/5 dark:shadow-black/20',
+    hover: 'hover:shadow-md hover:shadow-black/8 dark:hover:shadow-black/30',
+    interactive: 'shadow-lg shadow-black/10 dark:shadow-black/40',
+    elevated: 'shadow-xl shadow-black/15 dark:shadow-black/50',
+  },
+
+  borders: {
+    // Четкие границы для обеих тем
+    subtle: 'border border-border/60 dark:border-border/30',
+    default: 'border border-border dark:border-border',
+    emphasis: 'border-2 border-border dark:border-border',
+  },
+
+  containers: {
+    // Семантические контейнеры
+    card: 'bg-card text-card-foreground rounded-lg',
+    section: 'bg-background',
+    interactive: 'bg-card hover:bg-card/80 transition-colors',
+    accent: 'bg-accent text-accent-foreground',
+  },
+
+  focus: {
+    // Консистентные focus стили
+    ring: 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+    accessible: 'focus:outline-2 focus:outline-offset-2 focus:outline-ring',
+  },
+};
+```
+
+#### Использование в компонентах
 
 ```typescript
-// packages/ui/src/components/theme-provider.tsx
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system')
+// Пример использования централизованных стилей
+import { DESIGN_SYSTEM_V2_1 as DS } from '../styles/form-patterns';
 
-  useEffect(() => {
-    const root = window.document.documentElement
-    root.classList.remove('light', 'dark')
-
-    if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
-        ? 'dark' : 'light'
-      root.classList.add(systemTheme)
-    } else {
-      root.classList.add(theme)
-    }
-  }, [theme])
-
+export function ExchangeCard({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <div className={cn(
+      DS.containers.card,
+      DS.elevation.card,
+      DS.borders.default,
+      DS.focus.ring,
+      'p-6 space-y-4'
+    )}>
       {children}
-    </ThemeContext.Provider>
-  )
+    </div>
+  );
 }
 ```
+
+#### Адаптивные акцентные тени
+
+Для выделения интерактивных элементов используются цветные тени:
+
+```css
+/* Примеры адаптивных теней */
+.exchange-form {
+  @apply shadow-green-500/10 dark:shadow-green-400/20;
+}
+
+.sending-card {
+  @apply shadow-blue-500/10 dark:shadow-blue-400/20;
+}
+
+.receiving-card {
+  @apply shadow-purple-500/10 dark:shadow-purple-400/20;
+}
+```
+
+#### Семантические компоненты
+
+```typescript
+// Централизованные компоненты для консистентности
+export const DesignComponents = {
+  ExchangeCard: ({ type, children }: { type: 'sending' | 'receiving'; children: React.ReactNode }) => (
+    <div className={cn(
+      DS.containers.card,
+      DS.elevation.card,
+      DS.borders.default,
+      type === 'sending'
+        ? 'shadow-blue-500/10 dark:shadow-blue-400/20'
+        : 'shadow-purple-500/10 dark:shadow-purple-400/20',
+      'p-6 space-y-4 transition-all duration-200'
+    )}>
+      {children}
+    </div>
+  ),
+
+  ActionButton: ({ variant, children, ...props }: ButtonProps) => (
+    <Button
+      className={cn(
+        DS.elevation.hover,
+        DS.focus.ring,
+        'transition-all duration-200'
+      )}
+      variant={variant}
+      {...props}
+    >
+      {children}
+    </Button>
+  ),
+
+  FormSection: ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <div className={cn(DS.containers.section, 'space-y-3')}>
+      <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
+      <div className={cn(DS.borders.subtle, 'rounded-md p-4')}>
+        {children}
+      </div>
+    </div>
+  )
+};
+```
+
+#### Принципы дизайн-системы v2.1
+
+1. **Визуальная иерархия**: 6-уровневая система для темной темы, четкий контраст для светлой
+2. **Адаптивность**: Все компоненты работают в обеих темах без дополнительной настройки
+3. **Централизация**: Все стили определены в `form-patterns.js` для легкого обновления
+4. **Семантичность**: Компоненты названы по назначению, а не по внешнему виду
+5. **Переиспользование**: Максимальное использование существующих паттернов
 
 #### Как добавить новые design tokens:
 
@@ -1620,7 +1772,7 @@ export default [
   // Глобальные правила
   {
     name: 'global-rules',
-    files: ['**/*.{js,jsx,ts,tsx}'],
+    files: ['**/*.{js,ts,jsx,tsx}'],
     rules: lazyLoadConfig('global-rules', () => ({
       'max-lines-per-function': ['error', { max: FUNCTION_SIZE_LIMITS.BASE }],
       complexity: ['error', COMPLEXITY_LIMITS.BASE],
@@ -1761,26 +1913,10 @@ export const loggingMiddleware = t.middleware(async ({ next, path }) => {
 
 // ❌ НЕПРАВИЛЬНО: В UI компоненте
 export function UserCard() {
-  console.log('UserCard rendered'); // Будет заблокировано ESLint
+  console.log('UserCard rendered'); // Должно быть удалено
   return <div>...</div>;
 }
 ```
-
-**💡 Важно**: Это решение предотвращает конфликты между архитектурными требованиями логирования и автоматизированными проверками качества кода.
-export const loggingMiddleware = t.middleware(async ({ next, path }) => {
-console.log(`[tRPC] ${path} started`); // Архитектурно оправдано
-const result = await next();
-console.log(`[tRPC] ${path} completed`);
-return result;
-});
-
-// ❌ НЕПРАВИЛЬНО: В UI компоненте
-export function UserCard() {
-console.log('UserCard rendered'); // Должно быть удалено
-return <div>...</div>;
-}
-
-````
 
 **💡 Важно**: Это решение предотвращает конфликты между архитектурными требованиями логирования и автоматизированными проверками качества кода.
 
@@ -1809,7 +1945,7 @@ return <div>...</div>;
     ]
   }
 }
-````
+```
 
 ### Husky + lint-staged - Pre-commit хуки
 
@@ -1826,281 +1962,4 @@ return <div>...</div>;
 }
 ```
 
----
-
-## 🚀 Workflow и best practices
-
-### Разработка нового функционала
-
-#### 1. Анализ задачи:
-
-- Какие компоненты нужны?
-- Какое состояние требуется?
-- Какие API endpoints нужны?
-- Нужны ли новые переводы?
-
-#### 2. Создание структуры:
-
-```bash
-# 1. UI компоненты (если нужны)
-cd packages/ui
-npm run generate:component
-
-# 2. API процедуры (если нужны)
-# Добавить в packages/exchange-core/src/server.ts
-
-# 3. Состояние (если нужно)
-# Создать новый store в packages/hooks/src/state/
-
-# 4. Переводы (если нужны)
-# Добавить ключи в messages/*.json файлы
-```
-
-#### 3. Разработка компонентов:
-
-```typescript
-// Пример: функционал списка продуктов
-
-// 1. API процедура
-export const appRouter = t.router({
-  getProducts: t.procedure
-    .input(z.object({
-      category: z.string().optional(),
-      search: z.string().optional()
-    }))
-    .query(async ({ input }) => {
-      // Логика получения продуктов
-    })
-})
-
-// 2. Store (если нужен)
-interface ProductsState {
-  selectedCategory: string | null
-  setSelectedCategory: (category: string | null) => void
-}
-
-// 3. Компонент
-export function ProductsList() {
-  const { selectedCategory } = useProductsStore()
-  const { data: products } = trpc.getProducts.useQuery({
-    category: selectedCategory
-  })
-
-  return (
-    <DataTable
-      data={products || []}
-      columns={productColumns}
-      searchable
-      filterable
-    />
-  )
-}
-```
-
-#### 4. Тестирование:
-
-```bash
-# Unit тесты для компонентов
-npm run test
-
-# E2E тесты для user flows
-npx playwright test
-
-# Storybook для UI документации
-npm run storybook
-```
-
-#### 5. Проверка качества:
-
-```bash
-# Линтинг
-npm run lint
-
-# Типы
-npm run check-types
-
-# Сборка
-npm run build
-```
-
-### Добавление нового приложения
-
-#### 1. Создать структуру:
-
-```bash
-mkdir apps/new-app
-cd apps/new-app
-npm init -y
-```
-
-#### 2. Настроить Next.js:
-
-```bash
-npm install next react react-dom
-npm install -D @types/react @types/react-dom typescript
-```
-
-#### 3. Настроить конфигурацию:
-
-```json
-// apps/new-app/package.json
-{
-  "scripts": {
-    "dev": "next dev --port 3003",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "check-types": "tsc --noEmit"
-  },
-  "dependencies": {
-    "@repo/ui": "*",
-    "@repo/providers": "*",
-    "@repo/hooks": "*"
-  }
-}
-```
-
-#### 4. Добавить в Turborepo:
-
-```json
-// turbo.json
-{
-  "pipeline": {
-    "dev": {
-      "dependsOn": ["^build"],
-      "cache": false
-    }
-  }
-}
-```
-
-### Добавление нового пакета
-
-#### 1. Создать структуру:
-
-```bash
-mkdir packages/new-package
-cd packages/new-package
-npm init -y
-```
-
-#### 2. Настроить TypeScript:
-
-```json
-// packages/new-package/tsconfig.json
-{
-  "extends": "@repo/typescript-config/base.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src"
-  },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
-}
-```
-
-#### 3. Настроить экспорты:
-
-```json
-// packages/new-package/package.json
-{
-  "name": "@repo/new-package",
-  "main": "./src/index.ts",
-  "types": "./src/index.ts",
-  "exports": {
-    ".": "./src/index.ts"
-  }
-}
-```
-
-#### 4. Создать основные файлы:
-
-```typescript
-// packages/new-package/src/index.ts
-export { myFunction } from './my-function';
-export type { MyType } from './types';
-```
-
-### Debug и troubleshooting
-
-#### Распространенные проблемы:
-
-1. **TypeScript ошибки**:
-
-```bash
-# Проверить конфигурацию
-npm run check-types
-
-# Очистить кеш
-rm -rf .next .turbo node_modules/.cache
-npm install
-```
-
-2. **Tailwind классы не работают**:
-
-```javascript
-// Проверить tailwind.config.js
-module.exports = {
-  content: [
-    './apps/**/*.{js,ts,jsx,tsx}',
-    './packages/ui/**/*.{js,ts,jsx,tsx}', // Важно!
-  ],
-};
-```
-
-3. **Компоненты не импортируются**:
-
-```typescript
-// Проверить packages/ui/src/index.ts
-export { MyComponent } from './components/my-component';
-```
-
-4. **tRPC типы не работают**:
-
-```typescript
-// Проверить настройку клиента
-import type { AppRouter } from '../src/server/trpc';
-
-const trpc = createTRPCReact<AppRouter>();
-```
-
-#### Полезные команды:
-
-```bash
-# Очистка
-npm run clean        # Очистить все build артефакты
-rm -rf node_modules  # Полная переустановка
-
-# Разработка
-npm run dev          # Запустить все приложения
-npm run build        # Собрать все приложения
-npm run lint         # Проверить качество кода
-
-# Тестирование
-npm run test         # Unit тесты
-npx playwright test  # E2E тесты
-npm run storybook    # UI документация
-```
-
----
-
-## 📚 Заключение
-
-Этот проект предоставляет полную enterprise-инфраструктуру для разработки современных веб-приложений. Следуя этому руководству, вы сможете:
-
-- ✅ Создавать типизированные и переиспользуемые компоненты
-- ✅ Управлять состоянием приложения централизованно
-- ✅ Строить end-to-end типизированные API
-- ✅ Поддерживать высокое качество кода
-- ✅ Масштабировать архитектуру под любые потребности
-
-**Основные принципы:**
-
-1. **Централизация** - всё общее выносится в packages/
-2. **Типизация** - TypeScript everywhere
-3. **Переиспользование** - DRY principle
-4. **Качество** - автоматические проверки
-5. **Документация** - каждый компонент в Storybook
-6. **Тестирование** - unit + E2E coverage
-
-Удачной разработки! 🚀
+##

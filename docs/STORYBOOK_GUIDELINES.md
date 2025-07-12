@@ -380,12 +380,14 @@ export const decorators = [
   ),
 ];
 
-// Компонент-специфичные декораторы
+// Компонент-специфичные декораторы с Design System v2.1
 const meta: Meta<typeof ThemeButton> = {
   decorators: [
     (Story) => (
       <ThemeProvider theme={defaultTheme}>
-        <Story />
+        <div className="min-h-screen bg-background text-foreground">
+          <Story />
+        </div>
       </ThemeProvider>
     ),
   ],

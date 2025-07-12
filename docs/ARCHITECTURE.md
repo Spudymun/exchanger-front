@@ -21,11 +21,19 @@ exchanger-front/
 
 - **Framework:** Next.js 15 (App Router)
 - **Language:** TypeScript (strict mode)
-- **Styling:** Tailwind CSS + shadcn/ui
+- **Styling:** Tailwind CSS + shadcn/ui + Design System v2.1
 - **State:** Zustand + React Query
 - **API:** tRPC (end-to-end typesafe)
 - **Testing:** Jest + Playwright + Storybook
 - **Build:** Turborepo monorepo
+
+## 🎨 Design System v2.1
+
+- **CSS Variables:** Адаптивная 6-уровневая цветовая иерархия для темной темы
+- **Централизация:** Все стили в `packages/ui/src/styles/form-patterns.js`
+- **Адаптивность:** `dark:` префиксы для автоматической поддержки обеих тем
+- **Семантичность:** Компоненты именуются по назначению, не по внешнему виду
+- **Переиспользование:** Максимальное использование существующих паттернов
 
 ## 🎯 Development Workflow
 
@@ -38,7 +46,8 @@ exchanger-front/
 
 ### Code Guidelines
 
-- **Components:** Use shadcn/ui patterns
+- **Components:** Use shadcn/ui patterns + Design System v2.1
+- **Styling:** Импортировать стили из `form-patterns.js` для консистентности
 - **State:** Zustand for UI, React Query for server state
 - **Styling:** Tailwind utility classes
 - **Types:** Export from package entry points
@@ -49,7 +58,7 @@ exchanger-front/
 **Solution:** Run `npm run check-types` to find TypeScript errors
 
 **Problem:** UI looks broken  
-**Solution:** Check CSS variables in globals.css
+**Solution:** Check CSS variables in globals.css and use Design System v2.1 patterns
 
 **Problem:** State not syncing
 **Solution:** Use correct Zustand store from `@repo/hooks`
