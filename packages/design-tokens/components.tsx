@@ -29,6 +29,7 @@ export const DesignSystemClasses = {
     vertical: 'space-y-6',
     compact: 'grid grid-cols-1 gap-6',
     connected: 'grid grid-cols-1 md:grid-cols-2 gap-8 items-start relative',
+    withArrow: 'grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-6 lg:gap-8 items-start',
   },
 
   // Exchange Cards с улучшенными цветовыми акцентами для обеих тем
@@ -76,6 +77,27 @@ export const DesignSystemClasses = {
     content: layoutPatterns.complexComponent.content,
     horizontalGroup: layoutPatterns.complexComponent.horizontalGroup,
     actions: layoutPatterns.complexComponent.actions,
+  },
+
+  // Arrow Components для Exchange Form - Professional Implementation
+  exchangeArrow: {
+    // Контейнер для адаптивной стрелки
+    container: 'flex justify-center items-center lg:py-8 relative group',
+
+    // Мобильная стрелка (направление вниз)
+    mobile:
+      'block lg:hidden h-6 w-6 text-muted-foreground/70 group-hover:text-muted-foreground transition-colors duration-200',
+
+    // Десктопная стрелка (направление вправо)
+    desktop:
+      'hidden lg:block h-6 w-6 text-muted-foreground/70 group-hover:text-muted-foreground transition-colors duration-200',
+
+    // Декоративный фон с улучшенным стилем
+    background:
+      'absolute inset-0 -m-4 bg-background/90 rounded-full border border-border/30 backdrop-blur-sm -z-10 group-hover:border-border/50 group-hover:bg-background transition-all duration-200 shadow-sm',
+
+    // Дополнительный эффект свечения
+    glow: 'absolute inset-0 -m-4 rounded-full bg-gradient-to-r from-blue-500/5 to-green-500/5 -z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-300',
   },
 };
 
@@ -148,9 +170,77 @@ export const FormContainer = {
   },
 };
 
+// === READY-TO-USE COMPONENTS ===
+
+export const ExchangeArrow = ({
+  className,
+  size = 'default',
+  showGlow = true,
+}: {
+  className?: string;
+  size?: 'small' | 'default' | 'large';
+  showGlow?: boolean;
+}) => {
+  const getSizeClass = (size: 'small' | 'default' | 'large'): string => {
+    switch (size) {
+      case 'small':
+        return 'h-4 w-4';
+      case 'large':
+        return 'h-8 w-8';
+      default:
+        return 'h-6 w-6';
+    }
+  };
+
+  const sizeClass = getSizeClass(size);
+
+  return (
+    <div className={cn(DesignSystemClasses.exchangeArrow.container, className)}>
+      {/* Декоративный фон */}
+      <div className={DesignSystemClasses.exchangeArrow.background} />
+
+      {/* Эффект свечения */}
+      {showGlow && <div className={DesignSystemClasses.exchangeArrow.glow} />}
+
+      {/* Мобильная стрелка вниз */}
+      <svg
+        className={cn(DesignSystemClasses.exchangeArrow.mobile, sizeClass)}
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M19 14l-7 7m0 0l-7-7m7 7V3"
+        />
+      </svg>
+
+      {/* Десктопная стрелка вправо */}
+      <svg
+        className={cn(DesignSystemClasses.exchangeArrow.desktop, sizeClass)}
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M17 8l4 4m0 0l-4 4m4-4H3"
+        />
+      </svg>
+    </div>
+  );
+};
+
 export default {
   DesignSystemClasses,
   FormContainer,
+  ExchangeArrow,
   cn,
   createStateClasses,
 };

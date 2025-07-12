@@ -15,6 +15,15 @@ export {
   formSpacing,
 } from './form-patterns.js';
 
+// === COMPONENTS EXPORT ===
+export {
+  DesignSystemClasses,
+  ExchangeArrow,
+  FormContainer,
+  cn,
+  createStateClasses,
+} from './components.js';
+
 // === COMBINED DEFAULT EXPORT ===
 import { colors } from './colors.js';
 import formPatterns from './form-patterns.js';
