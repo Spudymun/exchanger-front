@@ -1,6 +1,12 @@
 import type { OrderStatus } from '@repo/constants';
 import { UI_DEBOUNCE_CONSTANTS } from '@repo/constants';
-import type { CryptoCurrency, ExchangeRate, ExchangeRecipientData } from '@repo/exchange-core';
+import type {
+  CryptoCurrency,
+  ExchangeRate,
+  ExchangeRecipientData,
+  FiatCurrency,
+  Bank,
+} from '@repo/exchange-core';
 import {
   createStore,
   createDebounceAction,
@@ -9,6 +15,7 @@ import {
 } from '@repo/utils';
 
 import { DEFAULT_FORM_DATA, DEFAULT_STEPS } from './exchange-constants.js';
+import { createFiatActions } from './exchange-fiat-actions.js';
 import {
   calculateExchangeRate,
   getNextStepIndex,
@@ -19,7 +26,8 @@ import {
 // Интерфейсы для данных формы обмена
 export interface ExchangeFormData {
   fromCurrency: CryptoCurrency | null;
-  toCurrency: 'UAH'; // Проект поддерживает только обмен на UAH
+  toCurrency: FiatCurrency | null; // Теперь поддерживаем множественные фиатные валюты
+  selectedBank: Bank | null; // Добавляем выбранный банк
   fromAmount: string;
   toAmount: string;
   recipientData: ExchangeRecipientData;
@@ -75,6 +83,8 @@ export interface ExchangeStore extends TimerState {
 
   // Available data
   availableRates: ExchangeRate[];
+  availableFiatCurrencies: FiatCurrency[];
+  availableBanks: Bank[];
 
   // Actions
   updateFormData: (data: Partial<ExchangeFormData>) => void;
@@ -94,6 +104,13 @@ export interface ExchangeStore extends TimerState {
   // Rates management
   updateRates: (rates: ExchangeRate[]) => void;
   getRateForCurrency: (currency: CryptoCurrency) => ExchangeRate | null;
+
+  // Fiat currency and bank management
+  updateFiatCurrencies: (currencies: FiatCurrency[]) => void;
+  updateBanksForCurrency: (currency: FiatCurrency, banks: Bank[]) => void;
+  getBanksForCurrency: (currency: FiatCurrency) => Bank[];
+  selectFiatCurrency: (currency: FiatCurrency) => void;
+  selectBank: (bank: Bank) => void;
 
   // Reset
   resetForm: () => void;
@@ -289,6 +306,8 @@ const createResetActions = (
       isSubmitting: false,
       currentOrder: null,
       availableRates: [],
+      availableFiatCurrencies: [],
+      availableBanks: [],
     }));
   },
 });
@@ -305,6 +324,8 @@ export const useExchangeStore = createStore<ExchangeStore>(
     isSubmitting: false,
     currentOrder: null,
     availableRates: [],
+    availableFiatCurrencies: [],
+    availableBanks: [],
     timers: new Map(),
 
     // Actions
@@ -313,6 +334,7 @@ export const useExchangeStore = createStore<ExchangeStore>(
     ...createStepActions(set),
     ...createOrderActions(set),
     ...createRatesActions(set, get),
+    ...createFiatActions(set, get),
     ...createResetActions(set, get),
   })
 );

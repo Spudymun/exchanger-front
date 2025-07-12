@@ -7,6 +7,8 @@ export * from './user';
 // ExchangeGO specific exports
 export * from './exchange';
 export * from './exchange-currencies';
+export * from './fiat-currencies';
+export * from './banks';
 export * from './rate-limits';
 export * from './order-statuses';
 

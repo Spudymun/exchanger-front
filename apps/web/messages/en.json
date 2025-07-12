@@ -174,5 +174,46 @@
         "cookies": "Cookie Policy"
       }
     }
+  },
+  "AdvancedExchangeForm": {
+    "benefits": {
+      "fast": "Fast • Secure • No registration • Best rates • Instant transfers",
+      "items": {
+        "exchange5min": "Exchange in 5 minutes",
+        "noRegistration": "No registration",
+        "bestRate": "Best rate"
+      }
+    },
+    "sending": {
+      "title": "You send",
+      "cryptocurrency": "Cryptocurrency",
+      "amount": "Amount",
+      "placeholder": "0.00",
+      "min": "min",
+      "rate": "Rate"
+    },
+    "receiving": {
+      "title": "You receive",
+      "fiatCurrency": "Fiat currency",
+      "bank": "Bank",
+      "selectBank": "Select bank",
+      "amount": "Amount",
+      "min": "min",
+      "reserve": "Reserve"
+    },
+    "exchange": "Exchange",
+    "validation": {
+      "enterAmount": "Enter amount",
+      "selectBank": "Select bank"
+    },
+    "fiatNames": {
+      "UAH": "Ukrainian hryvnia",
+      "USD": "US Dollar",
+      "EUR": "Euro"
+    }
+  },
+  "ExchangePage": {
+    "title": "Advanced Exchange",
+    "description": "Professional cryptocurrency exchange with fiat currency support and bank integration"
   }
 }

@@ -174,5 +174,46 @@
         "cookies": "Политика cookies"
       }
     }
+  },
+  "AdvancedExchangeForm": {
+    "benefits": {
+      "fast": "Быстро • Безопасно • Без регистрации • Выгодный курс • Моментальные переводы",
+      "items": {
+        "exchange5min": "Обмен за 5 минут",
+        "noRegistration": "Без регистрации",
+        "bestRate": "Лучший курс"
+      }
+    },
+    "sending": {
+      "title": "Вы отправляете",
+      "cryptocurrency": "Криптовалюта",
+      "amount": "Сумма",
+      "placeholder": "0.00",
+      "min": "min",
+      "rate": "Курс"
+    },
+    "receiving": {
+      "title": "Вы получаете",
+      "fiatCurrency": "Фиатная валюта",
+      "bank": "Банк",
+      "selectBank": "Выберите банк",
+      "amount": "Сумма",
+      "min": "min",
+      "reserve": "Резерв"
+    },
+    "exchange": "Обменять",
+    "validation": {
+      "enterAmount": "Введите сумму",
+      "selectBank": "Выберите банк"
+    },
+    "fiatNames": {
+      "UAH": "Украинская гривна",
+      "USD": "Доллар США",
+      "EUR": "Евро"
+    }
+  },
+  "ExchangePage": {
+    "title": "Продвинутый обмен",
+    "description": "Профессиональный обмен криптовалют с поддержкой фиатных валют и интеграцией с банками"
   }
 }

@@ -3,7 +3,8 @@ import type { ExchangeFormData, ExchangeStep } from './exchange-store.js';
 // Дефолтные значения для Exchange Store
 export const DEFAULT_FORM_DATA: ExchangeFormData = {
   fromCurrency: null,
-  toCurrency: 'UAH',
+  toCurrency: null,
+  selectedBank: null,
   fromAmount: '',
   toAmount: '',
   recipientData: {
