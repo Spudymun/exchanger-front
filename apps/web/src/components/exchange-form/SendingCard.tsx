@@ -198,9 +198,9 @@ function SendingInfo({
 
 export function SendingCard({ form, t, exchangeRate, minAmount }: SendingCardProps) {
   return (
-    <Card>
+    <Card className="bg-card text-card-foreground border-l-4 border-l-blue-500 dark:border-l-blue-400 shadow-md shadow-blue-500/15 dark:shadow-blue-400/20 hover:shadow-lg transition-all duration-200">
       <CardHeader>
-        <CardTitle>{t('sending.title')}</CardTitle>
+        <CardTitle className="text-foreground">{t('sending.title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <CurrencySelector form={form} t={t} />

@@ -14,7 +14,7 @@ function RateCard({ symbol, price, change, trending }: (typeof mockRates)[number
   const trendIcon = trending === 'up' ? '↗' : '↘';
 
   return (
-    <div className="bg-card p-4 rounded-lg border border-border">
+    <div className="bg-card border border-border/70 dark:border-border/60 p-4 rounded-lg shadow-md shadow-black/8 dark:shadow-black/20">
       <div className="flex justify-between items-start mb-2">
         <h3 className="text-sm font-medium text-muted-foreground">{symbol}</h3>
         <span className={`text-xs ${isPositive ? 'text-green-600' : 'text-red-600'}`}>

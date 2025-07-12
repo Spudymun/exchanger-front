@@ -122,9 +122,9 @@ function ReceivingInfo({
 
 export function ReceivingCard({ form, banks, calculatedAmount, t, minAmount }: ReceivingCardProps) {
   return (
-    <Card>
+    <Card className="bg-card text-card-foreground border-l-4 border-l-green-500 dark:border-l-green-400 shadow-md shadow-green-500/15 dark:shadow-green-400/20 hover:shadow-lg transition-all duration-200">
       <CardHeader>
-        <CardTitle>{t('receiving.title')}</CardTitle>
+        <CardTitle className="text-foreground">{t('receiving.title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <FiatCurrencySelector form={form} t={t} />
@@ -133,7 +133,11 @@ export function ReceivingCard({ form, banks, calculatedAmount, t, minAmount }: R
         <FormField name="toAmount">
           <FormLabel>{t('receiving.amount')}</FormLabel>
           <FormControl>
-            <Input value={calculatedAmount.toFixed(2)} readOnly className="bg-muted" />
+            <Input
+              value={calculatedAmount.toFixed(2)}
+              readOnly
+              className="bg-muted/50 text-foreground"
+            />
           </FormControl>
         </FormField>
 

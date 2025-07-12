@@ -30,29 +30,41 @@ export function HeroExchangeForm({ onExchange, className }: HeroExchangeFormProp
   return (
     <div className={className}>
       <ExchangeBenefits t={t} />
-      <form onSubmit={form.handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <SendingCard
-            form={form}
-            t={t}
-            exchangeRate={constants.EXCHANGE_RATE}
-            minAmount={constants.MIN_AMOUNTS.from}
-          />
-          <ReceivingCard
-            form={form}
-            banks={banks}
-            calculatedAmount={calculatedAmount}
-            t={t}
-            minAmount={constants.MIN_AMOUNTS.to}
-          />
-        </div>
-        <div className="flex justify-center">
-          <Button type="submit" size="lg" disabled={!isValid} className="min-w-[200px]">
-            <ArrowRight className="w-4 h-4 mr-2" />
-            {t('exchange')}
-          </Button>
-        </div>
-      </form>
+
+      {/* Улучшенная дизайн-система v2.1 - четкое разделение для обеих тем */}
+      <div className="bg-card backdrop-blur-sm text-card-foreground border border-border/80 dark:border-border/80 rounded-xl shadow-md shadow-black/8 dark:shadow-black/30 p-6">
+        <form onSubmit={form.handleSubmit} className="space-y-6">
+          {/* Горизонтальная группировка с улучшенными отступами */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+            <SendingCard
+              form={form}
+              t={t}
+              exchangeRate={constants.EXCHANGE_RATE}
+              minAmount={constants.MIN_AMOUNTS.from}
+            />
+            <ReceivingCard
+              form={form}
+              banks={banks}
+              calculatedAmount={calculatedAmount}
+              t={t}
+              minAmount={constants.MIN_AMOUNTS.to}
+            />
+          </div>
+
+          {/* Кнопка exchange - семантически правильное размещение */}
+          <div className="flex justify-center pt-4">
+            <Button
+              type="submit"
+              size="lg"
+              disabled={!isValid}
+              className="min-w-[200px] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <ArrowRight className="w-4 h-4 mr-2" />
+              {t('exchange')}
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
