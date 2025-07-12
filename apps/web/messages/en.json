@@ -13,31 +13,31 @@
       "commission": "Commission"
     },
     "features": {
-      "title": "Enterprise Features",
-      "description": "Built with modern technologies for scalability and performance",
-      "turborepo": {
-        "title": "Turborepo Monorepo",
-        "description": "Scalable monorepo architecture with shared packages and optimized builds"
+      "title": "Why Choose Us",
+      "subtitle": "We provide the best cryptocurrency exchange service with guaranteed security and favorable conditions",
+      "speed": {
+        "title": "Lightning Speed",
+        "description": "Cryptocurrency exchange happens in 5-15 minutes thanks to our automated processing system"
       },
-      "trpc": {
-        "title": "tRPC API",
-        "description": "End-to-end typesafe APIs with automatic type inference"
+      "rates": {
+        "title": "Best Exchange Rates",
+        "description": "Best exchange rates in the market with minimal fees and no hidden charges"
       },
-      "i18n": {
-        "title": "Internationalization",
-        "description": "Multi-language support with next-intl"
+      "security": {
+        "title": "Maximum Security",
+        "description": "SSL encryption, cold storage and multi-level protection of your funds"
       },
-      "ui": {
-        "title": "Modern UI",
-        "description": "Beautiful components with shadcn/ui and Tailwind CSS"
+      "availability": {
+        "title": "24/7 Availability",
+        "description": "Our service operates around the clock, exchange is available at any time of day or night"
       },
-      "state": {
-        "title": "State Management",
-        "description": "Zustand for lightweight and performant state management"
+      "support": {
+        "title": "Expert Support",
+        "description": "Professional technical support ready to help you solve any issues"
       },
-      "testing": {
-        "title": "Testing & Quality",
-        "description": "Jest, Playwright, ESLint, and TypeScript for code quality"
+      "reliability": {
+        "title": "Reliability & Trust",
+        "description": "Over 50,000 satisfied customers and years of experience in the market"
       }
     },
     "cta": {
