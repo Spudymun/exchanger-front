@@ -30,7 +30,7 @@ interface ReceivingCardProps {
   minAmount: number;
 }
 
-function FiatCurrencySelector({
+export function FiatCurrencySelector({
   form,
   t,
 }: {
@@ -65,7 +65,7 @@ function FiatCurrencySelector({
   );
 }
 
-function BankSelector({
+export function BankSelector({
   form,
   banks,
   t,
@@ -127,8 +127,10 @@ export function ReceivingCard({ form, banks, calculatedAmount, t, minAmount }: R
         <CardTitle className="text-foreground">{t('receiving.title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <FiatCurrencySelector form={form} t={t} />
-        <BankSelector form={form} banks={banks} t={t} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FiatCurrencySelector form={form} t={t} />
+          <BankSelector form={form} banks={banks} t={t} />
+        </div>
 
         <FormField name="toAmount">
           <FormLabel>{t('receiving.amount')}</FormLabel>

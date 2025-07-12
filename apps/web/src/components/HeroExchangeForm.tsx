@@ -35,7 +35,7 @@ export function HeroExchangeForm({ onExchange, className }: HeroExchangeFormProp
       <div className="bg-card backdrop-blur-sm text-card-foreground border border-border/80 dark:border-border/80 rounded-xl shadow-md shadow-black/8 dark:shadow-black/30 p-6">
         <form onSubmit={form.handleSubmit} className="space-y-6">
           {/* Горизонтальная группировка с улучшенными отступами */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
             <SendingCard
               form={form}
               t={t}

@@ -31,7 +31,7 @@ interface SendingCardProps {
   minAmount: number;
 }
 
-function TokenStandardSelector({
+export function TokenStandardSelector({
   form,
   t,
 }: {
@@ -42,7 +42,7 @@ function TokenStandardSelector({
   const isMultiNetwork = isMultiNetworkToken(currency);
 
   if (!isMultiNetwork) {
-    return null;
+    return <div className="h-[76px]"></div>;
   }
 
   const standards = getTokenStandards(currency);
@@ -132,7 +132,7 @@ function AmountInput({
   );
 }
 
-function CurrencySelector({
+export function CurrencySelector({
   form,
   t,
 }: {
@@ -203,9 +203,11 @@ export function SendingCard({ form, t, exchangeRate, minAmount }: SendingCardPro
         <CardTitle className="text-foreground">{t('sending.title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <CurrencySelector form={form} t={t} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <CurrencySelector form={form} t={t} />
+          <TokenStandardSelector form={form} t={t} />
+        </div>
         <AmountInput form={form} t={t} />
-        <TokenStandardSelector form={form} t={t} />
         <SendingInfo form={form} t={t} exchangeRate={exchangeRate} minAmount={minAmount} />
       </CardContent>
     </Card>
