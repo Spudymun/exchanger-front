@@ -39,12 +39,9 @@ export function CTASection() {
         <h2 className="text-3xl font-bold text-foreground mb-4">{t('title')}</h2>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">{t('description')}</p>
 
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <div className="flex justify-center">
           <Button size="lg" className="text-lg px-8 py-3">
             {t('button')}
-          </Button>
-          <Button variant="outline" size="lg" className="text-lg px-8 py-3">
-            {t('learnMore')}
           </Button>
         </div>
       </div>
