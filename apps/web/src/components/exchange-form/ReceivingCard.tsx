@@ -133,7 +133,7 @@ export function ReceivingCard({ form, banks, calculatedAmount, t }: ReceivingCar
             <Input
               value={calculatedAmount.toFixed(2)}
               readOnly
-              className="bg-muted/50 text-foreground"
+              className="bg-muted/50 text-foreground cursor-default pointer-events-none transition-none focus-visible:ring-0 focus-visible:border-input border-input"
             />
           </FormControl>
         </FormField>
