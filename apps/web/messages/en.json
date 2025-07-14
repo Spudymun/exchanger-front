@@ -201,7 +201,8 @@
       "selectBank": "Select bank",
       "amount": "Amount",
       "min": "min",
-      "reserve": "Reserve"
+      "reserve": "Reserve",
+      "processing": "Processing time: 15-30 minutes"
     },
     "exchange": "Exchange",
     "validation": {

@@ -110,6 +110,7 @@ function ReceivingInfo({
       <div>
         {t('receiving.reserve')}: 10,000,000 {form.values.toCurrency as string}
       </div>
+      <div>{t('receiving.processing')}</div>
     </div>
   );
 }

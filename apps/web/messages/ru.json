@@ -201,7 +201,8 @@
       "selectBank": "Выберите банк",
       "amount": "Сумма",
       "min": "min",
-      "reserve": "Резерв"
+      "reserve": "Резерв",
+      "processing": "Время обработки: 15-30 минут"
     },
     "exchange": "Обменять",
     "validation": {
