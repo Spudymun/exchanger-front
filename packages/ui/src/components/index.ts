@@ -207,3 +207,15 @@ export {
 
 // Utils
 export { cn } from '../lib/utils';
+
+// === Adaptive Container System ===
+export {
+  AdaptiveContainer,
+  useAdaptiveContainer,
+  useAdaptivePreset,
+  createAdaptiveStyles,
+  adaptivePresets,
+  adaptiveContainerCSS,
+  type AdaptiveWidthProps,
+  type AdaptiveContainerProps,
+} from './adaptive-container';

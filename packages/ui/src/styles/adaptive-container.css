@@ -1,0 +1,217 @@
+/*
+  AdaptiveContainer CSS - Container Queries & Responsive Styles
+  Создан для математического контроля ширины HeroSection
+  Интеграция с Tailwind CSS design system
+*/
+
+/* ========================================================================================
+   ADAPTIVE CONTAINER BASE STYLES
+   ======================================================================================== */
+
+.adaptive-container {
+  container-type: inline-size;
+  width: var(--adaptive-width);
+  max-width: var(--adaptive-max-width, 1200px);
+  min-width: var(--adaptive-min-width, 320px);
+}
+
+/* ========================================================================================
+   CONTAINER QUERIES - Progressive Enhancement
+   ======================================================================================== */
+
+/* Small containers - Mobile First */
+@container (min-width: 20rem) {
+  .adaptive-container {
+    --adaptive-scale: 1.1;
+    --adaptive-padding: 1.5rem;
+  }
+
+  .adaptive-container .exchange-form-cards {
+    gap: 1.5rem;
+  }
+}
+
+/* Medium containers - Tablet Range */
+@container (min-width: 48rem) {
+  .adaptive-container {
+    --adaptive-scale: 1.25;
+    --adaptive-padding: 2rem;
+  }
+
+  .adaptive-container .exchange-form-cards {
+    gap: 2rem;
+  }
+
+  .adaptive-container .exchange-form-arrow {
+    transform: scale(var(--adaptive-scale, 1));
+  }
+}
+
+/* Large containers - Desktop Range */
+@container (min-width: 64rem) {
+  .adaptive-container {
+    --adaptive-scale: 1.4;
+    --adaptive-padding: 2.5rem;
+  }
+
+  .adaptive-container .exchange-form-cards {
+    gap: 2.5rem;
+  }
+}
+
+/* Extra Large containers - Wide Desktop */
+@container (min-width: 80rem) {
+  .adaptive-container {
+    --adaptive-scale: 1.5;
+    --adaptive-padding: 3rem;
+  }
+
+  .adaptive-container .exchange-form-cards {
+    gap: 3rem;
+  }
+}
+
+/* ========================================================================================
+   UTILITY CLASSES - Mathematical Width Control
+   ======================================================================================== */
+
+/* Precise mathematical control with clamp() */
+.adaptive-width-precise {
+  width: clamp(
+    var(--adaptive-min-width, 320px),
+    var(--adaptive-preferred-width, 800px),
+    var(--adaptive-max-width, 1200px)
+  );
+}
+
+/* Fluid scaling with viewport units */
+.adaptive-width-fluid {
+  width: clamp(
+    var(--adaptive-min-width, 320px),
+    calc(var(--adaptive-preferred-width, 800px) * var(--adaptive-growth-factor, 0.85)),
+    var(--adaptive-max-width, 1200px)
+  );
+}
+
+/* Container queries responsive */
+.adaptive-width-responsive {
+  width: var(--adaptive-width);
+  container-type: inline-size;
+}
+
+/* ========================================================================================
+   INTEGRATION WITH EXCHANGE FORM COMPONENTS
+   ======================================================================================== */
+
+/* Enhanced spacing for adaptive containers */
+.adaptive-container .space-y-8 > * + * {
+  margin-top: calc(2rem * var(--adaptive-scale, 1));
+}
+
+.adaptive-container .space-y-6 > * + * {
+  margin-top: calc(1.5rem * var(--adaptive-scale, 1));
+}
+
+/* Responsive padding based on container size */
+.adaptive-container.bg-card {
+  padding: var(--adaptive-padding, 1.5rem);
+}
+
+/* Arrow scaling in adaptive containers */
+.adaptive-container [class*='w-12'][class*='h-12'] {
+  width: calc(3rem * var(--adaptive-scale, 1));
+  height: calc(3rem * var(--adaptive-scale, 1));
+}
+
+/* ========================================================================================
+   ENHANCED VARIANTS FOR EXCHANGE FORM
+   ======================================================================================== */
+
+/* Adaptive Hero Variant */
+.adaptive-container[data-variant='adaptive-hero'] {
+  --adaptive-preferred-width: 900px;
+  --adaptive-growth-factor: 0.9;
+}
+
+/* Adaptive Form Variant */
+.adaptive-container[data-variant='adaptive-form'] {
+  --adaptive-preferred-width: 600px;
+  --adaptive-growth-factor: 0.85;
+}
+
+/* Adaptive Content Variant */
+.adaptive-container[data-variant='adaptive-content'] {
+  --adaptive-preferred-width: 750px;
+  --adaptive-growth-factor: 0.8;
+}
+
+/* ========================================================================================
+   RESPONSIVE BREAKPOINTS INTEGRATION
+   ======================================================================================== */
+
+/* Integration with Tailwind breakpoints for fallback */
+@media (width >=640px) {
+  .adaptive-container {
+    --adaptive-sm-active: 1;
+  }
+}
+
+@media (width >=768px) {
+  .adaptive-container {
+    --adaptive-md-active: 1;
+  }
+}
+
+@media (width >=1024px) {
+  .adaptive-container {
+    --adaptive-lg-active: 1;
+  }
+}
+
+@media (width >=1280px) {
+  .adaptive-container {
+    --adaptive-xl-active: 1;
+  }
+}
+
+/* ========================================================================================
+   ACCESSIBILITY & MOTION PREFERENCES
+   ======================================================================================== */
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .adaptive-container * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: more) {
+  .adaptive-container {
+    border-width: 2px;
+  }
+}
+
+/* ========================================================================================
+   DEBUG MODE (Development Only)
+   ======================================================================================== */
+
+/* Add data-debug attribute to adaptive-container for development */
+.adaptive-container[data-debug='true'] {
+  outline: 2px dashed rgb(59 130 246 / 50%);
+  position: relative;
+}
+
+.adaptive-container[data-debug='true']::after {
+  content: 'W: ' var(--adaptive-width) ' | Scale: ' var(--adaptive-scale, '1');
+  position: absolute;
+  top: -1.5rem;
+  left: 0;
+  font-size: 0.75rem;
+  background: rgb(59 130 246 / 90%);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-family: monospace;
+}

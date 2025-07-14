@@ -60,8 +60,8 @@ export const Header = React.forwardRef<HTMLElement, HeaderProps>(
       role="banner"
       {...props}
     >
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">{children}</div>
+      <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-8">
+        <div className="flex justify-between items-center h-14 sm:h-16">{children}</div>
       </div>
     </header>
   )
@@ -97,7 +97,11 @@ HeaderNavigation.displayName = 'HeaderNavigation';
 // Header Actions Component
 export const HeaderActions = React.forwardRef<HTMLDivElement, HeaderActionsProps>(
   ({ className, children, ...props }, ref) => (
-    <div ref={ref} className={cn('flex items-center space-x-4', className)} {...props}>
+    <div
+      ref={ref}
+      className={cn('flex items-center space-x-1 sm:space-x-2 lg:space-x-4', className)}
+      {...props}
+    >
       {children}
     </div>
   )

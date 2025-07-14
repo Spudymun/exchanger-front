@@ -14,9 +14,9 @@ export function AppLayout({ children, className }: AppLayoutProps) {
   return (
     <ThemeProvider>
       <TRPCProvider>
-        <div className={`min-h-screen flex flex-col ${className || ''}`}>
+        <div className={`min-h-screen flex flex-col overflow-x-hidden ${className || ''}`}>
           <AppHeader />
-          <main className="flex-1" role="main">
+          <main className="flex-1 overflow-x-hidden" role="main">
             {children}
           </main>
           <AppFooter />

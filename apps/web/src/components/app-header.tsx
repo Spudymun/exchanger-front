@@ -43,11 +43,11 @@ export function AppHeader({ className }: AppHeaderProps) {
 function AppHeaderLogo() {
   return (
     <Header.Logo>
-      <Link href="/" className="flex items-center space-x-2">
-        <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-          <span className="text-primary-foreground font-bold text-sm">EG</span>
+      <Link href="/" className="flex items-center space-x-1 sm:space-x-2">
+        <div className="h-6 w-6 sm:h-8 sm:w-8 bg-primary rounded-lg flex items-center justify-center">
+          <span className="text-primary-foreground font-bold text-xs sm:text-sm">EG</span>
         </div>
-        <span className="font-bold text-xl">ExchangeGO</span>
+        <span className="font-bold text-lg sm:text-xl">ExchangeGO</span>
       </Link>
     </Header.Logo>
   );

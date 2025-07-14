@@ -4,9 +4,38 @@ import * as React from 'react';
 
 import { cn } from '../lib/utils';
 
+import AdaptiveContainer, {
+  useAdaptivePreset,
+  type AdaptiveWidthProps,
+} from './adaptive-container';
+
 // ===== COMPOUND COMPONENTS ARCHITECTURE v2.0 =====
 // Unified composition system extending form.tsx pattern
 // Based on Rule 20 analysis: 85% coverage with existing form.tsx approach
+
+// ===== КОНСТАНТЫ ДЛЯ УСТРАНЕНИЯ ДУБЛИРОВАНИЯ =====
+const CONTAINER_STYLES = {
+  hero: 'bg-card backdrop-blur-sm text-card-foreground border border-border/80 rounded-xl shadow-md shadow-black/8 dark:shadow-black/30 p-4 sm:p-6 md:p-8 max-w-2xl lg:max-w-4xl mx-auto w-full',
+  full: 'bg-card text-card-foreground border border-border rounded-2xl shadow-standard p-6 sm:p-8 space-y-6 sm:space-y-8',
+  mobile:
+    'bg-card text-card-foreground border border-border rounded-xl shadow-standard p-4 space-y-4',
+  adaptiveContent:
+    'bg-card text-card-foreground border border-border rounded-xl shadow-standard p-4 sm:p-6 space-y-4 sm:space-y-6',
+} as const;
+
+// ===== УТИЛИТАРНАЯ ФУНКЦИЯ СТИЛЕЙ КОНТЕЙНЕРА =====
+const getContainerVariantClass = (variant: 'hero' | 'full' | 'mobile'): string => {
+  switch (variant) {
+    case 'hero':
+      return CONTAINER_STYLES.hero;
+    case 'full':
+      return CONTAINER_STYLES.full;
+    case 'mobile':
+      return CONTAINER_STYLES.mobile;
+    default:
+      return CONTAINER_STYLES.full;
+  }
+};
 
 // Exchange Form Context
 export interface ExchangeFormContextValue {
@@ -60,21 +89,8 @@ export interface ContainerProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const Container = React.forwardRef<HTMLDivElement, ContainerProps>(
   ({ className, variant = 'full', children, ...props }, ref) => {
-    const getVariantClass = (v: 'hero' | 'full' | 'mobile') => {
-      switch (v) {
-        case 'hero':
-          return 'bg-card backdrop-blur-sm text-card-foreground border border-border/80 rounded-xl shadow-md shadow-black/8 dark:shadow-black/30 p-6';
-        case 'full':
-          return 'bg-card text-card-foreground border border-border rounded-2xl shadow-standard p-8 space-y-8';
-        case 'mobile':
-          return 'bg-card text-card-foreground border border-border rounded-xl shadow-standard p-4 space-y-4';
-        default:
-          return 'bg-card text-card-foreground border border-border rounded-2xl shadow-standard p-8 space-y-8';
-      }
-    };
-
     return (
-      <div ref={ref} className={cn(getVariantClass(variant), className)} {...props}>
+      <div ref={ref} className={cn(getContainerVariantClass(variant), className)} {...props}>
         {children}
       </div>
     );
@@ -82,6 +98,67 @@ const Container = React.forwardRef<HTMLDivElement, ContainerProps>(
 );
 
 Container.displayName = 'ExchangeForm.Container';
+
+// ===== ENHANCED CONTAINER VARIANTS v2.0 =====
+// Интеграция AdaptiveContainer с ExchangeForm.Container
+// Новые варианты для математического контроля ширины
+
+export interface EnhancedContainerProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: 'hero' | 'full' | 'mobile' | 'adaptive-hero' | 'adaptive-form' | 'adaptive-content';
+  adaptiveProps?: AdaptiveWidthProps;
+  children: React.ReactNode;
+}
+
+const EnhancedContainer = React.forwardRef<HTMLDivElement, EnhancedContainerProps>(
+  ({ className, variant = 'full', adaptiveProps, children, ...props }, ref) => {
+    // Обработка adaptive variants
+    if (variant.startsWith('adaptive-')) {
+      const presetName = variant.replace(
+        'adaptive-',
+        ''
+      ) as keyof typeof import('./adaptive-container').adaptivePresets;
+
+      // Получаем preset или используем переданные adaptiveProps
+      const finalAdaptiveProps =
+        adaptiveProps ||
+        useAdaptivePreset(
+          presetName === 'hero' ? 'hero' : presetName === 'form' ? 'form' : 'content'
+        );
+
+      // Стили контейнера для adaptive variants
+      const adaptiveContainerStyle =
+        variant === 'adaptive-hero'
+          ? CONTAINER_STYLES.hero
+          : variant === 'adaptive-form'
+            ? CONTAINER_STYLES.full
+            : CONTAINER_STYLES.adaptiveContent;
+
+      return (
+        <AdaptiveContainer
+          ref={ref}
+          className={cn(adaptiveContainerStyle, className)}
+          {...finalAdaptiveProps}
+          {...props}
+        >
+          {children}
+        </AdaptiveContainer>
+      );
+    }
+
+    // Существующая логика для стандартных variants
+    return (
+      <div
+        ref={ref}
+        className={cn(getContainerVariantClass(variant as 'hero' | 'full' | 'mobile'), className)}
+        {...props}
+      >
+        {children}
+      </div>
+    );
+  }
+);
+
+EnhancedContainer.displayName = 'ExchangeForm.EnhancedContainer';
 
 // ===== CARD PAIR LAYOUT COMPONENT =====
 export interface CardPairProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -94,15 +171,15 @@ const CardPair = React.forwardRef<HTMLDivElement, CardPairProps>(
     const getLayoutClass = (l: 'horizontal' | 'vertical' | 'compact' | 'withArrow') => {
       switch (l) {
         case 'horizontal':
-          return 'grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch';
+          return 'grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 items-stretch';
         case 'vertical':
-          return 'space-y-6';
+          return 'space-y-6 sm:space-y-8';
         case 'compact':
-          return 'grid grid-cols-1 gap-6';
+          return 'grid grid-cols-1 gap-6 sm:gap-8';
         case 'withArrow':
-          return 'grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-6 lg:gap-8 items-center';
+          return 'flex flex-col md:grid md:grid-cols-[1fr_auto_1fr] gap-6 sm:gap-8 md:gap-10 items-center';
         default:
-          return 'grid grid-cols-1 md:grid-cols-2 gap-8 items-start';
+          return 'grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 items-start';
       }
     };
 
@@ -125,7 +202,7 @@ export interface ExchangeCardProps extends React.HTMLAttributes<HTMLDivElement> 
 const ExchangeCard = React.forwardRef<HTMLDivElement, ExchangeCardProps>(
   ({ className, type = 'neutral', children, ...props }, ref) => {
     const baseClass =
-      'bg-card text-card-foreground border rounded-xl shadow-md hover:shadow-lg transition-all duration-200 p-6';
+      'bg-card text-card-foreground border rounded-xl shadow-md hover:shadow-lg transition-all duration-200 p-6 sm:p-8';
 
     const getTypeClass = (t: 'sending' | 'receiving' | 'neutral') => {
       switch (t) {
@@ -221,8 +298,11 @@ const Arrow = React.forwardRef<HTMLDivElement, ArrowProps>(
         )}
         {...props}
       >
-        <div className="bg-primary/10 border border-primary/20 rounded-full w-12 h-12 shadow-lg flex items-center justify-center hover:bg-primary/20 transition-colors">
-          <div className="text-primary text-2xl font-bold leading-none">{icon}</div>
+        <div className="bg-primary/10 border border-primary/20 rounded-full w-10 h-10 sm:w-12 sm:h-12 shadow-lg flex items-center justify-center hover:bg-primary/20 transition-colors">
+          <div className="text-primary text-lg sm:text-2xl font-bold leading-none">
+            <span className="lg:hidden">↓</span>
+            <span className="hidden lg:inline">{icon}</span>
+          </div>
         </div>
       </div>
     );
@@ -265,6 +345,7 @@ ActionArea.displayName = 'ExchangeForm.ActionArea';
 // ===== COMPOUND COMPONENT EXPORT =====
 export const ExchangeFormCompound = Object.assign(ExchangeForm, {
   Container,
+  EnhancedContainer,
   CardPair,
   ExchangeCard,
   FieldWrapper,
@@ -273,7 +354,16 @@ export const ExchangeFormCompound = Object.assign(ExchangeForm, {
 });
 
 // ===== INDIVIDUAL EXPORTS =====
-export { ExchangeForm as Root, Container, CardPair, ExchangeCard, FieldWrapper, Arrow, ActionArea };
+export {
+  ExchangeForm as Root,
+  Container,
+  EnhancedContainer,
+  CardPair,
+  ExchangeCard,
+  FieldWrapper,
+  Arrow,
+  ActionArea,
+};
 
 // Default export as compound component
 export default ExchangeFormCompound;

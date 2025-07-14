@@ -305,6 +305,25 @@ module.exports = {
         '.safe-area-bottom': {
           'padding-bottom': 'env(safe-area-inset-bottom)',
         },
+
+        // Мобильные touch targets
+        '.touch-target': {
+          'min-height': '44px',
+          'min-width': '44px',
+        },
+
+        // Мобильный контейнер
+        '.mobile-container': {
+          'width': '100%',
+          'max-width': '100vw',
+          'overflow-x': 'hidden',
+        },
+
+        // Предотвращение горизонтального скролла
+        '.no-scroll-x': {
+          'overflow-x': 'hidden',
+          'max-width': '100vw',
+        },
       };
 
       addUtilities(newUtilities);

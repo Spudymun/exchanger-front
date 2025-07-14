@@ -1,6 +1,9 @@
 /* Import CSS Variables from centralized system */
 @import '@repo/tailwind-preset/globals.css';
 
+/* Import AdaptiveContainer styles */
+@import './adaptive-container.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

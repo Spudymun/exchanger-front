@@ -18,7 +18,9 @@ describe('Button', () => {
   it('applies size classes correctly', () => {
     render(<Button size="sm">Small Button</Button>);
     const button = screen.getByRole('button');
-    expect(button).toHaveClass('h-8');
+    // Обновлено: после мобильной адаптации sm размер изменился с h-8 на h-10
+    // для соблюдения 44px touch target требований
+    expect(button).toHaveClass('h-10');
   });
 
   it('handles click events', async () => {
