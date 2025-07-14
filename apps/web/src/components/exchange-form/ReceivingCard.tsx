@@ -48,13 +48,13 @@ export function FiatCurrencySelector({
             form.setValue('selectedBankId', '');
           }}
         >
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             {FIAT_CURRENCIES.map(c => (
               <SelectItem key={c} value={c}>
-                {t(`fiatNames.${c}`)}
+                {c}
               </SelectItem>
             ))}
           </SelectContent>
@@ -82,7 +82,7 @@ export function BankSelector({
           value={form.values.selectedBankId as string}
           onValueChange={v => form.setValue('selectedBankId', v)}
         >
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder={t('receiving.selectBank')} />
           </SelectTrigger>
           <SelectContent>

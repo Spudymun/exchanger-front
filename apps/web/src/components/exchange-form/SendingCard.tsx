@@ -55,7 +55,7 @@ export function TokenStandardSelector({
           value={form.values.tokenStandard as string}
           onValueChange={v => form.setValue('tokenStandard', v)}
         >
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue placeholder={t('sending.selectStandard')} />
           </SelectTrigger>
           <SelectContent>
@@ -155,7 +155,7 @@ export function CurrencySelector({
             }
           }}
         >
-          <SelectTrigger>
+          <SelectTrigger className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
