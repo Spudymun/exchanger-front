@@ -60,7 +60,7 @@
 | **Next.js**      | 15.x   | React фреймворк с App Router | ✅ Настроен        |
 | **TypeScript**   | 5.x    | Статическая типизация        | ✅ Strict mode     |
 | **Turborepo**    | 2.x    | Монорепозиторий              | ✅ Настроен        |
-| **Tailwind CSS** | 4.x    | Utility-first CSS            | ✅ + Design Tokens |
+| **Tailwind CSS** | 3.4.16 | Utility-first CSS            | ✅ + Design Tokens |
 | **shadcn/ui**    | latest | UI-компоненты                | ✅ Интегрирован    |
 | **tRPC**         | 11.x   | End-to-end типизация API     | ✅ Настроен        |
 | **Zustand**      | 4.x    | State management             | ✅ Интегрирован    |
@@ -721,150 +721,184 @@ function useExternalData() {
 
 ## 🎨 Стилизация и темизация
 
-### Tailwind CSS + Design Tokens
+### Tailwind CSS + Централизованная CSS архитектура
 
-#### Конфигурация (`tailwind.config.js`):
+#### ✅ Новая архитектура CSS (2025)
+
+**Централизованные CSS Variables**: Все CSS переменные теперь определены в одном месте и автоматически импортируются во все приложения.
+
+**Расположение**: `packages/tailwind-preset/globals.css` - единственный источник истины для всех CSS переменных.
+
+#### Правильная структура импортов:
+
+```css
+/* В каждом apps/{app}/app/globals.css */
+@import '@repo/tailwind-preset/globals.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
+#### Конфигурация Tailwind CSS:
 
 ```javascript
+// packages/tailwind-preset/tailwind.config.js
 module.exports = {
-  content: ['./apps/**/*.{js,ts,jsx,tsx}', './packages/ui/**/*.{js,ts,jsx,tsx}'],
+  content: [
+    '../../apps/*/app/**/*.{js,ts,jsx,tsx,mdx}',
+    '../../packages/ui/src/**/*.{js,ts,jsx,tsx}',
+  ],
   theme: {
     extend: {
-      // Design tokens автоматически импортируются
-      colors: require('./packages/design-tokens/colors'),
-      fontFamily: require('./packages/design-tokens/typography').fontFamily,
-      spacing: require('./packages/design-tokens/spacing'),
+      // CSS Variables автоматически подхватываются из globals.css
+      colors: {
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        primary: 'hsl(var(--primary))',
+        'primary-foreground': 'hsl(var(--primary-foreground))',
+        // ... остальные переменные
+      },
     },
   },
   plugins: [require('tailwindcss-animate')],
 };
 ```
 
-#### CSS Variables для темизации:
+#### Централизованные CSS Variables:
 
-**🎯 Обновлено в дизайн-системе v2.1 - Улучшенная визуальная иерархия**
+**📍 Расположение**: `packages/tailwind-preset/globals.css`
 
 ```css
-/* packages/ui/src/styles/globals.css */
 @layer base {
   :root {
-    /* LIGHT THEME - Обновленная цветовая иерархия v2.1 */
-    --background: 220 14% 98%; /* Более контрастный фон */
+    /* === LIGHT THEME - Enhanced Visual Hierarchy v2.1 === */
+
+    /* Level 1: Main background */
+    --background: 220 14% 98%;
     --foreground: 222.2 84% 4.9%;
 
-    --card: 0 0% 100%; /* Белые карточки для контраста */
+    /* Level 2: Card surfaces */
+    --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
 
-    --border: 220 13% 85%; /* Более видимые границы */
-    --input: 220 13% 91%;
+    /* Level 3: Floating elements */
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 220 90% 50%; /* Яркий синий для акцентов */
+    /* Interactive elements */
+    --primary: 220 90% 50%;
     --primary-foreground: 210 40% 98%;
 
+    /* Secondary surfaces */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+
+    /* Muted backgrounds */
     --muted: 220 14% 96%;
     --muted-foreground: 215 16% 47%;
 
+    /* Accent surfaces */
     --accent: 220 14% 96%;
     --accent-foreground: 222.2 84% 4.9%;
 
+    /* Error states */
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
+    /* Visible borders */
+    --border: 220 13% 85%;
+
+    /* Input backgrounds */
+    --input: 220 13% 91%;
+
+    /* Focus rings */
     --ring: 220 90% 50%;
     --radius: 0.5rem;
   }
 
   .dark {
-    /* DARK THEME - 6-уровневая иерархия для четкого разделения */
-    --background: 222.2 84% 2%; /* Уровень 1: Глубокий фон */
+    /* === DARK THEME - 6-уровневая иерархия для четкого разделения === */
+
+    /* Level 1: Deep background */
+    --background: 222.2 84% 2%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4%; /* Уровень 2: Карточки */
+    /* Level 2: Card surfaces */
+    --card: 222.2 84% 4%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 5%; /* Уровень 3: Поповеры */
+    /* Level 3: Popovers */
+    --popover: 222.2 84% 5%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%; /* Уровень 4: Интерактивные элементы */
+    /* Level 4: Interactive elements */
+    --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 217.2 32.6% 10%; /* Уровень 5: Вторичные элементы */
+    /* Level 5: Secondary elements */
+    --secondary: 217.2 32.6% 10%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 8%; /* Уровень 6: Приглушенные элементы */
+    /* Level 6: Muted elements */
+    --muted: 217.2 32.6% 8%;
     --muted-foreground: 215 20.2% 65.1%;
 
+    /* Accent surfaces */
     --accent: 217.2 32.6% 10%;
     --accent-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 12%; /* Четкие границы */
-    --input: 217.2 32.6% 10%;
-
+    /* Error states */
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
+    /* Visible borders */
+    --border: 217.2 32.6% 12%;
+
+    /* Input backgrounds */
+    --input: 217.2 32.6% 10%;
+
+    /* Focus rings */
     --ring: 212.7 26.8% 83.9%;
-    --radius: 0.5rem;
   }
 }
 ```
 
+#### ✅ Ключевые принципы новой архитектуры:
+
+1. **Единый источник истины**: `packages/tailwind-preset/globals.css`
+2. **Автоматический импорт**: `@import '@repo/tailwind-preset/globals.css'` в каждом приложении
+3. **Нулевое дублирование**: CSS переменные определены только в одном файле
+4. **Предсказуемая иерархия**: Семантическая структура переменных
+5. **Поддержка тем**: Автоматическая поддержка light/dark режимов
+
+#### Правила использования:
+
+- ✅ **Используйте централизованные переменные**: `bg-card`, `text-foreground`
+- ✅ **Импортируйте preset во все приложения**: `@import '@repo/tailwind-preset/globals.css'`
+- ❌ **Не дублируйте CSS переменные** в отдельных файлах
+- ❌ **Не определяйте CSS переменные** вне `packages/tailwind-preset/`
+
 ### 🎨 Дизайн-система v2.1 - Централизованные паттерны
 
-**Обновлено:** Июль 2025 - Улучшенная визуальная иерархия и адаптивность
+**Обновлено:** Январь 2025 - Улучшенная визуальная иерархия и адаптивность
 
-#### Централизованные стили в form-patterns.js
-
-Для обеспечения консистентности используется централизованная система стилей:
-
-```javascript
-// packages/ui/src/styles/form-patterns.js
-export const DESIGN_SYSTEM_V2_1 = {
-  elevation: {
-    // Адаптивные тени с учетом темы
-    card: 'shadow-sm shadow-black/5 dark:shadow-black/20',
-    hover: 'hover:shadow-md hover:shadow-black/8 dark:hover:shadow-black/30',
-    interactive: 'shadow-lg shadow-black/10 dark:shadow-black/40',
-    elevated: 'shadow-xl shadow-black/15 dark:shadow-black/50',
-  },
-
-  borders: {
-    // Четкие границы для обеих тем
-    subtle: 'border border-border/60 dark:border-border/30',
-    default: 'border border-border dark:border-border',
-    emphasis: 'border-2 border-border dark:border-border',
-  },
-
-  containers: {
-    // Семантические контейнеры
-    card: 'bg-card text-card-foreground rounded-lg',
-    section: 'bg-background',
-    interactive: 'bg-card hover:bg-card/80 transition-colors',
-    accent: 'bg-accent text-accent-foreground',
-  },
-
-  focus: {
-    // Консистентные focus стили
-    ring: 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-    accessible: 'focus:outline-2 focus:outline-offset-2 focus:outline-ring',
-  },
-};
-```
-
-#### Использование в компонентах
+#### Использование централизованных стилей
 
 ```typescript
-// Пример использования централизованных стилей
-import { DESIGN_SYSTEM_V2_1 as DS } from '../styles/form-patterns';
+// Правильное использование CSS переменных
+import { cn } from '@repo/ui';
 
 export function ExchangeCard({ children }: { children: React.ReactNode }) {
   return (
     <div className={cn(
-      DS.containers.card,
-      DS.elevation.card,
-      DS.borders.default,
-      DS.focus.ring,
-      'p-6 space-y-4'
+      // Используем централизованные CSS переменные
+      'bg-card text-card-foreground rounded-lg',
+      'border border-border',
+      'shadow-sm',
+      'p-6 space-y-4',
+      // Focus стили
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
     )}>
       {children}
     </div>
@@ -872,32 +906,42 @@ export function ExchangeCard({ children }: { children: React.ReactNode }) {
 }
 ```
 
-#### Адаптивные акцентные тени
-
-Для выделения интерактивных элементов используются цветные тени:
-
-```css
-/* Примеры адаптивных теней */
-.exchange-form {
-  @apply shadow-green-500/10 dark:shadow-green-400/20;
-}
-
-.sending-card {
-  @apply shadow-blue-500/10 dark:shadow-blue-400/20;
-}
-
-.receiving-card {
-  @apply shadow-purple-500/10 dark:shadow-purple-400/20;
-}
-```
-
-#### Семантические компоненты
+#### Примеры семантических компонентов
 
 ```typescript
-// Централизованные компоненты для консистентности
+// Компоненты с правильным использованием переменных
 export const DesignComponents = {
   ExchangeCard: ({ type, children }: { type: 'sending' | 'receiving'; children: React.ReactNode }) => (
     <div className={cn(
+      'bg-card text-card-foreground rounded-lg border border-border p-6',
+      type === 'sending' && 'shadow-blue-500/10 dark:shadow-blue-400/20',
+      type === 'receiving' && 'shadow-purple-500/10 dark:shadow-purple-400/20'
+    )}>
+      {children}
+    </div>
+  ),
+
+  FormSection: ({ children }: { children: React.ReactNode }) => (
+    <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+      {children}
+    </div>
+  ),
+
+  InteractiveButton: ({ variant = 'default', children, ...props }: ButtonProps) => (
+    <button
+      className={cn(
+        'bg-primary text-primary-foreground hover:bg-primary/90',
+        'rounded-md px-4 py-2 transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+      )}
+      {...props}
+    >
+      {children}
+    </button>
+  ),
+};
+```
+
       DS.containers.card,
       DS.elevation.card,
       DS.borders.default,
@@ -908,32 +952,34 @@ export const DesignComponents = {
     )}>
       {children}
     </div>
-  ),
 
-  ActionButton: ({ variant, children, ...props }: ButtonProps) => (
-    <Button
-      className={cn(
-        DS.elevation.hover,
-        DS.focus.ring,
-        'transition-all duration-200'
-      )}
-      variant={variant}
-      {...props}
-    >
-      {children}
-    </Button>
-  ),
+),
 
-  FormSection: ({ title, children }: { title: string; children: React.ReactNode }) => (
-    <div className={cn(DS.containers.section, 'space-y-3')}>
-      <h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
-      <div className={cn(DS.borders.subtle, 'rounded-md p-4')}>
-        {children}
-      </div>
-    </div>
-  )
+ActionButton: ({ variant, children, ...props }: ButtonProps) => (
+<Button
+className={cn(
+DS.elevation.hover,
+DS.focus.ring,
+'transition-all duration-200'
+)}
+variant={variant}
+{...props} >
+{children}
+</Button>
+),
+
+FormSection: ({ title, children }: { title: string; children: React.ReactNode }) => (
+
+<div className={cn(DS.containers.section, 'space-y-3')}>
+<h3 className="text-sm font-medium text-muted-foreground">{title}</h3>
+<div className={cn(DS.borders.subtle, 'rounded-md p-4')}>
+{children}
+</div>
+</div>
+)
 };
-```
+
+````
 
 #### Принципы дизайн-системы v2.1
 
@@ -961,7 +1007,7 @@ module.exports = {
     },
   },
 };
-```
+````
 
 2. **Использовать в CSS**:
 

@@ -1,112 +1,202 @@
-# ExchangeGO Semantic Design System v2.0
+# ExchangeGO CSS Architecture v3.0 - Централизованная система
 
 ## Обзор
 
-Обновленная дизайн-система ExchangeGO основана на семантических токенах, которые автоматически адаптируются к светлой и темной темам. Это обеспечивает правильное отображение сложных компонентов интерфейса во всех условиях.
+**Обновлено Январь 2025:** Полностью переработанная CSS архитектура с централизованными переменными. Все CSS переменные теперь определены в одном месте и автоматически импортируются во все приложения.
 
-## Ключевые принципы
+## ✅ Новая архитектура
 
-### 1. Семантические токены
+### 1. Единый источник истины
 
-Вместо хардкодинга цветов используем семантические CSS-переменные:
+**Расположение**: `packages/tailwind-preset/globals.css`
 
-- `bg-card` → автоматически белый в светлой теме, темный в темной
-- `text-foreground` → автоматически черный/белый
-- `border-border` → правильный контраст в любой теме
+Все CSS переменные определены в одном файле, который автоматически импортируется во все приложения через `@import '@repo/tailwind-preset/globals.css'`.
 
-### 2. Правильная иерархия
+### 2. Автоматическая поддержка тем
 
-- **Поверхности**: page → card → muted → accent
-- **Глубина**: subtle → standard → floating
-- **Интерактивность**: default → hover → active → focus
+```css
+/* packages/tailwind-preset/globals.css */
+@layer base {
+  :root {
+    /* LIGHT THEME - автоматически применяется */
+    --background: 220 14% 98%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --primary: 220 90% 50%;
+    /* ...остальные переменные */
+  }
 
-### 3. Семантическое значение цветов
-
-- `primary` - основные действия (кнопки exchange)
-- `secondary` - вторичные элементы
-- `muted` - фоновые области
-- `accent` - выделения и акценты
-- `destructive` - ошибки и предупреждения
-
-## Компоненты системы
-
-### Semantic Tokens
-
-```javascript
-import { semanticTokens } from '@repo/design-tokens/form-patterns';
-
-// Поверхности для разных уровней
-semanticTokens.surfaces.page; // Основной фон страницы
-semanticTokens.surfaces.elevated; // Карточки и контейнеры
-semanticTokens.surfaces.accent; // Акцентные области
-
-// Границы с правильной прозрачностью
-semanticTokens.borders.subtle; // Мягкие границы
-semanticTokens.borders.accent; // Яркие границы
-
-// Тени с учетом темной темы
-semanticTokens.elevation.subtle; // Минимальная тень
-semanticTokens.elevation.floating; // Плавающие элементы
+  .dark {
+    /* DARK THEME - автоматически переключается */
+    --background: 222.2 84% 2%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4%;
+    --primary: 210 40% 98%;
+    /* ...остальные переменные */
+  }
+}
 ```
 
-### Form Containers
+### 3. Правильная структура импортов
 
-```javascript
-import { formContainers } from '@repo/design-tokens/form-patterns';
+```css
+/* В каждом apps/{app}/app/globals.css */
+@import '@repo/tailwind-preset/globals.css'; /* ← ОБЯЗАТЕЛЬНО первым */
 
-// Основной контейнер exchange формы
-<div className={formContainers.exchangeForm.variants.compact}>{/* Содержимое формы */}</div>;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 ```
 
-### Enhanced Cards
+## ✅ Семантические классы
 
-```javascript
-import { enhancedCards } from '@repo/design-tokens/form-patterns';
+### Поверхности и контейнеры
 
-// Карточки exchange с семантическими состояниями
-<div className={enhancedCards.exchangeCard.variants.sending}>{/* Карточка отправки */}</div>;
+```typescript
+// ✅ Используйте централизованные переменные
+<div className="bg-card text-card-foreground rounded-lg border border-border">
+  {/* Контент */}
+</div>
+
+// ✅ Интерактивные элементы
+<button className="bg-primary text-primary-foreground hover:bg-primary/90">
+  {/* Кнопка */}
+</button>
+
+// ✅ Мягкие фоны
+<div className="bg-muted/50 text-muted-foreground p-4">
+  {/* Приглушенная секция */}
+</div>
 ```
 
-### Layout Patterns
+### Правила использования
 
-```javascript
-import { layoutPatterns } from '@repo/design-tokens/form-patterns';
+````typescript
+// ✅ ПРАВИЛЬНО - семантические классы
+const cardStyles = cn(
+  'bg-card text-card-foreground',
+  'border border-border',
+  'rounded-lg shadow-sm',
+  'p-6 space-y-4'
+);
 
-// Сложный компонент с правильной группировкой
-<div className={layoutPatterns.complexComponent.wrapper}>
-  <div className={layoutPatterns.complexComponent.content}>
-    <div className={layoutPatterns.complexComponent.horizontalGroup}>
-      {/* Горизонтальная группировка */}
-    </div>
-    <div className={layoutPatterns.complexComponent.actions}>{/* Действия */}</div>
-  </div>
-</div>;
-```
+// ❌ НЕПРАВИЛЬНО - прямые значения
+const wrongStyles = cn(
+  'bg-white dark:bg-gray-900',
+  'text-black dark:text-white'
+);
 
-## Примеры использования
+## ✅ Практические примеры
 
 ### Exchange Form
 
 ```tsx
-import { formContainers, layoutPatterns, formSpacing } from '@repo/design-tokens/form-patterns';
+import { cn } from '@repo/ui';
 
 export function HeroExchangeForm() {
   return (
-    <div className={formContainers.exchangeForm.variants.compact}>
-      <div className={formSpacing.betweenGroups}>
-        <div className={layoutPatterns.complexComponent.horizontalGroup}>
-          <SendingCard />
-          <ReceivingCard />
-        </div>
-
-        <div className={formSpacing.aroundActions}>
-          <Button>Exchange</Button>
-        </div>
+    <div className={cn(
+      'bg-card text-card-foreground rounded-lg',
+      'border border-border shadow-sm',
+      'p-6 space-y-6'
+    )}>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <SendingCard />
+        <ReceivingCard />
       </div>
+
+      <button className={cn(
+        'bg-primary text-primary-foreground hover:bg-primary/90',
+        'w-full py-3 rounded-md transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+      )}>
+        Обменять
+      </button>
+    </div>
+  );
+}
+````
+
+### Sending/Receiving Cards
+
+```tsx
+export function SendingCard() {
+  return (
+    <div
+      className={cn(
+        'bg-muted/50 rounded-lg p-4 space-y-3',
+        'border border-border/50',
+        'transition-colors hover:bg-muted/70'
+      )}
+    >
+      <div className="text-sm text-muted-foreground">Отправляете</div>
+      <div className="text-2xl font-semibold text-foreground">1.5 BTC</div>
     </div>
   );
 }
 ```
+
+## ❌ Запрещенные практики
+
+### НЕ определяйте CSS переменные
+
+```css
+/* ❌ НЕ ДЕЛАЙТЕ ТАК */
+/* apps/web/app/globals.css */
+:root {
+  --background: 220 14% 98%; /* Дублирование! */
+}
+
+/* ❌ НЕ ДЕЛАЙТЕ ТАК */
+/* packages/ui/src/styles/globals.css */
+@layer base {
+  :root {
+    --card: 0 0% 100%; /* Дублирование! */
+  }
+}
+```
+
+### НЕ используйте прямые значения
+
+```typescript
+// ❌ НЕ ДЕЛАЙТЕ ТАК
+<div className="bg-white dark:bg-gray-900 text-black dark:text-white">
+
+// ✅ ДЕЛАЙТЕ ТАК
+<div className="bg-card text-card-foreground">
+```
+
+## 🚀 Миграция с старой системы
+
+### Если у вас есть дублированные CSS переменные:
+
+1. **Удалите все дублированные `:root` блоки** из файлов приложений
+2. **Добавьте @import в каждое приложение:**
+   ```css
+   @import '@repo/tailwind-preset/globals.css';
+   ```
+3. **Замените прямые значения** на семантические классы
+4. **Проверьте работу** в обеих темах
+
+## 📋 Чек-лист правильной архитектуры
+
+- [ ] ✅ CSS переменные определены ТОЛЬКО в `packages/tailwind-preset/globals.css`
+- [ ] ✅ Каждое приложение имеет `@import '@repo/tailwind-preset/globals.css'`
+- [ ] ✅ Используются семантические классы: `bg-card`, `text-foreground`
+- [ ] ✅ Темизация работает автоматически
+- [ ] ❌ НЕТ дублированных CSS переменных в других файлах
+- [ ] ❌ НЕТ прямых значений цветов в компонентах
+
+          <div className={formSpacing.aroundActions}>
+            <Button>Exchange</Button>
+          </div>
+        </div>
+      </div>
+
+  );
+  }
+
+````
 
 ### Feature Cards
 
@@ -126,7 +216,7 @@ export function FeatureCard() {
     </div>
   );
 }
-```
+````
 
 ## Преимущества новой системы
 

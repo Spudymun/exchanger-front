@@ -87,7 +87,7 @@ messages/
 1. **apps/web/src/app/layout.tsx**
 
 ```typescript
-import './globals.css';
+import './globals.css'; // ✅ Теперь корректно импортирует централизованные CSS переменные
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { cn } from '@repo/ui';

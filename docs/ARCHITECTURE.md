@@ -9,10 +9,10 @@ exchanger-front/
 │   ├── admin-panel/               # Admin dashboard (localhost:3002)
 │   └── docs/                      # Documentation (localhost:3001)
 ├── packages/                      # Shared packages
+│   ├── tailwind-preset/            # Centralized CSS variables + config
 │   ├── ui/                        # UI components (shadcn/ui)
 │   ├── providers/                 # React providers + tRPC setup
 │   ├── hooks/                     # Shared hooks + Zustand stores
-│   ├── design-tokens/             # Design system tokens
 │   └── utils/                     # Utility functions
 └── tests/                         # E2E tests (Playwright)
 ```
@@ -21,19 +21,26 @@ exchanger-front/
 
 - **Framework:** Next.js 15 (App Router)
 - **Language:** TypeScript (strict mode)
-- **Styling:** Tailwind CSS + shadcn/ui + Design System v2.1
+- **Styling:** Tailwind CSS + shadcn/ui + Centralized CSS Architecture
 - **State:** Zustand + React Query
 - **API:** tRPC (end-to-end typesafe)
 - **Testing:** Jest + Playwright + Storybook
 - **Build:** Turborepo monorepo
 
-## 🎨 Design System v2.1
+## 🎨 CSS Architecture v3.0 - Centralized System
 
-- **CSS Variables:** Адаптивная 6-уровневая цветовая иерархия для темной темы
-- **Централизация:** Все стили в `packages/ui/src/styles/form-patterns.js`
-- **Адаптивность:** `dark:` префиксы для автоматической поддержки обеих тем
-- **Семантичность:** Компоненты именуются по назначению, не по внешнему виду
-- **Переиспользование:** Максимальное использование существующих паттернов
+- **Single Source of Truth:** Все CSS переменные в `packages/tailwind-preset/globals.css`
+- **Auto Import:** `@import '@repo/tailwind-preset/globals.css'` в каждом приложении
+- **Zero Duplication:** CSS переменные определены только в одном месте
+- **Semantic Classes:** `bg-card`, `text-foreground`, `border-border`
+- **Theme Support:** Автоматическая поддержка light/dark режимов
+
+### ✅ Ключевые принципы новой архитектуры:
+
+1. **Единый источник**: `packages/tailwind-preset/globals.css`
+2. **Обязательный импорт**: `@import '@repo/tailwind-preset/globals.css'`
+3. **Семантические переменные**: `bg-card` вместо `bg-white dark:bg-gray-900`
+4. **Запрет дублирования**: НЕ определяйте CSS переменные в других местах
 
 ## 🎯 Development Workflow
 
@@ -46,8 +53,8 @@ exchanger-front/
 
 ### Code Guidelines
 
-- **Components:** Use shadcn/ui patterns + Design System v2.1
-- **Styling:** Импортировать стили из `form-patterns.js` для консистентности
+- **Components:** Use shadcn/ui patterns + Centralized CSS variables
+- **CSS:** Use semantic classes from `packages/tailwind-preset/globals.css`
 - **State:** Zustand for UI, React Query for server state
 - **Styling:** Tailwind utility classes
 - **Types:** Export from package entry points
@@ -58,7 +65,10 @@ exchanger-front/
 **Solution:** Run `npm run check-types` to find TypeScript errors
 
 **Problem:** UI looks broken  
-**Solution:** Check CSS variables in globals.css and use Design System v2.1 patterns
+**Solution:** Check `@import '@repo/tailwind-preset/globals.css'` and use semantic CSS classes
+
+**Problem:** CSS variables not working
+**Solution:** Ensure proper @import order in globals.css files
 
 **Problem:** State not syncing
 **Solution:** Use correct Zustand store from `@repo/hooks`

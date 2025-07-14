@@ -17,7 +17,7 @@
 #### Архитектурная роль в монорепозитории:
 
 - **Каталог компонентов** из `packages/ui/` - единый источник истины для UI
-- **Документация дизайн-системы** из `packages/design-tokens/`
+- **Документация CSS-системы** из `packages/tailwind-preset/` - централизованные переменные
 - **Тестовая среда** для компонентов без зависимостей от бизнес-логики
 - **Инструмент collaboration** между разработчиками и дизайнерами
 
@@ -26,7 +26,7 @@
 ```
 Уровень 6: Storybook Stories ← документируют
 Уровень 5: UI Components    ← тестируют изолированно
-Уровень 4: Design Tokens    ← демонстрируют использование
+Уровень 4: CSS Variables    ← демонстрируют использование (packages/tailwind-preset/)
 ```
 
 ---
@@ -68,7 +68,7 @@ import { PaymentAPI } from 'packages/exchange-core';
 #### Обязательная проверка централизованных систем (Rule 17):
 
 1. **packages/ui/** - ВСЕ переиспользуемые компоненты ДОЛЖНЫ иметь stories
-2. **packages/design-tokens/** - демонстрация токенов через stories
+2. **packages/tailwind-preset/** - демонстрация CSS переменных через stories
 3. **packages/constants/** - использование UI констант вместо hardcode
 
 #### Запрет дублирования (Rule 20):
@@ -104,17 +104,19 @@ import { PaymentAPI } from 'packages/exchange-core';
 - [ ] Компонент в `packages/ui/src/components/ui/`
 - [ ] Компонент переиспользуется в 2+ местах
 - [ ] Компонент имеет варианты состояний (loading, error, disabled)
-- [ ] Компонент использует `packages/design-tokens/`
+- [ ] Компонент использует централизованные CSS переменные из `packages/tailwind-preset/`
 
-#### Уровень 4: Design System элементы
+#### Уровень 4: Демонстрация CSS системы
 
-**Демонстрация токенов:**
+**Демонстрация переменных:**
 
 ```typescript
 // Цветовая палитра, типографика, spacing
-export const ColorPalette = () => (
+export const CSSVariables = () => (
   <div className="grid gap-4">
-    {DESIGN_TOKENS.colors.map(color => <ColorSwatch key={color} />)}
+    <div className="bg-card text-card-foreground p-4 rounded">Card Background</div>
+    <div className="bg-primary text-primary-foreground p-4 rounded">Primary</div>
+    <div className="bg-muted text-muted-foreground p-4 rounded">Muted</div>
   </div>
 );
 ```
