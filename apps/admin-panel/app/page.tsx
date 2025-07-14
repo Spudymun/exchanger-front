@@ -8,10 +8,12 @@ import {
   CardTitle,
   Button,
   DataTable,
+  DataTableNew,
   type Column,
   TreeView,
   type TreeNode,
   ThemeToggle,
+  AdminPanel,
 } from '@repo/ui';
 import { createUITestUsers, type UITestUser } from '@repo/exchange-core';
 import { UI_NUMERIC_CONSTANTS } from '@repo/constants';
@@ -264,7 +266,7 @@ function NavigationTree({ data, onSelect }: NavigationTreeProps) {
   );
 }
 
-function UsersTable({ users, columns, onRowClick }: UsersTableProps) {
+function UsersTableNew({ users, columns, onRowClick }: UsersTableProps) {
   return (
     <Card className="lg:col-span-3">
       <CardHeader>
@@ -272,7 +274,46 @@ function UsersTable({ users, columns, onRowClick }: UsersTableProps) {
         <CardDescription>Управление пользователями системы</CardDescription>
       </CardHeader>
       <CardContent>
-        <DataTable data={users} columns={columns} onRowClick={onRowClick} />
+        <DataTableNew data={users}>
+          <DataTableNew.Container variant="bordered">
+            <DataTableNew.Header title="Список пользователей" />
+            <DataTableNew.Filters searchPlaceholder="Поиск пользователей..." />
+            <DataTableNew.Content>
+              <DataTableNew.TableWrapper>
+                <thead className="[&_tr]:border-b">
+                  <tr>
+                    {columns.map(column => (
+                      <th
+                        key={String(column.key)}
+                        className="h-12 px-4 text-left align-middle font-medium text-muted-foreground"
+                      >
+                        {column.header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="[&_tr:last-child]:border-0">
+                  {users.map((user, index) => (
+                    <tr
+                      key={index}
+                      onClick={() => onRowClick(user)}
+                      className="border-b transition-colors hover:bg-muted/50 cursor-pointer"
+                    >
+                      {columns.map(column => (
+                        <DataTableNew.CellWrapper key={String(column.key)}>
+                          {column.render
+                            ? column.render(user)
+                            : String(user[column.key as keyof UITestUser])}
+                        </DataTableNew.CellWrapper>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </DataTableNew.TableWrapper>
+            </DataTableNew.Content>
+            <DataTableNew.Pagination showInfo={true} />
+          </DataTableNew.Container>
+        </DataTableNew>
       </CardContent>
     </Card>
   );
@@ -309,23 +350,59 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <AdminHeader />
+    <AdminPanel
+      currentUser={{ name: 'Администратор', email: 'admin@exchange.com', role: 'admin' }}
+      notifications={3}
+    >
+      <AdminPanel.Layout variant="full">
+        <AdminPanel.Header title="Admin Panel" showUserMenu={true} showNotifications={true}>
+          <ThemeToggle />
+        </AdminPanel.Header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" role="main">
-        <StatsGrid />
+        <AdminPanel.Main variant="padded">
+          <AdminPanel.StatsGrid columns={4}>
+            <AdminPanel.StatsCard
+              title="Пользователи"
+              value="1,234"
+              description="+10% от прошлого месяца"
+              trend="up"
+              icon={<Users className="h-4 w-4" />}
+            />
+            <AdminPanel.StatsCard
+              title="Транзакции"
+              value="5,678"
+              description="+15% от прошлого месяца"
+              trend="up"
+              icon={<CreditCard className="h-4 w-4" />}
+            />
+            <AdminPanel.StatsCard
+              title="Доходы"
+              value="$12,345"
+              description="+8% от прошлого месяца"
+              trend="up"
+              icon={<TrendingUp className="h-4 w-4" />}
+            />
+            <AdminPanel.StatsCard
+              title="Системные события"
+              value="23"
+              description="Требуют внимания"
+              trend="neutral"
+              icon={<Settings className="h-4 w-4" />}
+            />
+          </AdminPanel.StatsGrid>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <NavigationTree data={ADMIN_TREE_DATA} onSelect={handleTreeSelect} />
-          <UsersTable
-            users={ADMIN_USERS_DATA}
-            columns={ADMIN_COLUMNS}
-            onRowClick={handleUserClick}
-          />
-        </div>
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <NavigationTree data={ADMIN_TREE_DATA} onSelect={handleTreeSelect} />
+            <UsersTableNew
+              users={ADMIN_USERS_DATA}
+              columns={ADMIN_COLUMNS}
+              onRowClick={handleUserClick}
+            />
+          </div>
 
-        <ActionButtons onExport={handleExport} onCreateUser={handleCreateUser} />
-      </main>
-    </div>
+          <ActionButtons onExport={handleExport} onCreateUser={handleCreateUser} />
+        </AdminPanel.Main>
+      </AdminPanel.Layout>
+    </AdminPanel>
   );
 }

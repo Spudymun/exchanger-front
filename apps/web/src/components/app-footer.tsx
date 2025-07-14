@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  Footer,
-  FooterSection,
-  FooterLink,
-  FooterSocial,
-  FooterCompanyInfo,
-  FooterLegal,
-} from '@repo/ui';
+import { Footer } from '@repo/ui';
 import { useTranslations } from 'next-intl';
 
 interface AppFooterProps {
@@ -65,45 +58,38 @@ export function AppFooter({ className }: AppFooterProps) {
   const legalLinks = getLegalLinks(t);
 
   return (
-    <Footer className={className}>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-        <FooterSection title={t('footer.company.title')}>
-          <FooterCompanyInfo
-            companyName="ExchangeGO"
+    <Footer className={className} companyName="ExchangeGO" theme="dark">
+      <Footer.Container variant="grid" columns="four">
+        <Footer.Section title={t('footer.company.title')}>
+          <Footer.CompanyInfo
             description={t('footer.company.description')}
             address={t('footer.company.address')}
             phone={t('footer.company.phone')}
             email={t('footer.company.email')}
           />
-        </FooterSection>
+        </Footer.Section>
 
-        <FooterSection title={t('footer.services.title')}>
-          <div className="space-y-2">
-            <FooterLink href="/exchange">{t('footer.services.exchange')}</FooterLink>
-            <FooterLink href="/orders">{t('footer.services.orders')}</FooterLink>
-            <FooterLink href="/api">{t('footer.services.api')}</FooterLink>
-            <FooterLink href="/fees">{t('footer.services.fees')}</FooterLink>
-          </div>
-        </FooterSection>
+        <Footer.Section title={t('footer.services.title')}>
+          <Footer.Link href="/exchange">{t('footer.services.exchange')}</Footer.Link>
+          <Footer.Link href="/orders">{t('footer.services.orders')}</Footer.Link>
+          <Footer.Link href="/api">{t('footer.services.api')}</Footer.Link>
+          <Footer.Link href="/fees">{t('footer.services.fees')}</Footer.Link>
+        </Footer.Section>
 
-        <FooterSection title={t('footer.support.title')}>
-          <div className="space-y-2">
-            <FooterLink href="/help">{t('footer.support.help')}</FooterLink>
-            <FooterLink href="/contact">{t('footer.support.contact')}</FooterLink>
-            <FooterLink href="/faq">{t('footer.support.faq')}</FooterLink>
-            <FooterLink href="/status">{t('footer.support.status')}</FooterLink>
-          </div>
-        </FooterSection>
+        <Footer.Section title={t('footer.support.title')}>
+          <Footer.Link href="/help">{t('footer.support.help')}</Footer.Link>
+          <Footer.Link href="/contact">{t('footer.support.contact')}</Footer.Link>
+          <Footer.Link href="/faq">{t('footer.support.faq')}</Footer.Link>
+          <Footer.Link href="/status">{t('footer.support.status')}</Footer.Link>
+        </Footer.Section>
 
-        <FooterSection title={t('footer.social.title')}>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">{t('footer.social.description')}</p>
-            <FooterSocial links={socialLinks} />
-          </div>
-        </FooterSection>
-      </div>
+        <Footer.Section title={t('footer.social.title')}>
+          <p className="text-sm text-muted-foreground mb-4">{t('footer.social.description')}</p>
+          <Footer.Social links={socialLinks} />
+        </Footer.Section>
+      </Footer.Container>
 
-      <FooterLegal links={legalLinks} />
+      <Footer.Legal links={legalLinks} />
     </Footer>
   );
 }
