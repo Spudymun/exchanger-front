@@ -94,7 +94,7 @@ const CardPair = React.forwardRef<HTMLDivElement, CardPairProps>(
     const getLayoutClass = (l: 'horizontal' | 'vertical' | 'compact' | 'withArrow') => {
       switch (l) {
         case 'horizontal':
-          return 'grid grid-cols-1 md:grid-cols-2 gap-8 items-start';
+          return 'grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch';
         case 'vertical':
           return 'space-y-6';
         case 'compact':

@@ -1,7 +1,6 @@
 'use client';
 
 import { Button, ExchangeForm } from '@repo/ui';
-import { ArrowRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import React from 'react';
 
@@ -52,13 +51,7 @@ export function HeroExchangeForm({ onExchange, className }: HeroExchangeFormProp
             <ExchangeForm.Arrow direction="horizontal" />
 
             <ExchangeForm.FieldWrapper>
-              <ReceivingCard
-                form={form}
-                banks={banks}
-                calculatedAmount={calculatedAmount}
-                t={t}
-                minAmount={constants.MIN_AMOUNTS.to}
-              />
+              <ReceivingCard form={form} banks={banks} calculatedAmount={calculatedAmount} t={t} />
             </ExchangeForm.FieldWrapper>
           </ExchangeForm.CardPair>
 
@@ -69,7 +62,6 @@ export function HeroExchangeForm({ onExchange, className }: HeroExchangeFormProp
               disabled={!isValid}
               className="min-w-[200px] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
             >
-              <ArrowRight className="w-4 h-4 mr-2" />
               {t('exchange')}
             </Button>
           </ExchangeForm.ActionArea>

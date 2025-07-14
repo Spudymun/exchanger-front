@@ -1,8 +1,8 @@
 'use client';
 
 import { Header, ThemeToggle } from '@repo/ui';
-import { usePathname, useRouter } from 'next/navigation';
-import { useLocale, useTranslations } from 'next-intl';
+import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import * as React from 'react';
 
 import { Link } from '../../src/i18n/navigation';
@@ -26,34 +26,16 @@ const getNavLinkClass = (pathname: string | null, path: string, isExact = false)
 
 export function AppHeader({ className }: AppHeaderProps) {
   const t = useTranslations('Layout');
-  const locale = useLocale();
   const pathname = usePathname();
-  const router = useRouter();
-
-  const handleLocaleChange = (newLocale: string) => {
-    if (pathname) {
-      const newPath = pathname.replace(`/${locale}`, `/${newLocale}`);
-      router.push(newPath);
-    }
-  };
-
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
 
   return (
-    <Header
-      className={className}
-      currentLocale={locale}
-      isAuthenticated={false}
-      onLocaleChange={handleLocaleChange}
-      onSignIn={() => router.push('/sign-in')}
-      onSignOut={() => router.push('/sign-out')}
-      isMenuOpen={isMenuOpen}
-      onToggleMenu={() => setIsMenuOpen(!isMenuOpen)}
-    >
-      <AppHeaderLogo />
-      <AppHeaderNavigation t={t} pathname={pathname} />
-      <AppHeaderActions />
-      <Header.MobileMenu />
+    <Header className={className}>
+      <Header.Container>
+        <AppHeaderLogo />
+        <AppHeaderNavigation t={t} pathname={pathname} />
+        <AppHeaderActions />
+        <Header.MobileMenu />
+      </Header.Container>
     </Header>
   );
 }

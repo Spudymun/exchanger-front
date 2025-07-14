@@ -27,7 +27,6 @@ interface ReceivingCardProps {
   banks: ReturnType<typeof getBanksForCurrency>;
   calculatedAmount: number;
   t: (key: string) => string;
-  minAmount: number;
 }
 
 export function FiatCurrencySelector({
@@ -102,17 +101,12 @@ export function BankSelector({
 function ReceivingInfo({
   form,
   t,
-  minAmount,
 }: {
   form: ReturnType<typeof useForm<HeroExchangeFormData>>;
   t: (key: string) => string;
-  minAmount: number;
 }) {
   return (
     <div className="text-sm text-muted-foreground space-y-1">
-      <div>
-        {t('receiving.min')}: {minAmount} {form.values.toCurrency as string}
-      </div>
       <div>
         {t('receiving.reserve')}: 10,000,000 {form.values.toCurrency as string}
       </div>
@@ -120,7 +114,7 @@ function ReceivingInfo({
   );
 }
 
-export function ReceivingCard({ form, banks, calculatedAmount, t, minAmount }: ReceivingCardProps) {
+export function ReceivingCard({ form, banks, calculatedAmount, t }: ReceivingCardProps) {
   return (
     <Card className="bg-card text-card-foreground border-l-4 border-l-green-500 dark:border-l-green-400 shadow-md shadow-green-500/15 dark:shadow-green-400/20 hover:shadow-lg transition-all duration-200">
       <CardHeader>
@@ -143,7 +137,7 @@ export function ReceivingCard({ form, banks, calculatedAmount, t, minAmount }: R
           </FormControl>
         </FormField>
 
-        <ReceivingInfo form={form} t={t} minAmount={minAmount} />
+        <ReceivingInfo form={form} t={t} />
       </CardContent>
     </Card>
   );

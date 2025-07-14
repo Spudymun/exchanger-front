@@ -5,39 +5,45 @@ import { cn } from '../lib/utils';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
 
-export interface HeaderProps {
+export interface HeaderProps extends React.HTMLAttributes<HTMLElement> {
   className?: string;
   children?: React.ReactNode;
 }
 
-export interface HeaderNavigationProps {
+export interface HeaderNavigationProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
   children?: React.ReactNode;
 }
 
-export interface HeaderActionsProps {
+export interface HeaderActionsProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
   children?: React.ReactNode;
 }
 
-export interface HeaderLogoProps {
+export interface HeaderLogoProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
   children?: React.ReactNode;
 }
 
-export interface HeaderMobileMenuProps {
+export interface HeaderMobileMenuProps
+  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'isOpen' | 'onToggle'> {
   className?: string;
   isOpen?: boolean;
   onToggle?: () => void;
 }
 
-export interface HeaderLanguageSwitcherProps {
+export interface HeaderLanguageSwitcherProps
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, 'currentLocale' | 'onLocaleChange'> {
   className?: string;
   currentLocale?: string;
   onLocaleChange?: (locale: string) => void;
 }
 
-export interface HeaderUserMenuProps {
+export interface HeaderUserMenuProps
+  extends Omit<
+    React.HTMLAttributes<HTMLDivElement>,
+    'isAuthenticated' | 'userName' | 'onSignIn' | 'onSignOut'
+  > {
   className?: string;
   isAuthenticated?: boolean;
   userName?: string;
@@ -100,7 +106,7 @@ HeaderActions.displayName = 'HeaderActions';
 
 // Header Mobile Menu Component
 export const HeaderMobileMenu = React.forwardRef<HTMLButtonElement, HeaderMobileMenuProps>(
-  ({ className, isOpen = false, onToggle, ...props }, ref) => (
+  ({ className, isOpen = false, onToggle, ...restProps }, ref) => (
     <Button
       ref={ref}
       variant="ghost"
@@ -109,7 +115,7 @@ export const HeaderMobileMenu = React.forwardRef<HTMLButtonElement, HeaderMobile
       onClick={onToggle}
       aria-expanded={isOpen}
       aria-label="Toggle mobile menu"
-      {...props}
+      {...restProps}
     >
       <svg
         className="h-5 w-5"
@@ -129,33 +135,35 @@ HeaderMobileMenu.displayName = 'HeaderMobileMenu';
 
 // Header Language Switcher Component
 export const HeaderLanguageSwitcher = React.forwardRef<HTMLDivElement, HeaderLanguageSwitcherProps>(
-  ({ className, currentLocale = 'en', onLocaleChange, ...props }, ref) => (
-    <div ref={ref} className={cn('flex items-center space-x-1', className)} {...props}>
-      <Button
-        variant={currentLocale === 'en' ? 'default' : 'ghost'}
-        size="sm"
-        onClick={() => onLocaleChange?.('en')}
-        aria-label="Switch to English"
-      >
-        EN
-      </Button>
-      <Button
-        variant={currentLocale === 'ru' ? 'default' : 'ghost'}
-        size="sm"
-        onClick={() => onLocaleChange?.('ru')}
-        aria-label="Переключить на русский"
-      >
-        RU
-      </Button>
-    </div>
-  )
+  ({ className, currentLocale = 'en', onLocaleChange, ...restProps }, ref) => {
+    return (
+      <div ref={ref} className={cn('flex items-center space-x-1', className)} {...restProps}>
+        <Button
+          variant={currentLocale === 'en' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => onLocaleChange?.('en')}
+          aria-label="Switch to English"
+        >
+          EN
+        </Button>
+        <Button
+          variant={currentLocale === 'ru' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => onLocaleChange?.('ru')}
+          aria-label="Переключить на русский"
+        >
+          RU
+        </Button>
+      </div>
+    );
+  }
 );
 HeaderLanguageSwitcher.displayName = 'HeaderLanguageSwitcher';
 
 // Header User Menu Component
 export const HeaderUserMenu = React.forwardRef<HTMLDivElement, HeaderUserMenuProps>(
-  ({ className, isAuthenticated = false, userName, onSignIn, onSignOut, ...props }, ref) => (
-    <div ref={ref} className={cn('flex items-center space-x-2', className)} {...props}>
+  ({ className, isAuthenticated = false, userName, onSignIn, onSignOut, ...restProps }, ref) => (
+    <div ref={ref} className={cn('flex items-center space-x-2', className)} {...restProps}>
       {isAuthenticated ? (
         <>
           <span className="text-sm text-muted-foreground">{userName}</span>
