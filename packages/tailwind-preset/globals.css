@@ -1,0 +1,157 @@
+/* Centralized CSS Variables for ExchangeGO Design System */
+
+/* Based on Semantic Design System v2.1 */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* === LIGHT THEME - Enhanced Visual Hierarchy v2.1 === */
+
+    /* Level 1: Main background */
+    --background: 220 14% 98%;
+    --foreground: 222.2 84% 4.9%;
+
+    /* Level 2: Card surfaces */
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    /* Level 3: Floating elements */
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    /* Interactive elements */
+    --primary: 220 90% 50%;
+    --primary-foreground: 210 40% 98%;
+
+    /* Secondary surfaces */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+
+    /* Muted backgrounds */
+    --muted: 220 14% 96%;
+    --muted-foreground: 215 16% 47%;
+
+    /* Accent surfaces */
+    --accent: 220 14% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+
+    /* Error states */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    /* Visible borders */
+    --border: 220 13% 85%;
+
+    /* Input backgrounds */
+    --input: 220 13% 91%;
+
+    /* Focus rings */
+    --ring: 220 90% 50%;
+
+    /* Border radius */
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* === DARK THEME - 6-Level Hierarchy === */
+
+    /* Level 1: Deep background */
+    --background: 222.2 84% 2%;
+    --foreground: 210 40% 98%;
+
+    /* Level 2: Card surfaces */
+    --card: 222.2 84% 4%;
+    --card-foreground: 210 40% 98%;
+
+    /* Level 3: Popovers */
+    --popover: 222.2 84% 5%;
+    --popover-foreground: 210 40% 98%;
+
+    /* Level 4: Interactive elements */
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    /* Level 5: Secondary elements */
+    --secondary: 217.2 32.6% 10%;
+    --secondary-foreground: 210 40% 98%;
+
+    /* Level 6: Muted elements */
+    --muted: 217.2 32.6% 8%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    /* Accent surfaces */
+    --accent: 217.2 32.6% 10%;
+    --accent-foreground: 210 40% 98%;
+
+    /* Error states */
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    /* Visible borders */
+    --border: 217.2 32.6% 12%;
+
+    /* Input backgrounds */
+    --input: 217.2 32.6% 10%;
+
+    /* Focus rings */
+    --ring: 212.7 26.8% 83.9%;
+  }
+}
+
+/* === GLOBAL BASE STYLES === */
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
+  }
+}
+
+/* === COMPONENT UTILITIES === */
+@layer components {
+  /* Form Patterns */
+  .form-section {
+    @apply space-y-3;
+  }
+
+  .form-section-title {
+    @apply text-sm font-medium text-muted-foreground;
+  }
+
+  .form-section-content {
+    @apply border border-border/50 rounded-md p-4;
+  }
+
+  /* Exchange Specific */
+  .exchange-form-container {
+    @apply bg-card text-card-foreground rounded-2xl border border-border/60 shadow-lg p-6 space-y-6;
+  }
+
+  .exchange-card-sending {
+    @apply exchange-card shadow-blue-500/10 dark:shadow-blue-400/20;
+  }
+
+  .exchange-card-receiving {
+    @apply exchange-card shadow-purple-500/10 dark:shadow-purple-400/20;
+  }
+
+  /* Interactive States */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+
+  /* Visual Connectors */
+  .exchange-connector {
+    @apply absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10;
+    @apply bg-background border-2 border-border rounded-full p-2 shadow-sm;
+  }
+}

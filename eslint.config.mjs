@@ -334,6 +334,30 @@ export default [
       'no-console': 'off',
     })),
   },
+
+  // === TAILWIND PRESET COMMONJS ===
+  {
+    name: 'tailwind-preset-commonjs',
+    files: ['packages/tailwind-preset/**/*.{js,cjs}'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        require: 'readonly',
+        module: 'readonly',
+        exports: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        global: 'readonly',
+        process: 'readonly',
+      },
+    },
+    rules: lazyLoadConfig('tailwind-preset-rules', () => ({
+      '@typescript-eslint/no-require-imports': 'off', // Разрешено require в Tailwind preset
+      'unicorn/prefer-module': 'off', // Разрешено CommonJS в Tailwind config
+      'no-undef': 'off', // Глобальные переменные уже определены в languageOptions
+      'sonarjs/no-duplicate-string': 'off', // Разрешено дублирование в CSS значениях
+    })),
+  },
 ];
 
 // === PERFORMANCE REPORTING ===

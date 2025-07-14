@@ -1,0 +1,24 @@
+{
+  "name": "@repo/tailwind-preset",
+  "version": "1.0.0",
+  "description": "Centralized Tailwind CSS preset for ExchangeGO monorepo",
+  "main": "preset.js",
+  "files": [
+    "preset.js",
+    "globals.css"
+  ],
+  "devDependencies": {
+    "@repo/design-tokens": "*",
+    "tailwindcss": "^3.4.16"
+  },
+  "peerDependencies": {
+    "tailwindcss": "^3.0.0"
+  },
+  "keywords": [
+    "tailwind",
+    "preset",
+    "design-system",
+    "monorepo"
+  ],
+  "license": "MIT"
+}
