@@ -126,10 +126,10 @@ export {
   useAdminPanelContext,
 } from './admin-panel-compound';
 
-// Layout Components - Compound Pattern
+// Layout Components - Main Header (compound pattern)
 export {
   HeaderCompound as Header,
-  Root as HeaderRoot,
+  Root,
   Container as HeaderContainer,
   Logo as HeaderLogo,
   Navigation as HeaderNavigation,
@@ -170,40 +170,6 @@ export {
   type FullLayoutProps as FooterFullLayoutProps,
   useFooterContext,
 } from './footer-compound';
-
-// Legacy Layout Components (for backward compatibility)
-export {
-  Header as HeaderLegacy,
-  HeaderLogo as HeaderLogoLegacy,
-  HeaderNavigation as HeaderNavigationLegacy,
-  HeaderActions as HeaderActionsLegacy,
-  HeaderMobileMenu as HeaderMobileMenuLegacy,
-  HeaderLanguageSwitcher as HeaderLanguageSwitcherLegacy,
-  HeaderUserMenu as HeaderUserMenuLegacy,
-  HeaderWithTheme as HeaderWithThemeLegacy,
-  type HeaderProps as HeaderPropsLegacy,
-  type HeaderNavigationProps as HeaderNavigationPropsLegacy,
-  type HeaderActionsProps as HeaderActionsPropsLegacy,
-  type HeaderLogoProps as HeaderLogoPropsLegacy,
-  type HeaderMobileMenuProps as HeaderMobileMenuPropsLegacy,
-  type HeaderLanguageSwitcherProps as HeaderLanguageSwitcherPropsLegacy,
-  type HeaderUserMenuProps as HeaderUserMenuPropsLegacy,
-} from './header';
-export {
-  Footer as FooterLegacy,
-  FooterSection as FooterSectionLegacy,
-  FooterLink as FooterLinkLegacy,
-  FooterSocial as FooterSocialLegacy,
-  FooterCompanyInfo as FooterCompanyInfoLegacy,
-  FooterLegal as FooterLegalLegacy,
-  FooterLayout as FooterLayoutLegacy,
-  type FooterProps as FooterPropsLegacy,
-  type FooterSectionProps as FooterSectionPropsLegacy,
-  type FooterLinkProps as FooterLinkPropsLegacy,
-  type FooterSocialProps as FooterSocialPropsLegacy,
-  type FooterCompanyInfoProps as FooterCompanyInfoPropsLegacy,
-  type FooterLegalProps as FooterLegalPropsLegacy,
-} from './footer';
 
 // Utils
 export { cn } from '../lib/utils';

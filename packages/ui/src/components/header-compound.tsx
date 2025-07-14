@@ -7,10 +7,6 @@ import { cn } from '../lib/utils';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
 
-// ===== COMPOUND COMPONENTS ARCHITECTURE v2.0 =====
-// Header Compound Component following ExchangeForm pattern
-// Context API + React.cloneElement for prop enhancement
-
 // Header Context
 export interface HeaderContextValue {
   isMenuOpen?: boolean;
@@ -82,7 +78,7 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
           {...props}
         >
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">{children}</div>
+            <div className="py-1 sm:py-2 md:py-2">{children}</div>
           </div>
         </header>
       </HeaderContext.Provider>
@@ -92,7 +88,7 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
 
 Header.displayName = 'Header';
 
-// ===== CONTAINER COMPONENT =====
+// Container Component
 export interface ContainerProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'fluid' | 'compact';
   children: React.ReactNode;
@@ -115,7 +111,9 @@ const Container = React.forwardRef<HTMLDivElement, ContainerProps>(
 
     return (
       <div ref={ref} className={cn(getVariantClass(variant), className)} {...props}>
-        <div className="flex justify-between items-center h-16">{children}</div>
+        <div className="flex flex-col space-y-0 min-h-[2.5rem] sm:min-h-[3rem] md:min-h-[3rem]">
+          {children}
+        </div>
       </div>
     );
   }
@@ -123,7 +121,7 @@ const Container = React.forwardRef<HTMLDivElement, ContainerProps>(
 
 Container.displayName = 'Header.Container';
 
-// ===== LOGO COMPONENT =====
+// Logo Component
 export interface LogoProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
 }
@@ -138,7 +136,7 @@ const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
 
 Logo.displayName = 'Header.Logo';
 
-// ===== NAVIGATION COMPONENT =====
+// Navigation Component
 export interface NavigationProps extends React.HTMLAttributes<HTMLElement> {
   children: React.ReactNode;
 }
@@ -159,7 +157,7 @@ const Navigation = React.forwardRef<HTMLElement, NavigationProps>(
 
 Navigation.displayName = 'Header.Navigation';
 
-// ===== ACTIONS COMPONENT =====
+// Actions Component
 export interface ActionsProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
 }
@@ -182,7 +180,7 @@ const Actions = React.forwardRef<HTMLDivElement, ActionsProps>(
 
 Actions.displayName = 'Header.Actions';
 
-// ===== MOBILE MENU COMPONENT =====
+// Mobile Menu Component
 export interface MobileMenuProps extends React.HTMLAttributes<HTMLButtonElement> {
   children?: React.ReactNode;
 }
@@ -223,15 +221,27 @@ const MobileMenu = React.forwardRef<HTMLButtonElement, MobileMenuProps>(
 
 MobileMenu.displayName = 'Header.MobileMenu';
 
-// ===== LANGUAGE SWITCHER COMPONENT =====
+// Language Switcher Component
 export interface LanguageSwitcherProps extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
+  currentLocale?: string;
+  onLocaleChange?: (locale: string) => void;
 }
 
 const LanguageSwitcher = React.forwardRef<HTMLDivElement, LanguageSwitcherProps>(
-  ({ className, children, ...props }, ref) => {
+  (
+    {
+      className,
+      children,
+      currentLocale: propCurrentLocale,
+      onLocaleChange: propOnLocaleChange,
+      ...props
+    },
+    ref
+  ) => {
     const context = useHeaderContext();
-    const currentLocale = context?.currentLocale ?? 'en';
+    const currentLocale = propCurrentLocale ?? context?.currentLocale ?? 'en';
+    const onLocaleChange = propOnLocaleChange ?? context?.onLocaleChange;
 
     return (
       <div ref={ref} className={cn('flex items-center space-x-1', className)} {...props}>
@@ -239,16 +249,18 @@ const LanguageSwitcher = React.forwardRef<HTMLDivElement, LanguageSwitcherProps>
           <>
             <Button
               variant={currentLocale === 'en' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => context?.onLocaleChange?.('en')}
+              size="compact"
+              className="h-5 px-1.5 text-xs sm:h-5 sm:px-2 sm:text-xs"
+              onClick={() => onLocaleChange?.('en')}
               aria-label="Switch to English"
             >
               EN
             </Button>
             <Button
               variant={currentLocale === 'ru' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => context?.onLocaleChange?.('ru')}
+              size="compact"
+              className="h-5 px-1.5 text-xs sm:h-5 sm:px-2 sm:text-xs"
+              onClick={() => onLocaleChange?.('ru')}
               aria-label="Переключить на русский"
             >
               RU
@@ -262,7 +274,7 @@ const LanguageSwitcher = React.forwardRef<HTMLDivElement, LanguageSwitcherProps>
 
 LanguageSwitcher.displayName = 'Header.LanguageSwitcher';
 
-// ===== USER MENU COMPONENT =====
+// User Menu Component
 export interface UserMenuProps extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
 }
@@ -279,14 +291,28 @@ const UserMenu = React.forwardRef<HTMLDivElement, UserMenuProps>(
           <>
             {isAuthenticated ? (
               <>
-                {userName && <span className="text-sm text-muted-foreground">{userName}</span>}
-                <Button variant="outline" size="sm" onClick={context?.onSignOut}>
-                  Sign Out
+                {userName && (
+                  <span className="text-sm text-muted-foreground hidden sm:inline">{userName}</span>
+                )}
+                <Button
+                  variant="outline"
+                  size="compact"
+                  className="h-6 px-2 text-xs sm:h-7 sm:px-2.5 sm:text-xs"
+                  onClick={context?.onSignOut}
+                >
+                  <span className="sm:hidden">Out</span>
+                  <span className="hidden sm:inline">Sign Out</span>
                 </Button>
               </>
             ) : (
-              <Button variant="default" size="sm" onClick={context?.onSignIn}>
-                Sign In
+              <Button
+                variant="default"
+                size="compact"
+                className="h-6 px-2 text-xs sm:h-7 sm:px-2.5 sm:text-xs"
+                onClick={context?.onSignIn}
+              >
+                <span className="sm:hidden">In</span>
+                <span className="hidden sm:inline">Sign In</span>
               </Button>
             )}
           </>
@@ -298,8 +324,7 @@ const UserMenu = React.forwardRef<HTMLDivElement, UserMenuProps>(
 
 UserMenu.displayName = 'Header.UserMenu';
 
-// ===== ENHANCED CHILD COMPONENTS =====
-// Following ExchangeForm pattern for prop enhancement
+// Enhanced Child Components - Following ExchangeForm pattern for prop enhancement
 
 function addLocaleProps(
   props: Record<string, unknown>,
@@ -368,7 +393,7 @@ const WithTheme = React.forwardRef<HTMLElement, WithThemeProps>(
 
 WithTheme.displayName = 'Header.WithTheme';
 
-// ===== COMPOUND COMPONENT EXPORT =====
+// Compound Component Export
 export const HeaderCompound = Object.assign(Header, {
   Container,
   Logo,
@@ -380,7 +405,7 @@ export const HeaderCompound = Object.assign(Header, {
   WithTheme,
 });
 
-// ===== INDIVIDUAL EXPORTS =====
+// Individual Exports
 export {
   Header as Root,
   Container,
@@ -393,5 +418,4 @@ export {
   WithTheme,
 };
 
-// Default export as compound component
 export default HeaderCompound;

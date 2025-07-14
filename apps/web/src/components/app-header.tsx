@@ -1,8 +1,8 @@
 'use client';
 
 import { Header, ThemeToggle } from '@repo/ui';
-import { usePathname } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { usePathname, useRouter } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
 import * as React from 'react';
 
 import { Link } from '../../src/i18n/navigation';
@@ -27,25 +27,86 @@ const getNavLinkClass = (pathname: string | null, path: string, isExact = false)
 export function AppHeader({ className }: AppHeaderProps) {
   const t = useTranslations('Layout');
   const pathname = usePathname();
+  const locale = useLocale();
+  const router = useRouter();
+
+  const handleLocaleChange = (newLocale: string) => {
+    // Используем router из next/navigation для правильной навигации
+    const currentPath = pathname?.replace(`/${locale}`, '') || '/';
+    router.replace(`/${newLocale}${currentPath}`);
+  };
 
   return (
-    <Header className={className}>
+    <Header currentLocale={locale} onLocaleChange={handleLocaleChange} className={className}>
       <Header.Container>
-        <AppHeaderLogo />
-        <AppHeaderNavigation t={t} pathname={pathname} />
-        <AppHeaderActions />
-        <Header.MobileMenu />
+        {/* Мобильная версия */}
+        <div className="sm:hidden">
+          <div className="flex justify-between items-center h-10">
+            <AppHeaderLogoMobile />
+            <div className="flex items-center space-x-2">
+              <Header.LanguageSwitcher />
+              <ThemeToggle />
+              <Header.UserMenu />
+              <Header.MobileMenu />
+            </div>
+          </div>
+        </div>
+
+        {/* Десктопная версия */}
+        <div className="hidden sm:flex justify-between items-center h-10">
+          <AppHeaderLogoDesktop />
+          <Header.Navigation>
+            <AppHeaderNavigationLinks pathname={pathname} t={t} />
+          </Header.Navigation>
+          <Header.Actions>
+            <Header.LanguageSwitcher />
+            <ThemeToggle />
+            <Header.UserMenu />
+          </Header.Actions>
+        </div>
       </Header.Container>
     </Header>
   );
 }
 
-function AppHeaderLogo() {
+function AppHeaderLogoMobile() {
   return (
     <Header.Logo>
-      <Link href="/" className="flex items-center space-x-1 sm:space-x-2">
-        <div className="h-6 w-6 sm:h-8 sm:w-8 bg-primary rounded-lg flex items-center justify-center">
-          <span className="text-primary-foreground font-bold text-xs sm:text-sm">EG</span>
+      <Link href="/" className="flex items-center">
+        <div
+          className="bg-primary rounded-lg flex items-center justify-center"
+          style={{
+            width: '36px',
+            height: '36px',
+            minWidth: '36px',
+            minHeight: '36px',
+            maxWidth: '36px',
+            maxHeight: '36px',
+          }}
+        >
+          <span className="text-primary-foreground font-bold text-sm">EG</span>
+        </div>
+      </Link>
+    </Header.Logo>
+  );
+}
+
+function AppHeaderLogoDesktop() {
+  return (
+    <Header.Logo>
+      <Link href="/" className="flex items-center space-x-2 sm:space-x-3">
+        <div
+          className="bg-primary rounded-lg flex items-center justify-center"
+          style={{
+            width: '40px',
+            height: '40px',
+            minWidth: '40px',
+            minHeight: '40px',
+            maxWidth: '40px',
+            maxHeight: '40px',
+          }}
+        >
+          <span className="text-primary-foreground font-bold text-sm">EG</span>
         </div>
         <span className="font-bold text-lg sm:text-xl">ExchangeGO</span>
       </Link>
@@ -53,15 +114,15 @@ function AppHeaderLogo() {
   );
 }
 
-function AppHeaderNavigation({
-  t,
+function AppHeaderNavigationLinks({
   pathname,
+  t,
 }: {
-  t: ReturnType<typeof useTranslations>;
   pathname: string | null;
+  t: (key: string) => string;
 }) {
   return (
-    <Header.Navigation>
+    <nav className="hidden md:flex space-x-6">
       <Link href="/" className={getNavLinkClass(pathname, '/', true)}>
         {t('navigation.home')}
       </Link>
@@ -71,19 +132,9 @@ function AppHeaderNavigation({
       <Link href="/orders" className={getNavLinkClass(pathname, '/orders')}>
         {t('navigation.orders')}
       </Link>
-      <Link href="/contact" className={getNavLinkClass(pathname, '/contact')}>
+      <Link href="/contacts" className={getNavLinkClass(pathname, '/contacts')}>
         {t('navigation.contact')}
       </Link>
-    </Header.Navigation>
-  );
-}
-
-function AppHeaderActions() {
-  return (
-    <Header.Actions>
-      <Header.LanguageSwitcher />
-      <ThemeToggle />
-      <Header.UserMenu />
-    </Header.Actions>
+    </nav>
   );
 }

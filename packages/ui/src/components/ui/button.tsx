@@ -19,11 +19,11 @@ const buttonVariants = cva(
         link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
-        // ИСПРАВЛЕНО: Минимум 44px для touch targets согласно Mobile Guidelines
-        default: 'min-h-[44px] h-11 px-4 py-2 text-base sm:text-sm has-[>svg]:px-3',
-        sm: 'min-h-[44px] h-10 rounded-md gap-1.5 px-3 text-sm has-[>svg]:px-2.5',
-        lg: 'min-h-[44px] h-12 rounded-md px-6 text-base sm:text-lg has-[>svg]:px-4',
-        icon: 'size-11 min-w-[44px] min-h-[44px]',
+        default: 'h-11 px-4 py-2 text-base sm:text-sm has-[>svg]:px-3',
+        sm: 'h-10 rounded-md gap-1.5 px-3 text-sm has-[>svg]:px-2.5',
+        lg: 'h-12 rounded-md px-6 text-base sm:text-lg has-[>svg]:px-4',
+        icon: 'size-11',
+        compact: 'h-9 px-2 text-sm rounded-md gap-1',
       },
     },
     defaultVariants: {
