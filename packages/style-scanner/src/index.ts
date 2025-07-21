@@ -1,0 +1,12 @@
+/**
+ * Style Scanner
+ * Главный модуль для сканирования стилей в React компонентах
+ */
+
+export * from './types/scanner.js';
+export * from './constants/index.js';
+export * from './utils/file-utils.js';
+export * from './utils/component-parser-simple.js';
+export * from './utils/style-extractor.js';
+export * from './core/component-tree-simple.js';
+export * from './core/main-scanner.js';
