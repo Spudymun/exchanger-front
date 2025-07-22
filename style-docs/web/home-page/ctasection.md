@@ -2,19 +2,39 @@
 
 **File**: `e:/project/exchanger-front/apps/web/src/components/ctasection.tsx#CTASection`  
 **Page**: `apps\web\app\[locale]\page.tsx`  
-**Generated**: 2025-07-22T13:43:25.577Z
+**Generated**: 2025-07-22T19:33:15.822Z
 
-## 📋 Section Info
+---
 
-- **Section Type**: Imported Component
+## 📋 Section Summary
+
 - **Direct Children**: 0
 - **Total Nested Components**: 0
-- **Imports**: 0
-- **Exports**: 0
+- **Max Nesting Depth**: 2 levels
+- **Dynamic Classes Detected**: ❌
+- **Named Imports**: None
+- **Named Exports**: CTASection
 
-## 🎨 Section Own Styles
+---
 
-### Tailwind Classes (29)
+## 🧩 Component Tree
+
+```
+- 🧱 CTASection
+```
+
+---
+
+## 🎨 Styles Per Component
+
+### ⚪ CTASection
+
+**File**: `e:/project/exchanger-front/apps/web/src/components/ctasection.tsx#CTASection`  
+**Export**: `CTASection`
+
+#### 🎨 Tailwind Classes
+
+**Static (22)**:
 
 ```css
 bg-gradient-to-br
@@ -23,14 +43,9 @@ dark:to-primary/5
 flex
 font-bold
 from-primary/5
-gap-8
-grid
-grid-cols-2
 justify-center
-lg:grid-cols-4
 lg:p-12
 max-w-2xl
-mb-2
 mb-4
 mb-8
 mx-auto
@@ -38,79 +53,27 @@ p-8
 px-8
 py-3
 rounded-2xl
-text-2xl
 text-3xl
 text-center
 text-foreground
 text-lg
 text-muted-foreground
-text-sm
 to-primary/10
 ```
 
-### CSS Modules (0)
+#### 🧩 CSS Modules
 
-_No CSS modules found_
+_None_
 
-### CSS-in-JS (0)
+#### 🧬 CSS-in-JS
 
-_No CSS-in-JS styles found_
+_None_
 
-## 📦 Section Imports (0)
+---
 
-_No imports found_
+## 🔍 Complete Tailwind Summary
 
-## 📤 Section Exports (0)
-
-_No exports found_
-
-## 🧩 All Nested Components in Section (0)
-
-_No nested components in this section_
-
-## 🎨 Complete Section Styles Summary
-
-### All Tailwind Classes in Section
-
-```css
-bg-gradient-to-br
-dark:from-primary/10
-dark:to-primary/5
-flex
-font-bold
-from-primary/5
-gap-8
-grid
-grid-cols-2
-justify-center
-lg:grid-cols-4
-lg:p-12
-max-w-2xl
-mb-2
-mb-4
-mb-8
-mx-auto
-p-8
-px-8
-py-3
-rounded-2xl
-text-2xl
-text-3xl
-text-center
-text-foreground
-text-lg
-text-muted-foreground
-text-sm
-to-primary/10
-```
-
-### All CSS Modules in Section
-
-_No CSS modules in section tree_
-
-### All CSS-in-JS in Section
-
-_No CSS-in-JS in section tree_
+- **CTASection**: bg-gradient-to-br, dark:from-primary/10, dark:to-primary/5, flex, font-bold, from-primary/5, justify-center, lg:p-12, max-w-2xl, mb-4, mb-8, mx-auto, p-8, px-8, py-3, rounded-2xl, text-3xl, text-center, text-foreground, text-lg, text-muted-foreground, to-primary/10
 
 ---
 

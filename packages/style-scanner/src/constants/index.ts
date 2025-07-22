@@ -11,6 +11,30 @@ export const FILE_PATTERNS = {
     'apps/*/app/**/page.{tsx,jsx}', // apps/web/app/[locale]/page.tsx
     'apps/*/src/app/**/page.{tsx,jsx}', // apps/web/src/app/... (если есть)
   ],
+  LAYOUTS: [
+    'apps/*/app/**/layout.{tsx,jsx}', // layout.tsx файлы
+    'apps/*/src/app/**/layout.{tsx,jsx}', // альтернативная структура
+  ],
+  LAYOUT_COMPONENTS: [
+    'apps/*/src/components/app-layout.{tsx,jsx}', // AppLayout компоненты
+    'apps/*/src/components/app-header.{tsx,jsx}', // AppHeader компоненты
+    'apps/*/src/components/app-footer.{tsx,jsx}', // AppFooter компоненты
+    'apps/*/src/components/**/header*.{tsx,jsx}', // Header компоненты
+    'apps/*/src/components/**/footer*.{tsx,jsx}', // Footer компоненты
+    'apps/*/src/components/**/navigation*.{tsx,jsx}', // Navigation компоненты
+    'apps/*/src/components/**/sidebar*.{tsx,jsx}', // Sidebar компоненты
+  ],
+  UI_COMPONENTS: [
+    'packages/ui/src/components/ui/button.{tsx,jsx}', // Button
+    'packages/ui/src/components/ui/input.{tsx,jsx}', // Input
+    'packages/ui/src/components/ui/select.{tsx,jsx}', // Select
+    'packages/ui/src/components/ui/textarea.{tsx,jsx}', // Textarea
+    'packages/ui/src/components/ui/card.{tsx,jsx}', // Card
+    'packages/ui/src/components/ui/dialog.{tsx,jsx}', // Dialog
+    'packages/ui/src/components/header-compound.{tsx,jsx}', // Header
+    'packages/ui/src/components/footer-compound.{tsx,jsx}', // Footer
+    'packages/ui/src/components/theme-toggle.{tsx,jsx}', // ThemeToggle
+  ],
   COMPONENTS: '**/*.{tsx,jsx}',
   CSS_MODULES: '**/*.module.{css,scss}',
   STYLE_FILES: '**/*.{css,scss,sass}',

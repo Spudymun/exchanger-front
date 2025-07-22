@@ -2,61 +2,157 @@
 
 **File**: `e:/project/exchanger-front/apps/web/src/components/forms/exchangeform.tsx`  
 **Page**: `apps\web\app\[locale]\exchange\page.tsx`  
-**Generated**: 2025-07-22T13:43:25.605Z
+**Generated**: 2025-07-22T19:33:15.826Z
 
-## 📋 Section Info
+---
 
-- **Section Type**: Imported Component
-- **Direct Children**: 0
-- **Total Nested Components**: 0
-- **Imports**: 1
-- **Exports**: 1
+## 📋 Section Summary
 
-## 🎨 Section Own Styles
+- **Direct Children**: 5
+- **Total Nested Components**: 5
+- **Max Nesting Depth**: 2 levels
+- **Dynamic Classes Detected**: ❌
+- **Named Imports**: { useExchangeMutation }
+- **Named Exports**: ExchangeForm
 
-### Tailwind Classes (2)
+---
+
+## 🧩 Component Tree
+
+```
+- 🧱 ExchangeForm
+  - 🔸 ExchangeForm
+  - 🔸 ExchangeCurrencyField
+  - 🔸 ExchangeAmountField
+  - 🔸 ExchangeEmailField
+  - 🔸 ExchangeSubmitButton
+```
+
+---
+
+## 🎨 Styles Per Component
+
+### 🔸 ExchangeForm
+
+**File**: `e:/project/exchanger-front/apps/web/src/components/forms/exchangeform.tsx`  
+**Export**: `ExchangeForm`
+
+#### 🎨 Tailwind Classes
+
+**Static (2)**:
 
 ```css
 space-y-6
 w-full
 ```
 
-### CSS Modules (0)
+#### 🧩 CSS Modules
 
-_No CSS modules found_
+_None_
 
-### CSS-in-JS (0)
+#### 🧬 CSS-in-JS
 
-_No CSS-in-JS styles found_
+_None_
 
-## 📦 Section Imports (1)
+### ⚪ ExchangeForm
 
-- **{ useExchangeMutation }** (`named`) from `../../hooks/useExchangeMutation`
+**File**: `e:/project/exchanger-front/apps/web/src/components/forms/exchangeform.tsx#ExchangeForm`  
+**Export**: `ExchangeForm`
 
-## 📤 Section Exports (1)
+#### 🎨 Tailwind Classes
 
-- **ExchangeForm** (`named`)
+**Static (0)**:
+_None_
 
-## 🧩 All Nested Components in Section (0)
+#### 🧩 CSS Modules
 
-_No nested components in this section_
+_None_
 
-## 🎨 Complete Section Styles Summary
+#### 🧬 CSS-in-JS
 
-### All Tailwind Classes in Section
+_None_
+
+### ⚪ ExchangeCurrencyField
+
+**File**: `e:/project/exchanger-front/apps/web/src/components/forms/exchangeform.tsx#ExchangeCurrencyField`  
+**Export**: `ExchangeCurrencyField`
+
+#### 🎨 Tailwind Classes
+
+**Static (0)**:
+_None_
+
+#### 🧩 CSS Modules
+
+_None_
+
+#### 🧬 CSS-in-JS
+
+_None_
+
+### ⚪ ExchangeAmountField
+
+**File**: `e:/project/exchanger-front/apps/web/src/components/forms/exchangeform.tsx#ExchangeAmountField`  
+**Export**: `ExchangeAmountField`
+
+#### 🎨 Tailwind Classes
+
+**Static (0)**:
+_None_
+
+#### 🧩 CSS Modules
+
+_None_
+
+#### 🧬 CSS-in-JS
+
+_None_
+
+### ⚪ ExchangeEmailField
+
+**File**: `e:/project/exchanger-front/apps/web/src/components/forms/exchangeform.tsx#ExchangeEmailField`  
+**Export**: `ExchangeEmailField`
+
+#### 🎨 Tailwind Classes
+
+**Static (0)**:
+_None_
+
+#### 🧩 CSS Modules
+
+_None_
+
+#### 🧬 CSS-in-JS
+
+_None_
+
+### ⚪ ExchangeSubmitButton
+
+**File**: `e:/project/exchanger-front/apps/web/src/components/forms/exchangeform.tsx#ExchangeSubmitButton`  
+**Export**: `ExchangeSubmitButton`
+
+#### 🎨 Tailwind Classes
+
+**Static (1)**:
 
 ```css
-space-y-6
 w-full
 ```
 
-### All CSS Modules in Section
+#### 🧩 CSS Modules
 
-_No CSS modules in section tree_
+_None_
 
-### All CSS-in-JS in Section
+#### 🧬 CSS-in-JS
 
-_No CSS-in-JS in section tree_
+_None_
+
+---
+
+## 🔍 Complete Tailwind Summary
+
+- **ExchangeForm**: space-y-6, w-full
+- **ExchangeSubmitButton**: w-full
 
 ---
 

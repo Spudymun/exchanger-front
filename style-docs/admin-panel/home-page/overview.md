@@ -1,39 +1,17 @@
 # admin-panel - home-page
 
 **File**: `apps\admin-panel\app\page.tsx`  
-**Generated**: 2025-07-22T13:43:25.534Z
+**Generated**: 2025-07-22T19:33:15.819Z
 
 ## 📊 Overview
 
-- **Total Components**: 10
+- **Total Components**: 11
 - **Top-level Components**: 1
 - **Errors**: 0
 
 ## 🧩 Top-level Components
 
 - **[AdminHeader](./adminheader.md)** (53 styles) - `e:/project/exchanger-front/apps/admin-panel/app/page.tsx`
-
-## 🧩 All Components
-
-- **[AdminHeader](./adminheader.md)** (53 styles) - depth: 0
-  - **[AdminHeaderTitle](./adminheadertitle.md)** (53 styles) - depth: 1
-  - **[AdminHeaderActions](./adminheaderactions.md)** (53 styles) - depth: 1
-  - **[AdminAvatar](./adminavatar.md)** (53 styles) - depth: 1
-  - **[StatsCard](./statscard.md)** (53 styles) - depth: 1
-  - **[StatsGrid](./statsgrid.md)** (53 styles) - depth: 1
-  - **[NavigationTree](./navigationtree.md)** (53 styles) - depth: 1
-  - **[UsersTableNew](./userstablenew.md)** (53 styles) - depth: 1
-  - **[ActionButtons](./actionbuttons.md)** (53 styles) - depth: 1
-  - **[AdminDashboard](./admindashboard.md)** (53 styles) - depth: 1
-  - **[AdminHeaderTitle](./adminheadertitle.md)** (53 styles) - depth: 1
-  - **[AdminHeaderActions](./adminheaderactions.md)** (53 styles) - depth: 1
-  - **[AdminAvatar](./adminavatar.md)** (53 styles) - depth: 1
-  - **[StatsCard](./statscard.md)** (53 styles) - depth: 1
-  - **[StatsGrid](./statsgrid.md)** (53 styles) - depth: 1
-  - **[NavigationTree](./navigationtree.md)** (53 styles) - depth: 1
-  - **[UsersTableNew](./userstablenew.md)** (53 styles) - depth: 1
-  - **[ActionButtons](./actionbuttons.md)** (53 styles) - depth: 1
-  - **[AdminDashboard](./admindashboard.md)** (53 styles) - depth: 1
 
 ---
 

@@ -1,69 +1,43 @@
 # Style Scanner - Project Summary
 
-Generated: 2025-07-22T13:43:25.525Z
+Generated: 2025-07-22T19:33:15.817Z
 
 ## 📊 Overview
 
 - **Total Pages Scanned**: 4
-- **Total Components Found**: 40
+- **Total Components Found**: 103
 - **Total Errors**: 0
-- **Scan Duration**: 74ms
+- **Scan Duration**: 134ms
 
 ## 📄 Pages Analysis
 
 ### apps/admin-panel/app/page.tsx
 
-- **Components**: 10
+- **Components**: 11
 - **Errors**: 0
 - **Project**: [`admin-panel`](./admin-panel/home-page/overview.md)
 - **Sections**: [`AdminHeader`](./admin-panel/home-page/adminheader.md)
 
 ### apps/docs/app/page.tsx
 
-- **Components**: 6
+- **Components**: 7
 - **Errors**: 0
 - **Project**: [`docs`](./docs/home-page/overview.md)
 - **Sections**: [`Home`](./docs/home-page/home.md)
 
 ### apps/web/app/[locale]/page.tsx
 
-- **Components**: 22
+- **Components**: 31
 - **Errors**: 0
 - **Project**: [`web`](./web/home-page/overview.md)
 - **Sections**: [`HomePage`](./web/home-page/homepage.md)
 
 ### apps/web/app/[locale]/exchange/page.tsx
 
-- **Components**: 2
+- **Components**: 8
 - **Errors**: 0
 - **Project**: [`web`](./web/exchange-page/overview.md)
 - **Sections**: [`ExchangePage`](./web/exchange-page/exchangepage.md)
-
-## 🎨 Top Components by Styles
-
-- **AdminHeader** (53 styles) - `e:/project/exchanger-front/apps/admin-panel/app/page.tsx`
-
-- **AdminHeaderTitle** (53 styles) - `e:/project/exchanger-front/apps/admin-panel/app/page.tsx#AdminHeaderTitle`
-
-- **AdminHeaderActions** (53 styles) - `e:/project/exchanger-front/apps/admin-panel/app/page.tsx#AdminHeaderActions`
-
-- **AdminAvatar** (53 styles) - `e:/project/exchanger-front/apps/admin-panel/app/page.tsx#AdminAvatar`
-
-- **StatsCard** (53 styles) - `e:/project/exchanger-front/apps/admin-panel/app/page.tsx#StatsCard`
-
-- **StatsGrid** (53 styles) - `e:/project/exchanger-front/apps/admin-panel/app/page.tsx#StatsGrid`
-
-- **NavigationTree** (53 styles) - `e:/project/exchanger-front/apps/admin-panel/app/page.tsx#NavigationTree`
-
-- **UsersTableNew** (53 styles) - `e:/project/exchanger-front/apps/admin-panel/app/page.tsx#UsersTableNew`
-
-- **ActionButtons** (53 styles) - `e:/project/exchanger-front/apps/admin-panel/app/page.tsx#ActionButtons`
-
-- **AdminDashboard** (53 styles) - `e:/project/exchanger-front/apps/admin-panel/app/page.tsx#AdminDashboard`
-
-## ⚠️ Errors Summary
-
-✅ No errors found!
 
 ---
 

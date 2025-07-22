@@ -56,12 +56,23 @@ export interface ExportInfo {
 }
 
 /**
- * Стили компонента
+ * Стили компонента с разделением на статические и динамические
  */
 export interface ComponentStyles {
   readonly tailwind: readonly string[];
   readonly cssModules: readonly CSSModule[];
   readonly cssInJs: readonly string[];
+  readonly dynamicClasses?: readonly DynamicClassPattern[]; // НОВОЕ: динамические классы
+}
+
+/**
+ * Информация о динамическом паттерне класса
+ */
+export interface DynamicClassPattern {
+  readonly pattern: string;
+  readonly type: 'cn' | 'clsx' | 'twMerge' | 'template' | 'conditional';
+  readonly line?: number;
+  readonly originalCode: string;
 }
 
 /**
@@ -93,11 +104,33 @@ export interface ComponentTreeOptions {
 }
 
 /**
+ * Результат сканирования layout-компонентов
+ */
+export interface LayoutScanResult {
+  readonly layoutPath: string;
+  readonly layoutType: 'root' | 'nested' | 'component';
+  readonly components: readonly ComponentNode[];
+  readonly errors: readonly ScanError[];
+}
+
+/**
+ * Результат сканирования UI-компонентов
+ */
+export interface UIScanResult {
+  readonly uiPath: string;
+  readonly componentType: 'button' | 'input' | 'select' | 'card' | 'dialog' | 'other';
+  readonly components: readonly ComponentNode[];
+  readonly errors: readonly ScanError[];
+}
+
+/**
  * Результат полного сканирования проекта
  */
 export interface ProjectScanResult {
   readonly projectName: string;
   readonly pages: readonly PageScanResult[];
+  readonly layouts: readonly LayoutScanResult[];
+  readonly uiComponents: readonly UIScanResult[];
   readonly summary: ScanSummary;
 }
 
@@ -106,6 +139,8 @@ export interface ProjectScanResult {
  */
 export interface ScanSummary {
   readonly totalPages: number;
+  readonly totalLayouts: number;
+  readonly totalUIComponents: number;
   readonly totalComponents: number;
   readonly totalErrors: number;
   readonly scanDuration: number;

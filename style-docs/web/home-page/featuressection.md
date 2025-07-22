@@ -2,44 +2,46 @@
 
 **File**: `e:/project/exchanger-front/apps/web/src/components/featuressection.tsx#FeaturesSection`  
 **Page**: `apps\web\app\[locale]\page.tsx`  
-**Generated**: 2025-07-22T13:43:25.594Z
+**Generated**: 2025-07-22T19:33:15.824Z
 
-## 📋 Section Info
+---
 
-- **Section Type**: Imported Component
+## 📋 Section Summary
+
 - **Direct Children**: 0
 - **Total Nested Components**: 0
-- **Imports**: 0
-- **Exports**: 0
+- **Max Nesting Depth**: 2 levels
+- **Dynamic Classes Detected**: ❌
+- **Named Imports**: None
+- **Named Exports**: FeaturesSection
 
-## 🎨 Section Own Styles
+---
 
-### Tailwind Classes (46)
+## 🧩 Component Tree
+
+```
+- 🧱 FeaturesSection
+```
+
+---
+
+## 🎨 Styles Per Component
+
+### ⚪ FeaturesSection
+
+**File**: `e:/project/exchanger-front/apps/web/src/components/featuressection.tsx#FeaturesSection`  
+**Export**: `FeaturesSection`
+
+#### 🎨 Tailwind Classes
+
+**Static (21)**:
 
 ```css
-bg-card
 bg-muted/30
-bg-primary/10
-border
-border-border/70
-dark:border-border/60
-dark:hover:bg-accent/30
-dark:shadow-black/20
-duration-200
-flex
 font-bold
-font-semibold
 gap-8
 grid
 grid-cols-1
-h-12
-h-6
-h-full
-hover:bg-accent/40
-hover:shadow-lg
-items-center
-justify-center
-leading-relaxed
 lg:grid-cols-3
 max-w-3xl
 max-w-7xl
@@ -51,100 +53,26 @@ mx-auto
 px-4
 py-24
 relative
-rounded-lg
-shadow-black/8
-shadow-md
 text-3xl
 text-center
 text-foreground
 text-muted-foreground
-text-primary
 text-xl
-transition-all
-w-12
-w-6
 ```
 
-### CSS Modules (0)
+#### 🧩 CSS Modules
 
-_No CSS modules found_
+_None_
 
-### CSS-in-JS (0)
+#### 🧬 CSS-in-JS
 
-_No CSS-in-JS styles found_
+_None_
 
-## 📦 Section Imports (0)
+---
 
-_No imports found_
+## 🔍 Complete Tailwind Summary
 
-## 📤 Section Exports (0)
-
-_No exports found_
-
-## 🧩 All Nested Components in Section (0)
-
-_No nested components in this section_
-
-## 🎨 Complete Section Styles Summary
-
-### All Tailwind Classes in Section
-
-```css
-bg-card
-bg-muted/30
-bg-primary/10
-border
-border-border/70
-dark:border-border/60
-dark:hover:bg-accent/30
-dark:shadow-black/20
-duration-200
-flex
-font-bold
-font-semibold
-gap-8
-grid
-grid-cols-1
-h-12
-h-6
-h-full
-hover:bg-accent/40
-hover:shadow-lg
-items-center
-justify-center
-leading-relaxed
-lg:grid-cols-3
-max-w-3xl
-max-w-7xl
-mb-16
-mb-4
-md:grid-cols-2
-md:text-4xl
-mx-auto
-px-4
-py-24
-relative
-rounded-lg
-shadow-black/8
-shadow-md
-text-3xl
-text-center
-text-foreground
-text-muted-foreground
-text-primary
-text-xl
-transition-all
-w-12
-w-6
-```
-
-### All CSS Modules in Section
-
-_No CSS modules in section tree_
-
-### All CSS-in-JS in Section
-
-_No CSS-in-JS in section tree_
+- **FeaturesSection**: bg-muted/30, font-bold, gap-8, grid, grid-cols-1, lg:grid-cols-3, max-w-3xl, max-w-7xl, mb-16, mb-4, md:grid-cols-2, md:text-4xl, mx-auto, px-4, py-24, relative, text-3xl, text-center, text-foreground, text-muted-foreground, text-xl
 
 ---
 

@@ -142,6 +142,33 @@ function extractAllComponents(content: string): string[] {
     }
   }
 
+  // 4. НОВОЕ: Arrow function с React.FC типизацией: const ComponentName: React.FC =
+  const typedArrowRegex = /const\s+([A-Z][a-zA-Z0-9]*)\s*:\s*React\.FC[^=]*=\s*\(/g;
+
+  while ((match = typedArrowRegex.exec(content)) !== null) {
+    if (match[1]) {
+      components.add(match[1]);
+    }
+  }
+
+  // 5. НОВОЕ: Arrow function с типизированными пропсами: const ComponentName: React.FC<Props> =
+  const typedPropsArrowRegex = /const\s+([A-Z][a-zA-Z0-9]*)\s*:\s*React\.FC<[^>]+>\s*=\s*\(/g;
+
+  while ((match = typedPropsArrowRegex.exec(content)) !== null) {
+    if (match[1]) {
+      components.add(match[1]);
+    }
+  }
+
+  // 6. НОВОЕ: Более гибкий паттерн для любых типизированных компонентов
+  const flexibleTypedRegex = /const\s+([A-Z][a-zA-Z0-9]*)\s*:\s*[^=]+?=\s*\(/g;
+
+  while ((match = flexibleTypedRegex.exec(content)) !== null) {
+    if (match[1]) {
+      components.add(match[1]);
+    }
+  }
+
   return Array.from(components);
 }
 

@@ -10,11 +10,14 @@ import type {
   PageScanResult,
   ProjectScanResult,
   ComponentNode,
+  LayoutScanResult,
+  UIScanResult,
+  ScanError,
 } from '../types/scanner.js';
 
 import { parseComponent } from '../utils/component-parser-simple.js';
 import { findFiles, readFileSafely } from '../utils/file-utils.js';
-import { extractStyles } from '../utils/style-extractor.js';
+import { extractStyles, extractStylesForLocalComponent } from '../utils/style-extractor.js';
 
 import { ComponentTreeBuilder } from './component-tree-simple.js';
 
@@ -62,10 +65,28 @@ export class StyleScanner {
       console.log(`📄 Found ${pageFiles.length} page files`);
     }
 
-    // 2. Группировать по проектам
-    const projectPages = this.groupPagesByProject(pageFiles);
+    // 2. Найти все layout-компоненты
+    const layoutFiles = await this.findAllLayouts();
 
-    // 3. Сканировать каждый проект
+    if (this.config.verbose) {
+      // eslint-disable-next-line no-console
+      console.log(`🏗️ Found ${layoutFiles.length} layout files`);
+    }
+
+    // 3. Найти все UI компоненты
+    const uiFiles = await this.findAllUIComponents();
+
+    if (this.config.verbose) {
+      // eslint-disable-next-line no-console
+      console.log(`🎨 Found ${uiFiles.length} UI component files`);
+    }
+
+    // 4. Группировать по проектам
+    const projectPages = this.groupPagesByProject(pageFiles);
+    const projectLayouts = this.groupLayoutsByProject(layoutFiles);
+    const projectUIComponents = this.groupUIComponentsByProject(uiFiles);
+
+    // 4. Сканировать страницы каждого проекта
     const pages: PageScanResult[] = [];
 
     for (const [projectName, projectPageFiles] of projectPages.entries()) {
@@ -80,6 +101,36 @@ export class StyleScanner {
       }
     }
 
+    // 5. Сканировать layout-компоненты каждого проекта
+    const layouts: LayoutScanResult[] = [];
+
+    for (const [projectName, projectLayoutFiles] of projectLayouts.entries()) {
+      if (this.config.verbose) {
+        // eslint-disable-next-line no-console
+        console.log(`\n🏗️ Scanning layouts for project: ${projectName}`);
+      }
+
+      for (const layoutFile of projectLayoutFiles) {
+        const layoutResult = await this.scanLayoutSafely(layoutFile, projectName);
+        layouts.push(layoutResult);
+      }
+    }
+
+    // 6. Сканировать UI-компоненты каждого проекта
+    const uiComponents: UIScanResult[] = [];
+
+    for (const [projectName, projectUIFiles] of projectUIComponents.entries()) {
+      if (this.config.verbose) {
+        // eslint-disable-next-line no-console
+        console.log(`\n🎨 Scanning UI components for project: ${projectName}`);
+      }
+
+      for (const uiFile of projectUIFiles) {
+        const uiResult = await this.scanUISafely(uiFile, projectName);
+        uiComponents.push(uiResult);
+      }
+    }
+
     const scanDuration = Date.now() - startTime;
 
     // Очистка ресурсов
@@ -88,10 +139,20 @@ export class StyleScanner {
     return {
       projectName: 'exchanger-front',
       pages,
+      layouts,
+      uiComponents,
       summary: {
         totalPages: pages.length,
-        totalComponents: pages.reduce((sum, page) => sum + page.components.length, 0),
-        totalErrors: pages.reduce((sum, page) => sum + page.errors.length, 0),
+        totalLayouts: layouts.length,
+        totalUIComponents: uiComponents.length,
+        totalComponents:
+          pages.reduce((sum, page) => sum + page.components.length, 0) +
+          layouts.reduce((sum, layout) => sum + layout.components.length, 0) +
+          uiComponents.reduce((sum, ui) => sum + ui.components.length, 0),
+        totalErrors:
+          pages.reduce((sum, page) => sum + page.errors.length, 0) +
+          layouts.reduce((sum, layout) => sum + layout.errors.length, 0) +
+          uiComponents.reduce((sum, ui) => sum + ui.errors.length, 0),
         scanDuration,
       },
     };
@@ -298,6 +359,271 @@ export class StyleScanner {
   }
 
   /**
+   * Поиск всех layout-файлов по паттернам
+   */
+  private async findAllLayouts(): Promise<string[]> {
+    if (this.config.verbose) {
+      // eslint-disable-next-line no-console
+      console.log('🏗️ Finding all layouts...');
+    }
+
+    const allFiles: string[] = [];
+
+    // Поиск layout.tsx файлов
+    for (const pattern of FILE_PATTERNS.LAYOUTS) {
+      if (this.config.verbose) {
+        // eslint-disable-next-line no-console
+        console.log(`  📋 Searching layout pattern: ${pattern}`);
+      }
+
+      const files = await findFiles(pattern);
+
+      if (this.config.verbose) {
+        // eslint-disable-next-line no-console
+        console.log(`  ✅ Found ${files.length} layout files for pattern: ${pattern}`);
+      }
+
+      allFiles.push(...files);
+    }
+
+    // Поиск layout-компонентов (AppHeader, AppFooter и т.д.)
+    for (const pattern of FILE_PATTERNS.LAYOUT_COMPONENTS) {
+      if (this.config.verbose) {
+        // eslint-disable-next-line no-console
+        console.log(`  📋 Searching layout component pattern: ${pattern}`);
+      }
+
+      const files = await findFiles(pattern);
+
+      if (this.config.verbose) {
+        // eslint-disable-next-line no-console
+        console.log(`  ✅ Found ${files.length} layout component files for pattern: ${pattern}`);
+      }
+
+      allFiles.push(...files);
+    }
+
+    if (this.config.verbose) {
+      // eslint-disable-next-line no-console
+      console.log(`🏗️ Total layout files found: ${allFiles.length}`);
+    }
+
+    // Убираем дубликаты и возвращаем абсолютные пути
+    return [...new Set(allFiles)].map(file => resolve(file));
+  }
+
+  /**
+   * Группировка layout-файлов по проектам
+   */
+  private groupLayoutsByProject(layoutFiles: string[]): Map<string, string[]> {
+    const projects = new Map<string, string[]>();
+
+    for (const layoutFile of layoutFiles) {
+      const projectName = this.extractProjectName(layoutFile);
+
+      if (!projects.has(projectName)) {
+        projects.set(projectName, []);
+      }
+
+      const projectFileList = projects.get(projectName);
+      if (projectFileList) {
+        projectFileList.push(layoutFile);
+      }
+    }
+
+    return projects;
+  }
+
+  /**
+   * Поиск всех UI компонентов по паттернам
+   */
+  private async findAllUIComponents(): Promise<string[]> {
+    if (this.config.verbose) {
+      // eslint-disable-next-line no-console
+      console.log('🎨 Finding all UI components...');
+    }
+
+    const allFiles: string[] = [];
+
+    // Поиск UI компонентов
+    for (const pattern of FILE_PATTERNS.UI_COMPONENTS) {
+      if (this.config.verbose) {
+        // eslint-disable-next-line no-console
+        console.log(`  📋 Searching UI component pattern: ${pattern}`);
+      }
+
+      const files = await findFiles(pattern);
+
+      if (this.config.verbose) {
+        // eslint-disable-next-line no-console
+        console.log(`  ✅ Found ${files.length} UI component files for pattern: ${pattern}`);
+      }
+
+      allFiles.push(...files);
+    }
+
+    if (this.config.verbose) {
+      // eslint-disable-next-line no-console
+      console.log(`🎨 Total UI component files found: ${allFiles.length}`);
+    }
+
+    // Убираем дубликаты и возвращаем абсолютные пути
+    return [...new Set(allFiles)].map(file => resolve(file));
+  }
+
+  /**
+   * Группировка UI компонентов по проектам
+   */
+  private groupUIComponentsByProject(uiFiles: string[]): Map<string, string[]> {
+    const projects = new Map<string, string[]>();
+
+    for (const uiFile of uiFiles) {
+      // UI компоненты относятся к общему пакету ui
+      const projectName = 'ui';
+
+      if (!projects.has(projectName)) {
+        projects.set(projectName, []);
+      }
+
+      const projectFileList = projects.get(projectName);
+      if (projectFileList) {
+        projectFileList.push(uiFile);
+      }
+    }
+
+    return projects;
+  }
+
+  /**
+   * Безопасное сканирование layout-компонента с обработкой ошибок
+   */
+  private async scanLayoutSafely(
+    layoutFile: string,
+    projectName: string
+  ): Promise<LayoutScanResult> {
+    try {
+      return await this.scanLayoutWithTimeout(layoutFile, projectName);
+    } catch (error) {
+      if (this.config.verbose) {
+        // eslint-disable-next-line no-console
+        console.error(`❌ Error scanning layout ${layoutFile}:`, error);
+      }
+
+      return this.createMinimalLayoutScanResult(layoutFile, projectName, String(error));
+    }
+  }
+
+  /**
+   * Сканирование layout-компонента с таймаутом
+   */
+  private async scanLayoutWithTimeout(
+    layoutFile: string,
+    projectName: string
+  ): Promise<LayoutScanResult> {
+    const timeout = SCAN_TIMEOUTS.FULL_SCAN;
+
+    return Promise.race([
+      this.scanLayout(layoutFile, projectName),
+      this.createLayoutTimeoutPromise(timeout),
+    ]);
+  }
+
+  /**
+   * Основное сканирование layout-компонента
+   */
+  private async scanLayout(layoutFile: string, projectName: string): Promise<LayoutScanResult> {
+    if (this.config.verbose) {
+      // eslint-disable-next-line no-console
+      console.log(`  🏗️ Scanning layout: ${this.getRelativePath(layoutFile)}`);
+    }
+
+    // Определяем тип layout-а
+    const layoutType = this.determineLayoutType(layoutFile);
+
+    // Читаем содержимое файла
+    const content = await readFileSafely(layoutFile);
+    if (!content) {
+      throw new Error(`Cannot read layout file: ${layoutFile}`);
+    }
+
+    // Парсим компонент
+    const parsed = parseComponent(content);
+    const componentName = parsed.name || this.extractComponentNameFromPath(layoutFile);
+
+    // Строим дерево компонентов с ограниченной глубиной для layout-ов
+    const componentTree = await this.treeBuilder.buildComponentTree(layoutFile);
+
+    if (!componentTree) {
+      throw new Error(`Failed to build component tree for layout: ${layoutFile}`);
+    }
+
+    // Обогащаем стилями
+    const enrichedTree = await this.enrichWithStyles(componentTree);
+
+    // Преобразуем в плоский список
+    const components = this.flattenComponentTree(enrichedTree);
+
+    return {
+      layoutPath: this.getRelativePath(layoutFile),
+      layoutType,
+      components,
+      errors: [],
+    };
+  }
+
+  /**
+   * Определение типа layout-а
+   */
+  private determineLayoutType(layoutFile: string): 'root' | 'nested' | 'component' {
+    const relativePath = this.getRelativePath(layoutFile);
+
+    // layout.tsx файлы
+    if (relativePath.includes('layout.tsx') || relativePath.includes('layout.jsx')) {
+      // root layout обычно в корне app директории
+      if (relativePath.match(/apps\/[^/]+\/app\/layout\.(tsx|jsx)$/)) {
+        return 'root';
+      }
+      return 'nested';
+    }
+
+    // Компоненты layout-а (AppHeader, AppFooter и т.д.)
+    return 'component';
+  }
+
+  /**
+   * Создание минимального результата сканирования layout-а при неудаче
+   */
+  private createMinimalLayoutScanResult(
+    layoutFile: string,
+    _projectName: string,
+    errorMessage: string
+  ): LayoutScanResult {
+    return {
+      layoutPath: this.getRelativePath(layoutFile),
+      layoutType: this.determineLayoutType(layoutFile),
+      components: [],
+      errors: [
+        {
+          filePath: layoutFile,
+          message: `Failed to scan layout: ${errorMessage}`,
+          type: 'parse_error',
+        },
+      ],
+    };
+  }
+
+  /**
+   * Создание промиса таймаута для layout-а
+   */
+  private createLayoutTimeoutPromise(timeout: number): Promise<LayoutScanResult> {
+    return new Promise<LayoutScanResult>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(`Layout scan timeout ${timeout}ms exceeded`));
+      }, timeout);
+    });
+  }
+
+  /**
    * Получение относительного пути от корня проекта
    */
   private getRelativePath(filePath: string): string {
@@ -311,20 +637,33 @@ export class StyleScanner {
   private async enrichWithStyles(componentNode: ComponentNode): Promise<ComponentNode> {
     // ИСПРАВЛЕНИЕ: Проверяем если это локальный компонент (содержит #)
     if (componentNode.filePath.includes('#')) {
-      // Для локальных компонентов читаем оригинальный файл
-      const originalFilePath = componentNode.filePath.split('#')[0];
-      if (!originalFilePath) {
-        return componentNode; // Возвращаем как есть если нет пути
+      // Для локальных компонентов извлекаем стили из родительского файла + собственные
+      const [originalFilePath, componentName] = componentNode.filePath.split('#');
+      if (!originalFilePath || !componentName) {
+        return componentNode; // Возвращаем как есть если нет пути или имени
       }
 
-      const componentContent = (await readFileSafely(originalFilePath)) || '';
+      // Читаем содержимое файла и извлекаем стили из всего файла
+      const fileContent = (await readFileSafely(originalFilePath)) || '';
+      const { styles: fileStyles } = await extractStyles(originalFilePath, fileContent);
 
-      // Извлекаем стили из оригинального файла
-      const { styles } = await extractStyles(originalFilePath, componentContent);
+      // Дополнительно извлекаем стили из конкретной функции компонента
+      const { styles: localStyles } = await extractStylesForLocalComponent(
+        fileContent,
+        componentName
+      );
+
+      // ИСПРАВЛЕНИЕ: Локальные компоненты получают ТОЛЬКО свои стили, не стили всего файла
+      const componentStyles = {
+        tailwind: localStyles.tailwind,
+        cssModules: localStyles.cssModules,
+        cssInJs: localStyles.cssInJs,
+        dynamicClasses: localStyles.dynamicClasses || [],
+      };
 
       return {
         ...componentNode,
-        styles,
+        styles: componentStyles,
         children: [], // Локальные компоненты не имеют детей
       };
     }
@@ -542,6 +881,119 @@ export class StyleScanner {
       // eslint-disable-next-line no-console
       console.log(`  ⏰ Таймаут: ${errorMessage}`);
     }
+  }
+
+  /**
+   * Безопасное сканирование UI-компонента с обработкой ошибок
+   */
+  private async scanUISafely(uiFile: string, projectName: string): Promise<UIScanResult> {
+    try {
+      return await this.scanUIWithTimeout(uiFile, projectName);
+    } catch (error) {
+      if (this.config.verbose) {
+        // eslint-disable-next-line no-console
+        console.error(`❌ Error scanning UI component ${uiFile}:`, error);
+      }
+
+      return this.createMinimalUIScanResult(uiFile, projectName, String(error));
+    }
+  }
+
+  /**
+   * Сканирование UI-компонента с таймаутом
+   */
+  private async scanUIWithTimeout(uiFile: string, projectName: string): Promise<UIScanResult> {
+    const timeout = SCAN_TIMEOUTS.FULL_SCAN;
+
+    return Promise.race([this.scanUI(uiFile, projectName), this.createUITimeoutPromise(timeout)]);
+  }
+
+  /**
+   * Основное сканирование UI-компонента
+   */
+  private async scanUI(uiFile: string, projectName: string): Promise<UIScanResult> {
+    if (this.config.verbose) {
+      // eslint-disable-next-line no-console
+      console.log(`  🎨 Scanning UI component: ${this.getRelativePath(uiFile)}`);
+    }
+
+    // Определяем тип UI-компонента
+    const componentType = this.determineUIType(uiFile);
+
+    // Читаем содержимое файла
+    const content = await readFileSafely(uiFile);
+    if (!content) {
+      throw new Error(`Cannot read UI file: ${uiFile}`);
+    }
+
+    // Парсим компонент
+    const parsed = parseComponent(content);
+    const componentName = parsed.name || this.extractComponentNameFromPath(uiFile);
+
+    // Строим дерево компонентов
+    const componentTree = await this.treeBuilder.buildComponentTree(uiFile);
+
+    if (!componentTree) {
+      throw new Error(`Failed to build component tree for UI: ${uiFile}`);
+    }
+
+    // Обогащаем стилями
+    const enrichedTree = await this.enrichWithStyles(componentTree);
+
+    return {
+      uiPath: uiFile,
+      componentType,
+      components: [enrichedTree],
+      errors: [],
+    };
+  }
+
+  /**
+   * Определение типа UI-компонента
+   */
+  private determineUIType(filePath: string): UIScanResult['componentType'] {
+    const fileName = filePath.toLowerCase();
+
+    if (fileName.includes('button')) return 'button';
+    if (fileName.includes('input')) return 'input';
+    if (fileName.includes('select')) return 'select';
+    if (fileName.includes('card')) return 'card';
+    if (fileName.includes('dialog')) return 'dialog';
+
+    return 'other';
+  }
+
+  /**
+   * Создание минимального результата UI-сканирования при ошибке
+   */
+  private createMinimalUIScanResult(
+    uiFile: string,
+    projectName: string,
+    error: string
+  ): UIScanResult {
+    return {
+      uiPath: uiFile,
+      componentType: 'other',
+      components: [],
+      errors: [
+        {
+          type: 'parse_error',
+          message: error,
+          filePath: uiFile,
+        },
+      ],
+    };
+  }
+
+  /**
+   * Создание промиса с таймаутом для UI-сканирования
+   */
+  private createUITimeoutPromise(timeout: number): Promise<UIScanResult> {
+    return new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(`UI scan timeout after ${timeout}ms`));
+      }, timeout);
+    });
   }
 
   /**

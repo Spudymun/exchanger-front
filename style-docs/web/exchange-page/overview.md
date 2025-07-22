@@ -1,23 +1,17 @@
 # web - exchange-page
 
 **File**: `apps\web\app\[locale]\exchange\page.tsx`  
-**Generated**: 2025-07-22T13:43:25.599Z
+**Generated**: 2025-07-22T19:33:15.826Z
 
 ## 📊 Overview
 
-- **Total Components**: 2
+- **Total Components**: 8
 - **Top-level Components**: 1
 - **Errors**: 0
 
 ## 🧩 Top-level Components
 
 - **[ExchangePage](./exchangepage.md)** (21 styles) - `e:/project/exchanger-front/apps/web/app/[locale]/exchange/page.tsx`
-
-## 🧩 All Components
-
-- **[ExchangePage](./exchangepage.md)** (21 styles) - depth: 0
-  - **[ExchangeForm](./exchangeform.md)** (2 styles) - depth: 1
-  - **[ExchangeForm](./exchangeform.md)** (2 styles) - depth: 1
 
 ---
 

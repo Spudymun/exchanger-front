@@ -120,27 +120,37 @@ export class ComponentTreeBuilder {
         },
       };
 
-      // КЛЮЧЕВОЕ ИСПРАВЛЕНИЕ: Добавляем локальные компоненты как дочерние
+      // ПРАВИЛЬНАЯ ОБРАБОТКА ЛОКАЛЬНЫХ КОМПОНЕНТОВ
       if (parsedComponent.localComponents && parsedComponent.localComponents.length > 0) {
+        if (this.options.verbose) {
+          // eslint-disable-next-line no-console
+          console.log(
+            `      🔍 Found ${parsedComponent.localComponents.length} local components: ${parsedComponent.localComponents.join(', ')}`
+          );
+        }
+
         for (const localCompName of parsedComponent.localComponents) {
-          // Пропускаем главный компонент (он уже есть)
-          if (localCompName !== componentNode.name) {
-            const localComponent: ComponentNode = {
-              filePath: `${cacheKey}#${localCompName}`, // Уникальный ID для локального компонента
-              name: localCompName,
-              imports: [],
-              exports: [],
-              children: [],
-              depth: depth + 1,
-              errors: [],
-              styles: {
-                tailwind: [],
-                cssModules: [],
-                cssInJs: [],
+          // Создаем локальный компонент независимо от основного
+          const localComponent: ComponentNode = {
+            filePath: `${cacheKey}#${localCompName}`, // Уникальный ID для локального компонента
+            name: localCompName,
+            imports: [],
+            exports: [
+              {
+                name: localCompName,
+                type: 'named', // Локальные компоненты как named exports
               },
-            };
-            componentNode.children.push(localComponent);
-          }
+            ],
+            children: [],
+            depth: depth + 1,
+            errors: [],
+            styles: {
+              tailwind: [],
+              cssModules: [],
+              cssInJs: [],
+            },
+          };
+          componentNode.children.push(localComponent);
         }
       }
 
@@ -296,8 +306,13 @@ export class ComponentTreeBuilder {
    * Разрешение пути импорта
    */
   private async resolveImportPath(source: string, currentDir: string): Promise<string | null> {
-    // Пропускаем внешние пакеты
-    if (!source.startsWith('.') && !source.startsWith('/')) {
+    // Обрабатываем внутренние пакеты монорепо
+    if (source.startsWith('@repo/')) {
+      return this.resolveMonorepoPackage(source);
+    }
+
+    // Пропускаем внешние npm пакеты (node_modules)
+    if (!source.startsWith('.') && !source.startsWith('/') && !source.startsWith('@repo/')) {
       return null;
     }
 
@@ -319,6 +334,28 @@ export class ComponentTreeBuilder {
       if (await fileExists(indexPath)) {
         return indexPath;
       }
+    }
+
+    return null;
+  }
+
+  /**
+   * Разрешение импортов из внутренних пакетов монорепо
+   */
+  private async resolveMonorepoPackage(source: string): Promise<string | null> {
+    // @repo/ui -> packages/ui/src/index.ts
+    const packageName = source.replace('@repo/', '');
+    const packageBasePath = resolve(process.cwd(), 'packages', packageName, 'src');
+
+    // Попробуем найти основной экспорт
+    const indexPath = join(packageBasePath, 'index.ts');
+    if (await fileExists(indexPath)) {
+      return indexPath;
+    }
+
+    const indexTsxPath = join(packageBasePath, 'index.tsx');
+    if (await fileExists(indexTsxPath)) {
+      return indexTsxPath;
     }
 
     return null;

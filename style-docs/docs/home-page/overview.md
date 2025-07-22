@@ -1,31 +1,17 @@
 # docs - home-page
 
 **File**: `apps\docs\app\page.tsx`  
-**Generated**: 2025-07-22T13:43:25.542Z
+**Generated**: 2025-07-22T19:33:15.820Z
 
 ## 📊 Overview
 
-- **Total Components**: 6
+- **Total Components**: 7
 - **Top-level Components**: 1
 - **Errors**: 0
 
 ## 🧩 Top-level Components
 
 - **[Home](./home.md)** (3 styles) - `e:/project/exchanger-front/apps/docs/app/page.tsx`
-
-## 🧩 All Components
-
-- **[Home](./home.md)** (3 styles) - depth: 0
-  - **[ThemeImage](./themeimage.md)** (3 styles) - depth: 1
-  - **[LogoSection](./logosection.md)** (3 styles) - depth: 1
-  - **[InstructionsList](./instructionslist.md)** (3 styles) - depth: 1
-  - **[CTASection](./ctasection.md)** (3 styles) - depth: 1
-  - **[FooterSection](./footersection.md)** (3 styles) - depth: 1
-  - **[ThemeImage](./themeimage.md)** (3 styles) - depth: 1
-  - **[LogoSection](./logosection.md)** (3 styles) - depth: 1
-  - **[InstructionsList](./instructionslist.md)** (3 styles) - depth: 1
-  - **[CTASection](./ctasection.md)** (3 styles) - depth: 1
-  - **[FooterSection](./footersection.md)** (3 styles) - depth: 1
 
 ---
 

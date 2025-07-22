@@ -2,133 +2,79 @@
 
 **File**: `e:/project/exchanger-front/apps/web/src/components/ratessection.tsx#RatesSection`  
 **Page**: `apps\web\app\[locale]\page.tsx`  
-**Generated**: 2025-07-22T13:43:25.598Z
+**Generated**: 2025-07-22T19:33:15.825Z
 
-## 📋 Section Info
+---
 
-- **Section Type**: Imported Component
+## 📋 Section Summary
+
 - **Direct Children**: 0
 - **Total Nested Components**: 0
-- **Imports**: 0
-- **Exports**: 0
+- **Max Nesting Depth**: 2 levels
+- **Dynamic Classes Detected**: ❌
+- **Named Imports**: None
+- **Named Exports**: RatesSection
 
-## 🎨 Section Own Styles
+---
 
-### Tailwind Classes (38)
+## 🧩 Component Tree
+
+```
+- 🧱 RatesSection
+```
+
+---
+
+## 🎨 Styles Per Component
+
+### ⚪ RatesSection
+
+**File**: `e:/project/exchanger-front/apps/web/src/components/ratessection.tsx#RatesSection`  
+**Export**: `RatesSection`
+
+#### 🎨 Tailwind Classes
+
+**Static (23)**:
 
 ```css
-bg-card
-border
-border-border/70
-dark:border-border/60
-dark:shadow-black/20
-flex
 font-bold
 font-medium
-font-semibold
 gap-6
 grid
 h-4
 hover:text-primary/80
 inline-flex
 items-center
-items-start
-justify-between
 lg:grid-cols-4
 max-w-2xl
 mb-16
-mb-2
 mb-4
 mb-8
 md:grid-cols-2
 ml-1
 mx-auto
-p-4
-rounded-lg
-shadow-black/8
-shadow-md
 text-3xl
 text-center
 text-foreground
 text-lg
 text-muted-foreground
 text-primary
-text-sm
 w-4
 ```
 
-### CSS Modules (0)
+#### 🧩 CSS Modules
 
-_No CSS modules found_
+_None_
 
-### CSS-in-JS (0)
+#### 🧬 CSS-in-JS
 
-_No CSS-in-JS styles found_
+_None_
 
-## 📦 Section Imports (0)
+---
 
-_No imports found_
+## 🔍 Complete Tailwind Summary
 
-## 📤 Section Exports (0)
-
-_No exports found_
-
-## 🧩 All Nested Components in Section (0)
-
-_No nested components in this section_
-
-## 🎨 Complete Section Styles Summary
-
-### All Tailwind Classes in Section
-
-```css
-bg-card
-border
-border-border/70
-dark:border-border/60
-dark:shadow-black/20
-flex
-font-bold
-font-medium
-font-semibold
-gap-6
-grid
-h-4
-hover:text-primary/80
-inline-flex
-items-center
-items-start
-justify-between
-lg:grid-cols-4
-max-w-2xl
-mb-16
-mb-2
-mb-4
-mb-8
-md:grid-cols-2
-ml-1
-mx-auto
-p-4
-rounded-lg
-shadow-black/8
-shadow-md
-text-3xl
-text-center
-text-foreground
-text-lg
-text-muted-foreground
-text-primary
-text-sm
-w-4
-```
-
-### All CSS Modules in Section
-
-_No CSS modules in section tree_
-
-### All CSS-in-JS in Section
-
-_No CSS-in-JS in section tree_
+- **RatesSection**: font-bold, font-medium, gap-6, grid, h-4, hover:text-primary/80, inline-flex, items-center, lg:grid-cols-4, max-w-2xl, mb-16, mb-4, mb-8, md:grid-cols-2, ml-1, mx-auto, text-3xl, text-center, text-foreground, text-lg, text-muted-foreground, text-primary, w-4
 
 ---
 
