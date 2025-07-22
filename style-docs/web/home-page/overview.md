@@ -1,7 +1,7 @@
 # web - home-page
 
 **File**: `apps\web\app\[locale]\page.tsx`  
-**Generated**: 2025-07-22T19:33:15.821Z
+**Generated**: 2025-07-22T22:16:53.791Z
 
 ## 📊 Overview
 

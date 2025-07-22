@@ -133,6 +133,15 @@ function extractAllComponents(content: string): string[] {
     }
   }
 
+  // 2.1. ForwardRef компоненты: const ComponentName = React.forwardRef
+  const forwardRefRegex = /const\s+([A-Z][a-zA-Z0-9]*)\s*=\s*React\.forwardRef/g;
+
+  while ((match = forwardRefRegex.exec(content)) !== null) {
+    if (match[1]) {
+      components.add(match[1]);
+    }
+  }
+
   // 3. Export function компоненты: export function ComponentName(
   const exportFunctionRegex = /export\s+function\s+([A-Z][a-zA-Z0-9]*)\s*\(/g;
 

@@ -11,6 +11,7 @@ import type {
   CSSModule,
   ScanError,
   DynamicClassPattern,
+  ComponentNode,
 } from '../types/scanner.js';
 
 import { readFileSafely, fileExists } from './file-utils.js';
@@ -103,6 +104,182 @@ export async function extractStylesForLocalComponent(
       errors,
     };
   }
+}
+
+/**
+ * Извлечение стилей для конкретного локального компонента по имени (включая UI компоненты)
+ */
+export async function extractStylesForLocalComponentWithUI(
+  content: string, // Принимаем содержимое файла, а не путь
+  componentName: string,
+  uiComponents: ComponentNode[] = [] // UI components database
+): Promise<{ styles: ComponentStyles; errors: ScanError[] }> {
+  const errors: ScanError[] = [];
+
+  try {
+    // Извлекаем только код конкретного компонента
+    const componentCode = extractComponentFunction(content, componentName);
+
+    if (!componentCode) {
+      // Если не найден, возвращаем пустые стили
+      return {
+        styles: { tailwind: [], cssModules: [], cssInJs: [], dynamicClasses: [] },
+        errors: [
+          {
+            type: 'parse_error',
+            message: `Component function '${componentName}' not found in file`,
+            filePath: 'inline-content',
+          },
+        ],
+      };
+    }
+
+    const classAnalysis = analyzeClassNames(componentCode);
+
+    // Анализируем дочерние JSX компоненты (включая UI компоненты)
+    const childComponentStyles = await analyzeChildComponentsWithUI(
+      componentCode,
+      content,
+      uiComponents
+    );
+
+    // CSS модули не применяются к локальным компонентам, только к файлу в целом
+    const cssModules: CSSModule[] = [];
+
+    // Объединяем стили компонента и его дочерних компонентов
+    const combinedTailwind = [...classAnalysis.static, ...childComponentStyles.tailwind];
+    const combinedDynamic = [...classAnalysis.dynamic, ...childComponentStyles.dynamicClasses];
+
+    return {
+      styles: {
+        tailwind: combinedTailwind,
+        cssModules,
+        cssInJs: [],
+        dynamicClasses: combinedDynamic,
+      },
+      errors: [...errors, ...childComponentStyles.errors],
+    };
+  } catch (error) {
+    errors.push({
+      type: 'parse_error',
+      message: `Failed to extract styles for component ${componentName} with UI: ${error}`,
+      filePath: 'inline-content',
+    });
+
+    return {
+      styles: { tailwind: [], cssModules: [], cssInJs: [], dynamicClasses: [] },
+      errors,
+    };
+  }
+}
+
+/**
+ * Анализ дочерних JSX компонентов с поддержкой UI компонентов
+ */
+async function analyzeChildComponentsWithUI(
+  componentCode: string,
+  fullFileContent: string,
+  uiComponents: ComponentNode[]
+): Promise<{
+  tailwind: string[];
+  dynamicClasses: DynamicClassPattern[];
+  errors: ScanError[];
+}> {
+  const errors: ScanError[] = [];
+  const tailwindClasses: string[] = [];
+  const dynamicClasses: DynamicClassPattern[] = [];
+
+  try {
+    // Извлекаем все используемые компоненты из JSX
+    const usedComponents = extractUsedComponentsFromJSX(componentCode);
+
+    // Получаем импорты из полного содержимого файла
+    const imports = extractImports(fullFileContent);
+
+    for (const componentName of usedComponents) {
+      // Ищем компонент в UI компонентах
+      const uiComponent = uiComponents.find(comp => comp.name === componentName);
+
+      if (uiComponent && uiComponent.styles) {
+        // Добавляем стили UI компонента
+        tailwindClasses.push(...uiComponent.styles.tailwind);
+        if (uiComponent.styles.dynamicClasses) {
+          dynamicClasses.push(...uiComponent.styles.dynamicClasses);
+        }
+      }
+    }
+
+    // Удаляем дубликаты
+    const uniqueTailwind = [...new Set(tailwindClasses)];
+
+    return {
+      tailwind: uniqueTailwind,
+      dynamicClasses,
+      errors,
+    };
+  } catch (error) {
+    errors.push({
+      type: 'parse_error',
+      message: `Failed to analyze child components with UI: ${error}`,
+      filePath: 'inline-content',
+    });
+
+    return {
+      tailwind: [],
+      dynamicClasses: [],
+      errors,
+    };
+  }
+}
+
+/**
+ * Извлечение используемых компонентов из JSX
+ */
+function extractUsedComponentsFromJSX(content: string): string[] {
+  // Ищем компоненты в JSX: <ComponentName, <ComponentName/>, <ComponentName >
+  const componentRegex = /<([A-Z][a-zA-Z0-9]*)/g;
+  const components: Set<string> = new Set();
+  let match;
+
+  while ((match = componentRegex.exec(content)) !== null) {
+    if (match[1]) {
+      components.add(match[1]);
+    }
+  }
+
+  return Array.from(components);
+}
+
+/**
+ * Извлечение импортов из содержимого файла
+ */
+function extractImports(content: string): Array<{
+  components: string[];
+  source: string;
+}> {
+  const imports: Array<{ components: string[]; source: string }> = [];
+
+  // Ищем импорты вида: import { Component1, Component2 } from 'source'
+  const importRegex = /import\s*\{([^}]+)\}\s*from\s*['"]([^'"]+)['"]/g;
+  let match;
+
+  while ((match = importRegex.exec(content)) !== null) {
+    if (match[1] && match[2]) {
+      const components = match[1]
+        .split(',')
+        .map(comp => comp.trim())
+        .filter(comp => comp && /^[A-Z]/.test(comp)); // Только компоненты (начинаются с заглавной)
+
+      if (components.length > 0) {
+        imports.push({
+          components,
+          source: match[2],
+        });
+      }
+    }
+  }
+
+  return imports;
 }
 
 /**
@@ -244,7 +421,13 @@ export function analyzeClassNames(content: string): ClassAnalysisResult {
     }
   }
 
-  // 2. Динамические паттерны
+  // 2. CVA функции - извлечение всех классов
+  const cvaClassesFromContent = extractCVAClasses(content);
+  for (const className of cvaClassesFromContent) {
+    staticClasses.add(className);
+  }
+
+  // 3. Динамические паттерны
   dynamicPatterns.push(...detectDynamicClasses(content));
 
   return {
@@ -442,4 +625,92 @@ async function loadCSSModule(modulePath: string): Promise<CSSModule | null> {
 function resolveModulePath(componentPath: string, importPath: string): string {
   const componentDir = path.dirname(componentPath);
   return path.resolve(componentDir, importPath);
+}
+
+/**
+ * Извлечение всех Tailwind классов из CVA функций
+ */
+function extractCVAClasses(content: string): string[] {
+  const classes = new Set<string>();
+
+  // Найти все определения cva с помощью простого поиска
+  const lines = content.split('\n');
+  let insideCva = false;
+  let braceCount = 0;
+  let cvaContent = '';
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    if (!line) continue;
+
+    // Начало CVA функции
+    if (line.includes('cva(') && !insideCva) {
+      insideCva = true;
+      braceCount = 0;
+      cvaContent = line;
+
+      // Подсчет скобок в первой строке
+      for (const char of line) {
+        if (char === '(') braceCount++;
+        if (char === ')') braceCount--;
+      }
+
+      if (braceCount === 0) {
+        // CVA закрыт в одной строке
+        extractClassesFromCvaContent(cvaContent, classes);
+        insideCva = false;
+        cvaContent = '';
+      }
+    }
+    // Продолжение CVA функции
+    else if (insideCva) {
+      cvaContent += '\n' + line;
+
+      // Подсчет скобок
+      for (const char of line) {
+        if (char === '(') braceCount++;
+        if (char === ')') braceCount--;
+      }
+
+      // CVA завершен
+      if (braceCount === 0) {
+        extractClassesFromCvaContent(cvaContent, classes);
+        insideCva = false;
+        cvaContent = '';
+      }
+    }
+  }
+
+  return Array.from(classes).sort();
+}
+
+/**
+ * Извлечение классов из полного содержимого CVA
+ */
+function extractClassesFromCvaContent(cvaContent: string, classes: Set<string>): void {
+  // Извлечение базовых классов из первого аргумента
+  const baseClassMatch = cvaContent.match(/cva\s*\(\s*["']([^"']+)["']/);
+  if (baseClassMatch && baseClassMatch[1]) {
+    const baseClasses = baseClassMatch[1].split(/\s+/).filter(Boolean);
+    for (const cls of baseClasses) {
+      classes.add(cls);
+    }
+  }
+
+  // Извлечение всех строк с классами
+  const stringPattern = /["'`]([^"'`]*(?:\s+[^"'`]*)*?)["'`]/g;
+  const matches = cvaContent.matchAll(stringPattern);
+
+  for (const match of matches) {
+    if (match[1] && match[1].trim()) {
+      const foundClasses = match[1].split(/\s+/).filter(Boolean);
+      for (const cls of foundClasses) {
+        // Исключаем ключи объектов и пустые строки
+        if (cls.length > 0 && !cls.match(/^(variant|size|default|variants|defaultVariants)$/)) {
+          classes.add(cls);
+        }
+      }
+    }
+  }
 }

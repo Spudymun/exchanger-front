@@ -1,8 +1,8 @@
 # RatesSection
 
-**File**: `e:/project/exchanger-front/apps/web/src/components/ratessection.tsx#RatesSection`  
+**File**: `e:/project/exchanger-front/apps/web/src/components/ratessection.tsx`  
 **Page**: `apps\web\app\[locale]\page.tsx`  
-**Generated**: 2025-07-22T19:33:15.825Z
+**Generated**: 2025-07-22T22:16:53.796Z
 
 ---
 
@@ -29,7 +29,7 @@
 
 ### ⚪ RatesSection
 
-**File**: `e:/project/exchanger-front/apps/web/src/components/ratessection.tsx#RatesSection`  
+**File**: `e:/project/exchanger-front/apps/web/src/components/ratessection.tsx`  
 **Export**: `RatesSection`
 
 #### 🎨 Tailwind Classes
@@ -61,6 +61,10 @@ text-muted-foreground
 text-primary
 w-4
 ```
+
+#### 📤 Style Sources
+
+- **Own styles**: 23 classes from component code
 
 #### 🧩 CSS Modules
 

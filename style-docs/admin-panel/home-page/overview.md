@@ -1,7 +1,7 @@
 # admin-panel - home-page
 
 **File**: `apps\admin-panel\app\page.tsx`  
-**Generated**: 2025-07-22T19:33:15.819Z
+**Generated**: 2025-07-22T22:16:53.789Z
 
 ## 📊 Overview
 
@@ -11,7 +11,7 @@
 
 ## 🧩 Top-level Components
 
-- **[AdminHeader](./adminheader.md)** (53 styles) - `e:/project/exchanger-front/apps/admin-panel/app/page.tsx`
+- **[AdminHeader](./adminheader.md)** (12 styles) - `e:/project/exchanger-front/apps/admin-panel/app/page.tsx`
 
 ---
 

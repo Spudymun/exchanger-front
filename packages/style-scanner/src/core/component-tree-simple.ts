@@ -12,6 +12,7 @@ import type {
 
 import { parseComponent } from '../utils/component-parser-simple.js';
 import { readFileSafely, fileExists } from '../utils/file-utils.js';
+import { extractStylesForLocalComponentWithUI } from '../utils/style-extractor.js';
 
 /**
  * Строитель дерева компонентов
@@ -129,10 +130,19 @@ export class ComponentTreeBuilder {
           );
         }
 
+        // ИСПРАВЛЕНИЕ: НЕ создаём виртуальные компоненты для обычных файлов
+        // Виртуальные компоненты создаются только в main-scanner.ts для UI компонентов
         for (const localCompName of parsedComponent.localComponents) {
-          // Создаем локальный компонент независимо от основного
+          // Извлекаем стили для локального компонента с учетом UI компонентов
+          const localStylesResult = await extractStylesForLocalComponentWithUI(
+            content,
+            localCompName,
+            this.options.uiComponentsCache || []
+          );
+
+          // Создаем локальный компонент с ОБЫЧНЫМ путём без # и с реальными стилями
           const localComponent: ComponentNode = {
-            filePath: `${cacheKey}#${localCompName}`, // Уникальный ID для локального компонента
+            filePath: cacheKey, // ИСПРАВЛЕНО: убираем # для обычных компонентов
             name: localCompName,
             imports: [],
             exports: [
@@ -143,12 +153,8 @@ export class ComponentTreeBuilder {
             ],
             children: [],
             depth: depth + 1,
-            errors: [],
-            styles: {
-              tailwind: [],
-              cssModules: [],
-              cssInJs: [],
-            },
+            errors: [...localStylesResult.errors], // Добавляем ошибки извлечения стилей
+            styles: localStylesResult.styles, // Используем реальные стили вместо пустых
           };
           componentNode.children.push(localComponent);
         }

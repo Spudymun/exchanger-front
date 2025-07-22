@@ -1,7 +1,7 @@
 # docs - home-page
 
 **File**: `apps\docs\app\page.tsx`  
-**Generated**: 2025-07-22T19:33:15.820Z
+**Generated**: 2025-07-22T22:16:53.790Z
 
 ## 📊 Overview
 
@@ -11,7 +11,7 @@
 
 ## 🧩 Top-level Components
 
-- **[Home](./home.md)** (3 styles) - `e:/project/exchanger-front/apps/docs/app/page.tsx`
+- **[Home](./home.md)** (65 styles) - `e:/project/exchanger-front/apps/docs/app/page.tsx`
 
 ---
 

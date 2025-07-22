@@ -1,8 +1,8 @@
 # FeaturesSection
 
-**File**: `e:/project/exchanger-front/apps/web/src/components/featuressection.tsx#FeaturesSection`  
+**File**: `e:/project/exchanger-front/apps/web/src/components/featuressection.tsx`  
 **Page**: `apps\web\app\[locale]\page.tsx`  
-**Generated**: 2025-07-22T19:33:15.824Z
+**Generated**: 2025-07-22T22:16:53.794Z
 
 ---
 
@@ -29,7 +29,7 @@
 
 ### ⚪ FeaturesSection
 
-**File**: `e:/project/exchanger-front/apps/web/src/components/featuressection.tsx#FeaturesSection`  
+**File**: `e:/project/exchanger-front/apps/web/src/components/featuressection.tsx`  
 **Export**: `FeaturesSection`
 
 #### 🎨 Tailwind Classes
@@ -59,6 +59,10 @@ text-foreground
 text-muted-foreground
 text-xl
 ```
+
+#### 📤 Style Sources
+
+- **Own styles**: 21 classes from component code
 
 #### 🧩 CSS Modules
 

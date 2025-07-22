@@ -17,7 +17,11 @@ import type {
 
 import { parseComponent } from '../utils/component-parser-simple.js';
 import { findFiles, readFileSafely } from '../utils/file-utils.js';
-import { extractStyles, extractStylesForLocalComponent } from '../utils/style-extractor.js';
+import {
+  extractStyles,
+  extractStylesForLocalComponent,
+  extractStylesForLocalComponentWithUI,
+} from '../utils/style-extractor.js';
 
 import { ComponentTreeBuilder } from './component-tree-simple.js';
 
@@ -27,7 +31,8 @@ import { ComponentTreeBuilder } from './component-tree-simple.js';
  */
 export class StyleScanner {
   private readonly config: ScannerConfig;
-  private readonly treeBuilder: ComponentTreeBuilder;
+  private treeBuilder: ComponentTreeBuilder; // Убираем readonly чтобы обновлять с UI cache
+  private uiComponentsCache: ComponentNode[] = []; // Cache for UI components
 
   constructor(config: Partial<ScannerConfig> = {}) {
     this.config = {
@@ -51,6 +56,9 @@ export class StyleScanner {
    */
   async scanProject(): Promise<ProjectScanResult> {
     const startTime = Date.now();
+
+    // eslint-disable-next-line no-console
+    console.log('🎨 DEBUG: scanProject() method started');
 
     if (this.config.verbose) {
       // eslint-disable-next-line no-console
@@ -86,7 +94,79 @@ export class StyleScanner {
     const projectLayouts = this.groupLayoutsByProject(layoutFiles);
     const projectUIComponents = this.groupUIComponentsByProject(uiFiles);
 
-    // 4. Сканировать страницы каждого проекта
+    // eslint-disable-next-line no-console
+    console.log(
+      `🎨 DEBUG: UI grouping result: ${projectUIComponents.size} projects, keys: ${Array.from(projectUIComponents.keys()).join(', ')}`
+    );
+
+    // 4. Сканировать UI-компоненты каждого проекта ПЕРВЫМИ (для кэша)
+    const uiComponents: UIScanResult[] = [];
+    this.uiComponentsCache = []; // Очищаем кэш перед сканированием
+
+    // eslint-disable-next-line no-console
+    console.log(`🎨 DEBUG: Starting UI scanning for ${projectUIComponents.size} projects`);
+
+    for (const [projectName, projectUIFiles] of projectUIComponents.entries()) {
+      // eslint-disable-next-line no-console
+      console.log(
+        `🎨 DEBUG: Scanning project ${projectName} with ${projectUIFiles.length} UI files`
+      );
+
+      if (this.config.verbose) {
+        // eslint-disable-next-line no-console
+        console.log(`\n🎨 Scanning UI components for project: ${projectName}`);
+      }
+
+      for (const uiFile of projectUIFiles) {
+        const uiResult = await this.scanUISafely(uiFile, projectName);
+        uiComponents.push(uiResult);
+
+        // DEBUG: Always log UI result regardless of verbose setting
+        // eslint-disable-next-line no-console
+        console.log(
+          `🎨 DEBUG: UI result for ${this.getRelativePath(uiFile)}: ${uiResult.components.length} components`
+        );
+
+        // Сохраняем в кэш для использования в extractStylesForLocalComponentWithUI
+        uiResult.components.forEach(component => {
+          this.uiComponentsCache.push(component);
+          // eslint-disable-next-line no-console
+          console.log(
+            `📦 DEBUG: Added to cache: ${component.name} (${component.styles.tailwind.length} tailwind classes)`
+          );
+        });
+      }
+    }
+
+    if (this.config.verbose) {
+      // eslint-disable-next-line no-console
+      console.log(`🎨 Total UI components in cache: ${this.uiComponentsCache.length}`);
+      if (this.uiComponentsCache.length > 0) {
+        // eslint-disable-next-line no-console
+        console.log(
+          `   🎨 Cache contents: ${this.uiComponentsCache.map(comp => comp.name).join(', ')}`
+        );
+      }
+    }
+
+    // ВАЖНО: Обновляем tree builder с UI компонентами для правильной агрегации стилей
+    if (this.uiComponentsCache.length > 0) {
+      this.treeBuilder = new ComponentTreeBuilder({
+        maxDepth: 10,
+        includeNodeModules: false,
+        verbose: this.config.verbose,
+        uiComponentsCache: this.uiComponentsCache, // Передаем UI кэш для style aggregation
+      });
+
+      if (this.config.verbose) {
+        // eslint-disable-next-line no-console
+        console.log(
+          `🎨 Updated tree builder with ${this.uiComponentsCache.length} UI components in cache`
+        );
+      }
+    }
+
+    // 5. Теперь сканируем страницы с доступными UI компонентами в кэше
     const pages: PageScanResult[] = [];
 
     for (const [projectName, projectPageFiles] of projectPages.entries()) {
@@ -101,33 +181,18 @@ export class StyleScanner {
       }
     }
 
-    // 5. Сканировать layout-компоненты каждого проекта
+    // 6. Сканировать layout-компоненты каждого проекта
     const layouts: LayoutScanResult[] = [];
 
     for (const [projectName, projectLayoutFiles] of projectLayouts.entries()) {
       if (this.config.verbose) {
         // eslint-disable-next-line no-console
-        console.log(`\n🏗️ Scanning layouts for project: ${projectName}`);
+        console.log(`\n�️ Scanning layouts for project: ${projectName}`);
       }
 
       for (const layoutFile of projectLayoutFiles) {
         const layoutResult = await this.scanLayoutSafely(layoutFile, projectName);
         layouts.push(layoutResult);
-      }
-    }
-
-    // 6. Сканировать UI-компоненты каждого проекта
-    const uiComponents: UIScanResult[] = [];
-
-    for (const [projectName, projectUIFiles] of projectUIComponents.entries()) {
-      if (this.config.verbose) {
-        // eslint-disable-next-line no-console
-        console.log(`\n🎨 Scanning UI components for project: ${projectName}`);
-      }
-
-      for (const uiFile of projectUIFiles) {
-        const uiResult = await this.scanUISafely(uiFile, projectName);
-        uiComponents.push(uiResult);
       }
     }
 
@@ -635,46 +700,37 @@ export class StyleScanner {
    * Обогащение дерева компонентов стилями
    */
   private async enrichWithStyles(componentNode: ComponentNode): Promise<ComponentNode> {
-    // ИСПРАВЛЕНИЕ: Проверяем если это локальный компонент (содержит #)
+    // ИСПРАВЛЕНИЕ: Проверяем если это виртуальный компонент (содержит #)
     if (componentNode.filePath.includes('#')) {
-      // Для локальных компонентов извлекаем стили из родительского файла + собственные
-      const [originalFilePath, componentName] = componentNode.filePath.split('#');
-      if (!originalFilePath || !componentName) {
-        return componentNode; // Возвращаем как есть если нет пути или имени
-      }
-
-      // Читаем содержимое файла и извлекаем стили из всего файла
-      const fileContent = (await readFileSafely(originalFilePath)) || '';
-      const { styles: fileStyles } = await extractStyles(originalFilePath, fileContent);
-
-      // Дополнительно извлекаем стили из конкретной функции компонента
-      const { styles: localStyles } = await extractStylesForLocalComponent(
-        fileContent,
-        componentName
-      );
-
-      // ИСПРАВЛЕНИЕ: Локальные компоненты получают ТОЛЬКО свои стили, не стили всего файла
-      const componentStyles = {
-        tailwind: localStyles.tailwind,
-        cssModules: localStyles.cssModules,
-        cssInJs: localStyles.cssInJs,
-        dynamicClasses: localStyles.dynamicClasses || [],
-      };
-
-      return {
-        ...componentNode,
-        styles: componentStyles,
-        children: [], // Локальные компоненты не имеют детей
-      };
+      // Для виртуальных компонентов просто возвращаем как есть - они уже имеют стили
+      return componentNode;
     }
 
-    // Обычная логика для импортированных компонентов
+    // Читаем содержимое файла
     const componentContent = (await readFileSafely(componentNode.filePath)) || '';
-    const { styles } = await extractStyles(componentNode.filePath, componentContent);
+
+    // ИСПРАВЛЕННАЯ ЛОГИКА: Определяем является ли это локальным компонентом
+    // Парсим файл чтобы узнать сколько в нем компонентов
+    const parsed = parseComponent(componentContent);
+    const isMultiComponentFile = parsed.localComponents && parsed.localComponents.length > 1;
+
+    let styles;
+    if (isMultiComponentFile) {
+      // Для локальных компонентов в многокомпонентном файле используем функцию с UI поддержкой
+      const result = await extractStylesForLocalComponentWithUI(
+        componentContent,
+        componentNode.name,
+        this.uiComponentsCache // передаем кэш UI компонентов
+      );
+      styles = result.styles;
+    } else {
+      // Для обычных компонентов используем стандартную функцию
+      const result = await extractStyles(componentNode.filePath, componentContent);
+      styles = result.styles;
+    }
 
     // Рекурсивно обрабатываем дочерние компоненты
     const enrichedChildren: ComponentNode[] = [];
-
     for (const child of componentNode.children) {
       const enrichedChild = await this.enrichWithStyles(child);
       enrichedChildren.push(enrichedChild);
@@ -937,13 +993,56 @@ export class StyleScanner {
       throw new Error(`Failed to build component tree for UI: ${uiFile}`);
     }
 
+    // eslint-disable-next-line no-console
+    console.log(
+      `🎨 DEBUG: Before enrichment - ${componentName} has ${componentTree.styles.tailwind.length} tailwind classes`
+    );
+
     // Обогащаем стилями
     const enrichedTree = await this.enrichWithStyles(componentTree);
+
+    // eslint-disable-next-line no-console
+    console.log(
+      `🎨 DEBUG: After enrichment - ${enrichedTree.name} has ${enrichedTree.styles.tailwind.length} tailwind classes`
+    );
+
+    // Для multi-component файлов создаём отдельные узлы для каждого компонента
+    const components: ComponentNode[] = [enrichedTree];
+
+    // ВАЖНО: Виртуальные компоненты создаём ТОЛЬКО для UI компонентов (packages/ui)
+    const isUIComponent = uiFile.includes('packages/ui/');
+
+    if (isUIComponent && parsed.localComponents && parsed.localComponents.length > 1) {
+      // Если найдено несколько компонентов В UI ПАКЕТЕ, создаём узлы для каждого
+      for (const localComponentName of parsed.localComponents) {
+        if (localComponentName !== componentName) {
+          // Извлекаем стили конкретного локального UI компонента
+          const { styles } = await extractStylesForLocalComponentWithUI(
+            content,
+            localComponentName,
+            this.uiComponentsCache
+          );
+
+          // Создаём виртуальный узел для каждого локального UI компонента
+          const virtualNode: ComponentNode = {
+            name: localComponentName,
+            filePath: `${uiFile}#${localComponentName}`,
+            styles,
+            children: [],
+            depth: 0,
+            imports: [],
+            exports: [{ name: localComponentName, type: 'named' }],
+            errors: [],
+          };
+          components.push(virtualNode);
+        }
+      }
+    }
 
     return {
       uiPath: uiFile,
       componentType,
-      components: [enrichedTree],
+      components,
       errors: [],
     };
   }
@@ -1015,6 +1114,10 @@ export class StyleScanner {
  * Основная функция для использования в CLI
  */
 export async function scanStyles(config: Partial<ScannerConfig> = {}): Promise<ProjectScanResult> {
+  // eslint-disable-next-line no-console
+  console.log('🎨 DEBUG: scanStyles() function called');
   const scanner = new StyleScanner(config);
+  // eslint-disable-next-line no-console
+  console.log('🎨 DEBUG: About to call scanner.scanProject()');
   return scanner.scanProject();
 }

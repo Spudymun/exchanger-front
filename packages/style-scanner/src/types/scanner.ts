@@ -101,6 +101,7 @@ export interface ComponentTreeOptions {
   readonly maxDepth: number;
   readonly includeNodeModules: boolean;
   readonly verbose: boolean;
+  readonly uiComponentsCache?: ComponentNode[]; // UI components for style aggregation
 }
 
 /**

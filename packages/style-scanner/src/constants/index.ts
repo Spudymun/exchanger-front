@@ -31,6 +31,12 @@ export const FILE_PATTERNS = {
     'packages/ui/src/components/ui/textarea.{tsx,jsx}', // Textarea
     'packages/ui/src/components/ui/card.{tsx,jsx}', // Card
     'packages/ui/src/components/ui/dialog.{tsx,jsx}', // Dialog
+    'packages/ui/src/components/ui/form.{tsx,jsx}', // Form components (FormField, FormLabel, FormControl, FormMessage)
+    'packages/ui/src/components/ui/label.{tsx,jsx}', // Label
+    'packages/ui/src/components/ui/dropdown-menu.{tsx,jsx}', // DropdownMenu
+    'packages/ui/src/components/ui/spinner.{tsx,jsx}', // Spinner
+    'packages/ui/src/components/ui/table.{tsx,jsx}', // Table
+    'packages/ui/src/components/ui/notification.{tsx,jsx}', // Notification
     'packages/ui/src/components/header-compound.{tsx,jsx}', // Header
     'packages/ui/src/components/footer-compound.{tsx,jsx}', // Footer
     'packages/ui/src/components/theme-toggle.{tsx,jsx}', // ThemeToggle
@@ -68,6 +74,7 @@ export const CLASSNAME_PATTERNS = {
   SIMPLE: /className\s*=\s*["']([^"']+)["']/g,
   TEMPLATE: /className\s*=\s*`([^`]+)`/g,
   OBJECT: /className\s*=\s*\{([^}]+)\}/g,
+  CVA: /cva\s*\(\s*["']([^"']+)["']/g,
 } as const;
 
 /**
