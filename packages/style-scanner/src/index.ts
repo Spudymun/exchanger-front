@@ -8,5 +8,6 @@ export * from './constants/index.js';
 export * from './utils/file-utils.js';
 export * from './utils/component-parser-simple.js';
 export * from './utils/style-extractor.js';
+export * from './utils/markdown-generator.js';
 export * from './core/component-tree-simple.js';
 export * from './core/main-scanner.js';

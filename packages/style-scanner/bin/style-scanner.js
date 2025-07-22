@@ -46,6 +46,7 @@ try {
         try {
           // Динамический импорт модулей
           const { scanStyles } = await import('../dist/core/main-scanner.js');
+          const { generateMarkdownDocs } = await import('../dist/utils/markdown-generator.js');
 
           if (!options.quiet) {
             console.log(chalk.blue('🔍 Starting comprehensive style scanning...'));
@@ -58,6 +59,18 @@ try {
             verbose: options.verbose && !options.quiet,
             dryRun: options.dryRun,
           });
+
+          // Генерация Markdown документации если не dry-run
+          if (!options.dryRun) {
+            if (!options.quiet) {
+              console.log(chalk.blue('📝 Generating Markdown documentation...'));
+            }
+
+            await generateMarkdownDocs(scanResult, {
+              outputDir: options.out,
+              verbose: options.verbose && !options.quiet,
+            });
+          }
 
           // Вывод результатов
           if (options.quiet) {

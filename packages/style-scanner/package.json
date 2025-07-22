@@ -18,7 +18,8 @@
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch --passWithNoTests",
     "dev:cli": "npm run build && node bin/style-scanner.js",
-    "test:cli": "npm run build && node bin/style-scanner.js scan --help"
+    "test:cli": "npm run build && node bin/style-scanner.js scan --help",
+    "scan-styles": "npm run build && cd ../../ && node packages/style-scanner/bin/style-scanner.js scan --out style-docs --verbose"
   },
   "dependencies": {
     "typescript": "^5.0.0",

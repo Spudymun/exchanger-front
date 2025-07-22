@@ -59,6 +59,16 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "scan-styles": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "apps/**/app/**/*.{tsx,jsx}",
+        "apps/**/src/**/*.{tsx,jsx}",
+        "packages/style-scanner/**"
+      ],
+      "outputs": ["style-docs/**"],
+      "cache": false
     }
   }
 }
