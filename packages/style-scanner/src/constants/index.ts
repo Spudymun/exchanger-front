@@ -1,46 +1,26 @@
 /**
  * Style Scanner Constants
  * Централизованные константы в соответствии с архитектурой проекта
+ * Теперь использует конфигурируемые паттерны вместо hardcoded значений
  */
 
+import { generateFilePatterns, DEFAULT_PROJECT_STRUCTURE } from '../config/default-patterns.js';
+import {
+  DEPTH_LIMITS,
+  TIMEOUT_CONFIG,
+  PERFORMANCE_CONFIG,
+  COMPONENT_HEURISTICS,
+} from '../config/performance.js';
+
 /**
- * Паттерны поиска файлов
+ * Паттерны поиска файлов (конфигурируемые)
  */
-export const FILE_PATTERNS = {
-  PAGES: [
-    'apps/*/app/**/page.{tsx,jsx}', // apps/web/app/[locale]/page.tsx
-    'apps/*/src/app/**/page.{tsx,jsx}', // apps/web/src/app/... (если есть)
-  ],
-  LAYOUTS: [
-    'apps/*/app/**/layout.{tsx,jsx}', // layout.tsx файлы
-    'apps/*/src/app/**/layout.{tsx,jsx}', // альтернативная структура
-  ],
-  LAYOUT_COMPONENTS: [
-    'apps/*/src/components/app-layout.{tsx,jsx}', // AppLayout компоненты
-    'apps/*/src/components/app-header.{tsx,jsx}', // AppHeader компоненты
-    'apps/*/src/components/app-footer.{tsx,jsx}', // AppFooter компоненты
-    'apps/*/src/components/**/header*.{tsx,jsx}', // Header компоненты
-    'apps/*/src/components/**/footer*.{tsx,jsx}', // Footer компоненты
-    'apps/*/src/components/**/navigation*.{tsx,jsx}', // Navigation компоненты
-    'apps/*/src/components/**/sidebar*.{tsx,jsx}', // Sidebar компоненты
-  ],
-  UI_COMPONENTS: [
-    'packages/ui/src/components/ui/button.{tsx,jsx}', // Button
-    'packages/ui/src/components/ui/input.{tsx,jsx}', // Input
-    'packages/ui/src/components/ui/select.{tsx,jsx}', // Select
-    'packages/ui/src/components/ui/textarea.{tsx,jsx}', // Textarea
-    'packages/ui/src/components/ui/card.{tsx,jsx}', // Card
-    'packages/ui/src/components/ui/dialog.{tsx,jsx}', // Dialog
-    'packages/ui/src/components/ui/form.{tsx,jsx}', // Form components (FormField, FormLabel, FormControl, FormMessage)
-    'packages/ui/src/components/ui/label.{tsx,jsx}', // Label
-    'packages/ui/src/components/ui/dropdown-menu.{tsx,jsx}', // DropdownMenu
-    'packages/ui/src/components/ui/spinner.{tsx,jsx}', // Spinner
-    'packages/ui/src/components/ui/table.{tsx,jsx}', // Table
-    'packages/ui/src/components/ui/notification.{tsx,jsx}', // Notification
-    'packages/ui/src/components/header-compound.{tsx,jsx}', // Header
-    'packages/ui/src/components/footer-compound.{tsx,jsx}', // Footer
-    'packages/ui/src/components/theme-toggle.{tsx,jsx}', // ThemeToggle
-  ],
+export const FILE_PATTERNS = generateFilePatterns(DEFAULT_PROJECT_STRUCTURE);
+
+/**
+ * Дополнительные паттерны файлов
+ */
+export const ADDITIONAL_PATTERNS = {
   COMPONENTS: '**/*.{tsx,jsx}',
   CSS_MODULES: '**/*.module.{css,scss}',
   STYLE_FILES: '**/*.{css,scss,sass}',
@@ -78,23 +58,23 @@ export const CLASSNAME_PATTERNS = {
 } as const;
 
 /**
- * Конфигурация по умолчанию
+ * Конфигурация по умолчанию (теперь с обоснованными значениями)
  */
 export const DEFAULT_CONFIG = {
   OUTPUT_DIR: 'docs/styles',
   VERBOSE: false,
   DRY_RUN: false,
-  MAX_DEPTH: 5, // Уменьшили с 10 до 5 для предотвращения зависания
-  TIMEOUT: 30000,
+  MAX_DEPTH: DEPTH_LIMITS.MAX_COMPONENT_DEPTH, // Из конфигурации производительности
+  TIMEOUT: TIMEOUT_CONFIG.FULL_SCAN, // Из конфигурации производительности
 } as const;
 
 /**
- * Константы таймаутов для обработки сложных страниц
+ * Константы таймаутов (теперь из конфигурации)
  */
 export const SCAN_TIMEOUTS = {
-  FULL_SCAN: 30000, // 30 секунд - полное сканирование
-  FAST_SCAN: 20000, // 20 секунд - быстрое сканирование
-  MINIMAL_SCAN: 15000, // 15 секунд - минимальное сканирование
+  FULL_SCAN: TIMEOUT_CONFIG.FULL_SCAN,
+  FAST_SCAN: TIMEOUT_CONFIG.FAST_SCAN,
+  MINIMAL_SCAN: TIMEOUT_CONFIG.MINIMAL_SCAN,
 } as const;
 
 /**

@@ -4,11 +4,13 @@
 import { resolve, dirname, join } from 'node:path';
 
 import type {
-  ComponentNode,
+  ComponentTreeOptions,
+  ComponentNodeBuilder,
   ImportInfo,
   ExportInfo,
-  ComponentTreeOptions,
+  ScanError,
 } from '../types/scanner.js';
+import { ComponentNode } from '../types/scanner.js';
 
 import { parseComponent } from '../utils/component-parser-simple.js';
 import { readFileSafely, fileExists } from '../utils/file-utils.js';
@@ -106,19 +108,19 @@ export class ComponentTreeBuilder {
 
       const parsedComponent = await parseComponent(content);
 
-      const componentNode: ComponentNode = {
-        filePath: cacheKey,
-        name: parsedComponent.name || this.extractComponentName(filePath),
-        imports: this.convertToImportInfo(parsedComponent.imports),
-        exports: this.convertToExportInfo(parsedComponent.exports),
-        children: [],
-        depth,
-        errors: parsedComponent.errors,
-        styles: {
-          tailwind: [],
-          cssModules: [],
-          cssInJs: [],
-        },
+      // Используем builder pattern для создания componentNode
+      const componentBuilder = ComponentNode.builder(
+        parsedComponent.name || this.extractComponentName(filePath),
+        cacheKey
+      );
+      componentBuilder.imports = this.convertToImportInfo(parsedComponent.imports);
+      componentBuilder.exports = this.convertToExportInfo(parsedComponent.exports);
+      componentBuilder.depth = depth;
+      componentBuilder.errors = [...parsedComponent.errors];
+      componentBuilder.styles = {
+        tailwind: [],
+        cssModules: [],
+        cssInJs: [],
       };
 
       // ПРАВИЛЬНАЯ ОБРАБОТКА ЛОКАЛЬНЫХ КОМПОНЕНТОВ
@@ -140,25 +142,25 @@ export class ComponentTreeBuilder {
             this.options.uiComponentsCache || []
           );
 
-          // Создаем локальный компонент с ОБЫЧНЫМ путём без # и с реальными стилями
-          const localComponent: ComponentNode = {
-            filePath: cacheKey, // ИСПРАВЛЕНО: убираем # для обычных компонентов
-            name: localCompName,
-            imports: [],
-            exports: [
-              {
-                name: localCompName,
-                type: 'named', // Локальные компоненты как named exports
-              },
-            ],
-            children: [],
-            depth: depth + 1,
-            errors: [...localStylesResult.errors], // Добавляем ошибки извлечения стилей
-            styles: localStylesResult.styles, // Используем реальные стили вместо пустых
-          };
-          componentNode.children.push(localComponent);
+          // Создаем локальный компонент с использованием builder
+          const localComponentBuilder = ComponentNode.builder(localCompName, cacheKey);
+          localComponentBuilder.exports = [
+            {
+              name: localCompName,
+              type: 'named', // Локальные компоненты как named exports
+            },
+          ];
+          localComponentBuilder.depth = depth + 1;
+          localComponentBuilder.errors = [...localStylesResult.errors]; // Добавляем ошибки извлечения стилей
+          localComponentBuilder.styles = localStylesResult.styles; // Используем реальные стили вместо пустых
+
+          const localComponent = ComponentNode.build(localComponentBuilder);
+          componentBuilder.children.push(localComponent);
         }
       }
+
+      // Создаем финальный immutable объект
+      const componentNode = ComponentNode.build(componentBuilder);
 
       // Сохранение в кэш
       this.componentCache.set(cacheKey, componentNode);
@@ -208,6 +210,7 @@ export class ComponentTreeBuilder {
 
   /**
    * Разрешение импортов и построение дочерних узлов
+   * ВРЕМЕННО: использует мутации для production readiness, будет рефакторен в ЭТАПЕ 2
    */
   private async resolveImports(component: ComponentNode): Promise<void> {
     // Дополнительная проверка глубины
@@ -239,9 +242,9 @@ export class ComponentTreeBuilder {
       }
     }
 
-    // Предупреждение если импортов слишком много
+    // ВРЕМЕННО: мутируем для добавления ошибки - будет исправлено в ЭТАПЕ 2
     if (component.imports.length > MAX_IMPORTS) {
-      component.errors.push({
+      (component.errors as ScanError[]).push({
         type: 'import_error',
         message: `Too many imports (${component.imports.length}), processing only first ${MAX_IMPORTS}`,
         filePath: component.filePath,
@@ -291,16 +294,16 @@ export class ComponentTreeBuilder {
 
       const childComponent = await this.parseComponent(resolvedPath, component.depth + 1);
 
-      // Добавляем только НОВЫЕ компоненты
-      component.children.push(childComponent);
+      // ВРЕМЕННО: мутируем для добавления ребенка - будет исправлено в ЭТАПЕ 2
+      (component.children as ComponentNode[]).push(childComponent);
 
       // Рекурсивно разрешаем импорты дочерних компонентов
       if (component.depth < this.options.maxDepth - 1) {
         await this.resolveImports(childComponent);
       }
     } catch (error) {
-      // Добавляем ошибку
-      component.errors.push({
+      // ВРЕМЕННО: мутируем для добавления ошибки - будет исправлено в ЭТАПЕ 2
+      (component.errors as ScanError[]).push({
         type: 'import_error',
         message: `Failed to resolve import ${importInfo.source}: ${error}`,
         filePath: component.filePath,
@@ -387,26 +390,22 @@ export class ComponentTreeBuilder {
    * Создание узла компонента с ошибкой
    */
   private createErrorComponent(filePath: string, message: string): ComponentNode {
-    return {
-      filePath,
-      name: this.extractComponentName(filePath),
-      imports: [],
-      exports: [],
-      children: [],
-      depth: 0,
-      errors: [
-        {
-          type: 'parse_error',
-          message,
-          filePath,
-        },
-      ],
-      styles: {
-        tailwind: [],
-        cssModules: [],
-        cssInJs: [],
+    const errorBuilder = ComponentNode.builder(this.extractComponentName(filePath), filePath);
+    errorBuilder.depth = 0;
+    errorBuilder.errors = [
+      {
+        type: 'parse_error',
+        message,
+        filePath,
       },
+    ];
+    errorBuilder.styles = {
+      tailwind: [],
+      cssModules: [],
+      cssInJs: [],
     };
+
+    return ComponentNode.build(errorBuilder);
   }
 
   /**

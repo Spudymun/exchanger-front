@@ -470,7 +470,7 @@ ${lines.join('\n')}`;
       const result: ComponentNode[] = [];
       for (const comp of comps) {
         result.push(comp);
-        result.push(...flattenComponents(comp.children));
+        result.push(...flattenComponents([...comp.children])); // Создаем mutable копию для обработки
       }
       return result;
     };
@@ -535,7 +535,7 @@ ${cssModulesSection}`;
       const result: ComponentNode[] = [];
       for (const comp of comps) {
         result.push(comp);
-        result.push(...flattenComponents(comp.children));
+        result.push(...flattenComponents([...comp.children])); // Создаем mutable копию для обработки
       }
       return result;
     };

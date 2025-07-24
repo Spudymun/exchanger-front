@@ -5,6 +5,8 @@
 
 export * from './types/scanner.js';
 export * from './constants/index.js';
+export * from './config/default-patterns.js';
+export * from './config/performance.js';
 export * from './utils/file-utils.js';
 export * from './utils/component-parser-simple.js';
 export * from './utils/style-extractor.js';

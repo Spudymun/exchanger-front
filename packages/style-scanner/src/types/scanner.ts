@@ -24,17 +24,103 @@ export interface PageScanResult {
 }
 
 /**
- * Узел дерева компонентов
+ * Узел дерева компонентов (immutable)
  */
 export interface ComponentNode {
   readonly name: string;
   readonly filePath: string;
   readonly styles: ComponentStyles;
-  children: ComponentNode[]; // Мутабельный для построения дерева
+  readonly children: readonly ComponentNode[]; // Теперь readonly
   readonly depth: number;
   readonly imports: readonly ImportInfo[];
   readonly exports: readonly ExportInfo[];
+  readonly errors: readonly ScanError[]; // Теперь readonly
+}
+
+/**
+ * Билдер для построения ComponentNode (мутабельный во время сборки)
+ */
+export interface ComponentNodeBuilder {
+  name: string;
+  filePath: string;
+  styles: ComponentStyles;
+  children: ComponentNode[]; // Мутабельный для построения
+  depth: number;
+  imports: ImportInfo[];
+  exports: ExportInfo[];
   errors: ScanError[]; // Мутабельный для добавления ошибок
+}
+
+/**
+ * Функции для работы с ComponentNode
+ */
+export namespace ComponentNode {
+  /**
+   * Создает новый билдер для ComponentNode
+   */
+  export function builder(name: string, filePath: string): ComponentNodeBuilder {
+    return {
+      name,
+      filePath,
+      styles: {
+        tailwind: [],
+        cssModules: [],
+        cssInJs: [],
+        dynamicClasses: [],
+      },
+      children: [],
+      depth: 0,
+      imports: [],
+      exports: [],
+      errors: [],
+    };
+  }
+
+  /**
+   * Преобразует билдер в immutable ComponentNode
+   */
+  export function build(builder: ComponentNodeBuilder): ComponentNode {
+    return {
+      name: builder.name,
+      filePath: builder.filePath,
+      styles: builder.styles,
+      children: [...builder.children], // Создаем immutable копию
+      depth: builder.depth,
+      imports: [...builder.imports], // Создаем immutable копию
+      exports: [...builder.exports], // Создаем immutable копию
+      errors: [...builder.errors], // Создаем immutable копию
+    };
+  }
+
+  /**
+   * Добавляет ошибку к ComponentNode (возвращает новый объект)
+   */
+  export function addError(node: ComponentNode, error: ScanError): ComponentNode {
+    return {
+      ...node,
+      errors: [...node.errors, error],
+    };
+  }
+
+  /**
+   * Добавляет дочерний компонент (возвращает новый объект)
+   */
+  export function addChild(node: ComponentNode, child: ComponentNode): ComponentNode {
+    return {
+      ...node,
+      children: [...node.children, child],
+    };
+  }
+
+  /**
+   * Обновляет стили компонента (возвращает новый объект)
+   */
+  export function updateStyles(node: ComponentNode, styles: ComponentStyles): ComponentNode {
+    return {
+      ...node,
+      styles,
+    };
+  }
 }
 
 /**
