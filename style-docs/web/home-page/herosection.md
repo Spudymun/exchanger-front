@@ -2,18 +2,18 @@
 
 **File**: `e:/project/exchanger-front/apps/web/src/components/herosection.tsx`  
 **Page**: `apps\web\app\[locale]\page.tsx`  
-**Generated**: 2025-07-24T15:00:26.440Z
+**Generated**: 2025-07-25T13:38:40.932Z
 
 ---
 
 ## 📋 Component Summary
 
-- **Direct Children**: 2
-- **Total Nested Components**: 18
-- **Max Nesting Depth**: 4 levels
-- **Dynamic Classes Detected**: ✅
-- **Named Imports**: { HeroExchangeForm, type HeroExchangeFormData }
-- **Named Exports**: HeroSection
+* **Direct Children**: 2
+* **Total Nested Components**: 18
+* **Max Nesting Depth**: 4 levels
+* **Dynamic Classes Detected**: ✅
+* **Named Imports**: { HeroExchangeForm, type HeroExchangeFormData }
+* **Named Exports**: HeroSection
 
 ---
 
@@ -51,9 +51,7 @@
 **Export**: `HeroSection`
 
 #### 🎨 Tailwind Classes
-
 **Static (24)**:
-
 ```css
 font-bold
 leading-relaxed
@@ -81,16 +79,15 @@ text-lg
 text-muted-foreground
 ```
 
-#### 📤 Style Sources
 
+#### 📤 Style Sources
 - **Own styles**: 24 classes from component code
 
-#### 🧩 CSS Modules
 
+#### 🧩 CSS Modules
 _None_
 
 #### 🧬 CSS-in-JS
-
 _None_
 
 ### ⚪ HeroSection
@@ -99,9 +96,7 @@ _None_
 **Export**: `HeroSection`
 
 #### 🎨 Tailwind Classes
-
 **Static (24)**:
-
 ```css
 font-bold
 leading-relaxed
@@ -129,16 +124,15 @@ text-lg
 text-muted-foreground
 ```
 
-#### 📤 Style Sources
 
+#### 📤 Style Sources
 - **Own styles**: 24 classes from component code
 
-#### 🧩 CSS Modules
 
+#### 🧩 CSS Modules
 _None_
 
 #### 🧬 CSS-in-JS
-
 _None_
 
 ### ⚪ HeroExchangeForm
@@ -147,20 +141,18 @@ _None_
 **Export**: `HeroExchangeForm`
 
 #### 🎨 Tailwind Classes
-
 **Static (0)**:
 _None_
 
-#### 📤 Style Sources
 
+#### 📤 Style Sources
 - **Own styles**: 0 classes from component code
 
-#### 🧩 CSS Modules
 
+#### 🧩 CSS Modules
 _None_
 
 #### 🧬 CSS-in-JS
-
 _None_
 
 ### ⚪ ExchangeFormCards
@@ -169,20 +161,18 @@ _None_
 **Export**: `ExchangeFormCards`
 
 #### 🎨 Tailwind Classes
-
 **Static (0)**:
 _None_
 
-#### 📤 Style Sources
 
+#### 📤 Style Sources
 - **Own styles**: 0 classes from component code
 
-#### 🧩 CSS Modules
 
+#### 🧩 CSS Modules
 _None_
 
 #### 🧬 CSS-in-JS
-
 _None_
 
 ### ⚪ ExchangeFormAction
@@ -191,9 +181,7 @@ _None_
 **Export**: `ExchangeFormAction`
 
 #### 🎨 Tailwind Classes
-
 **Static (72)**:
-
 ```css
 active:scale-[0.98]
 duration-200
@@ -270,23 +258,21 @@ whitespace-nowrap
 ```
 
 **Dynamic**:
-
 ```tsx
 cn(buttonVariants({ variant, size, className })
 ```
 
-#### 📤 Style Sources
 
+#### 📤 Style Sources
 - **Own styles**: 7 classes from component code
 - **Button component**: 65 classes inherited from CVA variants
 - **Total**: 7 own + 65 inherited = 72 classes
 
-#### 🧩 CSS Modules
 
+#### 🧩 CSS Modules
 _None_
 
 #### 🧬 CSS-in-JS
-
 _None_
 
 ### ⚪ HeroExchangeForm
@@ -295,29 +281,26 @@ _None_
 **Export**: `HeroExchangeForm`
 
 #### 🎨 Tailwind Classes
-
 **Static (2)**:
-
 ```css
-sm: space-y-8 space-y-6;
+sm:space-y-8
+space-y-6
 ```
 
 **Dynamic**:
-
 ```tsx
-cn('w-full max-w-full overflow-hidden', className);
+cn('w-full max-w-full overflow-hidden', className)
 ```
 
-#### 📤 Style Sources
 
+#### 📤 Style Sources
 - **Own styles**: 2 classes from component code
 
-#### 🧩 CSS Modules
 
+#### 🧩 CSS Modules
 _None_
 
 #### 🧬 CSS-in-JS
-
 _None_
 
 ### ⚪ ExchangeBenefits
@@ -326,9 +309,7 @@ _None_
 **Export**: `ExchangeBenefits`
 
 #### 🎨 Tailwind Classes
-
 **Static (12)**:
-
 ```css
 flex
 flex-wrap
@@ -344,16 +325,15 @@ text-sm
 text-xs
 ```
 
-#### 📤 Style Sources
 
+#### 📤 Style Sources
 - **Own styles**: 12 classes from component code
 
-#### 🧩 CSS Modules
 
+#### 🧩 CSS Modules
 _None_
 
 #### 🧬 CSS-in-JS
-
 _None_
 
 ### ⚪ ExchangeBenefits
@@ -362,9 +342,7 @@ _None_
 **Export**: `ExchangeBenefits`
 
 #### 🎨 Tailwind Classes
-
 **Static (12)**:
-
 ```css
 flex
 flex-wrap
@@ -380,16 +358,15 @@ text-sm
 text-xs
 ```
 
-#### 📤 Style Sources
 
+#### 📤 Style Sources
 - **Own styles**: 12 classes from component code
 
-#### 🧩 CSS Modules
 
+#### 🧩 CSS Modules
 _None_
 
 #### 🧬 CSS-in-JS
-
 _None_
 
 ### ⚪ FiatCurrencySelector
@@ -398,23 +375,20 @@ _None_
 **Export**: `FiatCurrencySelector`
 
 #### 🎨 Tailwind Classes
-
 **Static (1)**:
-
 ```css
 w-full
 ```
 
-#### 📤 Style Sources
 
+#### 📤 Style Sources
 - **Own styles**: 1 classes from component code
 
-#### 🧩 CSS Modules
 
+#### 🧩 CSS Modules
 _None_
 
 #### 🧬 CSS-in-JS
-
 _None_
 
 ### ⚪ FiatCurrencySelector
@@ -423,23 +397,20 @@ _None_
 **Export**: `FiatCurrencySelector`
 
 #### 🎨 Tailwind Classes
-
 **Static (1)**:
-
 ```css
 w-full
 ```
 
-#### 📤 Style Sources
 
+#### 📤 Style Sources
 - **Own styles**: 1 classes from component code
 
-#### 🧩 CSS Modules
 
+#### 🧩 CSS Modules
 _None_
 
 #### 🧬 CSS-in-JS
-
 _None_
 
 ### ⚪ BankSelector
@@ -448,23 +419,20 @@ _None_
 **Export**: `BankSelector`
 
 #### 🎨 Tailwind Classes
-
 **Static (1)**:
-
 ```css
 w-full
 ```
 
-#### 📤 Style Sources
 
+#### 📤 Style Sources
 - **Own styles**: 1 classes from component code
 
-#### 🧩 CSS Modules
 
+#### 🧩 CSS Modules
 _None_
 
 #### 🧬 CSS-in-JS
-
 _None_
 
 ### ⚪ ReceivingInfo
@@ -473,25 +441,22 @@ _None_
 **Export**: `ReceivingInfo`
 
 #### 🎨 Tailwind Classes
-
 **Static (3)**:
-
 ```css
 space-y-1
 text-muted-foreground
 text-sm
 ```
 
-#### 📤 Style Sources
 
+#### 📤 Style Sources
 - **Own styles**: 3 classes from component code
 
-#### 🧩 CSS Modules
 
+#### 🧩 CSS Modules
 _None_
 
 #### 🧬 CSS-in-JS
-
 _None_
 
 ### ⚪ ReceivingCard
@@ -500,9 +465,7 @@ _None_
 **Export**: `ReceivingCard`
 
 #### 🎨 Tailwind Classes
-
 **Static (24)**:
-
 ```css
 bg-card
 bg-muted/50
@@ -531,21 +494,22 @@ transition-none
 ```
 
 **Dynamic**:
-
 ```tsx
-cn('bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm', className);
+cn(
+        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        className
+      )
 ```
 
-#### 📤 Style Sources
 
+#### 📤 Style Sources
 - **Own styles**: 24 classes from component code
 
-#### 🧩 CSS Modules
 
+#### 🧩 CSS Modules
 _None_
 
 #### 🧬 CSS-in-JS
-
 _None_
 
 ### ⚪ TokenStandardSelector
@@ -554,24 +518,21 @@ _None_
 **Export**: `TokenStandardSelector`
 
 #### 🎨 Tailwind Classes
-
 **Static (2)**:
-
 ```css
 h-[76px]
 w-full
 ```
 
-#### 📤 Style Sources
 
+#### 📤 Style Sources
 - **Own styles**: 2 classes from component code
 
-#### 🧩 CSS Modules
 
+#### 🧩 CSS Modules
 _None_
 
 #### 🧬 CSS-in-JS
-
 _None_
 
 ### ⚪ TokenStandardSelector
@@ -580,24 +541,21 @@ _None_
 **Export**: `TokenStandardSelector`
 
 #### 🎨 Tailwind Classes
-
 **Static (2)**:
-
 ```css
 h-[76px]
 w-full
 ```
 
-#### 📤 Style Sources
 
+#### 📤 Style Sources
 - **Own styles**: 2 classes from component code
 
-#### 🧩 CSS Modules
 
+#### 🧩 CSS Modules
 _None_
 
 #### 🧬 CSS-in-JS
-
 _None_
 
 ### ⚪ AmountInput
@@ -606,20 +564,18 @@ _None_
 **Export**: `AmountInput`
 
 #### 🎨 Tailwind Classes
-
 **Static (0)**:
 _None_
 
-#### 📤 Style Sources
 
+#### 📤 Style Sources
 - **Own styles**: 0 classes from component code
 
-#### 🧩 CSS Modules
 
+#### 🧩 CSS Modules
 _None_
 
 #### 🧬 CSS-in-JS
-
 _None_
 
 ### ⚪ CurrencySelector
@@ -628,23 +584,20 @@ _None_
 **Export**: `CurrencySelector`
 
 #### 🎨 Tailwind Classes
-
 **Static (1)**:
-
 ```css
 w-full
 ```
 
-#### 📤 Style Sources
 
+#### 📤 Style Sources
 - **Own styles**: 1 classes from component code
 
-#### 🧩 CSS Modules
 
+#### 🧩 CSS Modules
 _None_
 
 #### 🧬 CSS-in-JS
-
 _None_
 
 ### ⚪ SendingInfo
@@ -653,25 +606,22 @@ _None_
 **Export**: `SendingInfo`
 
 #### 🎨 Tailwind Classes
-
 **Static (3)**:
-
 ```css
 space-y-1
 text-muted-foreground
 text-sm
 ```
 
-#### 📤 Style Sources
 
+#### 📤 Style Sources
 - **Own styles**: 3 classes from component code
 
-#### 🧩 CSS Modules
 
+#### 🧩 CSS Modules
 _None_
 
 #### 🧬 CSS-in-JS
-
 _None_
 
 ### ⚪ SendingCard
@@ -680,9 +630,7 @@ _None_
 **Export**: `SendingCard`
 
 #### 🎨 Tailwind Classes
-
 **Static (17)**:
-
 ```css
 bg-card
 border-l-4
@@ -704,21 +652,22 @@ transition-all
 ```
 
 **Dynamic**:
-
 ```tsx
-cn('bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm', className);
+cn(
+        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        className
+      )
 ```
 
-#### 📤 Style Sources
 
+#### 📤 Style Sources
 - **Own styles**: 17 classes from component code
 
-#### 🧩 CSS Modules
 
+#### 🧩 CSS Modules
 _None_
 
 #### 🧬 CSS-in-JS
-
 _None_
 
 ---
@@ -727,7 +676,7 @@ _None_
 
 - **HeroSection**: font-bold, leading-relaxed, leading-tight, lg:mb-24, lg:text-6xl, max-w-2xl, max-w-full, mb-16, md:text-5xl, mx-auto, overflow-hidden, sm:max-w-3xl, sm:mb-20, sm:space-y-12, sm:space-y-8, sm:text-4xl, sm:text-xl, space-y-6, space-y-8, text-3xl, text-center, text-foreground, text-lg, text-muted-foreground
 - **HeroSection**: font-bold, leading-relaxed, leading-tight, lg:mb-24, lg:text-6xl, max-w-2xl, max-w-full, mb-16, md:text-5xl, mx-auto, overflow-hidden, sm:max-w-3xl, sm:mb-20, sm:space-y-12, sm:space-y-8, sm:text-4xl, sm:text-xl, space-y-6, space-y-8, text-3xl, text-center, text-foreground, text-lg, text-muted-foreground
-- **ExchangeFormAction**: active:scale-[0.98], duration-200, hover:scale-[1.02], sm:min-w-[200px], sm:w-auto, transition-all, w-full, [&\_svg:not([class\*=, [&_svg]:pointer-events-none, [&_svg]:shrink-0, ])]:size-4, aria-invalid:border-destructive, aria-invalid:ring-destructive/20, bg-background, bg-destructive, bg-primary, bg-secondary, border, dark:aria-invalid:ring-destructive/40, dark:bg-destructive/60, dark:bg-input/30, dark:border-input, dark:focus-visible:ring-destructive/40, dark:hover:bg-accent/50, dark:hover:bg-input/50, disabled:opacity-50, disabled:pointer-events-none, focus-visible:border-ring, focus-visible:ring-[3px], focus-visible:ring-destructive/20, focus-visible:ring-ring/50, font-medium, gap-1, gap-1.5, gap-2, h-10, h-11, h-12, h-9, has-[>svg]:px-2.5, has-[>svg]:px-3, has-[>svg]:px-4, hover:bg-accent, hover:bg-destructive/90, hover:bg-primary/90, hover:bg-secondary/80, hover:text-accent-foreground, hover:underline, inline-flex, items-center, justify-center, outline-none, px-2, px-3, px-4, px-6, py-2, rounded-md, shadow-xs, shrink-0, size-11, sm:text-lg, sm:text-sm, text-base, text-primary, text-primary-foreground, text-secondary-foreground, text-sm, text-white, transition-all, underline-offset-4, whitespace-nowrap
+- **ExchangeFormAction**: active:scale-[0.98], duration-200, hover:scale-[1.02], sm:min-w-[200px], sm:w-auto, transition-all, w-full, [&_svg:not([class*=, [&_svg]:pointer-events-none, [&_svg]:shrink-0, ])]:size-4, aria-invalid:border-destructive, aria-invalid:ring-destructive/20, bg-background, bg-destructive, bg-primary, bg-secondary, border, dark:aria-invalid:ring-destructive/40, dark:bg-destructive/60, dark:bg-input/30, dark:border-input, dark:focus-visible:ring-destructive/40, dark:hover:bg-accent/50, dark:hover:bg-input/50, disabled:opacity-50, disabled:pointer-events-none, focus-visible:border-ring, focus-visible:ring-[3px], focus-visible:ring-destructive/20, focus-visible:ring-ring/50, font-medium, gap-1, gap-1.5, gap-2, h-10, h-11, h-12, h-9, has-[>svg]:px-2.5, has-[>svg]:px-3, has-[>svg]:px-4, hover:bg-accent, hover:bg-destructive/90, hover:bg-primary/90, hover:bg-secondary/80, hover:text-accent-foreground, hover:underline, inline-flex, items-center, justify-center, outline-none, px-2, px-3, px-4, px-6, py-2, rounded-md, shadow-xs, shrink-0, size-11, sm:text-lg, sm:text-sm, text-base, text-primary, text-primary-foreground, text-secondary-foreground, text-sm, text-white, transition-all, underline-offset-4, whitespace-nowrap
 - **HeroExchangeForm**: sm:space-y-8, space-y-6
 - **ExchangeBenefits**: flex, flex-wrap, font-semibold, gap-4, justify-center, mb-4, sm:gap-6, text-center, text-muted-foreground, text-primary, text-sm, text-xs
 - **ExchangeBenefits**: flex, flex-wrap, font-semibold, gap-4, justify-center, mb-4, sm:gap-6, text-center, text-muted-foreground, text-primary, text-sm, text-xs
@@ -744,4 +693,4 @@ _None_
 
 ---
 
-_Generated by @repo/style-scanner_
+*Generated by @repo/style-scanner*

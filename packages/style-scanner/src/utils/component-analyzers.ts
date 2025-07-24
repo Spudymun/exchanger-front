@@ -3,7 +3,8 @@
  * Модуль для анализа компонентов и извлечения статистики
  */
 
-import type { ComponentNode, PageScanResult } from '../types/scanner.js';
+import type { ComponentNode, PageScanResult, LayoutScanResult } from '../types/scanner.js';
+import { UI_HEURISTICS } from '../constants/index.js';
 import { flattenComponents } from './markdown-utils.js';
 
 /**
@@ -41,7 +42,9 @@ export function getTopComponentsByStyles(pages: readonly PageScanResult[]): Arra
     collectComponents(page.components);
   }
 
-  return allComponents.sort((a, b) => b.styleCount - a.styleCount).slice(0, 10);
+  return allComponents
+    .sort((a, b) => b.styleCount - a.styleCount)
+    .slice(0, UI_HEURISTICS.ANALYSIS_LIMITS.TOP_COMPONENTS_LIMIT);
 }
 
 /**

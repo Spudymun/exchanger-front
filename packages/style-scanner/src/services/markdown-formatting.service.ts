@@ -3,7 +3,8 @@
  * Сервис для форматирования и утилитарных функций Markdown
  */
 
-import type { ComponentNode, ImportInfo } from '../types/scanner.js';
+import { ComponentNode, ImportInfo } from '../types/scanner.js';
+import { UI_HEURISTICS } from '../constants/index.js';
 
 /**
  * Сервис форматирования Markdown
@@ -59,18 +60,27 @@ export class MarkdownFormattingService {
       uiImports = comp.imports.filter(imp => this.isUIComponent(imp.name));
     } else {
       // Эвристика: если у компонента много классов и его имя предполагает использование UI компонентов
-      if (totalClasses > 60 && this.likelyUsesUIComponents(comp)) {
+      if (
+        totalClasses > UI_HEURISTICS.UI_DETECTION_THRESHOLDS.COMPLEX_UI_COMPONENT &&
+        this.likelyUsesUIComponents(comp)
+      ) {
         // Создаем mock импорты для известных UI компонентов
         uiImports = this.inferUIImports(comp);
       }
     }
 
     // Логика определения источников стилей
-    if (uiImports.length > 0 && totalClasses > 50) {
+    if (
+      uiImports.length > 0 &&
+      totalClasses > UI_HEURISTICS.UI_DETECTION_THRESHOLDS.MODERATE_UI_COMPONENT
+    ) {
       // Если есть UI импорты в файле И много классов, то это скорее всего наследование от UI
       const buttonImport = uiImports.find(imp => imp.name === 'Button');
 
-      if (buttonImport && totalClasses >= 60) {
+      if (
+        buttonImport &&
+        totalClasses >= UI_HEURISTICS.UI_DETECTION_THRESHOLDS.INFER_BUTTON_THRESHOLD
+      ) {
         // ExchangeFormAction случай: Button компонент дает большинство классов
         const estimatedButtonClasses = this.estimateUIComponentClasses('Button');
         const ownClasses = Math.max(1, totalClasses - estimatedButtonClasses);
@@ -245,8 +255,10 @@ ${cssInJs.length > 0 ? `\`\`\`javascript\n${cssInJs.join('\n')}\n\`\`\`` : '_Non
   private inferUIImports(comp: ComponentNode): ImportInfo[] {
     const inferred: ImportInfo[] = [];
 
-    // Если компонент имеет очень много классов (>60), скорее всего использует Button
-    if (comp.styles.tailwind.length >= 60) {
+    // Если компонент имеет очень много классов, скорее всего использует Button
+    if (
+      comp.styles.tailwind.length >= UI_HEURISTICS.UI_DETECTION_THRESHOLDS.INFER_BUTTON_THRESHOLD
+    ) {
       inferred.push({
         name: 'Button',
         localName: 'Button',
@@ -282,20 +294,11 @@ ${cssInJs.length > 0 ? `\`\`\`javascript\n${cssInJs.join('\n')}\n\`\`\`` : '_Non
    * Оценка количества классов от UI компонента
    */
   private estimateUIComponentClasses(componentName: string): number {
-    // Известные UI компоненты и их приблизительное количество классов
-    const uiComponentClasses: Record<string, number> = {
-      Button: 65, // из CVA
-      Input: 25,
-      Card: 15,
-      Dialog: 30,
-      Form: 20,
-      Select: 35,
-      Textarea: 15,
-      Label: 10,
-      Table: 20,
-      Notification: 60,
-    };
-
-    return uiComponentClasses[componentName] || 15;
+    // Используем конфигурируемые значения вместо hardcoded чисел
+    return (
+      UI_HEURISTICS.UI_COMPONENT_CLASS_ESTIMATES[
+        componentName as keyof typeof UI_HEURISTICS.UI_COMPONENT_CLASS_ESTIMATES
+      ] || UI_HEURISTICS.UI_COMPONENT_CLASS_ESTIMATES.DEFAULT
+    );
   }
 }

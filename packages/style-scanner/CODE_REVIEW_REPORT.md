@@ -385,10 +385,10 @@ style-scanner/
 
 #### 1.6 Исправление магических чисел
 
-- [ ] **ЗАДАЧА:** Обосновать и документировать MAX_DEPTH, TIMEOUT, магические числа
-- [ ] **ФАЙЛЫ:** `src/constants/index.ts`
-- [ ] **ПРОВЕРКА:** `npm run build && node packages/style-scanner/bin/style-scanner.js scan`
-- [ ] **КРИТЕРИЙ:** Конфигурация понятна и документирована
+- [x] **ЗАДАЧА:** Обосновать и документировать MAX_DEPTH, TIMEOUT, магические числа ✅ ЗАВЕРШЕНО
+- [x] **ФАЙЛЫ:** `src/constants/index.ts`, `src/config/performance.ts` ✅ ЗАВЕРШЕНО
+- [x] **ПРОВЕРКА:** `npm run build && node packages/style-scanner/bin/style-scanner.js scan` ✅ ЗАВЕРШЕНО
+- [x] **КРИТЕРИЙ:** Конфигурация понятна и документирована ✅ ЗАВЕРШЕНО
 
 ---
 

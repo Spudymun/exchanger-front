@@ -22,6 +22,12 @@ export const DEPTH_LIMITS = {
   MAX_IMPORTS_PER_COMPONENT: 20,
 
   /**
+   * Пороговое значение для логирования большого количества импортов
+   * Обоснование: 5+ импортов может указывать на high coupling
+   */
+  IMPORTS_WARNING_THRESHOLD: 5,
+
+  /**
    * Максимальная глубина для поиска файлов
    * Обоснование: Защита от бесконечной рекурсии в файловой системе
    */
@@ -91,6 +97,115 @@ export const COMPONENT_HEURISTICS = {
    * Основано на анализе популярных UI библиотек (shadcn/ui, Headless UI)
    */
   MIN_TAILWIND_CLASSES_FOR_RICH_COMPONENT: 30,
+
+  /**
+   * Пороговые значения для определения UI компонентов
+   */
+  UI_DETECTION_THRESHOLDS: {
+    /**
+     * Количество классов для детекции использования UI компонентов
+     * Обоснование: Button из shadcn/ui имеет ~65 классов в CVA,
+     * компоненты с >60 классами обычно используют сложные UI элементы
+     */
+    COMPLEX_UI_COMPONENT: 60,
+
+    /**
+     * Порог для компонентов с умеренным количеством стилей
+     * Обоснование: Input/Select компоненты обычно имеют 20-50 классов
+     */
+    MODERATE_UI_COMPONENT: 50,
+
+    /**
+     * Порог для инференции Button компонента
+     * Обоснование: Button с variant и size обычно имеет 60+ классов
+     */
+    INFER_BUTTON_THRESHOLD: 60,
+  },
+
+  /**
+   * Эталонные значения количества классов для UI компонентов
+   * Обоснование: Основано на анализе shadcn/ui и популярных библиотек
+   */
+  UI_COMPONENT_CLASS_ESTIMATES: {
+    /**
+     * Button: ~65 классов (CVA с вариантами: primary, secondary, размеры, состояния)
+     */
+    Button: 65,
+
+    /**
+     * Input: ~25 классов (base styles + focus + error states)
+     */
+    Input: 25,
+
+    /**
+     * Card: ~15 классов (container + padding + borders + shadows)
+     */
+    Card: 15,
+
+    /**
+     * Dialog: ~30 классов (overlay + content + animations)
+     */
+    Dialog: 30,
+
+    /**
+     * Form: ~20 классов (layout + spacing + validation styles)
+     */
+    Form: 20,
+
+    /**
+     * Select: ~35 классов (trigger + content + item styles)
+     */
+    Select: 35,
+
+    /**
+     * Textarea: ~15 классов (base + resize + states)
+     */
+    Textarea: 15,
+
+    /**
+     * Label: ~10 классов (typography + spacing)
+     */
+    Label: 10,
+
+    /**
+     * Table: ~20 классов (grid + borders + spacing)
+     */
+    Table: 20,
+
+    /**
+     * Notification/Toast: ~60 классов (variants + animations + icons)
+     */
+    Notification: 60,
+
+    /**
+     * Дефолтное значение для неизвестных UI компонентов
+     * Обоснование: Средние базовые стили для большинства элементов
+     */
+    DEFAULT: 15,
+  },
+
+  /**
+   * Лимиты для анализа и отображения
+   */
+  ANALYSIS_LIMITS: {
+    /**
+     * Максимальное количество топ-компонентов для отображения
+     * Обоснование: 10 компонентов достаточно для обзора без перегрузки
+     */
+    TOP_COMPONENTS_LIMIT: 10,
+
+    /**
+     * Максимальное количество стилей для "leaf" компонента
+     * Обоснование: Leaf компоненты должны быть простыми
+     */
+    MAX_STYLES_FOR_LEAF: 10,
+
+    /**
+     * Максимальное количество стилей для обычного компонента
+     * Обоснование: Баланс между функциональностью и простотой
+     */
+    MAX_STYLES_FOR_REGULAR: 15,
+  },
 
   /**
    * Паттерны имен для UI компонентов

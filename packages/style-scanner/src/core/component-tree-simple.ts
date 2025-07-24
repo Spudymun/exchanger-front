@@ -1,6 +1,7 @@
 // Component Tree Builder - построение дерева компонентов
 // Упрощенная версия без Babel AST для избежания проблем с типами
 import { resolve, dirname, join } from 'node:path';
+import { DEPTH_LIMITS } from '../config/performance.js';
 import type {
   ComponentTreeOptions,
   ComponentNodeBuilder,
@@ -187,8 +188,8 @@ export class ComponentTreeBuilder {
       // eslint-disable-next-line no-console
     }
     // Ограничиваем количество обрабатываемых импортов для предотвращения зависания
-    const MAX_IMPORTS = 20;
-    const IMPORTS_THRESHOLD = 5;
+    const MAX_IMPORTS = DEPTH_LIMITS.MAX_IMPORTS_PER_COMPONENT;
+    const IMPORTS_THRESHOLD = DEPTH_LIMITS.IMPORTS_WARNING_THRESHOLD;
     const currentDir = dirname(component.filePath);
     const importsToProcess = component.imports.slice(0, MAX_IMPORTS);
     for (const importInfo of importsToProcess) {

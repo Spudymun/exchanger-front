@@ -9,6 +9,7 @@ import type {
   LayoutScanResult,
   ImportInfo,
 } from '../types/scanner.js';
+import { UI_HEURISTICS } from '../constants/index.js';
 import { createLogger, type LoggerConfig } from '../utils/logger.js';
 
 /**
@@ -142,8 +143,10 @@ export class ComponentAnalysisService {
   inferUIImports(comp: ComponentNode): ImportInfo[] {
     const inferred: ImportInfo[] = [];
 
-    // Если компонент имеет очень много классов (>60), скорее всего использует Button
-    if (comp.styles.tailwind.length >= 60) {
+    // Если компонент имеет очень много классов, скорее всего использует Button
+    if (
+      comp.styles.tailwind.length >= UI_HEURISTICS.UI_DETECTION_THRESHOLDS.INFER_BUTTON_THRESHOLD
+    ) {
       inferred.push({
         name: 'Button',
         localName: 'Button',
@@ -190,31 +193,28 @@ export class ComponentAnalysisService {
     const dynamicClasses = comp.styles.dynamicClasses?.length || 0;
     if (dynamicClasses > 0) {
       // Если есть динамические классы (например, cn(...)), то собственных стилей мало
-      return Math.min(comp.styles.tailwind.length, 10);
+      return Math.min(
+        comp.styles.tailwind.length,
+        UI_HEURISTICS.ANALYSIS_LIMITS.MAX_STYLES_FOR_LEAF
+      );
     }
 
-    return Math.min(comp.styles.tailwind.length, 15);
+    return Math.min(
+      comp.styles.tailwind.length,
+      UI_HEURISTICS.ANALYSIS_LIMITS.MAX_STYLES_FOR_REGULAR
+    );
   }
 
   /**
    * Оценка количества классов от UI компонента
    */
   estimateUIComponentClasses(componentName: string): number {
-    // Известные UI компоненты и их приблизительное количество классов
-    const uiComponentClasses: Record<string, number> = {
-      Button: 65, // из CVA
-      Input: 25,
-      Card: 15,
-      Dialog: 30,
-      Form: 20,
-      Select: 35,
-      Textarea: 15,
-      Label: 10,
-      Table: 20,
-      Notification: 60,
-    };
-
-    return uiComponentClasses[componentName] || 15;
+    // Используем конфигурируемые значения вместо hardcoded чисел
+    return (
+      UI_HEURISTICS.UI_COMPONENT_CLASS_ESTIMATES[
+        componentName as keyof typeof UI_HEURISTICS.UI_COMPONENT_CLASS_ESTIMATES
+      ] || UI_HEURISTICS.UI_COMPONENT_CLASS_ESTIMATES.DEFAULT
+    );
   }
 
   /**

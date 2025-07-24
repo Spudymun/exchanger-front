@@ -8,6 +8,7 @@ import { PageScanner } from './page-scanner.js';
 import { LayoutScanner } from './layout-scanner.js';
 import { UIScanner } from './ui-scanner.js';
 import { createLogger } from '../utils/logger.js';
+import { DEPTH_LIMITS } from '../config/performance.js';
 import type {
   ScannerConfig,
   ProjectScanResult,
@@ -44,9 +45,9 @@ export class MainScanner {
     });
 
     this.treeBuilder = new ComponentTreeBuilder({
-      maxDepth: 10, // ВОССТАНАВЛИВАЕМ нормальную глубину для поиска ВСЕХ компонентов
-      includeNodeModules: false,
-      verbose: this.config.verbose,
+      maxDepth: DEPTH_LIMITS.MAX_FILE_SEARCH_DEPTH, // Используем конфигурируемое значение
+      verbose: this.config.verbose || false,
+      includeNodeModules: false, // Добавляем недостающее поле
     });
 
     // Инициализируем специализированные сканеры
@@ -178,7 +179,7 @@ export class MainScanner {
     // ВАЖНО: Обновляем tree builder с UI компонентами для правильной агрегации стилей
     if (uiCache.length > 0) {
       this.treeBuilder = new ComponentTreeBuilder({
-        maxDepth: 10,
+        maxDepth: DEPTH_LIMITS.MAX_FILE_SEARCH_DEPTH,
         includeNodeModules: false,
         verbose: this.config.verbose,
         uiComponentsCache: Array.from(uiCache), // Передаем UI кэш для style aggregation

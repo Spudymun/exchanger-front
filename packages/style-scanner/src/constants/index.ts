@@ -58,6 +58,11 @@ export const CLASSNAME_PATTERNS = {
 } as const;
 
 /**
+ * Экспорт настроек эвристик для использования в сервисах
+ */
+export const UI_HEURISTICS = COMPONENT_HEURISTICS;
+
+/**
  * Конфигурация по умолчанию (теперь с обоснованными значениями)
  */
 export const DEFAULT_CONFIG = {
