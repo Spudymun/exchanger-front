@@ -10,6 +10,7 @@ import { rm } from 'node:fs/promises';
 import type {
   ProjectScanResult,
   PageScanResult,
+  LayoutScanResult,
   ComponentNode,
   ImportInfo,
 } from '../types/scanner.js';
@@ -89,6 +90,16 @@ export class MarkdownGenerator {
       await mkdir(projectDir, { recursive: true });
       await mkdir(pageDir, { recursive: true });
     }
+
+    // Создаем директории для layout компонентов
+    for (const layoutResult of projectResult.layouts) {
+      const { projectName } = this.extractProjectAndLayoutNames(layoutResult.layoutPath);
+      const projectDir = join(this.config.outputDir, projectName);
+      const layoutsDir = join(projectDir, 'layouts');
+
+      await mkdir(projectDir, { recursive: true });
+      await mkdir(layoutsDir, { recursive: true });
+    }
   }
 
   /**
@@ -109,6 +120,7 @@ export class MarkdownGenerator {
    * Генерация структурированной документации по проектам
    */
   private async generateProjectStructuredDocs(projectResult: ProjectScanResult): Promise<void> {
+    // Генерируем документацию для страниц
     for (const pageResult of projectResult.pages) {
       const { projectName, pageName } = this.extractProjectAndPageNames(pageResult.pagePath);
 
@@ -117,6 +129,16 @@ export class MarkdownGenerator {
 
       // Генерируем файлы для ИМПОРТИРОВАННЫХ компонентов-секций
       await this.generateSectionFiles(pageResult, projectName, pageName);
+    }
+
+    // Генерируем документацию для layout компонентов
+    for (const layoutResult of projectResult.layouts) {
+      const { projectName, layoutName } = this.extractProjectAndLayoutNames(
+        layoutResult.layoutPath
+      );
+
+      // Генерируем документацию для layout компонента
+      await this.generateLayoutDocumentation(layoutResult, projectName, layoutName);
     }
   }
 
@@ -136,6 +158,68 @@ export class MarkdownGenerator {
       const content = this.createComponentMarkdown(structuringComponent, pageResult.pagePath);
       const fileName = this.sanitizeFileName(structuringComponent.name) + '.md';
       const filePath = join(this.config.outputDir, projectName, pageName, fileName);
+
+      await writeFile(filePath, content, 'utf-8');
+
+      if (this.config.verbose) {
+        console.log(`  📄 Created: ${filePath}`);
+      }
+    }
+  }
+
+  /**
+   * Генерация документации для layout компонента
+   */
+  private async generateLayoutDocumentation(
+    layoutResult: LayoutScanResult,
+    projectName: string,
+    layoutName: string
+  ): Promise<void> {
+    // Генерируем общий файл для layout
+    await this.generateLayoutOverview(layoutResult, projectName, layoutName);
+
+    // Генерируем файлы для компонентов layout-а (аналогично секциям)
+    await this.generateLayoutComponentFiles(layoutResult, projectName, layoutName);
+  }
+
+  /**
+   * Генерация overview файла для layout компонента
+   */
+  private async generateLayoutOverview(
+    layoutResult: LayoutScanResult,
+    projectName: string,
+    layoutName: string
+  ): Promise<void> {
+    const content = this.createLayoutOverviewMarkdown(layoutResult, projectName, layoutName);
+    const filePath = join(
+      this.config.outputDir,
+      projectName,
+      'layouts',
+      `${layoutName}-overview.md`
+    );
+
+    await writeFile(filePath, content, 'utf-8');
+
+    if (this.config.verbose) {
+      console.log(`  📄 Created: ${filePath}`);
+    }
+  }
+
+  /**
+   * Генерация файлов для компонентов layout-а
+   */
+  private async generateLayoutComponentFiles(
+    layoutResult: LayoutScanResult,
+    projectName: string,
+    layoutName: string
+  ): Promise<void> {
+    // Получаем структурирующие компоненты layout-а (аналогично страницам)
+    const structuringComponents = this.getStructuringComponentsFromLayout(layoutResult);
+
+    for (const structuringComponent of structuringComponents) {
+      const content = this.createComponentMarkdown(structuringComponent, layoutResult.layoutPath);
+      const fileName = this.sanitizeFileName(structuringComponent.name) + '.md';
+      const filePath = join(this.config.outputDir, projectName, 'layouts', fileName);
 
       await writeFile(filePath, content, 'utf-8');
 
@@ -205,6 +289,73 @@ export class MarkdownGenerator {
     if (this.config.verbose) {
       console.log(
         `  🔍 DEBUG: Selected components: ${selectedComponents.map(c => c.name).join(', ')}`
+      );
+    }
+
+    return selectedComponents;
+  }
+
+  /**
+   * Получение компонентов для структурирования из layout результата
+   * Аналогично getStructuringComponents, но для layout компонентов
+   */
+  private getStructuringComponentsFromLayout(layoutResult: LayoutScanResult): ComponentNode[] {
+    // Ищем все компоненты в layout
+    const allComponents = this.flattenComponents(layoutResult.components);
+    const mainLayoutComponent = layoutResult.components.find(comp => comp.depth === 0);
+
+    if (!mainLayoutComponent) return [];
+
+    // Получаем имена импортированных компонентов в layout
+    const importedNames = mainLayoutComponent.imports.map(imp =>
+      imp.name.replace(/[{}]/g, '').trim()
+    );
+
+    if (this.config.verbose) {
+      console.log(`  🔍 DEBUG: Layout imported names: ${importedNames.join(', ')}`);
+      console.log(
+        `  🔍 DEBUG: Layout all components: ${allComponents.map(c => c.name).join(', ')}`
+      );
+    }
+
+    // ПРАВИЛЬНАЯ ФИЛЬТРАЦИЯ: Для каждого импортированного имени ищем ПЕРВЫЙ подходящий компонент
+    const selectedComponents: ComponentNode[] = [];
+
+    for (const importedName of importedNames) {
+      // Сначала ищем основной компонент (без #)
+      let mainComp = allComponents.find(
+        comp => comp.name === importedName && comp.depth > 0 && !comp.filePath.includes('#')
+      );
+
+      // Если основной не найден, берём первый локальный
+      if (!mainComp) {
+        mainComp = allComponents.find(
+          comp => comp.name === importedName && comp.depth > 0 && comp.filePath.includes('#')
+        );
+      }
+
+      if (mainComp) {
+        selectedComponents.push(mainComp);
+      }
+    }
+
+    // НОВАЯ ЛОГИКА: Если импортированных компонентов не найдено,
+    // возвращаем все топ-левел компоненты layout-а
+    if (selectedComponents.length === 0) {
+      const topLevelComponents = mainLayoutComponent.children.filter(comp => comp.depth === 1);
+
+      if (this.config.verbose) {
+        console.log(
+          `  🔍 DEBUG: No imported layout components found, using top-level components: ${topLevelComponents.map(c => c.name).join(', ')}`
+        );
+      }
+
+      return topLevelComponents;
+    }
+
+    if (this.config.verbose) {
+      console.log(
+        `  🔍 DEBUG: Selected layout components: ${selectedComponents.map(c => c.name).join(', ')}`
       );
     }
 
@@ -442,6 +593,34 @@ ${
     }
 
     return { projectName, pageName };
+  }
+
+  private extractProjectAndLayoutNames(layoutPath: string): {
+    projectName: string;
+    layoutName: string;
+  } {
+    const normalizedPath = layoutPath.replace(/\\/g, '/');
+    const pathParts = normalizedPath.split('/');
+    let projectName = 'unknown';
+    let layoutName = 'layout';
+
+    const appsIndex = pathParts.findIndex(part => part === 'apps');
+    if (appsIndex !== -1 && pathParts[appsIndex + 1]) {
+      projectName = pathParts[appsIndex + 1] || 'unknown';
+    }
+
+    // Извлекаем название layout компонента из имени файла
+    const fileName = pathParts[pathParts.length - 1];
+    if (fileName) {
+      // Убираем расширение и делаем kebab-case
+      layoutName = fileName
+        .replace(/\.(tsx|jsx|ts|js)$/, '')
+        .replace(/([A-Z])/g, '-$1')
+        .toLowerCase()
+        .replace(/^-/, '');
+    }
+
+    return { projectName, layoutName };
   }
 
   private flattenComponents(components: readonly ComponentNode[]): ComponentNode[] {
@@ -872,6 +1051,46 @@ ${components
     return `- **[${comp.name}](./${this.sanitizeFileName(comp.name)}.md)** (${styleCount} styles) - \`${comp.filePath}\``;
   })
   .join('\n')}
+
+---
+
+*Generated by @repo/style-scanner*
+`;
+  }
+
+  private createLayoutOverviewMarkdown(
+    layoutResult: LayoutScanResult,
+    projectName: string,
+    layoutName: string
+  ): string {
+    const { layoutPath, layoutType, components, errors } = layoutResult;
+    return `# ${projectName} - ${layoutName} Layout
+
+**File**: \`${layoutPath}\`  
+**Type**: \`${layoutType}\`  
+**Generated**: ${new Date().toISOString()}
+
+## 📊 Overview
+
+- **Total Components**: ${components.length}
+- **Layout Type**: ${layoutType}
+- **Errors**: ${errors.length}
+
+## 🧩 Layout Components
+
+${
+  components.length > 0
+    ? components
+        .map(comp => {
+          const styleCount =
+            comp.styles.tailwind.length +
+            comp.styles.cssModules.length +
+            comp.styles.cssInJs.length;
+          return `- **[${comp.name}](./${this.sanitizeFileName(comp.name)}.md)** (${styleCount} styles) - \`${comp.filePath}\``;
+        })
+        .join('\n')
+    : '_No components found_'
+}
 
 ---
 

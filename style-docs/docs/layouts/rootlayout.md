@@ -1,8 +1,8 @@
-# CTASection
+# RootLayout
 
-**File**: `e:/project/exchanger-front/apps/docs/app/page.tsx`  
-**Page**: `apps\docs\app\page.tsx`  
-**Generated**: 2025-07-24T12:55:49.175Z
+**File**: `e:/project/exchanger-front/apps/docs/app/layout.tsx`  
+**Page**: `apps\docs\app\layout.tsx`  
+**Generated**: 2025-07-24T12:55:49.192Z
 
 ---
 
@@ -13,24 +13,24 @@
 - **Max Nesting Depth**: 1 levels
 - **Dynamic Classes Detected**: ❌
 - **Named Imports**: None
-- **Named Exports**: CTASection
+- **Named Exports**: RootLayout
 
 ---
 
 ## 🧩 Component Tree
 
 ```
-- 🧱 CTASection
+- 🧱 RootLayout
 ```
 
 ---
 
 ## 🎨 Styles Per Component
 
-### 🔸 CTASection
+### 🔸 RootLayout
 
-**File**: `e:/project/exchanger-front/apps/docs/app/page.tsx`  
-**Export**: `CTASection`
+**File**: `e:/project/exchanger-front/apps/docs/app/layout.tsx`  
+**Export**: `RootLayout`
 
 #### 🎨 Tailwind Classes
 

@@ -2,7 +2,7 @@
 
 **File**: `e:/project/exchanger-front/apps/web/src/components/ctasection.tsx`  
 **Page**: `apps\web\app\[locale]\page.tsx`  
-**Generated**: 2025-07-24T12:45:41.754Z
+**Generated**: 2025-07-24T12:55:49.178Z
 
 ---
 
