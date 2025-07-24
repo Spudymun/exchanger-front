@@ -7,6 +7,7 @@ import { ComponentTreeBuilder } from '../core/component-tree-simple.js';
 import { PageScanner } from './page-scanner.js';
 import { LayoutScanner } from './layout-scanner.js';
 import { UIScanner } from './ui-scanner.js';
+import { createLogger } from '../utils/logger.js';
 import type {
   ScannerConfig,
   ProjectScanResult,
@@ -21,6 +22,7 @@ import type {
  */
 export class MainScanner {
   private readonly config: ScannerConfig;
+  private readonly logger = createLogger({ quiet: false, verbose: true });
   private treeBuilder: ComponentTreeBuilder;
   private pageScanner: PageScanner;
   private layoutScanner: LayoutScanner;
@@ -34,6 +36,12 @@ export class MainScanner {
       verbose: config.verbose || DEFAULT_CONFIG.VERBOSE,
       dryRun: config.dryRun || DEFAULT_CONFIG.DRY_RUN,
     };
+
+    // Настроим logger в зависимости от режима
+    this.logger = createLogger({
+      quiet: !this.config.verbose,
+      verbose: this.config.verbose || false,
+    });
 
     this.treeBuilder = new ComponentTreeBuilder({
       maxDepth: 10, // ВОССТАНАВЛИВАЕМ нормальную глубину для поиска ВСЕХ компонентов
@@ -54,12 +62,10 @@ export class MainScanner {
   async scanProject(): Promise<ProjectScanResult> {
     const startTime = Date.now();
 
-    // eslint-disable-next-line no-console
-    console.log('🎨 DEBUG: scanProject() method started');
+    this.logger.verbose('🎨 Starting scanProject() method...');
 
     if (this.config.verbose) {
-      // eslint-disable-next-line no-console
-      console.log('🔍 Starting project-wide style scanning...');
+      this.logger.info('🔍 Starting project-wide style scanning...');
     }
 
     // 1. ЭТАП: Сканирование UI компонентов (создание кэша)
@@ -110,33 +116,29 @@ export class MainScanner {
 
     if (this.config.verbose) {
       // eslint-disable-next-line no-console
-      console.log(`🎨 Found ${uiFiles.length} UI component files`);
+      this.logger.verbose(`🎨 Found ${uiFiles.length} UI component files`);
     }
 
     // 2. Группировать по проектам
     const projectUIComponents = this.uiScanner.groupUIComponentsByProject(uiFiles);
 
     // eslint-disable-next-line no-console
-    console.log(
-      `🎨 DEBUG: UI grouping result: ${projectUIComponents.size} projects, keys: ${Array.from(projectUIComponents.keys()).join(', ')}`
-    );
-
-    // 3. Сканировать UI-компоненты каждого проекта
+    this.logger.verbose(
+      `🗂️ Grouped files by projects: ${[...projectUIComponents.entries()]
+        .map(([project, files]) => `${project}(${files.length})`)
+        .join(', ')}`
+    ); // 3. Сканировать UI-компоненты каждого проекта
     const uiComponents: UIScanResult[] = [];
     this.uiScanner.clearUIComponentsCache(); // Очищаем кэш перед сканированием
 
-    // eslint-disable-next-line no-console
-    console.log(`🎨 DEBUG: Starting UI scanning for ${projectUIComponents.size} projects`);
-
+    // UI сканирование (убираем DEBUG лог)
     for (const [projectName, projectUIFiles] of projectUIComponents.entries()) {
-      // eslint-disable-next-line no-console
-      console.log(
-        `🎨 DEBUG: Scanning project ${projectName} with ${projectUIFiles.length} UI files`
+      this.logger.verbose(
+        `🎨 Scanning project ${projectName} with ${projectUIFiles.length} UI files`
       );
 
       if (this.config.verbose) {
-        // eslint-disable-next-line no-console
-        console.log(`\n🎨 Scanning UI components for project: ${projectName}`);
+        this.logger.info(`\n🎨 Scanning UI components for project: ${projectName}`);
       }
 
       for (const uiFile of projectUIFiles) {
@@ -145,8 +147,8 @@ export class MainScanner {
 
         // DEBUG: Always log UI result regardless of verbose setting
         // eslint-disable-next-line no-console
-        console.log(
-          `🎨 DEBUG: UI result for ${this.getRelativePath(uiFile)}: ${uiResult.components.length} components`
+        this.logger.verbose(
+          `✅ UI scan completed for ${uiFile} (${uiResult.components.length} components)`
         );
       }
     }
@@ -154,13 +156,13 @@ export class MainScanner {
     if (this.config.verbose) {
       const cacheSize = this.uiScanner.getUIComponentsCache().length;
       // eslint-disable-next-line no-console
-      console.log(`🎨 Total UI components in cache: ${cacheSize}`);
+      this.logger.verbose(`🎨 Total UI components in cache: ${cacheSize}`);
       if (cacheSize > 0) {
         const cacheContents = Array.from(this.uiScanner.getUIComponentsCache())
           .map(comp => comp.name)
           .join(', ');
         // eslint-disable-next-line no-console
-        console.log(`   🎨 Cache contents: ${cacheContents}`);
+        this.logger.verbose(`   🎨 Cache contents: ${cacheContents}`);
       }
     }
 
@@ -184,7 +186,9 @@ export class MainScanner {
 
       if (this.config.verbose) {
         // eslint-disable-next-line no-console
-        console.log(`🎨 Updated tree builder with ${uiCache.length} UI components in cache`);
+        this.logger.verbose(
+          `🎨 Updated tree builder with ${uiCache.length} UI components in cache`
+        );
       }
 
       // Обновляем сканеры с новым tree builder и UI кэшем
@@ -202,7 +206,7 @@ export class MainScanner {
 
     if (this.config.verbose) {
       // eslint-disable-next-line no-console
-      console.log(`📄 Found ${pageFiles.length} page files`);
+      this.logger.verbose(`📄 Found ${pageFiles.length} page files`);
     }
 
     // 2. Группировать по проектам
@@ -214,7 +218,7 @@ export class MainScanner {
     for (const [projectName, projectPageFiles] of projectPages.entries()) {
       if (this.config.verbose) {
         // eslint-disable-next-line no-console
-        console.log(`\n📦 Scanning project: ${projectName}`);
+        this.logger.info(`\n📦 Scanning project: ${projectName}`);
       }
 
       for (const pageFile of projectPageFiles) {
@@ -235,7 +239,7 @@ export class MainScanner {
 
     if (this.config.verbose) {
       // eslint-disable-next-line no-console
-      console.log(`🏗️ Found ${layoutFiles.length} layout files`);
+      this.logger.verbose(`🏗️ Found ${layoutFiles.length} layout files`);
     }
 
     // 2. Группировать по проектам
@@ -247,7 +251,7 @@ export class MainScanner {
     for (const [projectName, projectLayoutFiles] of projectLayouts.entries()) {
       if (this.config.verbose) {
         // eslint-disable-next-line no-console
-        console.log(`\n🏗️ Scanning layouts for project: ${projectName}`);
+        this.logger.info(`\n🏗️ Scanning layouts for project: ${projectName}`);
       }
 
       for (const layoutFile of projectLayoutFiles) {
@@ -300,11 +304,17 @@ export class MainScanner {
 /**
  * Основная функция для использования в CLI
  */
-export async function scanStyles(config: Partial<ScannerConfig> = {}): Promise<ProjectScanResult> {
-  // eslint-disable-next-line no-console
-  console.log('🎨 DEBUG: scanStyles() function called');
+export async function scanStyles(options: Partial<ScannerConfig> = {}): Promise<ProjectScanResult> {
+  const config = { ...DEFAULT_CONFIG, ...options };
+  const logger = createLogger({
+    quiet: !config.verbose || false,
+    verbose: config.verbose || false,
+  });
+
+  logger.verbose('🎨 Starting project-wide style scanning...');
+
   const scanner = new MainScanner(config);
-  // eslint-disable-next-line no-console
-  console.log('🎨 DEBUG: About to call scanner.scanProject()');
-  return scanner.scanProject();
+  const result = await scanner.scanProject();
+
+  return result;
 }

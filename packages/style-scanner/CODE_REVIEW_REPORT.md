@@ -378,10 +378,10 @@ style-scanner/
 
 #### 1.5 Удаление DEBUG кода из production
 
-- [ ] **ЗАДАЧА:** Убрать все console.log, создать систему логирования
-- [ ] **ФАЙЛЫ:** `src/core/main-scanner.ts`, `src/utils/markdown-generator.ts`
-- [ ] **ПРОВЕРКА:** `npm run build && node packages/style-scanner/bin/style-scanner.js scan --quiet`
-- [ ] **КРИТЕРИЙ:** В quiet режиме нет лишних логов
+- [x] **ЗАДАЧА:** Убрать все console.log, создать систему логирования ✅ ЗАВЕРШЕНО
+- [x] **ФАЙЛЫ:** `src/core/main-scanner.ts`, `src/utils/markdown-generator.ts` ✅ ЗАВЕРШЕНО
+- [x] **ПРОВЕРКА:** `npm run build && node packages/style-scanner/bin/style-scanner.js scan --quiet` ✅ ЗАВЕРШЕНО
+- [x] **КРИТЕРИЙ:** В quiet режиме нет лишних логов ✅ ЗАВЕРШЕНО
 
 #### 1.6 Исправление магических чисел
 

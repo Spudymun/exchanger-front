@@ -7,6 +7,7 @@ import { FILE_PATTERNS } from '../constants/index.js';
 import { findFiles, readFileSafely } from '../utils/file-utils.js';
 import { parseComponent } from '../utils/component-parser-simple.js';
 import { extractStyles } from '../utils/style-extractor.js';
+import { createLogger } from '../utils/logger.js';
 import type { LayoutScanResult, ComponentNode, ScannerConfig } from '../types/scanner.js';
 import type { ComponentTreeBuilder } from '../core/component-tree-simple.js';
 
@@ -34,7 +35,7 @@ export class LayoutScanner extends BaseScanner {
   async findAllLayouts(): Promise<string[]> {
     if (this.config.verbose) {
       // eslint-disable-next-line no-console
-      console.log('🏗️ Finding all layouts...');
+      this.logger.verbose('🏗️ Finding all layouts...');
     }
 
     const allFiles: string[] = [];
@@ -43,14 +44,14 @@ export class LayoutScanner extends BaseScanner {
     for (const pattern of FILE_PATTERNS.LAYOUTS) {
       if (this.config.verbose) {
         // eslint-disable-next-line no-console
-        console.log(`  📋 Searching layout pattern: ${pattern}`);
+        this.logger.verbose(`  📋 Searching layout pattern: ${pattern}`);
       }
 
       const files = await findFiles(pattern);
 
       if (this.config.verbose) {
         // eslint-disable-next-line no-console
-        console.log(`  ✅ Found ${files.length} layout files for pattern: ${pattern}`);
+        this.logger.verbose(`  ✅ Found ${files.length} layout files for pattern: ${pattern}`);
       }
 
       allFiles.push(...files);
@@ -60,14 +61,16 @@ export class LayoutScanner extends BaseScanner {
     for (const pattern of FILE_PATTERNS.LAYOUT_COMPONENTS) {
       if (this.config.verbose) {
         // eslint-disable-next-line no-console
-        console.log(`  📋 Searching layout component pattern: ${pattern}`);
+        this.logger.verbose(`  📋 Searching layout component pattern: ${pattern}`);
       }
 
       const files = await findFiles(pattern);
 
       if (this.config.verbose) {
         // eslint-disable-next-line no-console
-        console.log(`  ✅ Found ${files.length} layout component files for pattern: ${pattern}`);
+        this.logger.verbose(
+          `  ✅ Found ${files.length} layout component files for pattern: ${pattern}`
+        );
       }
 
       allFiles.push(...files);
@@ -75,7 +78,7 @@ export class LayoutScanner extends BaseScanner {
 
     if (this.config.verbose) {
       // eslint-disable-next-line no-console
-      console.log(`🏗️ Total layout files found: ${allFiles.length}`);
+      this.logger.verbose(`🏗️ Total layout files found: ${allFiles.length}`);
     }
 
     // Убираем дубликаты и возвращаем абсолютные пути
@@ -142,7 +145,7 @@ export class LayoutScanner extends BaseScanner {
   private async scanLayout(layoutFile: string, projectName: string): Promise<LayoutScanResult> {
     if (this.config.verbose) {
       // eslint-disable-next-line no-console
-      console.log(`  🏗️ Scanning layout: ${this.getRelativePath(layoutFile)}`);
+      this.logger.verbose(`  🏗️ Scanning layout: ${this.getRelativePath(layoutFile)}`);
     }
 
     // Определяем тип layout-а

@@ -6,15 +6,21 @@
 import { writeFile, mkdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { ProjectScanResult, PageScanResult, LayoutScanResult } from '../types/scanner.js';
+import { createLogger, type LoggerConfig } from '../utils/logger.js';
 
 /**
  * Сервис управления файлами для генерации Markdown
  */
 export class FileManagementService {
+  private readonly logger;
+
   constructor(
     private readonly outputDir: string,
     private readonly verbose: boolean
-  ) {}
+  ) {
+    const loggerConfig = { quiet: !verbose, verbose };
+    this.logger = createLogger(loggerConfig);
+  }
 
   /**
    * Очистка выходной директории
@@ -22,14 +28,10 @@ export class FileManagementService {
   async cleanOutputDirectory(): Promise<void> {
     try {
       await rm(this.outputDir, { recursive: true, force: true });
-      if (this.verbose) {
-        console.log(`🗑️  Cleaned output directory: ${this.outputDir}`);
-      }
+      this.logger.verbose(`🗑️  Cleaned output directory: ${this.outputDir}`);
     } catch (error) {
       // Директория может не существовать - это нормально
-      if (this.verbose) {
-        console.log(`📁 Output directory will be created: ${this.outputDir}`);
-      }
+      this.logger.verbose(`📁 Output directory will be created: ${this.outputDir}`);
     }
   }
 
@@ -66,9 +68,7 @@ export class FileManagementService {
   async writeMarkdownFile(filePath: string, content: string): Promise<void> {
     await writeFile(filePath, content, 'utf-8');
 
-    if (this.verbose) {
-      console.log(`  📄 Created: ${filePath}`);
-    }
+    this.logger.verbose(`  📄 Created: ${filePath}`);
   }
 
   /**

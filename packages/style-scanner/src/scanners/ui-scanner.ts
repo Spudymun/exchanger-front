@@ -9,6 +9,7 @@ import { parseComponent } from '../utils/component-parser-simple.js';
 import { extractStylesForLocalComponentWithUI } from '../utils/style-extractor.js';
 import type { UIScanResult, ComponentNode, ScannerConfig } from '../types/scanner.js';
 import type { ComponentTreeBuilder } from '../core/component-tree-simple.js';
+import { createLogger } from '../utils/logger.js';
 
 /**
  * Сканер UI компонентов
@@ -32,34 +33,22 @@ export class UIScanner extends BaseScanner {
    * Поиск всех UI компонентов по паттернам
    */
   async findAllUIComponents(): Promise<string[]> {
-    if (this.config.verbose) {
-      // eslint-disable-next-line no-console
-      console.log('🎨 Finding all UI components...');
-    }
+    this.logger.verbose('🎨 Finding all UI components...');
 
     const allFiles: string[] = [];
 
     // Поиск UI компонентов
     for (const pattern of FILE_PATTERNS.UI_COMPONENTS) {
-      if (this.config.verbose) {
-        // eslint-disable-next-line no-console
-        console.log(`  📋 Searching UI component pattern: ${pattern}`);
-      }
+      this.logger.verbose(`  📋 Searching UI component pattern: ${pattern}`);
 
       const files = await findFiles(pattern);
 
-      if (this.config.verbose) {
-        // eslint-disable-next-line no-console
-        console.log(`  ✅ Found ${files.length} UI component files for pattern: ${pattern}`);
-      }
+      this.logger.verbose(`  ✅ Found ${files.length} UI component files for pattern: ${pattern}`);
 
       allFiles.push(...files);
     }
 
-    if (this.config.verbose) {
-      // eslint-disable-next-line no-console
-      console.log(`🎨 Total UI component files found: ${allFiles.length}`);
-    }
+    this.logger.verbose(`🎨 Total UI component files found: ${allFiles.length}`);
 
     // Убираем дубликаты и возвращаем абсолютные пути
     return [...new Set(allFiles)].map(file => resolve(file));
@@ -122,8 +111,7 @@ export class UIScanner extends BaseScanner {
    */
   private async scanUI(uiFile: string, projectName: string): Promise<UIScanResult> {
     if (this.config.verbose) {
-      // eslint-disable-next-line no-console
-      console.log(`  🎨 Scanning UI component: ${this.getRelativePath(uiFile)}`);
+      this.logger.verbose(`  🎨 Scanning UI component: ${this.getRelativePath(uiFile)}`);
     }
 
     // Определяем тип UI-компонента
@@ -146,18 +134,8 @@ export class UIScanner extends BaseScanner {
       throw new Error(`Failed to build component tree for UI: ${uiFile}`);
     }
 
-    // eslint-disable-next-line no-console
-    console.log(
-      `🎨 DEBUG: Before enrichment - ${componentName} has ${componentTree.styles.tailwind.length} tailwind classes`
-    );
-
     // Обогащаем стилями
     const enrichedTree = await this.enrichWithStyles(componentTree);
-
-    // eslint-disable-next-line no-console
-    console.log(
-      `🎨 DEBUG: After enrichment - ${enrichedTree.name} has ${enrichedTree.styles.tailwind.length} tailwind classes`
-    );
 
     // Для multi-component файлов создаём отдельные узлы для каждого компонента
     const components: ComponentNode[] = [enrichedTree];
@@ -195,10 +173,6 @@ export class UIScanner extends BaseScanner {
     // Сохраняем найденные компоненты в кэш
     components.forEach(component => {
       this.uiComponentsCache.push(component);
-      // eslint-disable-next-line no-console
-      console.log(
-        `📦 DEBUG: Added to cache: ${component.name} (${component.styles.tailwind.length} tailwind classes)`
-      );
     });
 
     return {

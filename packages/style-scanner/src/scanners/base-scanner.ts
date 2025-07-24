@@ -4,6 +4,7 @@
 import { resolve, relative } from 'node:path';
 import { parseComponent } from '../utils/component-parser-simple.js';
 import { readFileSafely } from '../utils/file-utils.js';
+import { createLogger } from '../utils/logger.js';
 import { SCAN_TIMEOUTS } from '../constants/index.js';
 import type { ComponentNode, ScanError, ScannerConfig } from '../types/scanner.js';
 
@@ -13,9 +14,16 @@ import type { ComponentNode, ScanError, ScannerConfig } from '../types/scanner.j
  */
 export abstract class BaseScanner {
   protected readonly config: ScannerConfig;
+  protected readonly logger = createLogger({ quiet: false, verbose: true });
 
   constructor(config: ScannerConfig) {
     this.config = config;
+
+    // Настроим logger в зависимости от режима
+    this.logger = createLogger({
+      quiet: !config.verbose,
+      verbose: config.verbose || false,
+    });
   }
 
   /**
@@ -50,7 +58,7 @@ export abstract class BaseScanner {
   protected logAttempt(timeout: number): void {
     if (this.config.verbose) {
       // eslint-disable-next-line no-console
-      console.log(`  🔄 Попытка сканирования (таймаут: ${timeout}ms)`);
+      this.logger.verbose(`  🔄 Попытка сканирования (таймаут: ${timeout}ms)`);
     }
   }
 
@@ -60,7 +68,7 @@ export abstract class BaseScanner {
   protected logSuccess(): void {
     if (this.config.verbose) {
       // eslint-disable-next-line no-console
-      console.log(`  ✅ Успешно просканировано`);
+      this.logger.verbose(`  ✅ Успешно просканировано`);
     }
   }
 
@@ -70,7 +78,7 @@ export abstract class BaseScanner {
   protected logTimeout(errorMessage: string): void {
     if (this.config.verbose) {
       // eslint-disable-next-line no-console
-      console.log(`  ⏰ Таймаут: ${errorMessage}`);
+      this.logger.verbose(`  ⏰ Таймаут: ${errorMessage}`);
     }
   }
 

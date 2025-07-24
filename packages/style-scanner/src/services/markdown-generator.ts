@@ -9,6 +9,7 @@ import {
   ComponentAnalysisService,
   ContentGenerationService,
 } from './index.js';
+import { createLogger, type LoggerConfig } from '../utils/logger.js';
 
 /**
  * Конфигурация генератора Markdown
@@ -25,8 +26,11 @@ export class MarkdownGenerator {
   private readonly fileService: FileManagementService;
   private readonly analysisService: ComponentAnalysisService;
   private readonly contentService: ContentGenerationService;
+  private readonly logger;
 
   constructor(private readonly config: MarkdownConfig) {
+    const loggerConfig = { quiet: !config.verbose, verbose: config.verbose };
+    this.logger = createLogger(loggerConfig);
     this.fileService = new FileManagementService(config.outputDir, config.verbose);
     this.analysisService = new ComponentAnalysisService(config.verbose);
     this.contentService = new ContentGenerationService(config.verbose);
@@ -36,9 +40,7 @@ export class MarkdownGenerator {
    * Генерация всей документации для проекта
    */
   async generateDocumentation(projectResult: ProjectScanResult): Promise<void> {
-    if (this.config.verbose) {
-      console.log('📝 Generating Markdown documentation...');
-    }
+    this.logger.info('📝 Generating Markdown documentation...');
 
     // СНАЧАЛА ОЧИЩАЕМ ДИРЕКТОРИЮ
     await this.fileService.cleanOutputDirectory();
@@ -52,9 +54,7 @@ export class MarkdownGenerator {
     // Генерируем документацию для каждой страницы по новой структуре
     await this.generateProjectStructuredDocs(projectResult);
 
-    if (this.config.verbose) {
-      console.log(`✅ Documentation generated in: ${this.config.outputDir}`);
-    }
+    this.logger.info(`✅ Documentation generated in: ${this.config.outputDir}`);
   }
 
   /**

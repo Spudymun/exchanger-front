@@ -8,6 +8,7 @@ import { findFiles, readFileSafely } from '../utils/file-utils.js';
 import { parseComponent } from '../utils/component-parser-simple.js';
 import type { PageScanResult, ComponentNode, ScannerConfig } from '../types/scanner.js';
 import type { ComponentTreeBuilder } from '../core/component-tree-simple.js';
+import { createLogger } from '../utils/logger.js';
 
 /**
  * Сканер страниц приложения
@@ -31,34 +32,22 @@ export class PageScanner extends BaseScanner {
    * Поиск всех страниц по паттернам
    */
   async findAllPages(): Promise<string[]> {
-    if (this.config.verbose) {
-      // eslint-disable-next-line no-console
-      console.log('🔍 Finding all pages...');
-    }
+    this.logger.verbose('🔍 Finding all pages...');
 
     const allFiles: string[] = [];
 
     // FILE_PATTERNS.PAGES теперь массив
     for (const pattern of FILE_PATTERNS.PAGES) {
-      if (this.config.verbose) {
-        // eslint-disable-next-line no-console
-        console.log(`  📋 Searching pattern: ${pattern}`);
-      }
+      this.logger.verbose(`  📋 Searching pattern: ${pattern}`);
 
       const files = await findFiles(pattern);
 
-      if (this.config.verbose) {
-        // eslint-disable-next-line no-console
-        console.log(`  ✅ Found ${files.length} files for pattern: ${pattern}`);
-      }
+      this.logger.verbose(`  ✅ Found ${files.length} files for pattern: ${pattern}`);
 
       allFiles.push(...files);
     }
 
-    if (this.config.verbose) {
-      // eslint-disable-next-line no-console
-      console.log(`📄 Total files found: ${allFiles.length}`);
-    }
+    this.logger.verbose(`📄 Total files found: ${allFiles.length}`);
 
     // Убираем дубликаты и возвращаем абсолютные пути
     return [...new Set(allFiles)].map(file => resolve(file));
@@ -128,10 +117,7 @@ export class PageScanner extends BaseScanner {
   private async scanPage(pageFilePath: string, _projectName: string): Promise<PageScanResult> {
     const relativePath = this.getRelativePath(pageFilePath);
 
-    if (this.config.verbose) {
-      // eslint-disable-next-line no-console
-      console.log(`  📄 Scanning page: ${relativePath}`);
-    }
+    this.logger.verbose(`  📄 Scanning page: ${relativePath}`);
 
     try {
       // 1. Построить дерево компонентов

@@ -9,12 +9,18 @@ import type {
   LayoutScanResult,
   ImportInfo,
 } from '../types/scanner.js';
+import { createLogger, type LoggerConfig } from '../utils/logger.js';
 
 /**
  * Сервис анализа компонентов
  */
 export class ComponentAnalysisService {
-  constructor(private readonly verbose: boolean) {}
+  private readonly logger;
+
+  constructor(private readonly verbose: boolean) {
+    const loggerConfig = { quiet: !verbose, verbose };
+    this.logger = createLogger(loggerConfig);
+  }
 
   /**
    * Получение компонентов для структурирования (секции или топ-левел компоненты)
@@ -31,11 +37,6 @@ export class ComponentAnalysisService {
     const importedNames = mainPageComponent.imports.map(imp =>
       imp.name.replace(/[{}]/g, '').trim()
     );
-
-    if (this.verbose) {
-      console.log(`  🔍 DEBUG: Imported names: ${importedNames.join(', ')}`);
-      console.log(`  🔍 DEBUG: All components: ${allComponents.map(c => c.name).join(', ')}`);
-    }
 
     // ПРАВИЛЬНАЯ ФИЛЬТРАЦИЯ: Для каждого импортированного имени ищем ПЕРВЫЙ подходящий компонент
     // (приоритет отдаем основным файлам, затем локальным)
@@ -63,20 +64,7 @@ export class ComponentAnalysisService {
     // возвращаем все топ-левел компоненты (прямые дети главной страницы)
     if (selectedComponents.length === 0) {
       const topLevelComponents = mainPageComponent.children.filter(comp => comp.depth === 1);
-
-      if (this.verbose) {
-        console.log(
-          `  🔍 DEBUG: No imported sections found, using top-level components: ${topLevelComponents.map(c => c.name).join(', ')}`
-        );
-      }
-
       return topLevelComponents;
-    }
-
-    if (this.verbose) {
-      console.log(
-        `  🔍 DEBUG: Selected components: ${selectedComponents.map(c => c.name).join(', ')}`
-      );
     }
 
     return selectedComponents;
@@ -97,13 +85,6 @@ export class ComponentAnalysisService {
     const importedNames = mainLayoutComponent.imports.map(imp =>
       imp.name.replace(/[{}]/g, '').trim()
     );
-
-    if (this.verbose) {
-      console.log(`  🔍 DEBUG: Layout imported names: ${importedNames.join(', ')}`);
-      console.log(
-        `  🔍 DEBUG: Layout all components: ${allComponents.map(c => c.name).join(', ')}`
-      );
-    }
 
     // ПРАВИЛЬНАЯ ФИЛЬТРАЦИЯ: Для каждого импортированного имени ищем ПЕРВЫЙ подходящий компонент
     const selectedComponents: ComponentNode[] = [];
@@ -130,20 +111,7 @@ export class ComponentAnalysisService {
     // возвращаем все топ-левел компоненты layout-а
     if (selectedComponents.length === 0) {
       const topLevelComponents = mainLayoutComponent.children.filter(comp => comp.depth === 1);
-
-      if (this.verbose) {
-        console.log(
-          `  🔍 DEBUG: No imported layout components found, using top-level components: ${topLevelComponents.map(c => c.name).join(', ')}`
-        );
-      }
-
       return topLevelComponents;
-    }
-
-    if (this.verbose) {
-      console.log(
-        `  🔍 DEBUG: Selected layout components: ${selectedComponents.map(c => c.name).join(', ')}`
-      );
     }
 
     return selectedComponents;
