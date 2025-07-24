@@ -61,7 +61,7 @@ export const CLASSNAME_PATTERNS = {
  * Конфигурация по умолчанию (теперь с обоснованными значениями)
  */
 export const DEFAULT_CONFIG = {
-  OUTPUT_DIR: 'docs/styles',
+  OUTPUT_DIR: 'style-docs',
   VERBOSE: false,
   DRY_RUN: false,
   MAX_DEPTH: DEPTH_LIMITS.MAX_COMPONENT_DEPTH, // Из конфигурации производительности

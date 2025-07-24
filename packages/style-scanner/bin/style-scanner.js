@@ -27,7 +27,7 @@ try {
     program
       .command('scan')
       .description('Scan components and generate style documentation')
-      .option('-o, --out <dir>', 'Output directory', 'docs')
+      .option('-o, --out <dir>', 'Output directory', 'style-docs')
       .option(
         '-p, --pattern <pattern>',
         'File pattern to scan',
@@ -46,7 +46,7 @@ try {
         try {
           // Динамический импорт модулей
           const { scanStyles } = await import('../dist/core/main-scanner.js');
-          const { generateMarkdownDocs } = await import('../dist/utils/markdown-generator.js');
+          const { generateMarkdownDocs } = await import('../dist/services/markdown-generator.js');
 
           if (!options.quiet) {
             console.log(chalk.blue('🔍 Starting comprehensive style scanning...'));

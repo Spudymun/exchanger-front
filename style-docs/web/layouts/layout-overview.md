@@ -2,7 +2,7 @@
 
 **File**: `apps\web\app\[locale]\layout.tsx`  
 **Type**: `nested`  
-**Generated**: 2025-07-24T12:55:49.187Z
+**Generated**: 2025-07-24T15:00:26.445Z
 
 ## 📊 Overview
 
@@ -20,11 +20,11 @@
 - **[TRPCProvider](./trpcprovider.md)** (0 styles) - `e:/project/exchanger-front/apps/web/lib/trpc-provider.tsx`
 - **[AppFooter](./appfooter.md)** (5 styles) - `e:/project/exchanger-front/apps/web/src/components/app-footer.tsx`
 - **[AppFooter](./appfooter.md)** (5 styles) - `e:/project/exchanger-front/apps/web/src/components/app-footer.tsx`
-- **[AppHeader](./appheader.md)** (28 styles) - `e:/project/exchanger-front/apps/web/src/components/app-header.tsx`
-- **[AppHeader](./appheader.md)** (28 styles) - `e:/project/exchanger-front/apps/web/src/components/app-header.tsx`
-- **[AppHeaderLogoMobile](./appheaderlogomobile.md)** (8 styles) - `e:/project/exchanger-front/apps/web/src/components/app-header.tsx`
-- **[AppHeaderLogoDesktop](./appheaderlogodesktop.md)** (12 styles) - `e:/project/exchanger-front/apps/web/src/components/app-header.tsx`
-- **[AppHeaderNavigationLinks](./appheadernavigationlinks.md)** (3 styles) - `e:/project/exchanger-front/apps/web/src/components/app-header.tsx`
+- **[AppHeader](./appheader.md)** (19 styles) - `e:/project/exchanger-front/apps/web/src/components/app-header.tsx`
+- **[AppHeader](./appheader.md)** (19 styles) - `e:/project/exchanger-front/apps/web/src/components/app-header.tsx`
+- **[AppHeaderLogoMobile](./appheaderlogomobile.md)** (19 styles) - `e:/project/exchanger-front/apps/web/src/components/app-header.tsx`
+- **[AppHeaderLogoDesktop](./appheaderlogodesktop.md)** (19 styles) - `e:/project/exchanger-front/apps/web/src/components/app-header.tsx`
+- **[AppHeaderNavigationLinks](./appheadernavigationlinks.md)** (19 styles) - `e:/project/exchanger-front/apps/web/src/components/app-header.tsx`
 
 ---
 

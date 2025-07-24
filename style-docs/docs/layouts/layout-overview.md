@@ -2,7 +2,7 @@
 
 **File**: `apps\docs\app\layout.tsx`  
 **Type**: `nested`  
-**Generated**: 2025-07-24T12:55:49.190Z
+**Generated**: 2025-07-24T15:00:26.448Z
 
 ## 📊 Overview
 

@@ -2,7 +2,7 @@
 
 **File**: `e:/project/exchanger-front/apps/web/src/components/app-layout.tsx`  
 **Page**: `apps\web\app\[locale]\layout.tsx`  
-**Generated**: 2025-07-24T12:55:49.188Z
+**Generated**: 2025-07-24T15:00:26.446Z
 
 ---
 
@@ -198,42 +198,33 @@ _None_
 
 #### 🎨 Tailwind Classes
 
-**Static (28)**:
+**Static (19)**:
 
 ```css
+bg-primary
 flex
+font-bold
 h-10
 hidden
 items-center
 justify-between
+justify-center
+md:flex
+rounded-lg
 sm:flex
 sm:hidden
+sm:space-x-3
+sm:text-xl
 space-x-2
-absolute
-cursor-pointer
-dark:-rotate-90
-dark:rotate-0
-dark:scale-0
-dark:scale-100
-h-4
-h-7
-h-[0.9rem]
-ml-auto
-mr-2
-rotate-0
-rotate-90
-scale-0
-scale-100
-sr-only
-transition-all
-w-4
-w-7
-w-[0.9rem]
+space-x-6
+text-lg
+text-primary-foreground
+text-sm
 ```
 
 #### 📤 Style Sources
 
-- **Own styles**: 28 classes from component code
+- **Own styles**: 19 classes from component code
 
 #### 🧩 CSS Modules
 
@@ -250,42 +241,33 @@ _None_
 
 #### 🎨 Tailwind Classes
 
-**Static (28)**:
+**Static (19)**:
 
 ```css
+bg-primary
 flex
+font-bold
 h-10
 hidden
 items-center
 justify-between
+justify-center
+md:flex
+rounded-lg
 sm:flex
 sm:hidden
+sm:space-x-3
+sm:text-xl
 space-x-2
-absolute
-cursor-pointer
-dark:-rotate-90
-dark:rotate-0
-dark:scale-0
-dark:scale-100
-h-4
-h-7
-h-[0.9rem]
-ml-auto
-mr-2
-rotate-0
-rotate-90
-scale-0
-scale-100
-sr-only
-transition-all
-w-4
-w-7
-w-[0.9rem]
+space-x-6
+text-lg
+text-primary-foreground
+text-sm
 ```
 
 #### 📤 Style Sources
 
-- **Own styles**: 28 classes from component code
+- **Own styles**: 19 classes from component code
 
 #### 🧩 CSS Modules
 
@@ -302,22 +284,33 @@ _None_
 
 #### 🎨 Tailwind Classes
 
-**Static (8)**:
+**Static (19)**:
 
 ```css
 bg-primary
 flex
 font-bold
+h-10
+hidden
 items-center
+justify-between
 justify-center
+md:flex
 rounded-lg
+sm:flex
+sm:hidden
+sm:space-x-3
+sm:text-xl
+space-x-2
+space-x-6
+text-lg
 text-primary-foreground
 text-sm
 ```
 
 #### 📤 Style Sources
 
-- **Own styles**: 8 classes from component code
+- **Own styles**: 19 classes from component code
 
 #### 🧩 CSS Modules
 
@@ -334,18 +327,25 @@ _None_
 
 #### 🎨 Tailwind Classes
 
-**Static (12)**:
+**Static (19)**:
 
 ```css
 bg-primary
 flex
 font-bold
+h-10
+hidden
 items-center
+justify-between
 justify-center
+md:flex
 rounded-lg
+sm:flex
+sm:hidden
 sm:space-x-3
 sm:text-xl
 space-x-2
+space-x-6
 text-lg
 text-primary-foreground
 text-sm
@@ -353,7 +353,7 @@ text-sm
 
 #### 📤 Style Sources
 
-- **Own styles**: 12 classes from component code
+- **Own styles**: 19 classes from component code
 
 #### 🧩 CSS Modules
 
@@ -370,17 +370,33 @@ _None_
 
 #### 🎨 Tailwind Classes
 
-**Static (3)**:
+**Static (19)**:
 
 ```css
+bg-primary
+flex
+font-bold
+h-10
 hidden
+items-center
+justify-between
+justify-center
 md:flex
+rounded-lg
+sm:flex
+sm:hidden
+sm:space-x-3
+sm:text-xl
+space-x-2
 space-x-6
+text-lg
+text-primary-foreground
+text-sm
 ```
 
 #### 📤 Style Sources
 
-- **Own styles**: 3 classes from component code
+- **Own styles**: 19 classes from component code
 
 #### 🧩 CSS Modules
 
@@ -398,11 +414,11 @@ _None_
 - **AppLayout**: flex-1, overflow-x-hidden
 - **AppFooter**: h-5, mb-4, text-muted-foreground, text-sm, w-5
 - **AppFooter**: h-5, mb-4, text-muted-foreground, text-sm, w-5
-- **AppHeader**: flex, h-10, hidden, items-center, justify-between, sm:flex, sm:hidden, space-x-2, absolute, cursor-pointer, dark:-rotate-90, dark:rotate-0, dark:scale-0, dark:scale-100, h-4, h-7, h-[0.9rem], ml-auto, mr-2, rotate-0, rotate-90, scale-0, scale-100, sr-only, transition-all, w-4, w-7, w-[0.9rem]
-- **AppHeader**: flex, h-10, hidden, items-center, justify-between, sm:flex, sm:hidden, space-x-2, absolute, cursor-pointer, dark:-rotate-90, dark:rotate-0, dark:scale-0, dark:scale-100, h-4, h-7, h-[0.9rem], ml-auto, mr-2, rotate-0, rotate-90, scale-0, scale-100, sr-only, transition-all, w-4, w-7, w-[0.9rem]
-- **AppHeaderLogoMobile**: bg-primary, flex, font-bold, items-center, justify-center, rounded-lg, text-primary-foreground, text-sm
-- **AppHeaderLogoDesktop**: bg-primary, flex, font-bold, items-center, justify-center, rounded-lg, sm:space-x-3, sm:text-xl, space-x-2, text-lg, text-primary-foreground, text-sm
-- **AppHeaderNavigationLinks**: hidden, md:flex, space-x-6
+- **AppHeader**: bg-primary, flex, font-bold, h-10, hidden, items-center, justify-between, justify-center, md:flex, rounded-lg, sm:flex, sm:hidden, sm:space-x-3, sm:text-xl, space-x-2, space-x-6, text-lg, text-primary-foreground, text-sm
+- **AppHeader**: bg-primary, flex, font-bold, h-10, hidden, items-center, justify-between, justify-center, md:flex, rounded-lg, sm:flex, sm:hidden, sm:space-x-3, sm:text-xl, space-x-2, space-x-6, text-lg, text-primary-foreground, text-sm
+- **AppHeaderLogoMobile**: bg-primary, flex, font-bold, h-10, hidden, items-center, justify-between, justify-center, md:flex, rounded-lg, sm:flex, sm:hidden, sm:space-x-3, sm:text-xl, space-x-2, space-x-6, text-lg, text-primary-foreground, text-sm
+- **AppHeaderLogoDesktop**: bg-primary, flex, font-bold, h-10, hidden, items-center, justify-between, justify-center, md:flex, rounded-lg, sm:flex, sm:hidden, sm:space-x-3, sm:text-xl, space-x-2, space-x-6, text-lg, text-primary-foreground, text-sm
+- **AppHeaderNavigationLinks**: bg-primary, flex, font-bold, h-10, hidden, items-center, justify-between, justify-center, md:flex, rounded-lg, sm:flex, sm:hidden, sm:space-x-3, sm:text-xl, space-x-2, space-x-6, text-lg, text-primary-foreground, text-sm
 
 ---
 

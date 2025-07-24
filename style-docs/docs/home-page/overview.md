@@ -1,7 +1,7 @@
 # docs - home-page
 
 **File**: `apps\docs\app\page.tsx`  
-**Generated**: 2025-07-24T12:55:49.171Z
+**Generated**: 2025-07-24T15:00:26.433Z
 
 ## 📊 Overview
 

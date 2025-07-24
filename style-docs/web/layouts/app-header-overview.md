@@ -2,7 +2,7 @@
 
 **File**: `apps\web\src\components\app-header.tsx`  
 **Type**: `component`  
-**Generated**: 2025-07-24T12:55:49.189Z
+**Generated**: 2025-07-24T15:00:26.447Z
 
 ## 📊 Overview
 
@@ -12,11 +12,11 @@
 
 ## 🧩 Layout Components
 
-- **[AppHeader](./appheader.md)** (28 styles) - `e:/project/exchanger-front/apps/web/src/components/app-header.tsx`
-- **[AppHeader](./appheader.md)** (28 styles) - `e:/project/exchanger-front/apps/web/src/components/app-header.tsx`
-- **[AppHeaderLogoMobile](./appheaderlogomobile.md)** (8 styles) - `e:/project/exchanger-front/apps/web/src/components/app-header.tsx`
-- **[AppHeaderLogoDesktop](./appheaderlogodesktop.md)** (12 styles) - `e:/project/exchanger-front/apps/web/src/components/app-header.tsx`
-- **[AppHeaderNavigationLinks](./appheadernavigationlinks.md)** (3 styles) - `e:/project/exchanger-front/apps/web/src/components/app-header.tsx`
+- **[AppHeader](./appheader.md)** (19 styles) - `e:/project/exchanger-front/apps/web/src/components/app-header.tsx`
+- **[AppHeader](./appheader.md)** (19 styles) - `e:/project/exchanger-front/apps/web/src/components/app-header.tsx`
+- **[AppHeaderLogoMobile](./appheaderlogomobile.md)** (19 styles) - `e:/project/exchanger-front/apps/web/src/components/app-header.tsx`
+- **[AppHeaderLogoDesktop](./appheaderlogodesktop.md)** (19 styles) - `e:/project/exchanger-front/apps/web/src/components/app-header.tsx`
+- **[AppHeaderNavigationLinks](./appheadernavigationlinks.md)** (19 styles) - `e:/project/exchanger-front/apps/web/src/components/app-header.tsx`
 
 ---
 

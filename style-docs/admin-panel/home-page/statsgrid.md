@@ -2,7 +2,7 @@
 
 **File**: `e:/project/exchanger-front/apps/admin-panel/app/page.tsx`  
 **Page**: `apps\admin-panel\app\page.tsx`  
-**Generated**: 2025-07-24T12:55:49.166Z
+**Generated**: 2025-07-24T15:00:26.429Z
 
 ---
 

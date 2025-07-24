@@ -2,7 +2,7 @@
 
 **File**: `e:/project/exchanger-front/apps/web/src/components/forms/exchangeform.tsx`  
 **Page**: `apps\web\app\[locale]\exchange\page.tsx`  
-**Generated**: 2025-07-24T12:55:49.182Z
+**Generated**: 2025-07-24T15:00:26.442Z
 
 ---
 

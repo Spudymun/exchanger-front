@@ -10,8 +10,10 @@ export * from './config/performance.js';
 export * from './utils/file-utils.js';
 export * from './utils/component-parser-simple.js';
 export * from './utils/style-extractor.js';
-export * from './utils/markdown-generator.js';
 export * from './core/component-tree-simple.js';
+
+// НОВАЯ АРХИТЕКТУРА СЕРВИСОВ
+export * from './services/index.js';
 
 // НОВАЯ АРХИТЕКТУРА СКАНЕРОВ
 export * from './scanners/index.js';
