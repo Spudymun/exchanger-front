@@ -2,11 +2,11 @@
 
 **File**: `e:/project/exchanger-front/apps/web/src/components/ctasection.tsx`  
 **Page**: `apps\web\app\[locale]\page.tsx`  
-**Generated**: 2025-07-22T22:16:53.793Z
+**Generated**: 2025-07-24T12:45:41.754Z
 
 ---
 
-## 📋 Section Summary
+## 📋 Component Summary
 
 - **Direct Children**: 0
 - **Total Nested Components**: 0

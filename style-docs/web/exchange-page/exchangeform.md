@@ -2,11 +2,11 @@
 
 **File**: `e:/project/exchanger-front/apps/web/src/components/forms/exchangeform.tsx`  
 **Page**: `apps\web\app\[locale]\exchange\page.tsx`  
-**Generated**: 2025-07-22T22:16:53.798Z
+**Generated**: 2025-07-24T12:45:41.759Z
 
 ---
 
-## 📋 Section Summary
+## 📋 Component Summary
 
 - **Direct Children**: 5
 - **Total Nested Components**: 5

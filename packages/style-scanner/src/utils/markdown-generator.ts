@@ -121,19 +121,20 @@ export class MarkdownGenerator {
   }
 
   /**
-   * Генерация файлов для секций (импортированных компонентов)
+   * Генерация файлов для структурирования страницы
+   * Создаёт файлы для секций (если есть импорты) или топ-левел компонентов (если импортов нет)
    */
   private async generateSectionFiles(
     pageResult: PageScanResult,
     projectName: string,
     pageName: string
   ): Promise<void> {
-    // Получаем компоненты из импортов (это и есть секции)
-    const sectionComponents = this.getSectionComponentsFromImports(pageResult);
+    // Получаем компоненты для структурирования (секции или топ-левел)
+    const structuringComponents = this.getStructuringComponents(pageResult);
 
-    for (const sectionComponent of sectionComponents) {
-      const content = this.createSectionMarkdown(sectionComponent, pageResult.pagePath);
-      const fileName = this.sanitizeFileName(sectionComponent.name) + '.md';
+    for (const structuringComponent of structuringComponents) {
+      const content = this.createComponentMarkdown(structuringComponent, pageResult.pagePath);
+      const fileName = this.sanitizeFileName(structuringComponent.name) + '.md';
       const filePath = join(this.config.outputDir, projectName, pageName, fileName);
 
       await writeFile(filePath, content, 'utf-8');
@@ -145,9 +146,10 @@ export class MarkdownGenerator {
   }
 
   /**
-   * Получение компонентов-секций из импортов
+   * Получение компонентов для структурирования (секции или топ-левел компоненты)
+   * Унифицированная работа как для страниц с секциями, так и без них
    */
-  private getSectionComponentsFromImports(pageResult: PageScanResult): ComponentNode[] {
+  private getStructuringComponents(pageResult: PageScanResult): ComponentNode[] {
     // Ищем все компоненты, которые импортированы на странице
     const allComponents = this.flattenComponents(pageResult.components);
     const mainPageComponent = pageResult.components.find(comp => comp.depth === 0);
@@ -186,6 +188,20 @@ export class MarkdownGenerator {
       }
     }
 
+    // НОВАЯ ЛОГИКА: Если импортированных компонентов не найдено (страница без секций),
+    // возвращаем все топ-левел компоненты (прямые дети главной страницы)
+    if (selectedComponents.length === 0) {
+      const topLevelComponents = mainPageComponent.children.filter(comp => comp.depth === 1);
+
+      if (this.config.verbose) {
+        console.log(
+          `  🔍 DEBUG: No imported sections found, using top-level components: ${topLevelComponents.map(c => c.name).join(', ')}`
+        );
+      }
+
+      return topLevelComponents;
+    }
+
     if (this.config.verbose) {
       console.log(
         `  🔍 DEBUG: Selected components: ${selectedComponents.map(c => c.name).join(', ')}`
@@ -196,34 +212,34 @@ export class MarkdownGenerator {
   }
 
   /**
-   * Создание Markdown контента для СЕКЦИИ (импортированного компонента)
+   * Создание Markdown контента для компонента (секции или топ-левел)
    */
-  private createSectionMarkdown(sectionComponent: ComponentNode, pagePath: string): string {
-    // Получаем ВСЕ вложенные компоненты этой секции
-    const allNestedComponents = this.flattenComponents([sectionComponent]);
-    const nestedOnly = allNestedComponents.filter(comp => comp !== sectionComponent);
+  private createComponentMarkdown(component: ComponentNode, pagePath: string): string {
+    // Получаем ВСЕ вложенные компоненты этого компонента
+    const allNestedComponents = this.flattenComponents([component]);
+    const nestedOnly = allNestedComponents.filter(comp => comp !== component);
 
     // Проверяем наличие динамических классов во ВСЕХ компонентах
     const hasDynamicClasses = allNestedComponents.some(
       comp => comp.styles.dynamicClasses && comp.styles.dynamicClasses.length > 0
     );
 
-    return `# ${sectionComponent.name}
+    return `# ${component.name}
 
-**File**: \`${sectionComponent.filePath}\`  
+**File**: \`${component.filePath}\`  
 **Page**: \`${pagePath}\`  
 **Generated**: ${new Date().toISOString()}
 
 ---
 
-## 📋 Section Summary
+## 📋 Component Summary
 
-* **Direct Children**: ${sectionComponent.children.length}
+* **Direct Children**: ${component.children.length}
 * **Total Nested Components**: ${nestedOnly.length}
 * **Max Nesting Depth**: ${this.getMaxDepth(allNestedComponents)} levels
 * **Dynamic Classes Detected**: ${hasDynamicClasses ? '✅' : '❌'}
-* **Named Imports**: ${sectionComponent.imports.map(imp => imp.name).join(', ') || 'None'}
-* **Named Exports**: ${sectionComponent.exports.map(exp => exp.name).join(', ') || 'None'}
+* **Named Imports**: ${component.imports.map(imp => imp.name).join(', ') || 'None'}
+* **Named Exports**: ${component.exports.map(exp => exp.name).join(', ') || 'None'}
 
 ---
 

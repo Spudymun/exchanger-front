@@ -108,20 +108,3 @@ export function deduplicateComponents(components: ComponentNode[]): ComponentNod
     return true;
   });
 }
-
-/**
- * Получение компонентов-секций из импортов
- */
-export function getSectionComponentsFromImports(pageResult: PageScanResult): ComponentNode[] {
-  // Ищем все компоненты, которые импортированы на странице
-  const allComponents = flattenComponents(pageResult.components);
-  const mainPageComponent = pageResult.components.find(comp => comp.depth === 0);
-
-  if (!mainPageComponent) return [];
-
-  // Получаем имена импортированных компонентов
-  const importedNames = mainPageComponent.imports.map(imp => imp.name.replace(/[{}]/g, '').trim());
-
-  // Находим компоненты, которые соответствуют импортам
-  return allComponents.filter(comp => importedNames.includes(comp.name) && comp.depth > 0);
-}

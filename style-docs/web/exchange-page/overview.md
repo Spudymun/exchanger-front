@@ -1,7 +1,7 @@
 # web - exchange-page
 
 **File**: `apps\web\app\[locale]\exchange\page.tsx`  
-**Generated**: 2025-07-22T22:16:53.797Z
+**Generated**: 2025-07-24T12:45:41.758Z
 
 ## 📊 Overview
 

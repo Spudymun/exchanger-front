@@ -2,11 +2,11 @@
 
 **File**: `e:/project/exchanger-front/apps/web/src/components/herosection.tsx`  
 **Page**: `apps\web\app\[locale]\page.tsx`  
-**Generated**: 2025-07-22T22:16:53.795Z
+**Generated**: 2025-07-24T12:45:41.756Z
 
 ---
 
-## 📋 Section Summary
+## 📋 Component Summary
 
 - **Direct Children**: 2
 - **Total Nested Components**: 18
