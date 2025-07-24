@@ -12,4 +12,9 @@ export * from './utils/component-parser-simple.js';
 export * from './utils/style-extractor.js';
 export * from './utils/markdown-generator.js';
 export * from './core/component-tree-simple.js';
+
+// НОВАЯ АРХИТЕКТУРА СКАНЕРОВ
+export * from './scanners/index.js';
+
+// ОБРАТНАЯ СОВМЕСТИМОСТЬ (устаревшие экспорты)
 export * from './core/main-scanner.js';
