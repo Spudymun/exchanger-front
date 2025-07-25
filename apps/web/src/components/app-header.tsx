@@ -40,7 +40,7 @@ export function AppHeader({ className }: AppHeaderProps) {
     <Header currentLocale={locale} onLocaleChange={handleLocaleChange} className={className}>
       <Header.Container>
         {/* Мобильная версия */}
-        <div className="sm:hidden">
+        <div className="block sm:hidden">
           <div className="flex justify-between items-center h-10">
             <AppHeaderLogoMobile />
             <div className="flex items-center space-x-2">
@@ -53,16 +53,18 @@ export function AppHeader({ className }: AppHeaderProps) {
         </div>
 
         {/* Десктопная версия */}
-        <div className="hidden sm:flex justify-between items-center h-10">
-          <AppHeaderLogoDesktop />
-          <Header.Navigation>
-            <AppHeaderNavigationLinks pathname={pathname} t={t} />
-          </Header.Navigation>
-          <Header.Actions>
-            <Header.LanguageSwitcher />
-            <ThemeToggle />
-            <Header.UserMenu />
-          </Header.Actions>
+        <div className="hidden sm:block">
+          <div className="flex justify-between items-center h-10">
+            <AppHeaderLogoDesktop />
+            <Header.Navigation>
+              <AppHeaderNavigationLinks pathname={pathname} t={t} />
+            </Header.Navigation>
+            <Header.Actions>
+              <Header.LanguageSwitcher />
+              <ThemeToggle />
+              <Header.UserMenu />
+            </Header.Actions>
+          </div>
         </div>
       </Header.Container>
     </Header>

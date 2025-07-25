@@ -2,12 +2,14 @@
 
 import * as React from 'react';
 
+import { enhanceChildWithContext } from '../lib/header-helpers';
 import { cn } from '../lib/utils';
+
+const FLEX_ITEMS_CENTER_SPACE_X_2 = 'flex items-center space-x-2';
 
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
 
-// Header Context
 export interface HeaderContextValue {
   isMenuOpen?: boolean;
   currentLocale?: string;
@@ -24,9 +26,8 @@ const HeaderContext = React.createContext<HeaderContextValue | undefined>(undefi
 export const useHeaderContext = () => {
   return React.useContext(HeaderContext);
 };
-
-// ===== ROOT COMPONENT =====
-export interface HeaderProps extends React.HTMLAttributes<HTMLElement> {
+export interface HeaderProps {
+  className?: string;
   isMenuOpen?: boolean;
   currentLocale?: string;
   isAuthenticated?: boolean;
@@ -51,7 +52,6 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
       onLocaleChange,
       onSignIn,
       onSignOut,
-      ...props
     },
     ref
   ) => {
@@ -75,7 +75,6 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
             className
           )}
           role="banner"
-          {...props}
         >
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="py-1 sm:py-2 md:py-2">{children}</div>
@@ -88,7 +87,6 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
 
 Header.displayName = 'Header';
 
-// Container Component
 export interface ContainerProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'fluid' | 'compact';
   children: React.ReactNode;
@@ -121,14 +119,13 @@ const Container = React.forwardRef<HTMLDivElement, ContainerProps>(
 
 Container.displayName = 'Header.Container';
 
-// Logo Component
 export interface LogoProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
 }
 
 const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
   ({ className, children, ...props }, ref) => (
-    <div ref={ref} className={cn('flex items-center space-x-2', className)} {...props}>
+    <div ref={ref} className={cn(FLEX_ITEMS_CENTER_SPACE_X_2, className)} {...props}>
       {children}
     </div>
   )
@@ -136,7 +133,6 @@ const Logo = React.forwardRef<HTMLDivElement, LogoProps>(
 
 Logo.displayName = 'Header.Logo';
 
-// Navigation Component
 export interface NavigationProps extends React.HTMLAttributes<HTMLElement> {
   children: React.ReactNode;
 }
@@ -157,7 +153,6 @@ const Navigation = React.forwardRef<HTMLElement, NavigationProps>(
 
 Navigation.displayName = 'Header.Navigation';
 
-// Actions Component
 export interface ActionsProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
 }
@@ -180,7 +175,6 @@ const Actions = React.forwardRef<HTMLDivElement, ActionsProps>(
 
 Actions.displayName = 'Header.Actions';
 
-// Mobile Menu Component
 export interface MobileMenuProps extends React.HTMLAttributes<HTMLButtonElement> {
   children?: React.ReactNode;
 }
@@ -221,7 +215,6 @@ const MobileMenu = React.forwardRef<HTMLButtonElement, MobileMenuProps>(
 
 MobileMenu.displayName = 'Header.MobileMenu';
 
-// Language Switcher Component
 export interface LanguageSwitcherProps extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
   currentLocale?: string;
@@ -274,48 +267,60 @@ const LanguageSwitcher = React.forwardRef<HTMLDivElement, LanguageSwitcherProps>
 
 LanguageSwitcher.displayName = 'Header.LanguageSwitcher';
 
-// User Menu Component
 export interface UserMenuProps extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
+  currentLocale?: string;
+  onLocaleChange?: (locale: string) => void;
+  isAuthenticated?: boolean;
+  onSignIn?: () => void;
+  onSignOut?: () => void;
 }
 
 const UserMenu = React.forwardRef<HTMLDivElement, UserMenuProps>(
-  ({ className, children, ...props }, ref) => {
+  (
+    {
+      className,
+      children,
+      currentLocale: _currentLocale,
+      onLocaleChange: _onLocaleChange,
+      isAuthenticated: propIsAuthenticated,
+      onSignIn,
+      onSignOut,
+      ...props
+    },
+    ref
+  ) => {
     const context = useHeaderContext();
-    const isAuthenticated = context?.isAuthenticated ?? false;
-    const userName = context?.userName;
+    const isAuth = propIsAuthenticated ?? context?.isAuthenticated ?? false;
+
+    if (children) {
+      return (
+        <div ref={ref} className={cn(FLEX_ITEMS_CENTER_SPACE_X_2, className)} {...props}>
+          {children}
+        </div>
+      );
+    }
 
     return (
-      <div ref={ref} className={cn('flex items-center space-x-2', className)} {...props}>
-        {children || (
-          <>
-            {isAuthenticated ? (
-              <>
-                {userName && (
-                  <span className="text-sm text-muted-foreground hidden sm:inline">{userName}</span>
-                )}
-                <Button
-                  variant="outline"
-                  size="compact"
-                  className="h-6 px-2 text-xs sm:h-7 sm:px-2.5 sm:text-xs"
-                  onClick={context?.onSignOut}
-                >
-                  <span className="sm:hidden">Out</span>
-                  <span className="hidden sm:inline">Sign Out</span>
-                </Button>
-              </>
-            ) : (
-              <Button
-                variant="default"
-                size="compact"
-                className="h-6 px-2 text-xs sm:h-7 sm:px-2.5 sm:text-xs"
-                onClick={context?.onSignIn}
-              >
-                <span className="sm:hidden">In</span>
-                <span className="hidden sm:inline">Sign In</span>
-              </Button>
-            )}
-          </>
+      <div ref={ref} className={cn(FLEX_ITEMS_CENTER_SPACE_X_2, className)} {...props}>
+        {isAuth ? (
+          <Button
+            variant="outline"
+            size="compact"
+            className="h-6 px-2 text-xs"
+            onClick={onSignOut ?? context?.onSignOut}
+          >
+            Sign Out
+          </Button>
+        ) : (
+          <Button
+            variant="default"
+            size="compact"
+            className="h-6 px-2 text-xs"
+            onClick={onSignIn ?? context?.onSignIn}
+          >
+            Sign In
+          </Button>
         )}
       </div>
     );
@@ -324,58 +329,6 @@ const UserMenu = React.forwardRef<HTMLDivElement, UserMenuProps>(
 
 UserMenu.displayName = 'Header.UserMenu';
 
-// Enhanced Child Components - Following ExchangeForm pattern for prop enhancement
-
-function addLocaleProps(
-  props: Record<string, unknown>,
-  context: HeaderContextValue | undefined,
-  childProps: Record<string, unknown>
-) {
-  if (context?.currentLocale && !childProps.currentLocale) {
-    props.currentLocale = context.currentLocale;
-  }
-  if (context?.onLocaleChange && !childProps.onLocaleChange) {
-    props.onLocaleChange = context.onLocaleChange;
-  }
-}
-
-function addAuthProps(
-  props: Record<string, unknown>,
-  context: HeaderContextValue | undefined,
-  childProps: Record<string, unknown>
-) {
-  if (context?.isAuthenticated !== undefined && !childProps.isAuthenticated) {
-    props.isAuthenticated = context.isAuthenticated;
-  }
-  if (context?.onSignIn && !childProps.onSignIn) {
-    props.onSignIn = context.onSignIn;
-  }
-  if (context?.onSignOut && !childProps.onSignOut) {
-    props.onSignOut = context.onSignOut;
-  }
-}
-
-function createEnhancedProps(
-  context: HeaderContextValue | undefined,
-  childProps: Record<string, unknown>
-) {
-  const enhancedProps: Record<string, unknown> = {};
-  addLocaleProps(enhancedProps, context, childProps);
-  addAuthProps(enhancedProps, context, childProps);
-  return enhancedProps;
-}
-
-function enhanceChildWithContext(child: React.ReactNode, context: HeaderContextValue | undefined) {
-  if (!React.isValidElement(child)) {
-    return child;
-  }
-
-  const childProps = child.props as Record<string, unknown>;
-  const enhancedProps = createEnhancedProps(context, childProps);
-  return React.cloneElement(child, enhancedProps);
-}
-
-// ===== THEME TOGGLE INTEGRATION =====
 export interface WithThemeProps extends React.HTMLAttributes<HTMLElement> {
   children?: React.ReactNode;
 }
@@ -393,7 +346,6 @@ const WithTheme = React.forwardRef<HTMLElement, WithThemeProps>(
 
 WithTheme.displayName = 'Header.WithTheme';
 
-// Compound Component Export
 export const HeaderCompound = Object.assign(Header, {
   Container,
   Logo,
@@ -405,7 +357,6 @@ export const HeaderCompound = Object.assign(Header, {
   WithTheme,
 });
 
-// Individual Exports
 export {
   Header as Root,
   Container,

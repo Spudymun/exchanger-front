@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 
+import '../globals.css';
 import { AppLayout } from '../../src/components/app-layout';
 import { routing } from '../../src/i18n/routing';
 

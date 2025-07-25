@@ -172,6 +172,53 @@ export const FormContainer = {
 
 // === READY-TO-USE COMPONENTS ===
 
+// Вспомогательный компонент для SVG стрелки вниз (мобильная)
+const ExchangeArrowMobile = ({ sizeClass }: { sizeClass: string }) => (
+  <svg
+    className={cn(DesignSystemClasses.exchangeArrow.mobile, sizeClass)}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M19 14l-7 7m0 0l-7-7m7 7V3"
+    />
+  </svg>
+);
+
+// Вспомогательный компонент для SVG стрелки вправо (десктоп)
+const ExchangeArrowDesktop = ({ sizeClass }: { sizeClass: string }) => (
+  <svg
+    className={cn(DesignSystemClasses.exchangeArrow.desktop, sizeClass)}
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M17 8l4 4m0 0l-4 4m4-4H3"
+    />
+  </svg>
+);
+
+function getSizeClass(size: 'small' | 'default' | 'large'): string {
+  switch (size) {
+    case 'small':
+      return 'h-4 w-4';
+    case 'large':
+      return 'h-8 w-8';
+    default:
+      return 'h-6 w-6';
+  }
+}
+
 export const ExchangeArrow = ({
   className,
   size = 'default',
@@ -181,58 +228,14 @@ export const ExchangeArrow = ({
   size?: 'small' | 'default' | 'large';
   showGlow?: boolean;
 }) => {
-  const getSizeClass = (size: 'small' | 'default' | 'large'): string => {
-    switch (size) {
-      case 'small':
-        return 'h-4 w-4';
-      case 'large':
-        return 'h-8 w-8';
-      default:
-        return 'h-6 w-6';
-    }
-  };
-
   const sizeClass = getSizeClass(size);
 
   return (
     <div className={cn(DesignSystemClasses.exchangeArrow.container, className)}>
-      {/* Декоративный фон */}
       <div className={DesignSystemClasses.exchangeArrow.background} />
-
-      {/* Эффект свечения */}
       {showGlow && <div className={DesignSystemClasses.exchangeArrow.glow} />}
-
-      {/* Мобильная стрелка вниз */}
-      <svg
-        className={cn(DesignSystemClasses.exchangeArrow.mobile, sizeClass)}
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M19 14l-7 7m0 0l-7-7m7 7V3"
-        />
-      </svg>
-
-      {/* Десктопная стрелка вправо */}
-      <svg
-        className={cn(DesignSystemClasses.exchangeArrow.desktop, sizeClass)}
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M17 8l4 4m0 0l-4 4m4-4H3"
-        />
-      </svg>
+      <ExchangeArrowMobile sizeClass={sizeClass} />
+      <ExchangeArrowDesktop sizeClass={sizeClass} />
     </div>
   );
 };
