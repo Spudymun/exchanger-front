@@ -52,10 +52,20 @@
         "countries": "Supported Countries"
       }
     },
-    "rates": {
-      "title": "Live Exchange Rates",
-      "description": "Real-time cryptocurrency prices and market data",
-      "viewAll": "View All Rates"
+    "howItWorks": {
+      "title": "How It Works",
+      "step1": {
+        "title": "Calculate Exchange",
+        "description": "Enter amount and select currencies to calculate rate and fees"
+      },
+      "step2": {
+        "title": "Send Cryptocurrency",
+        "description": "Transfer cryptocurrency to the specified address for exchange"
+      },
+      "step3": {
+        "title": "Receive Hryvnias",
+        "description": "Get UAH directly to your bank card instantly"
+      }
     }
   },
   "navigation": {
