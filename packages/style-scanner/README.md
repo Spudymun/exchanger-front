@@ -14,6 +14,7 @@ Style Scanner сканирует страницы приложения, стро
 - 🌳 **Построение дерева компонентов** с поддержкой локальных и импортированных компонентов
 - 📦 **Анализ зависимостей** с предотвращением циклических ссылок
 - 🎨 **Извлечение стилей** из Tailwind, CSS Modules и CSS-in-JS
+- ⚙️ **Проверка конфигураций Tailwind** - валидация content путей, поиск пропущенных файлов, анализ дублирования
 - 📄 **Генерация Markdown** документации с детальной структурой
 - ⚡ **Поддержка кэширования** для ускорения повторных сканирований
 - 🔧 **Настраиваемые паттерны** поиска файлов
@@ -217,6 +218,59 @@ docs/
 
 ...
 ````
+
+## ⚙️ Проверка конфигураций Tailwind
+
+Style Scanner автоматически анализирует все конфигурации Tailwind CSS в проекте и выявляет потенциальные проблемы.
+
+### Типы проверок
+
+- **Валидация content путей** - проверка существования файлов и директорий в `content` массиве
+- **Поиск пропущенных файлов** - обнаружение файлов с Tailwind классами, не включенных в конфигурацию
+- **Анализ дублирования** - выявление дублирующихся путей между конфигурациями
+- **Оптимизация производительности** - обнаружение слишком широких glob паттернов
+
+### Пример результата проверки
+
+```markdown
+## ⚙️ Tailwind Configuration Analysis
+
+- **Total Configurations**: 5
+- **Total Issues Found**: 2
+- **Total Errors**: 3
+
+### Root Configurations
+
+#### `tailwind.config.cjs`
+
+- **Type**: root
+- **Content Paths**: 6
+- **Valid Paths**: 5
+- **Issues**: 2
+- **Errors**: 0
+
+**⚠️ Issues Found:**
+
+**Inefficient Glob Patterns** (1):
+
+- 🔵 Glob pattern "./packages/\*_/_.{js,ts,jsx,tsx}" matches 1246 files (very broad)
+  - Path: `./packages/**/*.{js,ts,jsx,tsx}`
+  - 💡 Suggestion: Consider using more specific patterns for better performance
+
+**Empty Glob Patterns** (1):
+
+- 🟡 Glob pattern "./src/\*_/_.{js,ts,jsx,tsx,mdx}" matches no files
+  - Path: `./src/**/*.{js,ts,jsx,tsx,mdx}`
+  - 💡 Suggestion: Check if the pattern is correct or if matching files exist
+```
+
+### Типы найденных проблем
+
+- **🔵 Inefficient Glob** - паттерн находит слишком много файлов (>1000)
+- **🟡 Empty Glob** - паттерн не находит файлов
+- **🔴 Dead Path** - путь не существует
+- **⚠️ Missing File** - файл с Tailwind классами не включен в content
+- **🔄 Redundant Path** - дублирующийся путь в разных конфигурациях
 
 ## 🏗️ Архитектура
 

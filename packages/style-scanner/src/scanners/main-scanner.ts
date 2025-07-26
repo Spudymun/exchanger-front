@@ -7,6 +7,7 @@ import { ComponentTreeBuilder } from '../core/component-tree-simple.js';
 import { PageScanner } from './page-scanner.js';
 import { LayoutScanner } from './layout-scanner.js';
 import { UIScanner } from './ui-scanner.js';
+import { TailwindConfigScanner } from './tailwind-config-scanner.js';
 import { createLogger } from '../utils/logger.js';
 import { DEPTH_LIMITS } from '../config/performance.js';
 import type {
@@ -15,6 +16,7 @@ import type {
   PageScanResult,
   LayoutScanResult,
   UIScanResult,
+  TailwindConfigScanResult,
 } from '../types/scanner.js';
 
 /**
@@ -28,6 +30,7 @@ export class MainScanner {
   private pageScanner: PageScanner;
   private layoutScanner: LayoutScanner;
   private uiScanner: UIScanner;
+  private tailwindConfigScanner: TailwindConfigScanner;
 
   constructor(config: Partial<ScannerConfig> = {}) {
     this.config = {
@@ -54,6 +57,7 @@ export class MainScanner {
     this.pageScanner = new PageScanner(this.config, this.treeBuilder);
     this.layoutScanner = new LayoutScanner(this.config, this.treeBuilder);
     this.uiScanner = new UIScanner(this.config, this.treeBuilder);
+    this.tailwindConfigScanner = new TailwindConfigScanner(this.config);
   }
 
   /**
@@ -81,6 +85,9 @@ export class MainScanner {
     // 4. ЭТАП: Сканирование layouts
     const layouts = await this.scanLayouts();
 
+    // 5. ЭТАП: Сканирование Tailwind конфигураций
+    const tailwindConfigs = await this.scanTailwindConfigs();
+
     const scanDuration = Date.now() - startTime;
 
     // Очистка ресурсов
@@ -91,10 +98,12 @@ export class MainScanner {
       pages,
       layouts,
       uiComponents,
+      tailwindConfigs,
       summary: {
         totalPages: pages.length,
         totalLayouts: layouts.length,
         totalUIComponents: uiComponents.length,
+        totalTailwindConfigs: tailwindConfigs.length,
         totalComponents:
           pages.reduce((sum, page) => sum + page.components.length, 0) +
           layouts.reduce((sum, layout) => sum + layout.components.length, 0) +
@@ -103,6 +112,7 @@ export class MainScanner {
           pages.reduce((sum, page) => sum + page.errors.length, 0) +
           layouts.reduce((sum, layout) => sum + layout.errors.length, 0) +
           uiComponents.reduce((sum, ui) => sum + ui.errors.length, 0),
+        totalConfigIssues: tailwindConfigs.reduce((sum, config) => sum + config.issues.length, 0),
         scanDuration,
       },
     };
@@ -262,6 +272,44 @@ export class MainScanner {
     }
 
     return layouts;
+  }
+
+  /**
+   * Сканирование Tailwind конфигураций (ПЯТЫЙ ЭТАП)
+   */
+  private async scanTailwindConfigs(): Promise<TailwindConfigScanResult[]> {
+    if (this.config.verbose) {
+      this.logger.info('\n⚙️ Scanning Tailwind configurations...');
+    }
+
+    try {
+      // Используем метод scanAllConfigs для анализа всех конфигураций с дублированием
+      const tailwindConfigs = await this.tailwindConfigScanner.scanAllConfigs();
+
+      if (this.config.verbose) {
+        this.logger.verbose(`⚙️ Found ${tailwindConfigs.length} Tailwind config files`);
+
+        // Логируем статистику по issues
+        const totalIssues = tailwindConfigs.reduce((sum, config) => sum + config.issues.length, 0);
+        const totalErrors = tailwindConfigs.reduce((sum, config) => sum + config.errors.length, 0);
+
+        if (totalIssues > 0) {
+          this.logger.verbose(`⚠️ Found ${totalIssues} configuration issues`);
+        }
+
+        if (totalErrors > 0) {
+          this.logger.verbose(`❌ Found ${totalErrors} configuration errors`);
+        }
+      }
+
+      return tailwindConfigs;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.verbose(`❌ Error scanning Tailwind configs: ${errorMessage}`);
+
+      // Возвращаем пустой массив в случае ошибки, чтобы не блокировать весь процесс
+      return [];
+    }
   }
 
   /**

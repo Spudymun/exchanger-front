@@ -36,6 +36,17 @@ try {
       .option('-v, --verbose', 'Verbose output', false)
       .option('-q, --quiet', 'Minimal output', false)
       .option('--dry-run', 'Dry run without writing files', false)
+      .option('--skip-tailwind-config', 'Skip Tailwind configuration analysis', false)
+      .option(
+        '--config-severity <level>',
+        'Tailwind config issue severity level (error|warning|info)',
+        'warning'
+      )
+      .option(
+        '--ignore-paths <paths>',
+        'Comma-separated list of paths to ignore in Tailwind config analysis',
+        ''
+      )
       .action(async options => {
         if (!options.quiet) {
           console.log(chalk.blue('🔍 Starting style scan...'));

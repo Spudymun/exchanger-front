@@ -3,11 +3,13 @@
  * Сервис для создания содержимого Markdown документации
  */
 
+import { type } from 'os';
 import type {
   ProjectScanResult,
   PageScanResult,
   LayoutScanResult,
   ComponentNode,
+  TailwindConfigScanResult,
 } from '../types/scanner.js';
 import { ComponentAnalysisService } from './component-analysis.service.js';
 import { MarkdownFormattingService } from './markdown-formatting.service.js';
@@ -84,7 +86,7 @@ ${this.formattingService.renderTailwindSummaryByComponent(allNestedComponents)}
    * Создание сводного Markdown файла
    */
   createSummaryMarkdown(projectResult: ProjectScanResult): string {
-    const { summary, pages } = projectResult;
+    const { summary, pages, tailwindConfigs } = projectResult;
     return `# Style Scanner - Project Summary
 
 Generated: ${new Date().toISOString()}
@@ -92,9 +94,15 @@ Generated: ${new Date().toISOString()}
 ## 📊 Overview
 
 - **Total Pages Scanned**: ${summary.totalPages}
+- **Total Layouts Scanned**: ${summary.totalLayouts}
+- **Total UI Components Scanned**: ${summary.totalUIComponents}
+- **Total Tailwind Configs Scanned**: ${summary.totalTailwindConfigs || 0}
 - **Total Components Found**: ${summary.totalComponents}
 - **Total Errors**: ${summary.totalErrors}
+- **Total Config Issues**: ${summary.totalConfigIssues || 0}
 - **Scan Duration**: ${summary.scanDuration}ms
+
+${tailwindConfigs && tailwindConfigs.length > 0 ? this.createTailwindConfigSection(tailwindConfigs) : ''}
 
 ## 📄 Pages Analysis
 
@@ -234,5 +242,131 @@ ${
     }
 
     return { projectName, pageName };
+  }
+  /**
+   * Создание секции Tailwind Configuration Analysis
+   */
+  private createTailwindConfigSection(
+    tailwindConfigs: readonly TailwindConfigScanResult[]
+  ): string {
+    const totalIssues = tailwindConfigs.reduce((sum, config) => sum + config.issues.length, 0);
+    const totalErrors = tailwindConfigs.reduce((sum, config) => sum + config.errors.length, 0);
+
+    let section = `## ⚙️ Tailwind Configuration Analysis
+
+- **Total Configurations**: ${tailwindConfigs.length}
+- **Total Issues Found**: ${totalIssues}
+- **Total Errors**: ${totalErrors}
+
+`;
+
+    if (tailwindConfigs.length === 0) {
+      section += '_No Tailwind configurations found._\n\n';
+      return section;
+    }
+
+    // Группируем по типам конфигураций
+    const configsByType = {
+      root: tailwindConfigs.filter(c => c.configType === 'root'),
+      'app-specific': tailwindConfigs.filter(c => c.configType === 'app-specific'),
+      preset: tailwindConfigs.filter(c => c.configType === 'preset'),
+    };
+
+    for (const [type, configs] of Object.entries(configsByType)) {
+      if (configs.length === 0) continue;
+
+      section += `### ${type.charAt(0).toUpperCase() + type.slice(1)} Configurations\n\n`;
+
+      for (const config of configs) {
+        const issuesByType = this.groupIssuesByType(config.issues);
+        const hasIssues = config.issues.length > 0;
+        const hasErrors = config.errors.length > 0;
+
+        section += `#### \`${config.configPath}\`\n\n`;
+        section += `- **Type**: ${config.configType}\n`;
+        section += `- **Content Paths**: ${config.stats.totalContentPaths}\n`;
+        section += `- **Valid Paths**: ${config.stats.validPaths}\n`;
+        section += `- **Issues**: ${config.issues.length}\n`;
+        section += `- **Errors**: ${config.errors.length}\n\n`;
+
+        if (hasErrors) {
+          section += `**❌ Errors:**\n`;
+          for (const error of config.errors) {
+            section += `- ${error.type}: ${error.message}\n`;
+          }
+          section += '\n';
+        }
+
+        if (hasIssues) {
+          section += `**⚠️ Issues Found:**\n\n`;
+
+          for (const [issueType, issues] of Object.entries(issuesByType)) {
+            if (issues.length === 0) continue;
+
+            section += `**${this.formatIssueType(issueType)}** (${issues.length}):\n`;
+            for (const issue of issues) {
+              const severityIcon = this.getSeverityIcon(issue.severity);
+              section += `- ${severityIcon} ${issue.message}\n`;
+              if (issue.path) {
+                section += `  - Path: \`${issue.path}\`\n`;
+              }
+              if (issue.suggestion) {
+                section += `  - 💡 Suggestion: ${issue.suggestion}\n`;
+              }
+            }
+            section += '\n';
+          }
+        }
+
+        if (!hasIssues && !hasErrors) {
+          section += `✅ _No issues found in this configuration._\n\n`;
+        }
+      }
+    }
+
+    return section;
+  }
+
+  /**
+   * Группировка issues по типам
+   */
+  private groupIssuesByType(issues: readonly any[]): Record<string, any[]> {
+    return issues.reduce(
+      (groups, issue) => {
+        const type = issue.type || 'unknown';
+        if (!groups[type]) {
+          groups[type] = [];
+        }
+        groups[type].push(issue);
+        return groups;
+      },
+      {} as Record<string, any[]>
+    );
+  }
+
+  /**
+   * Форматирование типа issue для отображения
+   */
+  private formatIssueType(type: string): string {
+    const typeMap: Record<string, string> = {
+      dead_path: 'Dead Paths',
+      empty_glob: 'Empty Glob Patterns',
+      missing_file: 'Missing Files',
+      redundant_path: 'Redundant Paths',
+      inefficient_glob: 'Inefficient Glob Patterns',
+    };
+    return typeMap[type] || type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
+
+  /**
+   * Получение иконки для уровня серьезности
+   */
+  private getSeverityIcon(severity: string): string {
+    const iconMap: Record<string, string> = {
+      error: '🔴',
+      warning: '🟡',
+      info: '🔵',
+    };
+    return iconMap[severity] || '⚪';
   }
 }

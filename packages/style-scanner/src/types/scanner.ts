@@ -211,6 +211,44 @@ export interface UIScanResult {
 }
 
 /**
+ * Проблема конфигурации Tailwind
+ */
+export interface ConfigIssue {
+  readonly type:
+    | 'dead_path'
+    | 'empty_glob'
+    | 'missing_file'
+    | 'redundant_path'
+    | 'inefficient_glob';
+  readonly severity: 'error' | 'warning' | 'info';
+  readonly message: string;
+  readonly path?: string;
+  readonly suggestion?: string;
+}
+
+/**
+ * Статистика конфигурации Tailwind
+ */
+export interface ConfigStats {
+  readonly totalContentPaths: number;
+  readonly validPaths: number;
+  readonly deadPaths: number;
+  readonly filesFound: number;
+  readonly missingFiles: number;
+}
+
+/**
+ * Результат сканирования конфигурации Tailwind
+ */
+export interface TailwindConfigScanResult {
+  readonly configPath: string;
+  readonly configType: 'root' | 'app-specific' | 'preset';
+  readonly issues: readonly ConfigIssue[];
+  readonly stats: ConfigStats;
+  readonly errors: readonly ScanError[];
+}
+
+/**
  * Результат полного сканирования проекта
  */
 export interface ProjectScanResult {
@@ -218,6 +256,7 @@ export interface ProjectScanResult {
   readonly pages: readonly PageScanResult[];
   readonly layouts: readonly LayoutScanResult[];
   readonly uiComponents: readonly UIScanResult[];
+  readonly tailwindConfigs: readonly TailwindConfigScanResult[];
   readonly summary: ScanSummary;
 }
 
@@ -228,7 +267,9 @@ export interface ScanSummary {
   readonly totalPages: number;
   readonly totalLayouts: number;
   readonly totalUIComponents: number;
+  readonly totalTailwindConfigs: number;
   readonly totalComponents: number;
   readonly totalErrors: number;
+  readonly totalConfigIssues: number;
   readonly scanDuration: number;
 }
