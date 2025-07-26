@@ -156,13 +156,13 @@ module.exports = {
     // Приложения
     './apps/**/*.{js,ts,jsx,tsx,mdx}',
 
-    // Пакеты
+    // UI пакет (основной источник компонентов)
     './packages/ui/src/**/*.{js,ts,jsx,tsx}',
     './packages/ui/src/**/*.stories.{js,ts,jsx,tsx}',
-    './packages/**/*.{js,ts,jsx,tsx}',
 
-    // Корневые файлы
-    './src/**/*.{js,ts,jsx,tsx,mdx}',
+    // Специфичные пакеты с компонентами (избегаем широкого сканирования)
+    './packages/hooks/src/**/*.{js,ts,jsx,tsx}',
+    './packages/providers/src/**/*.{js,ts,jsx,tsx}',
 
     // Storybook
     './.storybook/**/*.{js,ts,jsx,tsx}',
