@@ -40,18 +40,6 @@
         "description": "Over 50,000 satisfied customers and years of experience in the market"
       }
     },
-    "cta": {
-      "title": "Ready to Start Trading?",
-      "description": "Join thousands of traders using our platform",
-      "button": "Start Trading",
-      "learnMore": "Learn More",
-      "stats": {
-        "users": "Active Users",
-        "volume": "Trading Volume",
-        "transactions": "Total Transactions",
-        "countries": "Supported Countries"
-      }
-    },
     "howItWorks": {
       "title": "How It Works",
       "step1": {

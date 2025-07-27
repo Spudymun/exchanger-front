@@ -1,6 +1,5 @@
 import { setRequestLocale } from 'next-intl/server';
 
-import { CTASection } from '../../src/components/CTASection';
 import { FeaturesSection } from '../../src/components/FeaturesSection';
 import { HeroSection } from '../../src/components/HeroSection';
 import { HowItWorksSection } from '../../src/components/HowItWorksSection';
@@ -21,7 +20,6 @@ export default async function HomePage({ params }: HomePageProps) {
         <HeroSection />
         <FeaturesSection />
         <HowItWorksSection />
-        <CTASection />
       </div>
     </div>
   );
