@@ -81,7 +81,7 @@ export const FooterLink = React.forwardRef<HTMLAnchorElement, FooterLinkProps>(
       ref={ref}
       href={href}
       className={cn(
-        'text-muted-foreground hover:text-foreground transition-colors text-sm',
+        'text-muted-foreground hover:text-foreground transition-colors text-sm block',
         className
       )}
       target={external ? '_blank' : undefined}

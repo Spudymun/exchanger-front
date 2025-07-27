@@ -22,3 +22,6 @@ export * from './percentage-calculations';
 export * from './time-constants';
 export * from './currency-formats';
 export * from './business-limits';
+
+// Contact information and social links
+export * from './contacts';

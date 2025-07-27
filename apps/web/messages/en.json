@@ -142,34 +142,39 @@
     },
     "footer": {
       "company": {
-        "title": "Company",
-        "description": "Professional cryptocurrency exchange platform for secure and efficient trading",
-        "address": "123 Trading Street, Finance District, FD 12345",
-        "phone": "+1 (555) 123-4567",
-        "email": "info@exchangego.com"
+        "title": "About Service",
+        "description": "Fast and secure cryptocurrency to fiat exchange without registration",
+        "workingHours": "Working 24/7",
+        "serviceType": "Automatic exchanger",
+        "responseTime": "Processing time: 5-15 minutes"
       },
-      "services": {
-        "title": "Services",
-        "exchange": "Exchange",
-        "orders": "Order Management",
-        "api": "API Access",
-        "fees": "Fee Structure"
+      "exchange": {
+        "title": "Currency Exchange",
+        "calculator": "Exchange Calculator",
+        "rates": "Exchange Rates",
+        "reserves": "Reserves",
+        "limits": "Exchange Limits"
       },
       "support": {
-        "title": "Support",
-        "help": "Help Center",
-        "contact": "Contact Us",
+        "title": "Support & Help",
+        "telegram": "Telegram Support",
         "faq": "FAQ",
-        "status": "System Status"
-      },
-      "social": {
-        "title": "Connect",
-        "description": "Follow us for updates and trading insights"
+        "howItWorks": "How It Works",
+        "contacts": "Contacts"
       },
       "legal": {
-        "terms": "Terms of Service",
-        "privacy": "Privacy Policy",
-        "cookies": "Cookie Policy"
+        "title": "Legal Information",
+        "rules": "Site Rules",
+        "aml": "AML Policy",
+        "returns": "Return Policy",
+        "privacy": "Privacy Policy"
+      },
+      "contacts": {
+        "title": "Contact Us",
+        "telegram": "Telegram: @exchangego_support",
+        "email": "Email: support@exchangego.com",
+        "workingHours": "Working 24/7",
+        "socialDescription": "Follow for news and rates"
       }
     }
   },
