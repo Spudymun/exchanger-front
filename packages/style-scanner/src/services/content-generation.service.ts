@@ -53,7 +53,9 @@ export class ContentGenerationService {
 * **Total Nested Components**: ${nestedOnly.length}
 * **Max Nesting Depth**: ${this.analysisService.getMaxDepth(allNestedComponents)} levels
 * **Dynamic Classes Detected**: ${hasDynamicClasses ? '✅' : '❌'}
-* **Named Imports**: ${component.imports.map(imp => imp.name).join(', ') || 'None'}
+* **Named Imports**: ${(() => {
+      return component.imports.map(imp => imp.name).join(', ') || 'None';
+    })()}
 * **Named Exports**: ${component.exports.map(exp => exp.name).join(', ') || 'None'}
 
 ---

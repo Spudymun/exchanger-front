@@ -269,8 +269,9 @@ export class PageScanner extends BaseScanner {
     const pageComponent: ComponentNode = {
       filePath: pageFilePath,
       name: componentName,
-      imports: [], // Упрощаем - не парсим импорты в fallback режиме
-      exports: [], // Упрощаем - не парсим экспорты в fallback режиме
+      imports: this.treeBuilder.convertToImportInfo(parsed.imports), // ИСПРАВЛЕНО: парсим импорты
+      exports: this.treeBuilder.convertToExportInfo(parsed.exports), // ИСПРАВЛЕНО: парсим экспорты
+
       children: usedComponents.map((compName, index) =>
         this.createSimpleComponent(compName, index + 1)
       ),

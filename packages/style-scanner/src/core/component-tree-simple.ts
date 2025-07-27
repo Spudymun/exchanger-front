@@ -92,6 +92,7 @@ export class ComponentTreeBuilder {
         cacheKey
       );
       componentBuilder.imports = this.convertToImportInfo(parsedComponent.imports);
+
       componentBuilder.exports = this.convertToExportInfo(parsedComponent.exports);
       componentBuilder.depth = depth;
       componentBuilder.errors = [...parsedComponent.errors];
@@ -116,6 +117,7 @@ export class ComponentTreeBuilder {
           );
           // Создаем локальный компонент с использованием builder
           const localComponentBuilder = ComponentNode.builder(localCompName, cacheKey);
+          localComponentBuilder.imports = componentBuilder.imports; // ИСПРАВЛЕНО: передаем импорты от файла
           localComponentBuilder.exports = [
             {
               name: localCompName,
@@ -142,31 +144,71 @@ export class ComponentTreeBuilder {
   /**
    * Преобразование строк импортов в ImportInfo
    */
-  private convertToImportInfo(imports: string[]): ImportInfo[] {
-    return imports.map(importStr => {
-      // Простой парсинг импорта через regex
-      const match = importStr.match(/import\s+(.+?)\s+from\s+['"](.+?)['"]/);
-      if (match && match[1] && match[2]) {
-        const [, importedName, source] = match;
-        return {
-          name: importedName.trim(),
-          localName: importedName.trim(),
-          source,
-          type: 'named' as const,
-        };
+  public convertToImportInfo(imports: string[]): ImportInfo[] {
+    const result: ImportInfo[] = [];
+
+    for (const importStr of imports) {
+      // Парсинг именованных импортов: import { A, B, C } from 'source'
+      const namedMatch = importStr.match(/import\s*\{([^}]+)\}\s*from\s*['"]([^'"]+)['"]/);
+      if (namedMatch && namedMatch[1] && namedMatch[2]) {
+        const [, importedNames, source] = namedMatch;
+        const names = importedNames
+          .split(',')
+          .map(name => name.trim())
+          .filter(name => name.length > 0);
+
+        for (const name of names) {
+          result.push({
+            name: name,
+            localName: name,
+            source,
+            type: 'named' as const,
+          });
+        }
+        continue;
       }
-      return {
+
+      // Парсинг дефолтных импортов: import Name from 'source'
+      const defaultMatch = importStr.match(/import\s+(\w+)\s+from\s*['"]([^'"]+)['"]/);
+      if (defaultMatch && defaultMatch[1] && defaultMatch[2]) {
+        const [, importedName, source] = defaultMatch;
+        result.push({
+          name: importedName,
+          localName: importedName,
+          source,
+          type: 'default' as const,
+        });
+        continue;
+      }
+
+      // Парсинг namespace импортов: import * as Name from 'source'
+      const namespaceMatch = importStr.match(/import\s*\*\s*as\s+(\w+)\s+from\s*['"]([^'"]+)['"]/);
+      if (namespaceMatch && namespaceMatch[1] && namespaceMatch[2]) {
+        const [, importedName, source] = namespaceMatch;
+        result.push({
+          name: importedName,
+          localName: importedName,
+          source,
+          type: 'namespace' as const,
+        });
+        continue;
+      }
+
+      // Если не удалось распарсить, добавляем как unknown
+      result.push({
         name: 'unknown',
         localName: 'unknown',
         source: importStr,
         type: 'named' as const,
-      };
-    });
+      });
+    }
+
+    return result;
   }
   /**
    * Преобразование строк экспортов в ExportInfo
    */
-  private convertToExportInfo(exports: string[]): ExportInfo[] {
+  public convertToExportInfo(exports: string[]): ExportInfo[] {
     return exports.map(exportStr => ({
       name: exportStr,
       type: 'named' as const,

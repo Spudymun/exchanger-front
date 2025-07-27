@@ -65,11 +65,11 @@ export function parseComponent(content: string): ParsedComponent {
 }
 
 /**
- * Извлечение относительных импортов
+ * Извлечение всех импортов (относительных и из пакетов)
  */
 function extractImports(content: string): string[] {
-  // Ищем ВСЕ относительные импорты - начинающиеся с . или ../
-  const importRegex = /import\s+.*?from\s+['"](\.[^'"]*)['"]/g;
+  // Ищем ВСЕ импорты - относительные (. или ../) И из пакетов (@repo/ui, lucide-react, next-intl, etc.)
+  const importRegex = /import\s+.*?from\s+['"]([^'"]+)['"]/g;
   const imports: string[] = [];
   let match;
 
