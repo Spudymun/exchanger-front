@@ -1,6 +1,7 @@
 {
   "name": "@repo/providers",
   "version": "0.0.0",
+  "type": "module",
   "private": true,
   "exports": {
     ".": "./src/index.tsx"
@@ -22,6 +23,7 @@
   },
   "dependencies": {
     "@repo/constants": "*",
+    "@repo/hooks": "*",
     "@trpc/react-query": "^11.0.0",
     "@tanstack/react-query": "^5.45.0",
     "react": "^19.1.0",

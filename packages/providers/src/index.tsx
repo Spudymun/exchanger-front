@@ -4,8 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import React from 'react';
 
-export { ThemeProvider, useTheme } from './theme-provider';
-export { ThemeScript } from './theme-script';
+export { ThemeProvider, useTheme } from './theme-provider.js';
+export { ThemeScript } from './theme-script.js';
 
 interface ProvidersProps {
   children: React.ReactNode;
