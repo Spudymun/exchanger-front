@@ -1,5 +1,5 @@
-import { useUIStore as useUIStoreBase } from './state/ui-store.js';
-import { useNotifications } from './useNotifications.js';
+import { useUIStore as useUIStoreBase } from './state/ui-store';
+import { useNotifications } from './useNotifications';
 
 // Enhanced UI Store wrapper - интеграция с централизованной notification системой
 export const useUIStore = () => {

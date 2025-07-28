@@ -1,8 +1,8 @@
 import { THEME_MODES, type ThemeMode } from '@repo/constants';
 import { useCallback } from 'react';
 
-import { useNotifications } from './useNotifications.js';
-import { useUIStore } from './useUIStore.js';
+import { useNotifications } from './useNotifications';
+import { useUIStore } from './useUIStore';
 
 /**
  * Enhanced theme hook with notifications and centralized state

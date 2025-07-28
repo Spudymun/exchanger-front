@@ -3,8 +3,8 @@ import { validateEmail } from '@repo/exchange-core';
 import {
   useExchangeStore as useExchangeStoreBase,
   type ExchangeStore,
-} from './state/exchange-store.js';
-import { useNotifications } from './useNotifications.js';
+} from './state/exchange-store';
+import { useNotifications } from './useNotifications';
 
 // Helper function to validate basic form fields
 const validateBasicFields = (formData: ExchangeStore['formData']) => {

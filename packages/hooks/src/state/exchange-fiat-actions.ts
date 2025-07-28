@@ -2,7 +2,7 @@ import { UI_DEBOUNCE_CONSTANTS } from '@repo/constants';
 import type { FiatCurrency, Bank } from '@repo/exchange-core';
 import { createDebounceAction } from '@repo/utils';
 
-import type { ExchangeStore } from './exchange-store.js';
+import type { ExchangeStore } from './exchange-store';
 
 export const createFiatActions = (
   set: (fn: (state: ExchangeStore) => Partial<ExchangeStore>) => void,

@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 
-import { useForm, FORM_VALIDATION_SCHEMAS } from './useForm.js';
+import { useForm, FORM_VALIDATION_SCHEMAS } from './useForm';
 
 // Example form schema
 const LoginFormSchema = z.object({

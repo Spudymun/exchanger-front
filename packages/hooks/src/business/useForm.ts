@@ -2,7 +2,7 @@ import { VALIDATION_PATTERNS } from '@repo/constants';
 import { useCallback, useMemo, useState } from 'react';
 import { z } from 'zod';
 
-import { useNotifications } from '../useNotifications.js';
+import { useNotifications } from '../useNotifications';
 
 // Interfaces
 export interface FormField<T> {

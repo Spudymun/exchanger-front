@@ -1,7 +1,7 @@
 import { type OrderStatus, ORDER_STATUSES, BUSINESS_LIMITS } from '@repo/constants';
 import React from 'react';
 
-import { useNotifications, type UseNotificationsReturn } from '../useNotifications.js';
+import { useNotifications, type UseNotificationsReturn } from '../useNotifications';
 
 interface Order {
   id: string;

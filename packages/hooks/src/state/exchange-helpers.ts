@@ -1,7 +1,7 @@
 import { calculateUahAmount, calculateCommission } from '@repo/exchange-core';
 import type { ExchangeRate } from '@repo/exchange-core';
 
-import type { ExchangeCalculation, ExchangeFormData } from './exchange-store.js';
+import type { ExchangeCalculation, ExchangeFormData } from './exchange-store';
 
 // Вспомогательные функции для расчетов using centralized utilities
 export const calculateExchangeRate = (

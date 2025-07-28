@@ -2,8 +2,8 @@
  * ЦЕНТРАЛЬНЫЙ notification hook - единственная точка входа
  * Объединяет всю notification-логику согласно Rule 20 (запрет избыточности)
  */
-import { useNotificationStore } from './state/notification-store.js';
-import type { NotificationStore } from './state/notification-store.js';
+import { useNotificationStore } from './state/notification-store';
+import type { NotificationStore } from './state/notification-store';
 
 // === HELPER FUNCTIONS (внутренние, из бывших дублированных файлов) ===
 

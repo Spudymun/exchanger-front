@@ -14,14 +14,14 @@ import {
   type TimerState,
 } from '@repo/utils';
 
-import { DEFAULT_FORM_DATA, DEFAULT_STEPS } from './exchange-constants.js';
-import { createFiatActions } from './exchange-fiat-actions.js';
+import { DEFAULT_FORM_DATA, DEFAULT_STEPS } from './exchange-constants';
+import { createFiatActions } from './exchange-fiat-actions';
 import {
   calculateExchangeRate,
   getNextStepIndex,
   getPrevStepIndex,
   clampStepIndex,
-} from './exchange-helpers.js';
+} from './exchange-helpers';
 
 // Интерфейсы для данных формы обмена
 export interface ExchangeFormData {

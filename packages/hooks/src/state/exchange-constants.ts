@@ -1,4 +1,4 @@
-import type { ExchangeFormData, ExchangeStep } from './exchange-store.js';
+import type { ExchangeFormData, ExchangeStep } from './exchange-store';
 
 // Дефолтные значения для Exchange Store
 export const DEFAULT_FORM_DATA: ExchangeFormData = {

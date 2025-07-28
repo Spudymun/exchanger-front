@@ -4,8 +4,8 @@ import { validateEmail } from '@repo/exchange-core';
 
 import React from 'react';
 
-import type { ExchangeStore } from '../state/exchange-store.js';
-import { useExchangeStore } from '../useExchangeStore.js';
+import type { ExchangeStore } from '../state/exchange-store';
+import { useExchangeStore } from '../useExchangeStore';
 
 /**
  * Exchange Business Logic Hook

@@ -1,10 +1,10 @@
 // Базовые stores
-export { useUIStore as useUIStoreBase } from './ui-store.js';
-export { useTradingStore, type Trade, type Portfolio } from './trading-store.js';
+export { useUIStore as useUIStoreBase } from './ui-store';
+export { useTradingStore, type Trade, type Portfolio } from './trading-store';
 
 // Новые stores
-export { useNotificationStore } from './notification-store.js';
-export { useExchangeStore as useExchangeStoreBase } from './exchange-store.js';
+export { useNotificationStore } from './notification-store';
+export { useExchangeStore as useExchangeStoreBase } from './exchange-store';
 
 // Types
 export type {
@@ -12,11 +12,11 @@ export type {
   Notification,
   NotificationType,
   NotificationAction,
-} from './notification-store.js';
+} from './notification-store';
 export type {
   ExchangeStore,
   ExchangeFormData,
   ExchangeCalculation,
   ExchangeStep,
   ExchangeOrderData,
-} from './exchange-store.js';
+} from './exchange-store';

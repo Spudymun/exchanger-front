@@ -1,6 +1,6 @@
 import { UI_NUMERIC_CONSTANTS, BUSINESS_LIMITS } from '@repo/constants';
 
-import { useNotifications } from '../useNotifications.js';
+import { useNotifications } from '../useNotifications';
 
 interface AuthUser {
   id: string;

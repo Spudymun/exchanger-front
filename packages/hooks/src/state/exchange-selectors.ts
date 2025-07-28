@@ -1,4 +1,4 @@
-import type { ExchangeStore } from './exchange-store.js';
+import type { ExchangeStore } from './exchange-store';
 
 // Селекторы для Exchange Store
 export const selectFormData = (state: ExchangeStore) => state.formData;
