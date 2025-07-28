@@ -1,11 +1,14 @@
 'use client';
 
-import { Header, ThemeToggle } from '@repo/ui';
+import { Header } from '@repo/ui';
+
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import * as React from 'react';
 
 import { Link } from '../../src/i18n/navigation';
+
+import { ThemeToggleI18n } from './theme-toggle-i18n';
 
 interface AppHeaderProps {
   className?: string;
@@ -45,7 +48,7 @@ export function AppHeader({ className }: AppHeaderProps) {
             <AppHeaderLogoMobile />
             <div className="flex items-center space-x-2">
               <Header.LanguageSwitcher />
-              <ThemeToggle />
+              <ThemeToggleI18n />
               <Header.UserMenu />
               <Header.MobileMenu />
             </div>
@@ -61,7 +64,7 @@ export function AppHeader({ className }: AppHeaderProps) {
             </Header.Navigation>
             <Header.Actions>
               <Header.LanguageSwitcher />
-              <ThemeToggle />
+              <ThemeToggleI18n />
               <Header.UserMenu />
             </Header.Actions>
           </div>

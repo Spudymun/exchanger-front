@@ -1,3 +1,4 @@
+import { THEME_MODES, type ThemeMode } from '@repo/constants';
 import { createStore } from '@repo/utils';
 
 /**
@@ -46,8 +47,8 @@ interface UIState {
   setGlobalLoading: (loading: boolean) => void;
 
   // Theme
-  theme: 'light' | 'dark' | 'system';
-  setTheme: (theme: 'light' | 'dark' | 'system') => void;
+  theme: ThemeMode;
+  setTheme: (theme: ThemeMode) => void;
 
   // Layout
   layout: 'default' | 'compact' | 'wide';
@@ -79,45 +80,58 @@ const createModalActions = (
 
 const createConfigActions = (set: (partial: Partial<UIState>) => void) => ({
   setGlobalLoading: (loading: boolean) => set({ globalLoading: loading }),
-  setTheme: (theme: UIState['theme']) => set({ theme }),
+  setTheme: (theme: ThemeMode) => set({ theme }),
   setLayout: (layout: UIState['layout']) => set({ layout }),
 });
 
-export const useUIStore = createStore<UIState>('ui-store', (set, _get) => ({
-  // Sidebar
-  sidebarOpen: true,
-  ...createSidebarActions(set),
+export const useUIStore = createStore<UIState>('ui-store', (set, _get) => {
+  return {
+    // Sidebar
+    sidebarOpen: true,
+    ...createSidebarActions(set),
 
-  // Modals
-  activeModal: null,
-  modals: {
-    settings: false,
-    trade: false,
-    deposit: false,
-    withdraw: false,
-  },
-  ...createModalActions(set),
+    // Modals
+    activeModal: null,
+    modals: {
+      settings: false,
+      trade: false,
+      deposit: false,
+      withdraw: false,
+    },
+    ...createModalActions(set),
 
-  // Notifications - УДАЛЕНЫ (используем notification-store.ts)
+    // Notifications - УДАЛЕНЫ (используем notification-store.ts)
 
-  // Loading
-  globalLoading: false,
+    // Loading
+    globalLoading: false,
 
-  // Theme
-  theme: 'system',
+    // Theme - initialize from localStorage if available
+    theme: THEME_MODES.SYSTEM, // Default value, will be updated by initialization
 
-  // Layout
-  layout: 'default',
+    // Layout
+    layout: 'default',
 
-  // Config actions
-  ...createConfigActions(set),
-}));
+    // Config actions
+    ...createConfigActions(set),
+  };
+});
 
-// Persist theme to localStorage
+// Initialize theme from localStorage ONCE after store creation
+if (typeof window !== 'undefined') {
+  const storedTheme = localStorage.getItem('theme') as ThemeMode;
+
+  if (
+    storedTheme &&
+    Object.values(THEME_MODES).includes(storedTheme) && // Only set if different from default to avoid unnecessary updates
+    storedTheme !== THEME_MODES.SYSTEM
+  ) {
+    useUIStore.getState().setTheme(storedTheme);
+  }
+}
+
+// Persist theme to localStorage - save ALL themes including system
 if (typeof window !== 'undefined') {
   useUIStore.subscribe(state => {
-    if (state.theme !== 'system') {
-      localStorage.setItem('theme', state.theme);
-    }
+    localStorage.setItem('theme', state.theme);
   });
 }

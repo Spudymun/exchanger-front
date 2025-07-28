@@ -1,3 +1,4 @@
+import { ThemeScript } from '@repo/providers';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
@@ -65,6 +66,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
         <meta name="color-scheme" content="light dark" />
         <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
         <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+        <ThemeScript />
       </head>
       <body className="antialiased">
         <NextIntlClientProvider>

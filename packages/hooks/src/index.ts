@@ -5,6 +5,7 @@ export * from './state/index.js';
 export { useUIStore } from './useUIStore.js';
 export { useNotifications } from './useNotifications.js';
 export { useExchangeStore } from './useExchangeStore.js';
+export { useTheme } from './useTheme.js';
 
 // Business logic hooks
 export { useEnhancedAuth } from './business/useAuth.js';
