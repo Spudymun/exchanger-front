@@ -311,6 +311,34 @@ function OrderStatusBadge({ status }: Props) {
 - UI компоненты (активная разработка)
 - Хуки и провайдеры (динамическая логика)
 
+**🚨 КРИТИЧЕСКИ ВАЖНО: Exports Configuration**
+
+TS-Direct пакеты требуют **правильной настройки exports** для доступа к внутренним модулям:
+
+```json
+// packages/hooks/package.json
+{
+  "exports": {
+    ".": "./src/index.ts", // Основной экспорт
+    "./state": "./src/state/index.ts", // Доступ к state модулям
+    "./src/client-hooks": "./src/client-hooks.ts", // Client-side hooks
+    "./src/state/ui-store": "./src/state/ui-store.ts" // Прямой доступ к store
+  }
+}
+```
+
+**Правила exports для TS-Direct:**
+
+1. **Основной экспорт** - всегда `".": "./src/index.ts"`
+2. **Подмодули** - добавлять по мере необходимости
+3. **Client-side код** - отдельные exports для SSR-safe импортов
+4. **Прямые пути** - для обхода barrel exports при необходимости
+
+**Типичные ошибки:**
+
+- ❌ `Module not found: Can't resolve '@repo/hooks/src/state/ui-store'`
+- ✅ Добавить `"./src/state/ui-store": "./src/state/ui-store.ts"` в exports
+
 #### 🎯 **3. Types-Only пакеты (Types-Only)**
 
 **Пример:** `exchange-core`
@@ -402,6 +430,103 @@ npm run build:force                  # Принудительная пересб
 ```powershell
 # При проблемах - перезапустить dev-server
 npm run dev                          # Next.js пересобирает автоматически
+```
+
+### 🔥 **SSR и Client-Side Разделение**
+
+**Проблема:** TS-Direct пакеты с Zustand stores могут вызывать SSR ошибки.
+
+**Решение:** Разделение на SSR-safe и Client-only экспорты.
+
+#### **Техническая причина разделения:**
+
+**Проблема с useSyncExternalStore:**
+
+- Zustand использует `useSyncExternalStore` для синхронизации состояния
+- Этот хук не работает в Server Components (Next.js App Router)
+- Вызывает ошибки типа "useUIStore is not a function" при SSR
+- Server-side рендеринг не имеет доступа к browser APIs (localStorage, window)
+
+**Hydration Mismatch:**
+
+- Сервер рендерит с одним состоянием (default значения)
+- Клиент гидратирует с другим состоянием (из localStorage/sessionStorage)
+- React выдает предупреждения о несоответствии HTML
+- Может вызывать визуальные "блики" при переключении состояний
+
+**Next.js App Router специфика:**
+
+- Server Components выполняются на сервере и не могут использовать client-side состояние
+- Client Components помечены `'use client'` и выполняются в браузере
+- Смешивание приводит к runtime ошибкам в production build
+
+#### **Решение через client-hooks.ts:**
+
+**Архитектурные преимущества:**
+
+- Все Zustand stores изолированы в client-only файле
+- Основной index.ts содержит только SSR-safe экспорты
+- Четкое разделение предотвращает ошибки автоматически
+- Масштабируемость - легко добавлять новые client-only hooks
+
+**Практические примеры ошибок и решений:**
+
+```typescript
+// ❌ Ошибка: "useUIStore is not a function"
+// Причина: импорт в Server Component или SSR context
+import { useUIStore } from '@repo/hooks';
+
+// ✅ Решение: использовать client-hooks
+('use client');
+import { useUIStore } from '@repo/hooks/src/client-hooks';
+
+// ❌ Ошибка: "Cannot read properties of undefined"
+// Причина: store не инициализирован на сервере
+const theme = useUIStore().theme; // undefined на сервере
+
+// ✅ Решение: проверка на клиентскую среду
+('use client');
+const { theme } = useUIStore(); // безопасно в Client Component
+```
+
+#### **Архитектурный паттерн:**
+
+```typescript
+// packages/hooks/src/index.ts - SSR-safe экспорты
+export type { UseFormOptions, UseFormReturn } from './business/useForm';
+export { FORM_VALIDATION_SCHEMAS } from './business/useForm';
+// НЕ экспортируем stores напрямую
+
+// packages/hooks/src/client-hooks.ts - Client-only экспорты
+('use client');
+export { useUIStore } from './state/ui-store';
+export { useTradingStore } from './state/trading-store';
+export * from './useTheme';
+```
+
+#### **Использование в компонентах:**
+
+```typescript
+// ❌ Может вызвать SSR ошибки
+import { useUIStore } from '@repo/hooks';
+
+// ✅ SSR-safe подход
+('use client');
+import { useUIStore } from '@repo/hooks/src/client-hooks';
+// или
+import { useUIStore } from '@repo/hooks/src/state/ui-store';
+```
+
+#### **Настройка exports:**
+
+```json
+{
+  "exports": {
+    ".": "./src/index.ts", // SSR-safe экспорты
+    "./src/client-hooks": "./src/client-hooks.ts", // Client-only hooks
+    "./src/state/ui-store": "./src/state/ui-store.ts" // Прямой доступ
+  }
+}
 ```
 
 **exchange-core (Types-Only):**

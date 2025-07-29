@@ -312,7 +312,41 @@ centralized_systems:
     types: "import { CurrencyType } from '@repo/exchange-core'"
     utils: "import { formatCurrency } from '@repo/utils'"
     components: "import { Button } from '@repo/ui'"
-    hooks: "import { useTradingStore } from '@repo/hooks'"
+    hooks_ssr_safe: "import type { UseFormReturn } from '@repo/hooks'"
+    hooks_client_only: "import { useUIStore } from '@repo/hooks/src/client-hooks'"
+
+# 🔧 MODULE RESOLUTION & SSR
+module_resolution:
+  critical_principle: 'Правильная настройка exports и SSR/Client разделение'
+
+  ts_direct_packages:
+    definition: 'Пакеты с прямыми TypeScript импортами без компиляции'
+    examples: ['utils', 'ui', 'hooks', 'providers']
+
+  exports_configuration:
+    main_export: '"." - основной SSR-safe экспорт'
+    client_hooks: '"./src/client-hooks" - Client-only хуки'
+    direct_access: '"./src/state/ui-store" - прямой доступ к модулям'
+
+  ssr_client_separation:
+    ssr_safe_exports:
+      - 'Типы и интерфейсы'
+      - 'Константы и схемы'
+      - 'Чистые функции'
+    client_only_exports:
+      - 'Zustand stores'
+      - 'Хуки с побочными эффектами'
+      - 'Browser-specific код'
+
+  common_errors:
+    module_not_found: 'Отсутствует export в package.json'
+    ssr_hydration: 'Store импортируется на сервере'
+    hooks_order: 'Условные вызовы хуков'
+
+  solutions:
+    add_export: 'Добавить путь в exports секцию package.json'
+    use_client_directive: 'Добавить "use client" и использовать client-hooks'
+    stable_hooks_order: 'Всегда вызывать хуки в одном порядке'
 
 # 🔄 РОЛИ И АРХИТЕКТУРА ДОСТУПА
 roles_architecture:

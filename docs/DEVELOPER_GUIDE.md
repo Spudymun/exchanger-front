@@ -502,8 +502,9 @@ export { useUserStore } from './state/user-store';
 3. **Использовать в компонентах**:
 
 ```typescript
-// В любом компоненте
-import { useUserStore } from '@repo/hooks'
+// ✅ SSR-safe подход для client компонентов
+'use client';
+import { useUserStore } from '@repo/hooks/src/client-hooks';
 
 export function LoginButton() {
   const { login, isAuthenticated } = useUserStore()
@@ -511,6 +512,64 @@ export function LoginButton() {
   if (isAuthenticated) return <LogoutButton />
 
   return <button onClick={() => login(credentials)}>Login</button>
+}
+```
+
+## 🔄 Working with State in Next.js App Router
+
+### SSR-Safe State Management Rules:
+
+**1. Server Components - только типы:**
+
+```typescript
+// ✅ Безопасно в Server Components
+import type { UseFormReturn, NotificationType } from '@repo/hooks';
+
+// ❌ Ошибка в Server Components
+import { useUIStore } from '@repo/hooks'; // SSR error!
+```
+
+**2. Client Components - полная функциональность:**
+
+```typescript
+// ✅ Правильно в Client Components
+'use client';
+import { useUIStore, useForm, useNotifications } from '@repo/hooks/src/client-hooks';
+
+export function ThemeToggle() {
+  const { theme, setTheme } = useUIStore();
+  return <button onClick={() => setTheme('dark')}>Toggle</button>;
+}
+```
+
+**3. Обязательная директива 'use client':**
+
+```typescript
+// ❌ Забыли 'use client' - будет SSR ошибка
+import { useUIStore } from '@repo/hooks/src/client-hooks';
+
+// ✅ Правильно с директивой
+('use client');
+import { useUIStore } from '@repo/hooks/src/client-hooks';
+```
+
+**4. Избегание Hydration Mismatch:**
+
+```typescript
+'use client';
+import { useUIStore } from '@repo/hooks/src/client-hooks';
+import { useEffect, useState } from 'react';
+
+export function ThemeAwareComponent() {
+  const { theme } = useUIStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+
+  // Предотвращаем hydration mismatch
+  if (!mounted) return <div>Loading...</div>;
+
+  return <div className={theme === 'dark' ? 'dark' : 'light'}>Content</div>;
 }
 ```
 

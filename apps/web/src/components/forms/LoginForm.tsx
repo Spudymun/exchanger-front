@@ -1,4 +1,6 @@
-import { useForm, useNotifications } from '@repo/hooks';
+'use client';
+
+import { useForm, useNotifications } from '@repo/hooks/src/client-hooks';
 import { FormField, FormControl, FormLabel, FormMessage, Input, Button } from '@repo/ui';
 import { loginSchema } from '@repo/utils';
 import React from 'react';

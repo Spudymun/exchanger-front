@@ -1,7 +1,7 @@
 'use client';
 
 import { FIAT_CURRENCIES, getBanksForCurrency } from '@repo/constants';
-import { useForm } from '@repo/hooks';
+import { useForm } from '@repo/hooks/src/client-hooks';
 import {
   FormField,
   FormLabel,

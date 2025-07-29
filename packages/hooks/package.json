@@ -5,7 +5,9 @@
   "exports": {
     ".": "./src/index.ts",
     "./ui": "./src/ui/index.ts",
-    "./state": "./src/state/index.ts"
+    "./state": "./src/state/index.ts",
+    "./src/client-hooks": "./src/client-hooks.ts",
+    "./src/state/ui-store": "./src/state/ui-store.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",

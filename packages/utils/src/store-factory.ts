@@ -68,15 +68,40 @@ function createStoreWithMiddleware<T>(
 ) {
   const { name, version, enableSubscriptions, enableDevtools } = options;
 
-  if (enableSubscriptions && enableDevtools) {
+  // SSR-safe: disable middleware on server side
+  const isClient = typeof window !== 'undefined';
+  const safeEnableSubscriptions = enableSubscriptions && isClient;
+  const safeEnableDevtools = enableDevtools && isClient;
+
+  return createStoreWithConfig(stateCreator, {
+    name,
+    version,
+    safeEnableSubscriptions,
+    safeEnableDevtools,
+  });
+}
+
+// Extract store creation logic to reduce statements
+function createStoreWithConfig<T>(
+  stateCreator: StateCreator<T, [], [], T>,
+  config: {
+    name: string;
+    version: number;
+    safeEnableSubscriptions: boolean;
+    safeEnableDevtools: boolean;
+  }
+) {
+  const { name, version, safeEnableSubscriptions, safeEnableDevtools } = config;
+
+  if (safeEnableSubscriptions && safeEnableDevtools) {
     return create<T>()(devtools(subscribeWithSelector(stateCreator), { name, version }));
   }
 
-  if (enableSubscriptions) {
+  if (safeEnableSubscriptions) {
     return create<T>()(subscribeWithSelector(stateCreator));
   }
 
-  if (enableDevtools) {
+  if (safeEnableDevtools) {
     return create<T>()(devtools(stateCreator, { name, version }));
   }
 

@@ -7,7 +7,7 @@ import {
   type FiatCurrency,
   getDefaultTokenStandard,
 } from '@repo/constants';
-import { useForm } from '@repo/hooks';
+import { useForm } from '@repo/hooks/src/client-hooks';
 import { useMemo } from 'react';
 import { z } from 'zod';
 

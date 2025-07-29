@@ -1,5 +1,7 @@
+'use client';
+
 import { CRYPTOCURRENCIES } from '@repo/constants';
-import { useForm, useNotifications } from '@repo/hooks';
+import { useForm, useNotifications } from '@repo/hooks/src/client-hooks';
 import {
   FormField,
   FormControl,

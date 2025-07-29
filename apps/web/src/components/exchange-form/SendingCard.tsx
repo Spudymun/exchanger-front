@@ -2,7 +2,7 @@
 
 import { getDefaultTokenStandard, isMultiNetworkToken, getTokenStandards } from '@repo/constants';
 import { validateCryptoAmount, type CryptoCurrency } from '@repo/exchange-core';
-import { useForm } from '@repo/hooks';
+import { useForm } from '@repo/hooks/src/client-hooks';
 import {
   FormField,
   FormLabel,

@@ -1,24 +1,30 @@
-// Базовые stores (экспортируются под базовыми именами)
-export * from './state/index';
-
-// Enhanced hooks с интеграцией stores (экспортируются под обычными именами)
-export { useUIStore } from './useUIStore';
-export { useNotifications } from './useNotifications';
-export { useExchangeStore } from './useExchangeStore';
-export { useTheme } from './useTheme';
-
-// Business logic hooks
-export { useEnhancedAuth } from './business/useAuth';
-export { useExchange } from './business/useExchange';
-export { useOrderTracking } from './business/useOrderTracking';
-export { useForm, FORM_VALIDATION_SCHEMAS } from './business/useForm';
+// SSR-safe exports - only types and non-store utilities
 export type { UseFormOptions, UseFormReturn, FormField } from './business/useForm';
+export { FORM_VALIDATION_SCHEMAS } from './business/useForm';
 
-// Re-export trading store as is (no enhancements needed)
-export { useTradingStore } from './state/trading-store';
-
-// Селекторы
+// Селекторы (pure functions, SSR-safe)
 export * from './state/exchange-selectors';
+
+// Types from stores (SSR-safe)
+export type {
+  NotificationStore,
+  Notification,
+  NotificationType,
+  NotificationAction,
+} from './state/notification-store';
+
+export type {
+  ExchangeStore,
+  ExchangeFormData,
+  ExchangeCalculation,
+  ExchangeStep,
+  ExchangeOrderData,
+} from './state/exchange-store';
+
+export type { Trade, Portfolio } from './state/trading-store';
+
+// Client-side hooks (use dynamic imports in components)
+// For client components, import from './client-hooks' instead
 
 // Temporarily disable UI exports until they are properly implemented
 // export * from './ui'
