@@ -1127,10 +1127,13 @@ apps/web/
 ├── middleware.ts            # Использует createMiddleware
 ├── next.config.js           # Указывает путь к request.ts
 └── app/
+    ├── layout.tsx           # Корневой layout с html/body
+    ├── not-found.tsx        # Глобальная 404 с редиректом на локализированную
     └── [locale]/
         ├── layout.tsx       # С hasLocale, setRequestLocale
         ├── page.tsx         # С setRequestLocale
-        └── not-found.tsx
+        └── not-found-page/  # Локализированная 404 страница
+            └── page.tsx
 ```
 
 #### 1. Конфигурация маршрутизации (`src/i18n/routing.ts`):
@@ -1213,7 +1216,28 @@ const nextConfig = {
 export default withNextIntl(nextConfig);
 ```
 
-#### 6. Layout с локалью (`app/[locale]/layout.tsx`):
+#### 6. Root Layout (`app/layout.tsx`):
+
+```typescript
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'ExchangeGO - Enterprise Crypto Exchange',
+  description: 'Modern cryptocurrency exchange platform',
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html suppressHydrationWarning>
+      <body>
+        {children}
+      </body>
+    </html>
+  );
+}
+```
+
+#### 7. Layout с локалью (`app/[locale]/layout.tsx`):
 
 ```typescript
 import type { Metadata } from "next";
@@ -1222,11 +1246,6 @@ import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { setRequestLocale } from 'next-intl/server';
 
 import { routing } from '../../src/i18n/routing';
-
-export const metadata: Metadata = {
-  title: "ExchangeGO - Enterprise Crypto Exchange",
-  description: "Modern cryptocurrency exchange platform",
-};
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -1249,21 +1268,14 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   setRequestLocale(locale);
 
   return (
-    <html lang={locale} suppressHydrationWarning>
-      <head>
-        <meta name="color-scheme" content="light dark" />
-      </head>
-      <body>
-        <NextIntlClientProvider>
-          {children}
-        </NextIntlClientProvider>
-      </body>
-    </html>
+    <NextIntlClientProvider>
+      {children}
+    </NextIntlClientProvider>
   );
 }
 ```
 
-#### 7. Страница с локалью (`app/[locale]/page.tsx`):
+#### 8. Страница с локалью (`app/[locale]/page.tsx`):
 
 ```typescript
 import { useTranslations } from "next-intl";
@@ -1423,6 +1435,52 @@ export function Navigation() {
 | "Cannot find module" | Неверный путь в next.config.js | Проверьте путь к request.ts    |
 | Missing translations | Отсутствие `setRequestLocale`  | Добавьте в layout и page       |
 | Hydration errors     | Неправильный ClientProvider    | Используйте без messages prop  |
+
+### 🚨 Архитектура 404 страниц
+
+Проект использует специальную архитектуру для локализированных 404 страниц:
+
+#### Глобальная 404 (`app/not-found.tsx`):
+
+```typescript
+import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
+
+export default async function GlobalNotFound() {
+  const headersList = await headers();
+  const locale = headersList.get('x-locale') || 'en';
+  redirect(`/${locale}/not-found-page`);
+}
+```
+
+#### Локализированная 404 (`app/[locale]/not-found-page/page.tsx`):
+
+```typescript
+import { getTranslations } from 'next-intl/server';
+import { setRequestLocale } from 'next-intl/server';
+
+export default async function NotFoundPage({ params }) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations('NotFound');
+
+  return (
+    <div>
+      <h1>404</h1>
+      <h2>{t('title')}</h2>
+      <p>{t('description')}</p>
+    </div>
+  );
+}
+```
+
+**Как работает:**
+
+1. Пользователь заходит на несуществующий URL (например `/ru/orders`)
+2. Next.js вызывает глобальный `not-found.tsx`
+3. Middleware предоставляет локаль через header `x-locale`
+4. Происходит редирект на локализированную страницу `/ru/not-found-page`
+5. Отображается 404 с правильными переводами
 
 ### 🔗 Полезные ссылки:
 

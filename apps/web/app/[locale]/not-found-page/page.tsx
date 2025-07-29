@@ -1,8 +1,16 @@
-import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-export default function NotFound() {
-  const t = useTranslations('NotFound');
+import { Link } from '../../../src/i18n/navigation';
+
+interface NotFoundPageProps {
+  params: Promise<{ locale: string }>;
+}
+
+export default async function NotFoundPage({ params }: NotFoundPageProps) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
+  const t = await getTranslations('NotFound');
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-4">

@@ -1,10 +1,8 @@
-import { ThemeScript } from '@repo/providers';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 
-import '../globals.css';
 import { AppLayout } from '../../src/components/app-layout';
 import { routing } from '../../src/i18n/routing';
 
@@ -57,22 +55,8 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   setRequestLocale(locale);
 
   return (
-    <html lang={locale} suppressHydrationWarning>
-      <head>
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
-        />
-        <meta name="color-scheme" content="light dark" />
-        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
-        <ThemeScript />
-      </head>
-      <body className="antialiased">
-        <NextIntlClientProvider>
-          <AppLayout>{children}</AppLayout>
-        </NextIntlClientProvider>
-      </body>
-    </html>
+    <NextIntlClientProvider>
+      <AppLayout>{children}</AppLayout>
+    </NextIntlClientProvider>
   );
 }

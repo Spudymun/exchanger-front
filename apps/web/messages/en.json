@@ -106,6 +106,7 @@
   },
   "common": {
     "loading": "Loading...",
+    "loadingDescription": "Please wait while we load your content",
     "error": "Error",
     "success": "Success",
     "cancel": "Cancel",

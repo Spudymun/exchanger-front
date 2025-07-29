@@ -16,6 +16,7 @@
 - GET /en → 404
 - GET /ru → 404
 - Приложение не загружается
+- Отображается стандартная 404 страница Next.js вместо локализированной
 
 **Причины:**
 
@@ -23,6 +24,7 @@
 2. Отсутствует `generateStaticParams` в layout
 3. Неправильный путь в `next.config.js`
 4. Не используется `setRequestLocale`
+5. Неправильная архитектура 404 страниц (отсутствует глобальный `not-found.tsx` или локализированная страница)
 
 **Решение:**
 
@@ -42,6 +44,10 @@ export default async function HomePage({ params }: HomePageProps) {
 
 // 4. Проверить next.config.js:
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
+
+// 5. Создать правильную архитектуру 404:
+// app/not-found.tsx - глобальная 404 с редиректом
+// app/[locale]/not-found-page/page.tsx - локализированная 404
 ```
 
 ### Проблема 2: Redirect loops (307 redirects)
@@ -61,9 +67,15 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 **Решение:**
 
 ```typescript
-// Root layout должен быть минимальным:
+// Root layout должен содержать html и body теги (требование Next.js):
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <html suppressHydrationWarning>
+      <body>
+        {children}
+      </body>
+    </html>
+  );
 }
 
 // Middleware должен использовать createMiddleware:
@@ -200,7 +212,7 @@ Test-Path "messages/ru.json"
 
 ### При redirect loops:
 
-- [ ] Root layout минимальный (только return children)
+- [ ] Root layout содержит html и body теги (требование Next.js)
 - [ ] Middleware использует createMiddleware
 - [ ] Нет конфликтующих редиректов
 
