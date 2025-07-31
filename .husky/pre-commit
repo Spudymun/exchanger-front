@@ -1,8 +1,15 @@
 echo "🔍 Running pre-commit checks..."
 
-# Run lint-staged for file-specific checks (continue on failure)
+# Run lint-staged for file-specific checks (fail on errors, but no auto-revert)
 echo "📝 Checking staged files..."
-npx lint-staged || echo "⚠️ Lint-staged failed, but continuing without auto-revert..."
+npx lint-staged --no-stash
+LINT_EXIT_CODE=$?
+
+if [ $LINT_EXIT_CODE -ne 0 ]; then
+  echo "❌ Lint-staged failed with errors above"
+  echo "💡 Files remain staged - fix errors and commit again"
+  exit 1
+fi
 
 # Type checking for the entire project (continue on failure)
 echo "🔧 Checking TypeScript..."

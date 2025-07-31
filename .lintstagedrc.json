@@ -1,7 +1,7 @@
 {
-  "*.{js,jsx,ts,tsx}": ["eslint --fix --max-warnings 0 --no-warn-ignored || true", "prettier --write || true"],
-  "*.{css,scss}": ["stylelint --fix || true", "prettier --write || true"],
-  "*.{json,md}": ["prettier --write || true"],
-  "*.{yml,yaml}": "prettier --write || true",
+  "*.{js,jsx,ts,tsx}": ["eslint --fix --max-warnings 0 --no-warn-ignored", "prettier --write"],
+  "*.{css,scss}": ["stylelint --fix", "prettier --write"],
+  "*.{json,md}": ["prettier --write"],
+  "*.{yml,yaml}": "prettier --write",
   "docs/ai-agent/ai-agent-rules.yml": "echo 'Skipping formatting for ai-agent-rules.yml (protected file)'"
 }
