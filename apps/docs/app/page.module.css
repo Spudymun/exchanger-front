@@ -32,13 +32,13 @@
 }
 
 .main ol {
-  font-family: var(--font-geist-mono);
-  font-size: 14px;
-  letter-spacing: -0.01em;
-  line-height: 24px;
-  list-style-position: inside;
   margin: 0;
   padding-left: 0;
+  font-family: var(--font-geist-mono);
+  font-size: 14px;
+  line-height: 24px;
+  letter-spacing: -0.01em;
+  list-style-position: inside;
 }
 
 .main li:not(:last-of-type) {
@@ -46,11 +46,11 @@
 }
 
 .main code {
+  padding: 2px 4px;
   background: var(--gray-alpha-100);
-  border-radius: 4px;
   font-family: inherit;
   font-weight: 600;
-  padding: 2px 4px;
+  border-radius: 4px;
 }
 
 .ctas {
@@ -59,27 +59,30 @@
 }
 
 .ctas a {
-  align-items: center;
-  appearance: none;
-  border: none;
-  border: 1px solid transparent;
-  border-radius: 128px;
-  cursor: pointer;
   display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 48px;
+  padding: 0 20px;
   font-family: var(--font-geist-sans);
   font-size: 16px;
   font-weight: 500;
-  height: 48px;
-  justify-content: center;
   line-height: 20px;
-  padding: 0 20px;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  border: none;
+  border: 1px solid transparent;
+  border-radius: 128px;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+  appearance: none;
+  cursor: pointer;
 }
 
 a.primary {
+  gap: 8px;
   background: var(--foreground);
   color: var(--background);
-  gap: 8px;
 }
 
 a.secondary {
@@ -88,36 +91,39 @@ a.secondary {
 }
 
 button.secondary {
-  align-items: center;
-  appearance: none;
-  background: transparent;
-  border: none;
-  border: 1px solid transparent;
-  border-color: var(--gray-alpha-200);
-  border-radius: 128px;
-  cursor: pointer;
   display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 48px;
+  min-width: 180px;
+  padding: 0 20px;
+  background: transparent;
   font-family: var(--font-geist-sans);
   font-size: 16px;
   font-weight: 500;
-  height: 48px;
-  justify-content: center;
   line-height: 20px;
-  min-width: 180px;
-  padding: 0 20px;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  border: none;
+  border: 1px solid transparent;
+  border-radius: 128px;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+  appearance: none;
+  border-color: var(--gray-alpha-200);
+  cursor: pointer;
 }
 
 .footer {
   display: flex;
-  font-family: var(--font-geist-sans);
   gap: 24px;
+  font-family: var(--font-geist-sans);
   grid-row-start: 3;
 }
 
 .footer a {
-  align-items: center;
   display: flex;
+  align-items: center;
   gap: 8px;
 }
 
@@ -162,9 +168,9 @@ button.secondary {
   }
 
   .ctas a {
-    font-size: 14px;
     height: 40px;
     padding: 0 16px;
+    font-size: 14px;
   }
 
   a.secondary {
@@ -172,9 +178,9 @@ button.secondary {
   }
 
   .footer {
-    align-items: center;
     flex-wrap: wrap;
     justify-content: center;
+    align-items: center;
   }
 }
 

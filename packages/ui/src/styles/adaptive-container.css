@@ -11,8 +11,8 @@
 .adaptive-container {
   container-type: inline-size;
   width: var(--adaptive-width);
-  max-width: var(--adaptive-max-width, 1200px);
   min-width: var(--adaptive-min-width, 320px);
+  max-width: var(--adaptive-max-width, 1200px);
 }
 
 /* ========================================================================================
@@ -95,8 +95,8 @@
 
 /* Container queries responsive */
 .adaptive-width-responsive {
-  width: var(--adaptive-width);
   container-type: inline-size;
+  width: var(--adaptive-width);
 }
 
 /* ========================================================================================
@@ -204,14 +204,14 @@
 }
 
 .adaptive-container[data-debug='true']::after {
-  content: 'W: ' var(--adaptive-width) ' | Scale: ' var(--adaptive-scale, '1');
   position: absolute;
   top: -1.5rem;
   left: 0;
-  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
   background: rgb(59 130 246 / 90%);
   color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
   font-family: monospace;
+  font-size: 0.75rem;
+  border-radius: 0.25rem;
+  content: 'W: ' var(--adaptive-width) ' | Scale: ' var(--adaptive-scale, '1');
 }
