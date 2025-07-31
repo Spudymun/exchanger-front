@@ -23,7 +23,7 @@ export function HeroSection() {
   };
 
   return (
-    <section className="text-center space-y-8 sm:space-y-12 mb-16 sm:mb-20 lg:mb-24">
+    <section id="exchange-section" className="text-center space-y-8 sm:space-y-12 mb-16 sm:mb-20 lg:mb-24">
       {/* Hero Header */}
       <div className="space-y-6 sm:space-y-8">
         <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight">

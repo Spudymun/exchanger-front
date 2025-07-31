@@ -75,6 +75,7 @@ export {
 
 // Compound Components
 export { DataTable, type DataTableProps, type Column } from './data-table';
+export { FloatingActionButton, type FloatingActionButtonProps } from './floating-action-button';
 export { TreeView, type TreeViewProps, type TreeNode } from './tree-view';
 export { ThemeToggle } from './theme-toggle';
 

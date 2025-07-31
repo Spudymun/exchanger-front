@@ -121,7 +121,7 @@ export function HeroExchangeForm(props: HeroExchangeFormProps) {
   const actionProps = { isValid, t };
 
   return (
-    <div className={cn('w-full max-w-full overflow-hidden', className)}>
+    <div className={cn('w-full max-w-full overflow-hidden', className)} data-testid="hero-exchange-form">
       <div className="space-y-6 sm:space-y-8">
         <ExchangeBenefits t={t} />
         <ExchangeForm

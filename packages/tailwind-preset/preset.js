@@ -90,6 +90,11 @@ module.exports = {
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'slide-up': 'slideUp 0.3s ease-out',
         'bounce-gentle': 'bounceGentle 0.6s ease-in-out',
+        // Кастомные анимации пульсации с уникальными именами (избегаем конфликта с встроенным pulse)
+        'heartbeat-slow': 'pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'heartbeat-normal': 'pulse-normal 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'heartbeat-fast': 'pulse-fast 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'heartbeat-attention': 'pulse-attention 2.5s ease-in-out infinite',
       },
 
       keyframes: {
@@ -104,6 +109,30 @@ module.exports = {
         bounceGentle: {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-5px)' },
+        },
+        // Разные keyframes для разной частоты пульсации (точно по документации)
+        'pulse-slow': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.6' },
+        },
+        'pulse-normal': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.7' },
+        },
+        'pulse-fast': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.8' },
+        },
+        // Кастомная анимация для привлечения внимания
+        'pulse-attention': {
+          '0%, 100%': { 
+            opacity: '1',
+            transform: 'scale(1)',
+          },
+          '50%': { 
+            opacity: '0.7',
+            transform: 'scale(1.05)',
+          },
         },
       },
 

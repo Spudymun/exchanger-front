@@ -1,2 +1,1 @@
-// UI hooks will be added here
-export { };
+export { useScrollVisibility, type UseScrollVisibilityOptions } from './useScrollVisibility';

@@ -1,6 +1,7 @@
 import { setRequestLocale } from 'next-intl/server';
 
 import { FeaturesSection } from '../../src/components/FeaturesSection';
+import { FloatingExchangeButton } from '../../src/components/FloatingExchangeButton';
 import { HeroSection } from '../../src/components/HeroSection';
 import { HowItWorksSection } from '../../src/components/HowItWorksSection';
 
@@ -21,6 +22,7 @@ export default async function HomePage({ params }: HomePageProps) {
         <FeaturesSection />
         <HowItWorksSection />
       </div>
+      <FloatingExchangeButton />
     </div>
   );
 }

@@ -181,6 +181,24 @@ export const CSS_CLASSES = {
   ICON_SIZE_MEDIUM: 'h-4 w-4',
 } as const;
 
+// Z-Index layers for proper stacking order
+export const Z_INDEX_LAYERS = {
+  // Base content
+  BASE: 0,
+  // Dropdowns and tooltips
+  DROPDOWN: 10,
+  // Sticky headers and navigation
+  STICKY: 20,
+  // Floating action buttons and similar
+  FLOATING: 40,
+  // Modals and dialogs
+  MODAL: 50,
+  // Toast notifications
+  TOAST: 60,
+  // Critical overlays
+  OVERLAY: 70,
+} as const;
+
 // Design token constants for color scales
 export const COLOR_SCALE_KEYS = {
   LIGHTEST: 50,
@@ -265,3 +283,4 @@ export type TableDensity = (typeof TABLE_DENSITIES)[keyof typeof TABLE_DENSITIES
 export type IconSize = (typeof ICON_SIZES)[keyof typeof ICON_SIZES];
 export type ColorScaleKey = (typeof COLOR_SCALE_KEYS)[keyof typeof COLOR_SCALE_KEYS];
 export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
+export type ZIndexLayer = (typeof Z_INDEX_LAYERS)[keyof typeof Z_INDEX_LAYERS];

@@ -2,6 +2,13 @@
 module.exports = {
   presets: [require('@repo/tailwind-preset/preset')],
   content: ['./app/**/*.{ts,tsx}', './src/**/*.{ts,tsx}', '../../packages/ui/src/**/*.{ts,tsx}'],
+  // Safelist для динамически создаваемых классов анимации
+  safelist: [
+    'animate-heartbeat-slow',
+    'animate-heartbeat-normal', 
+    'animate-heartbeat-fast',
+    'animate-heartbeat-attention',
+  ],
   // App-specific extensions can be added here if needed
   theme: {
     extend: {

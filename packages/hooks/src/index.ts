@@ -26,5 +26,5 @@ export type { Trade, Portfolio } from './state/trading-store';
 // Client-side hooks (use dynamic imports in components)
 // For client components, import from './client-hooks' instead
 
-// Temporarily disable UI exports until they are properly implemented
-// export * from './ui'
+// UI hooks (SSR-safe)
+export * from './ui';
