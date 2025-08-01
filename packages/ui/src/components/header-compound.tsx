@@ -274,9 +274,7 @@ export interface UserMenuProps extends React.HTMLAttributes<HTMLDivElement> {
   isAuthenticated?: boolean;
   onSignIn?: () => void;
   onSignOut?: () => void;
-  onSignUp?: () => void;
   signInText?: string;
-  signUpText?: string;
   signOutText?: string;
 }
 
@@ -290,9 +288,7 @@ const UserMenu = React.forwardRef<HTMLDivElement, UserMenuProps>(
       isAuthenticated: propIsAuthenticated,
       onSignIn,
       onSignOut,
-      onSignUp,
       signInText = 'Sign In',
-      signUpText = 'Sign Up',
       signOutText = 'Sign Out',
       ...props
     },
@@ -302,37 +298,15 @@ const UserMenu = React.forwardRef<HTMLDivElement, UserMenuProps>(
     const isAuth = propIsAuthenticated ?? context?.isAuthenticated ?? false;
 
     const renderAuthenticatedButtons = () => (
-      <Button
-        variant="outline"
-        size="compact"
-        className="min-h-[22px] sm:h-[18px] px-1.5 text-xs sm:px-2 sm:text-xs"
-        onClick={onSignOut ?? context?.onSignOut}
-      >
+      <Button variant="outline" size="compact" onClick={onSignOut ?? context?.onSignOut}>
         {signOutText}
       </Button>
     );
 
     const renderUnauthenticatedButtons = () => (
-      <div className="flex items-center space-x-2">
-        <Button
-          variant="default"
-          size="compact"
-          className="min-h-[22px] sm:h-[18px] px-1.5 text-xs sm:px-2 sm:text-xs"
-          onClick={onSignIn ?? context?.onSignIn}
-        >
-          {signInText}
-        </Button>
-        {onSignUp && (
-          <Button
-            variant="default"
-            size="compact"
-            className="min-h-[22px] sm:h-[18px] px-1.5 text-xs sm:px-2 sm:text-xs"
-            onClick={onSignUp}
-          >
-            {signUpText}
-          </Button>
-        )}
-      </div>
+      <Button variant="default" size="compact" onClick={onSignIn ?? context?.onSignIn}>
+        {signInText}
+      </Button>
     );
 
     if (children) {

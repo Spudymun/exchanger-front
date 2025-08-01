@@ -69,12 +69,10 @@ function useAuthDialogs() {
 function AppHeaderMobile({
   session,
   handleOpenLogin,
-  handleOpenRegister,
   t,
 }: {
   session: { user: { id: string; email: string; isVerified: boolean } | null } | undefined;
   handleOpenLogin: () => void;
-  handleOpenRegister: () => void;
   t: (key: string) => string;
 }) {
   return (
@@ -87,9 +85,7 @@ function AppHeaderMobile({
           <Header.UserMenu
             isAuthenticated={!!session?.user}
             onSignIn={handleOpenLogin}
-            onSignUp={handleOpenRegister}
             signInText={t('auth.signIn')}
-            signUpText={t('auth.signUp')}
             signOutText={t('auth.signOut')}
           />
           <Header.MobileMenu />
@@ -105,13 +101,11 @@ function AppHeaderDesktop({
   t,
   session,
   handleOpenLogin,
-  handleOpenRegister,
 }: {
   pathname: string | null;
   t: (key: string) => string;
   session: { user: { id: string; email: string; isVerified: boolean } | null } | undefined;
   handleOpenLogin: () => void;
-  handleOpenRegister: () => void;
 }) {
   return (
     <div className="hidden sm:block">
@@ -126,9 +120,7 @@ function AppHeaderDesktop({
           <Header.UserMenu
             isAuthenticated={!!session?.user}
             onSignIn={handleOpenLogin}
-            onSignUp={handleOpenRegister}
             signInText={t('auth.signIn')}
-            signUpText={t('auth.signUp')}
             signOutText={t('auth.signOut')}
           />
         </Header.Actions>
@@ -148,7 +140,6 @@ export function AppHeader({ className }: AppHeaderProps) {
     isLoginDialogOpen,
     isRegisterDialogOpen,
     handleOpenLogin,
-    handleOpenRegister,
     handleCloseLogin,
     handleCloseRegister,
     handleAuthSuccess,
@@ -162,18 +153,12 @@ export function AppHeader({ className }: AppHeaderProps) {
   return (
     <Header currentLocale={locale} onLocaleChange={handleLocaleChange} className={className}>
       <Header.Container>
-        <AppHeaderMobile
-          session={session}
-          handleOpenLogin={handleOpenLogin}
-          handleOpenRegister={handleOpenRegister}
-          t={t}
-        />
+        <AppHeaderMobile session={session} handleOpenLogin={handleOpenLogin} t={t} />
         <AppHeaderDesktop
           pathname={pathname}
           t={t}
           session={session}
           handleOpenLogin={handleOpenLogin}
-          handleOpenRegister={handleOpenRegister}
         />
       </Header.Container>
 
