@@ -56,7 +56,7 @@ const useAnswerHandler = ({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const answer = e.target.value;
       setUserAnswer(answer);
-      
+
       // Вызываем callback'и с текущим состоянием валидности
       // isValid будет пересчитано автоматически в useMemo хука
       onAnswerChange?.(answer, isValid);
@@ -74,10 +74,7 @@ const useAnswerHandler = ({
   return { handleChange, handleBlur };
 };
 
-const useRefreshHandler = (
-  refreshChallenge: () => void,
-  reset: () => void
-) => {
+const useRefreshHandler = (refreshChallenge: () => void, reset: () => void) => {
   return React.useCallback(() => {
     refreshChallenge();
     reset();
@@ -92,9 +89,7 @@ const CaptchaQuestion: React.FC<{
   refreshLabel: string;
 }> = ({ question, onRefresh, disabled, refreshLabel }) => (
   <div className="flex items-center gap-3 p-3 bg-muted rounded-md border">
-    <span className="font-mono text-lg font-semibold text-foreground">
-      {question}
-    </span>
+    <span className="font-mono text-lg font-semibold text-foreground">{question}</span>
     <Button
       type="button"
       variant="ghost"
@@ -121,17 +116,17 @@ const CaptchaInput: React.FC<{
   name: string;
   questionLabel: string;
   question: string;
-}> = ({ 
-  userAnswer, 
-  onChange, 
+}> = ({
+  userAnswer,
+  onChange,
   onBlur,
-  placeholder, 
-  disabled, 
-  isVerified, 
+  placeholder,
+  disabled,
+  isVerified,
   hasError,
-  name, 
+  name,
   questionLabel,
-  question 
+  question,
 }) => (
   <FormControl>
     <Input
@@ -189,10 +184,7 @@ const useMathCaptchaLogic = (
     onVerified,
   });
 
-  const handleRefresh = useRefreshHandler(
-    captcha.refreshChallenge, 
-    captcha.reset
-  );
+  const handleRefresh = useRefreshHandler(captcha.refreshChallenge, captcha.reset);
 
   return {
     ...captcha,
@@ -204,14 +196,14 @@ const useMathCaptchaLogic = (
 
 /**
  * Математическая CAPTCHA для проверки, что действие выполняет человек
- * 
+ *
  * Особенности:
  * - Интеграция с FormField для единообразия с другими полями формы
  * - Три уровня сложности: easy (1-10), medium (10-50), hard (50-100)
  * - Автоматическое обновление вопроса при неправильном ответе
  * - Поддержка интернационализации через labels
  * - Полная типизация TypeScript
- * 
+ *
  * @example
  * ```tsx
  * <MathCaptcha
@@ -227,37 +219,16 @@ const useMathCaptchaLogic = (
  * />
  * ```
  */
-export const MathCaptcha = React.forwardRef<HTMLDivElement, MathCaptchaProps>(
-  (props, ref) => {
-    const {
-      name = 'captcha',
-      difficulty = 'medium',
-      onAnswerChange,
-      onVerified,
-      disabled = false,
-      className,
-      hideLabel = false,
-      labels = {},
-      ...restProps
-    } = props;
-
-    console.log('🔍 MathCaptcha render:', {
-      hideLabel,
-      hasLabels: Object.keys(labels).length > 0,
-      questionLabel: labels.question,
-    });
-
-    const {
-      challenge,
-      userAnswer,
-      isVerified,
-      hasError,
-      handleChange,
-      handleBlur,
-      handleRefresh,
-    } = useMathCaptchaLogic(difficulty, onAnswerChange, onVerified);
-
-    // Определяем метки по умолчанию (fallback для случаев без локализации)
+const useMathCaptchaLabels = (
+  labels: Partial<{
+    question?: string;
+    placeholder?: string;
+    refresh?: string;
+    verification?: string;
+    error?: string;
+  }>
+) => {
+  return React.useMemo(() => {
     const defaultLabels = {
       question: 'Solve the math problem:',
       placeholder: 'Enter answer',
@@ -265,56 +236,116 @@ export const MathCaptcha = React.forwardRef<HTMLDivElement, MathCaptchaProps>(
       verification: 'Verification passed ✓',
       error: 'Incorrect answer. Please try again.',
     };
+    return { ...defaultLabels, ...labels };
+  }, [labels]);
+};
 
-    const finalLabels = { ...defaultLabels, ...labels };
+const MathCaptchaHeader: React.FC<{
+  hideLabel: boolean;
+  finalLabels: {
+    question: string;
+    verification: string;
+  };
+  isVerified: boolean;
+}> = ({ hideLabel, finalLabels, isVerified }) => {
+  if (hideLabel) return null;
 
-    console.log('🔍 MathCaptcha finalLabels:', {
-      question: finalLabels.question,
-      hideLabel,
-      willShowLabel: !hideLabel
-    });
+  return (
+    <FormLabel className="flex items-center justify-between">
+      <span>{finalLabels.question}</span>
+      {isVerified && (
+        <span className="text-green-600 text-sm font-medium">{finalLabels.verification}</span>
+      )}
+    </FormLabel>
+  );
+};
 
-    return (
-      <div
-        ref={ref}
-        className={cn('space-y-3', className)}
-        {...restProps}
-      >
-        {!hideLabel && (
-          <FormLabel className="flex items-center justify-between">
-            <span>{finalLabels.question}</span>
-            {isVerified && (
-              <span className="text-green-600 text-sm font-medium">
-                {finalLabels.verification}
-              </span>
-            )}
-          </FormLabel>
-        )}
+const MathCaptchaInputs: React.FC<{
+  challenge: { question: string };
+  userAnswer: string;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleBlur: () => void;
+  handleRefresh: () => void;
+  finalLabels: {
+    refresh: string;
+    placeholder: string;
+    question: string;
+  };
+  disabled: boolean;
+  isVerified: boolean;
+  hasError: boolean;
+  name: string;
+}> = ({
+  challenge,
+  userAnswer,
+  handleChange,
+  handleBlur,
+  handleRefresh,
+  finalLabels,
+  disabled,
+  isVerified,
+  hasError,
+  name,
+}) => (
+  <div className="space-y-2">
+    <CaptchaQuestion
+      question={challenge.question}
+      onRefresh={handleRefresh}
+      disabled={disabled}
+      refreshLabel={finalLabels.refresh}
+    />
 
-        <div className="space-y-2">
-          <CaptchaQuestion
-            question={challenge.question}
-            onRefresh={handleRefresh}
-            disabled={disabled}
-            refreshLabel={finalLabels.refresh}
-          />
-
-          <CaptchaInput
-            userAnswer={userAnswer}
-            onChange={handleChange}
-            onBlur={handleBlur}
-            placeholder={finalLabels.placeholder}
-            disabled={disabled}
-            isVerified={isVerified}
-            hasError={hasError}
-            name={name}
-            questionLabel={finalLabels.question}
-            question={challenge.question}
-          />
-        </div>
-      </div>
-    );
-  }
+    <CaptchaInput
+      userAnswer={userAnswer}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      placeholder={finalLabels.placeholder}
+      disabled={disabled}
+      isVerified={isVerified}
+      hasError={hasError}
+      name={name}
+      questionLabel={finalLabels.question}
+      question={challenge.question}
+    />
+  </div>
 );
+
+export const MathCaptcha = React.forwardRef<HTMLDivElement, MathCaptchaProps>((props, ref) => {
+  const {
+    name = 'captcha',
+    difficulty = 'medium',
+    onAnswerChange,
+    onVerified,
+    disabled = false,
+    className,
+    hideLabel = false,
+    labels = {},
+    ...restProps
+  } = props;
+
+  const { challenge, userAnswer, isVerified, hasError, handleChange, handleBlur, handleRefresh } =
+    useMathCaptchaLogic(difficulty, onAnswerChange, onVerified);
+
+  const finalLabels = useMathCaptchaLabels(labels);
+
+  return (
+    <div ref={ref} className={cn('space-y-3', className)} {...restProps}>
+      <MathCaptchaHeader hideLabel={hideLabel} finalLabels={finalLabels} isVerified={isVerified} />
+
+      <MathCaptchaInputs
+        challenge={challenge}
+        userAnswer={userAnswer}
+        handleChange={handleChange}
+        handleBlur={handleBlur}
+        handleRefresh={handleRefresh}
+        finalLabels={finalLabels}
+        disabled={disabled}
+        isVerified={isVerified}
+        hasError={hasError}
+        name={name}
+      />
+    </div>
+  );
+});
 
 MathCaptcha.displayName = 'MathCaptcha';
