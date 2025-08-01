@@ -4,7 +4,7 @@
  * Centralized exports for all form components
  */
 
-export { ExchangeForm } from './ExchangeForm.js';
-export { LoginForm } from './LoginForm.js';
-export { RegisterForm } from './RegisterForm.js';
-export { AuthForms } from './AuthForms.js';
+export { ExchangeForm } from './ExchangeForm';
+export { LoginForm } from './LoginForm';
+export { RegisterForm } from './RegisterForm';
+export { AuthForms } from './AuthForms';

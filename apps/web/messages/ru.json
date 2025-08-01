@@ -137,10 +137,57 @@
   },
   "Layout": {
     "navigation": {
-      "home": "Главная",
       "exchange": "Обмен",
       "orders": "Заказы",
       "contact": "Контакты"
+    },
+    "auth": {
+      "signIn": "Вход",
+      "signUp": "Регистрация",
+      "signOut": "Выход",
+      "close": "Закрыть",
+      "loginTitle": "Вход в систему",
+      "registerTitle": "Регистрация",
+      "loginSubtitle": "Войдите в свой аккаунт для продолжения",
+      "registerSubtitle": "Создайте новый аккаунт для начала работы",
+      "loginButton": "Вход",
+      "registerButton": "Регистрация"
+    },
+    "forms": {
+      "login": {
+        "email": {
+          "label": "Email",
+          "placeholder": "your@email.com"
+        },
+        "password": {
+          "label": "Пароль",
+          "placeholder": "Введите пароль"
+        },
+        "submit": "Войти",
+        "submitting": "Вход...",
+        "switchToRegister": "Нет аккаунта? Зарегистрироваться"
+      },
+      "register": {
+        "email": {
+          "label": "Email",
+          "placeholder": "your@email.com"
+        },
+        "password": {
+          "label": "Пароль",
+          "placeholder": "Минимум 6 символов"
+        },
+        "confirmPassword": {
+          "label": "Подтвердите пароль",
+          "placeholder": "Повторите пароль"
+        },
+        "submit": "Зарегистрироваться",
+        "submitting": "Регистрация...",
+        "switchToLogin": "Уже есть аккаунт? Войти",
+        "successTitle": "Регистрация успешна",
+        "successMessage": "Проверьте email для подтверждения аккаунта",
+        "errorTitle": "Ошибка регистрации",
+        "errorMessage": "Попробуйте снова"
+      }
     },
     "footer": {
       "company": {
@@ -212,7 +259,45 @@
     "exchange": "Обменять",
     "validation": {
       "enterAmount": "Введите сумму",
-      "selectBank": "Выберите банк"
+      "selectBank": "Выберите банк",
+      "email": {
+        "invalid": "Некорректный email адрес",
+        "required": "Email обязателен"
+      },
+      "password": {
+        "minLength": "Пароль должен содержать минимум {{min}} символов",
+        "required": "Пароль обязателен"
+      },
+      "confirmPassword": {
+        "noMatch": "Пароли не совпадают",
+        "required": "Подтверждение пароля обязательно"
+      },
+      "username": {
+        "minLength": "Имя пользователя должно содержать минимум {{min}} символов",
+        "maxLength": "Имя пользователя не должно превышать {{max}} символов",
+        "required": "Имя пользователя обязательно"
+      },
+      "firstName": {
+        "minLength": "Имя должно содержать минимум {{min}} символов",
+        "maxLength": "Имя не должно превышать {{max}} символов",
+        "required": "Имя обязательно"
+      },
+      "lastName": {
+        "minLength": "Фамилия должна содержать минимум {{min}} символов",
+        "maxLength": "Фамилия не должна превышать {{max}} символов",
+        "required": "Фамилия обязательна"
+      },
+      "phone": {
+        "invalid": "Некорректный номер телефона",
+        "required": "Номер телефона обязателен"
+      },
+      "amount": {
+        "minValue": "Минимальная сумма: {{min}}",
+        "maxValue": "Максимальная сумма: {{max}}",
+        "required": "Сумма обязательна"
+      },
+      "required": "Это поле обязательно",
+      "invalid": "Некорректное значение"
     },
     "fiatNames": {
       "UAH": "Украинская гривна",

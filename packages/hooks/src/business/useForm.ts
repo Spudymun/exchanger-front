@@ -1,47 +1,14 @@
 import { VALIDATION_PATTERNS } from '@repo/constants';
-import { useCallback, useMemo, useState } from 'react';
+import { createZodErrorMap } from '@repo/utils';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 import { z } from 'zod';
 
 import { useNotifications } from '../useNotifications';
 
-// Interfaces
-export interface FormField<T> {
-  name: string;
-  value: T;
-  onChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => void;
-  onBlur?: () => void;
-}
+import { UseFormOptions, UseFormReturn, checkObjectEquality } from './useFormTypes';
 
-export interface UseFormOptions<T> {
-  initialValues: T;
-  validationSchema?: z.ZodSchema<T>;
-  onSubmit?: (values: T) => void | Promise<void>;
-  validateOnBlur?: boolean;
-}
-
-export interface UseFormReturn<T> {
-  values: T;
-  errors: Record<string, string>;
-  isSubmitting: boolean;
-  isDirty: boolean;
-  isValid: boolean;
-  validateForm: () => boolean;
-  validateField: (field: string) => boolean;
-  setValue: <K extends keyof T>(field: K, value: T[K]) => void;
-  setError: (field: string, error: string) => void;
-  clearError: (field: string) => void;
-  clearErrors: () => void;
-  reset: () => void;
-  handleSubmit: (e?: React.FormEvent) => Promise<void>;
-  getFieldProps: <K extends keyof T>(field: K) => FormField<T[K]>;
-}
-
-// Helper function to check object equality
-function checkObjectEquality<T>(obj1: T, obj2: T): boolean {
-  return JSON.stringify(obj1) === JSON.stringify(obj2);
-}
+// Re-export types for public API
+export type { FormField, UseFormOptions, UseFormReturn } from './useFormTypes';
 
 /**
  * Universal form hook with Zod validation integration
@@ -51,6 +18,7 @@ export function useForm<T extends Record<string, unknown>>({
   validationSchema,
   onSubmit,
   validateOnBlur = true,
+  locale = 'en', // Добавляем locale с дефолтным значением
 }: UseFormOptions<T>): UseFormReturn<T> {
   const notifications = useNotifications();
 
@@ -59,8 +27,15 @@ export function useForm<T extends Record<string, unknown>>({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Устанавливаем глобальный error map при изменении локали
+  useEffect(() => {
+    if (locale) {
+      z.setErrorMap(createZodErrorMap(locale));
+    }
+  }, [locale]);
+
   // Validation methods
-  const validation = useFormValidation(validationSchema, values, setErrors);
+  const validation = useFormValidation(validationSchema, values, setErrors, locale);
 
   // Derived state
   const isDirty = useMemo(
@@ -130,52 +105,85 @@ function handleFieldValidationError(error: z.ZodError, fieldName: string): strin
   return fieldError ? fieldError.message : null;
 }
 
+// Валидация всей формы
+function validateFormWithErrorMap<T extends Record<string, unknown>>(
+  validationSchema: z.ZodSchema<T>,
+  values: T,
+  locale?: string
+): { isValid: boolean; errors: Record<string, string> } {
+  // Устанавливаем error map для текущей локали
+  if (locale) {
+    z.setErrorMap(createZodErrorMap(locale));
+  }
+
+  try {
+    validationSchema.parse(values);
+    return { isValid: true, errors: {} };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const newErrors = processValidationErrors(error);
+      return { isValid: false, errors: newErrors };
+    }
+    return { isValid: false, errors: {} };
+  }
+}
+
+// Валидация отдельного поля
+function validateFieldWithErrorMap<T extends Record<string, unknown>>(
+  validationSchema: z.ZodSchema<T>,
+  values: T,
+  fieldName: string,
+  locale?: string
+): { isValid: boolean; error: string | null } {
+  // Устанавливаем error map для текущей локали
+  if (locale) {
+    z.setErrorMap(createZodErrorMap(locale));
+  }
+
+  try {
+    validationSchema.parse(values);
+    return { isValid: true, error: null };
+  } catch (error) {
+    if (!(error instanceof z.ZodError)) {
+      return { isValid: false, error: null };
+    }
+
+    const fieldError = handleFieldValidationError(error, fieldName);
+    return { isValid: !fieldError, error: fieldError };
+  }
+}
+
 // Separate validation hook
 function useFormValidation<T extends Record<string, unknown>>(
   validationSchema: z.ZodSchema<T> | undefined,
   values: T,
-  setErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>
+  setErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>,
+  locale?: string
 ) {
   const validateForm = useCallback((): boolean => {
     if (!validationSchema) return true;
 
-    try {
-      validationSchema.parse(values);
-      setErrors({});
-      return true;
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const newErrors = processValidationErrors(error);
-        setErrors(newErrors);
-      }
-      return false;
-    }
-  }, [validationSchema, values, setErrors]);
+    const result = validateFormWithErrorMap(validationSchema, values, locale);
+    setErrors(result.errors);
+    return result.isValid;
+  }, [validationSchema, values, setErrors, locale]);
 
   const validateField = useCallback(
     (field: string): boolean => {
       if (!validationSchema) return true;
 
-      const fieldName = field;
+      const result = validateFieldWithErrorMap(validationSchema, values, field, locale);
 
-      try {
-        validationSchema.parse(values);
-        setErrors(prev => removeFieldFromErrors(prev, fieldName));
-        return true;
-      } catch (error) {
-        if (!(error instanceof z.ZodError)) {
-          return false;
-        }
-
-        const fieldError = handleFieldValidationError(error, fieldName);
-        if (fieldError) {
-          setErrors(prev => ({
-            ...prev,
-            [fieldName]: fieldError,
-          }));
-        }
-        return false;
+      if (result.isValid) {
+        setErrors(prev => removeFieldFromErrors(prev, field));
+      } else if (result.error) {
+        setErrors(prev => ({
+          ...prev,
+          [field]: result.error as string,
+        }));
       }
+
+      return result.isValid;
     },
     [validationSchema, values, setErrors]
   );

@@ -6,8 +6,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import * as React from 'react';
 
+import { trpc } from '../../lib/trpc-provider';
 import { Link } from '../../src/i18n/navigation';
 
+import { AuthDialogs } from './auth-dialogs';
 import { ThemeToggleI18n } from './theme-toggle-i18n';
 
 interface AppHeaderProps {
@@ -27,14 +29,132 @@ const getNavLinkClass = (pathname: string | null, path: string, isExact = false)
   }`;
 };
 
+// Хук для управления аутентификацией в хедере
+function useAuthDialogs() {
+  const { data: session } = trpc.auth.getSession.useQuery();
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = React.useState(false);
+  const [isRegisterDialogOpen, setIsRegisterDialogOpen] = React.useState(false);
+
+  const handleOpenLogin = () => {
+    setIsRegisterDialogOpen(false);
+    setIsLoginDialogOpen(true);
+  };
+
+  const handleOpenRegister = () => {
+    setIsLoginDialogOpen(false);
+    setIsRegisterDialogOpen(true);
+  };
+
+  const handleCloseLogin = () => setIsLoginDialogOpen(false);
+  const handleCloseRegister = () => setIsRegisterDialogOpen(false);
+
+  const handleAuthSuccess = () => {
+    setIsLoginDialogOpen(false);
+    setIsRegisterDialogOpen(false);
+  };
+
+  return {
+    session,
+    isLoginDialogOpen,
+    isRegisterDialogOpen,
+    handleOpenLogin,
+    handleOpenRegister,
+    handleCloseLogin,
+    handleCloseRegister,
+    handleAuthSuccess,
+  };
+}
+
+// Компонент мобильной версии хедера
+function AppHeaderMobile({
+  session,
+  handleOpenLogin,
+  handleOpenRegister,
+  t,
+}: {
+  session: { user: { id: string; email: string; isVerified: boolean } | null } | undefined;
+  handleOpenLogin: () => void;
+  handleOpenRegister: () => void;
+  t: (key: string) => string;
+}) {
+  return (
+    <div className="block sm:hidden">
+      <div className="flex justify-between items-center h-10">
+        <AppHeaderLogoMobile />
+        <div className="flex items-center space-x-2">
+          <Header.LanguageSwitcher />
+          <ThemeToggleI18n />
+          <Header.UserMenu
+            isAuthenticated={!!session?.user}
+            onSignIn={handleOpenLogin}
+            onSignUp={handleOpenRegister}
+            signInText={t('auth.signIn')}
+            signUpText={t('auth.signUp')}
+            signOutText={t('auth.signOut')}
+          />
+          <Header.MobileMenu />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Компонент десктопной версии хедера
+function AppHeaderDesktop({
+  pathname,
+  t,
+  session,
+  handleOpenLogin,
+  handleOpenRegister,
+}: {
+  pathname: string | null;
+  t: (key: string) => string;
+  session: { user: { id: string; email: string; isVerified: boolean } | null } | undefined;
+  handleOpenLogin: () => void;
+  handleOpenRegister: () => void;
+}) {
+  return (
+    <div className="hidden sm:block">
+      <div className="flex justify-between items-center h-10">
+        <AppHeaderLogoDesktop />
+        <Header.Navigation>
+          <AppHeaderNavigationLinks pathname={pathname} t={t} />
+        </Header.Navigation>
+        <Header.Actions>
+          <Header.LanguageSwitcher />
+          <ThemeToggleI18n />
+          <Header.UserMenu
+            isAuthenticated={!!session?.user}
+            onSignIn={handleOpenLogin}
+            onSignUp={handleOpenRegister}
+            signInText={t('auth.signIn')}
+            signUpText={t('auth.signUp')}
+            signOutText={t('auth.signOut')}
+          />
+        </Header.Actions>
+      </div>
+    </div>
+  );
+}
+
 export function AppHeader({ className }: AppHeaderProps) {
   const t = useTranslations('Layout');
   const pathname = usePathname();
   const locale = useLocale();
   const router = useRouter();
 
+  const {
+    session,
+    isLoginDialogOpen,
+    isRegisterDialogOpen,
+    handleOpenLogin,
+    handleOpenRegister,
+    handleCloseLogin,
+    handleCloseRegister,
+    handleAuthSuccess,
+  } = useAuthDialogs();
+
   const handleLocaleChange = (newLocale: string) => {
-    // Используем router из next/navigation для правильной навигации
     const currentPath = pathname?.replace(`/${locale}`, '') || '/';
     router.replace(`/${newLocale}${currentPath}`);
   };
@@ -42,34 +162,28 @@ export function AppHeader({ className }: AppHeaderProps) {
   return (
     <Header currentLocale={locale} onLocaleChange={handleLocaleChange} className={className}>
       <Header.Container>
-        {/* Мобильная версия */}
-        <div className="block sm:hidden">
-          <div className="flex justify-between items-center h-10">
-            <AppHeaderLogoMobile />
-            <div className="flex items-center space-x-2">
-              <Header.LanguageSwitcher />
-              <ThemeToggleI18n />
-              <Header.UserMenu />
-              <Header.MobileMenu />
-            </div>
-          </div>
-        </div>
-
-        {/* Десктопная версия */}
-        <div className="hidden sm:block">
-          <div className="flex justify-between items-center h-10">
-            <AppHeaderLogoDesktop />
-            <Header.Navigation>
-              <AppHeaderNavigationLinks pathname={pathname} t={t} />
-            </Header.Navigation>
-            <Header.Actions>
-              <Header.LanguageSwitcher />
-              <ThemeToggleI18n />
-              <Header.UserMenu />
-            </Header.Actions>
-          </div>
-        </div>
+        <AppHeaderMobile
+          session={session}
+          handleOpenLogin={handleOpenLogin}
+          handleOpenRegister={handleOpenRegister}
+          t={t}
+        />
+        <AppHeaderDesktop
+          pathname={pathname}
+          t={t}
+          session={session}
+          handleOpenLogin={handleOpenLogin}
+          handleOpenRegister={handleOpenRegister}
+        />
       </Header.Container>
+
+      <AuthDialogs
+        isLoginOpen={isLoginDialogOpen}
+        isRegisterOpen={isRegisterDialogOpen}
+        onLoginClose={handleCloseLogin}
+        onRegisterClose={handleCloseRegister}
+        onAuthSuccess={handleAuthSuccess}
+      />
     </Header>
   );
 }
@@ -126,12 +240,23 @@ function AppHeaderNavigationLinks({
   pathname: string | null;
   t: (key: string) => string;
 }) {
+  const handleExchangeClick = (e: React.MouseEvent) => {
+    if (pathname === '/') {
+      e.preventDefault();
+      const exchangeSection = document.getElementById('exchange-section');
+      if (exchangeSection) {
+        exchangeSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+  };
+
   return (
     <nav className="hidden md:flex space-x-6">
-      <Link href="/" className={getNavLinkClass(pathname, '/', true)}>
-        {t('navigation.home')}
-      </Link>
-      <Link href="/exchange" className={getNavLinkClass(pathname, '/exchange')}>
+      <Link
+        href={pathname === '/' ? '#exchange-section' : '/#exchange-section'}
+        className={getNavLinkClass(pathname, '/exchange')}
+        onClick={handleExchangeClick}
+      >
         {t('navigation.exchange')}
       </Link>
       <Link href="/orders" className={getNavLinkClass(pathname, '/orders')}>

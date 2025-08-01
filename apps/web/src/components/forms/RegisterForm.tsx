@@ -3,6 +3,7 @@
 import { useForm, useNotifications } from '@repo/hooks/src/client-hooks';
 import { FormField, FormControl, FormLabel, FormMessage, Input, Button } from '@repo/ui';
 import { registerSchema } from '@repo/utils';
+import { useTranslations, useLocale } from 'next-intl';
 import React from 'react';
 
 import { useAuthMutation } from '../../hooks/useAuthMutation';
@@ -27,26 +28,25 @@ interface RegisterFormData extends Record<string, unknown> {
  * - registerSchema для валидации из @repo/utils
  */
 export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) {
-  const notifications = useNotifications();
   const { register } = useAuthMutation();
+  const notifications = useNotifications();
+  const t = useTranslations('Layout.forms.register');
+  const locale = useLocale();
 
   const form = useForm<RegisterFormData>({
-    initialValues: {
-      email: '',
-      password: '',
-      confirmPassword: '',
-    },
+    initialValues: { email: '', password: '', confirmPassword: '' },
     validationSchema: registerSchema,
+    locale: locale, // Передаем локаль для локализации валидации
     onSubmit: async values => {
       try {
         await register.mutateAsync({
           email: values.email,
           password: values.password,
         });
-        notifications.success('Регистрация успешна', 'Проверьте email для подтверждения аккаунта');
+        notifications.success(t('successTitle'), t('successMessage'));
         onSuccess?.();
       } catch {
-        notifications.error('Ошибка регистрации', 'Попробуйте снова');
+        notifications.error(t('errorTitle'), t('errorMessage'));
       }
     },
   });
@@ -54,10 +54,10 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
   return (
     <div className="w-full max-w-md mx-auto">
       <form onSubmit={form.handleSubmit} className="space-y-4">
-        <RegisterEmailField form={form} isLoading={register.isPending} />
-        <RegisterPasswordField form={form} isLoading={register.isPending} />
-        <RegisterConfirmPasswordField form={form} isLoading={register.isPending} />
-        <RegisterSubmitButton form={form} isLoading={register.isPending} />
+        <RegisterEmailField form={form} isLoading={register.isPending} t={t} />
+        <RegisterPasswordField form={form} isLoading={register.isPending} t={t} />
+        <RegisterConfirmPasswordField form={form} isLoading={register.isPending} t={t} />
+        <RegisterSubmitButton form={form} isLoading={register.isPending} t={t} />
         <RegisterSwitchButton onSwitch={onSwitchToLogin} isLoading={register.isPending} />
       </form>
     </div>
@@ -67,19 +67,20 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
 interface RegisterFieldProps {
   form: ReturnType<typeof useForm<RegisterFormData>>;
   isLoading: boolean;
+  t: (key: string) => string;
 }
 
-const RegisterEmailField: React.FC<RegisterFieldProps> = ({ form, isLoading }) => (
+const RegisterEmailField: React.FC<RegisterFieldProps> = ({ form, isLoading, t }) => (
   <FormField name="email" error={form.errors.email}>
     <FormLabel htmlFor="register-email" className="required">
-      Email
+      {t('email.label')}
     </FormLabel>
     <FormControl>
       <Input
         {...form.getFieldProps('email')}
         id="register-email"
         type="email"
-        placeholder="your@email.com"
+        placeholder={t('email.placeholder')}
         disabled={isLoading}
         required
       />
@@ -88,17 +89,17 @@ const RegisterEmailField: React.FC<RegisterFieldProps> = ({ form, isLoading }) =
   </FormField>
 );
 
-const RegisterPasswordField: React.FC<RegisterFieldProps> = ({ form, isLoading }) => (
+const RegisterPasswordField: React.FC<RegisterFieldProps> = ({ form, isLoading, t }) => (
   <FormField name="password" error={form.errors.password}>
     <FormLabel htmlFor="register-password" className="required">
-      Пароль
+      {t('password.label')}
     </FormLabel>
     <FormControl>
       <Input
         {...form.getFieldProps('password')}
         id="register-password"
         type="password"
-        placeholder="Минимум 6 символов"
+        placeholder={t('password.placeholder')}
         disabled={isLoading}
         required
       />
@@ -107,17 +108,17 @@ const RegisterPasswordField: React.FC<RegisterFieldProps> = ({ form, isLoading }
   </FormField>
 );
 
-const RegisterConfirmPasswordField: React.FC<RegisterFieldProps> = ({ form, isLoading }) => (
+const RegisterConfirmPasswordField: React.FC<RegisterFieldProps> = ({ form, isLoading, t }) => (
   <FormField name="confirmPassword" error={form.errors.confirmPassword}>
     <FormLabel htmlFor="register-confirm-password" className="required">
-      Подтвердите пароль
+      {t('confirmPassword.label')}
     </FormLabel>
     <FormControl>
       <Input
         {...form.getFieldProps('confirmPassword')}
         id="register-confirm-password"
         type="password"
-        placeholder="Повторите пароль"
+        placeholder={t('confirmPassword.placeholder')}
         disabled={isLoading}
         required
       />
@@ -126,9 +127,9 @@ const RegisterConfirmPasswordField: React.FC<RegisterFieldProps> = ({ form, isLo
   </FormField>
 );
 
-const RegisterSubmitButton: React.FC<RegisterFieldProps> = ({ form, isLoading }) => (
+const RegisterSubmitButton: React.FC<RegisterFieldProps> = ({ form, isLoading, t }) => (
   <Button type="submit" className="w-full" disabled={isLoading || !form.isValid}>
-    {isLoading ? 'Регистрация...' : 'Зарегистрироваться'}
+    {isLoading ? t('submitting') : t('submit')}
   </Button>
 );
 
@@ -138,6 +139,8 @@ interface RegisterSwitchButtonProps {
 }
 
 const RegisterSwitchButton: React.FC<RegisterSwitchButtonProps> = ({ onSwitch, isLoading }) => {
+  const t = useTranslations('Layout.forms.register');
+
   if (!onSwitch) return null;
 
   return (
@@ -148,7 +151,7 @@ const RegisterSwitchButton: React.FC<RegisterSwitchButtonProps> = ({ onSwitch, i
         className="text-sm text-blue-600 hover:text-blue-800 underline"
         disabled={isLoading}
       >
-        Уже есть аккаунт? Войти
+        {t('switchToLogin')}
       </button>
     </div>
   );

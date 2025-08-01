@@ -8,7 +8,10 @@ import {
   TICKET_STATUS_VALUES,
   ORDER_STATUSES,
 } from '@repo/constants';
+
 import { z } from 'zod';
+
+import { validationMessages } from './validation-messages';
 
 // === КОНСТАНТЫ ===
 const POSITIVE_AMOUNT_MESSAGE = 'Сумма должна быть положительной';
@@ -28,6 +31,7 @@ const OPERATOR_CHANGEABLE_STATUSES = [
 /**
  * Централизованные Zod схемы валидации для tRPC роутеров
  * Устраняет дублирование валидационной логики
+ * Сообщения об ошибках предоставляются через Zod error map для поддержки i18n
  */
 
 // === БАЗОВЫЕ ТИПЫ ===
@@ -35,17 +39,12 @@ const OPERATOR_CHANGEABLE_STATUSES = [
 /**
  * Валидация email адреса
  */
-export const emailSchema = z.string().email('Некорректный email адрес');
+export const emailSchema = z.string().email();
 
 /**
  * Валидация пароля
  */
-export const passwordSchema = z
-  .string()
-  .min(
-    VALIDATION_LIMITS.PASSWORD_MIN_LENGTH,
-    `Пароль должен содержать минимум ${VALIDATION_LIMITS.PASSWORD_MIN_LENGTH} символов`
-  );
+export const passwordSchema = z.string().min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH);
 
 /**
  * Валидация нового пароля (с дополнительными требованиями)
@@ -57,19 +56,13 @@ export const newPasswordSchema = passwordSchema;
  */
 export const usernameSchema = z
   .string()
-  .min(
-    VALIDATION_LIMITS.USERNAME_MIN_LENGTH,
-    `Имя пользователя должно содержать минимум ${VALIDATION_LIMITS.USERNAME_MIN_LENGTH} символов`
-  )
-  .max(
-    VALIDATION_LIMITS.USERNAME_MAX_LENGTH,
-    `Имя пользователя не должно превышать ${VALIDATION_LIMITS.USERNAME_MAX_LENGTH} символов`
-  );
+  .min(VALIDATION_LIMITS.USERNAME_MIN_LENGTH)
+  .max(VALIDATION_LIMITS.USERNAME_MAX_LENGTH);
 
 /**
  * Валидация ID (обычно UUID или строка)
  */
-export const idSchema = z.string().min(1, 'ID не может быть пустым');
+export const idSchema = z.string().min(1, validationMessages.required());
 
 /**
  * Валидация поискового запроса
@@ -242,7 +235,7 @@ export const registerSchema = z
     confirmPassword: z.string(),
   })
   .refine(data => data.password === data.confirmPassword, {
-    message: 'Пароли не совпадают',
+    message: 'Passwords do not match',
     path: ['confirmPassword'],
   });
 
@@ -258,7 +251,7 @@ export const resetPasswordSchema = z.object({
  */
 export const confirmResetPasswordSchema = z.object({
   email: emailSchema,
-  resetCode: z.string().min(1, 'Код сброса не может быть пустым'),
+  resetCode: z.string().min(1, validationMessages.required()),
   newPassword: newPasswordSchema,
 });
 
@@ -267,7 +260,7 @@ export const confirmResetPasswordSchema = z.object({
  */
 export const confirmEmailSchema = z.object({
   email: emailSchema,
-  verificationCode: z.string().min(1, 'Код подтверждения не может быть пустым'),
+  verificationCode: z.string().min(1, validationMessages.required()),
 });
 
 // === БЕЗОПАСНОСТЬ ===
@@ -282,7 +275,7 @@ export const changePasswordSchema = z
     confirmPassword: z.string(),
   })
   .refine(data => data.newPassword === data.confirmPassword, {
-    message: 'Пароли не совпадают',
+    message: validationMessages.confirmPassword.noMatch(),
     path: ['confirmPassword'],
   });
 

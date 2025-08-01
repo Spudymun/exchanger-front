@@ -12,12 +12,7 @@ export function renderAuthenticatedUser(
       {userName && (
         <span className="text-sm text-muted-foreground hidden sm:inline">{userName}</span>
       )}
-      <Button
-        variant="outline"
-        size="compact"
-        className="h-6 px-2 text-xs sm:h-7 sm:px-2.5 sm:text-xs"
-        onClick={onSignOut}
-      >
+      <Button variant="outline" size="compact" onClick={onSignOut}>
         <span className="sm:hidden">Out</span>
         <span className="hidden sm:inline">Sign Out</span>
       </Button>
@@ -27,12 +22,7 @@ export function renderAuthenticatedUser(
 
 export function renderUnauthenticatedUser(onSignIn: (() => void) | undefined) {
   return (
-    <Button
-      variant="default"
-      size="compact"
-      className="h-6 px-2 text-xs sm:h-7 sm:px-2.5 sm:text-xs"
-      onClick={onSignIn}
-    >
+    <Button variant="default" size="compact" onClick={onSignIn}>
       <span className="sm:hidden">In</span>
       <span className="hidden sm:inline">Sign In</span>
     </Button>

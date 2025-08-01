@@ -274,6 +274,10 @@ export interface UserMenuProps extends React.HTMLAttributes<HTMLDivElement> {
   isAuthenticated?: boolean;
   onSignIn?: () => void;
   onSignOut?: () => void;
+  onSignUp?: () => void;
+  signInText?: string;
+  signUpText?: string;
+  signOutText?: string;
 }
 
 const UserMenu = React.forwardRef<HTMLDivElement, UserMenuProps>(
@@ -286,12 +290,50 @@ const UserMenu = React.forwardRef<HTMLDivElement, UserMenuProps>(
       isAuthenticated: propIsAuthenticated,
       onSignIn,
       onSignOut,
+      onSignUp,
+      signInText = 'Sign In',
+      signUpText = 'Sign Up',
+      signOutText = 'Sign Out',
       ...props
     },
     ref
   ) => {
     const context = useHeaderContext();
     const isAuth = propIsAuthenticated ?? context?.isAuthenticated ?? false;
+
+    const renderAuthenticatedButtons = () => (
+      <Button
+        variant="outline"
+        size="compact"
+        className="min-h-[22px] sm:h-[18px] px-1.5 text-xs sm:px-2 sm:text-xs"
+        onClick={onSignOut ?? context?.onSignOut}
+      >
+        {signOutText}
+      </Button>
+    );
+
+    const renderUnauthenticatedButtons = () => (
+      <div className="flex items-center space-x-2">
+        <Button
+          variant="default"
+          size="compact"
+          className="min-h-[22px] sm:h-[18px] px-1.5 text-xs sm:px-2 sm:text-xs"
+          onClick={onSignIn ?? context?.onSignIn}
+        >
+          {signInText}
+        </Button>
+        {onSignUp && (
+          <Button
+            variant="default"
+            size="compact"
+            className="min-h-[22px] sm:h-[18px] px-1.5 text-xs sm:px-2 sm:text-xs"
+            onClick={onSignUp}
+          >
+            {signUpText}
+          </Button>
+        )}
+      </div>
+    );
 
     if (children) {
       return (
@@ -303,25 +345,7 @@ const UserMenu = React.forwardRef<HTMLDivElement, UserMenuProps>(
 
     return (
       <div ref={ref} className={cn(FLEX_ITEMS_CENTER_SPACE_X_2, className)} {...props}>
-        {isAuth ? (
-          <Button
-            variant="outline"
-            size="compact"
-            className="h-6 px-2 text-xs"
-            onClick={onSignOut ?? context?.onSignOut}
-          >
-            Sign Out
-          </Button>
-        ) : (
-          <Button
-            variant="default"
-            size="compact"
-            className="h-6 px-2 text-xs"
-            onClick={onSignIn ?? context?.onSignIn}
-          >
-            Sign In
-          </Button>
-        )}
+        {isAuth ? renderAuthenticatedButtons() : renderUnauthenticatedButtons()}
       </div>
     );
   }

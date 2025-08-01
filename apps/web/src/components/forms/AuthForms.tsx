@@ -1,8 +1,9 @@
 import { Button } from '@repo/ui';
+import { useTranslations } from 'next-intl';
 import React from 'react';
 
-import { LoginForm } from './LoginForm.js';
-import { RegisterForm } from './RegisterForm.js';
+import { LoginForm } from './LoginForm';
+import { RegisterForm } from './RegisterForm';
 
 interface AuthFormsProps {
   onAuthSuccess?: () => void;
@@ -20,15 +21,16 @@ interface AuthFormsProps {
  */
 export function AuthForms({ onAuthSuccess, defaultMode = 'login' }: AuthFormsProps) {
   const [mode, setMode] = React.useState<'login' | 'register'>(defaultMode);
+  const t = useTranslations('Layout.auth');
 
   const switchToLogin = () => setMode('login');
   const switchToRegister = () => setMode('register');
 
   return (
     <div className="w-full max-w-md mx-auto">
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <AuthFormsHeader mode={mode} />
-        <AuthFormsToggle mode={mode} onSwitch={{ switchToLogin, switchToRegister }} />
+      <div className="bg-background border rounded-lg shadow-md p-6">
+        <AuthFormsHeader mode={mode} t={t} />
+        <AuthFormsToggle mode={mode} onSwitch={{ switchToLogin, switchToRegister }} t={t} />
         <AuthFormsContent
           mode={mode}
           onAuthSuccess={onAuthSuccess}
@@ -41,17 +43,16 @@ export function AuthForms({ onAuthSuccess, defaultMode = 'login' }: AuthFormsPro
 
 interface AuthFormsHeaderProps {
   mode: 'login' | 'register';
+  t: (key: string) => string;
 }
 
-const AuthFormsHeader: React.FC<AuthFormsHeaderProps> = ({ mode }) => (
+const AuthFormsHeader: React.FC<AuthFormsHeaderProps> = ({ mode, t }) => (
   <div className="text-center mb-6">
-    <h2 className="text-2xl font-bold text-gray-900">
-      {mode === 'login' ? 'Вход в систему' : 'Регистрация'}
+    <h2 className="text-2xl font-bold text-foreground">
+      {mode === 'login' ? t('loginTitle') : t('registerTitle')}
     </h2>
-    <p className="text-sm text-gray-600 mt-2">
-      {mode === 'login'
-        ? 'Войдите в свой аккаунт для продолжения'
-        : 'Создайте новый аккаунт для начала работы'}
+    <p className="text-sm text-muted-foreground mt-2">
+      {mode === 'login' ? t('loginSubtitle') : t('registerSubtitle')}
     </p>
   </div>
 );
@@ -62,25 +63,28 @@ interface AuthFormsToggleProps {
     switchToLogin: () => void;
     switchToRegister: () => void;
   };
+  t: (key: string) => string;
 }
 
-const AuthFormsToggle: React.FC<AuthFormsToggleProps> = ({ mode, onSwitch }) => (
-  <div className="flex rounded-lg bg-gray-100 p-1 mb-6">
+const AuthFormsToggle: React.FC<AuthFormsToggleProps> = ({ mode, onSwitch, t }) => (
+  <div className="flex rounded-lg bg-muted p-1 mb-6">
     <Button
       variant={mode === 'login' ? 'default' : 'ghost'}
+      size="compact"
       className="flex-1"
       onClick={onSwitch.switchToLogin}
       type="button"
     >
-      Вход
+      {t('loginButton')}
     </Button>
     <Button
       variant={mode === 'register' ? 'default' : 'ghost'}
+      size="compact"
       className="flex-1"
       onClick={onSwitch.switchToRegister}
       type="button"
     >
-      Регистрация
+      {t('registerButton')}
     </Button>
   </div>
 );

@@ -137,10 +137,57 @@
   },
   "Layout": {
     "navigation": {
-      "home": "Home",
       "exchange": "Exchange",
       "orders": "Orders",
       "contact": "Contact"
+    },
+    "auth": {
+      "signIn": "Sign In",
+      "signUp": "Sign Up",
+      "signOut": "Sign Out",
+      "close": "Close",
+      "loginTitle": "Sign In to Your Account",
+      "registerTitle": "Create Account",
+      "loginSubtitle": "Enter your credentials to continue",
+      "registerSubtitle": "Create a new account to get started",
+      "loginButton": "Sign In",
+      "registerButton": "Sign Up"
+    },
+    "forms": {
+      "login": {
+        "email": {
+          "label": "Email",
+          "placeholder": "your@email.com"
+        },
+        "password": {
+          "label": "Password",
+          "placeholder": "Enter your password"
+        },
+        "submit": "Sign In",
+        "submitting": "Signing in...",
+        "switchToRegister": "Don't have an account? Sign up"
+      },
+      "register": {
+        "email": {
+          "label": "Email",
+          "placeholder": "your@email.com"
+        },
+        "password": {
+          "label": "Password",
+          "placeholder": "Minimum 6 characters"
+        },
+        "confirmPassword": {
+          "label": "Confirm Password",
+          "placeholder": "Repeat password"
+        },
+        "submit": "Sign Up",
+        "submitting": "Creating account...",
+        "switchToLogin": "Already have an account? Sign in",
+        "successTitle": "Registration successful",
+        "successMessage": "Check your email to confirm your account",
+        "errorTitle": "Registration error",
+        "errorMessage": "Please try again"
+      }
     },
     "footer": {
       "company": {
@@ -212,7 +259,45 @@
     "exchange": "Exchange",
     "validation": {
       "enterAmount": "Enter amount",
-      "selectBank": "Select bank"
+      "selectBank": "Select bank",
+      "email": {
+        "invalid": "Invalid email address",
+        "required": "Email is required"
+      },
+      "password": {
+        "minLength": "Password must contain at least {{min}} characters",
+        "required": "Password is required"
+      },
+      "confirmPassword": {
+        "noMatch": "Passwords do not match",
+        "required": "Password confirmation is required"
+      },
+      "username": {
+        "minLength": "Username must contain at least {{min}} characters",
+        "maxLength": "Username must not exceed {{max}} characters",
+        "required": "Username is required"
+      },
+      "firstName": {
+        "minLength": "First name must contain at least {{min}} character",
+        "maxLength": "First name must not exceed {{max}} characters",
+        "required": "First name is required"
+      },
+      "lastName": {
+        "minLength": "Last name must contain at least {{min}} character",
+        "maxLength": "Last name must not exceed {{max}} characters",
+        "required": "Last name is required"
+      },
+      "phone": {
+        "invalid": "Invalid phone number",
+        "required": "Phone number is required"
+      },
+      "amount": {
+        "minValue": "Minimum amount: {{min}}",
+        "maxValue": "Maximum amount: {{max}}",
+        "required": "Amount is required"
+      },
+      "required": "This field is required",
+      "invalid": "Invalid value"
     },
     "fiatNames": {
       "UAH": "Ukrainian hryvnia",
