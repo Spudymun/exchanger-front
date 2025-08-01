@@ -1,7 +1,7 @@
 'use client';
 
 import { useForm, useNotifications } from '@repo/hooks/src/client-hooks';
-import { FormField, FormControl, FormLabel, FormMessage, Input, Button } from '@repo/ui';
+import { FormField, FormControl, FormLabel, FormMessage, Input, Button, MathCaptcha } from '@repo/ui';
 import { registerSchema } from '@repo/utils';
 import { useTranslations, useLocale } from 'next-intl';
 import React from 'react';
@@ -17,6 +17,8 @@ interface RegisterFormData extends Record<string, unknown> {
   email: string;
   password: string;
   confirmPassword: string;
+  captcha: string;
+  captchaVerified: boolean;
 }
 
 /**
@@ -34,9 +36,9 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
   const locale = useLocale();
 
   const form = useForm<RegisterFormData>({
-    initialValues: { email: '', password: '', confirmPassword: '' },
+    initialValues: { email: '', password: '', confirmPassword: '', captcha: '', captchaVerified: false },
     validationSchema: registerSchema,
-    locale: locale, // Передаем локаль для локализации валидации
+    locale: locale, // Используем текущую локаль приложения для валидации
     onSubmit: async values => {
       try {
         await register.mutateAsync({
@@ -57,6 +59,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
         <RegisterEmailField form={form} isLoading={register.isPending} t={t} />
         <RegisterPasswordField form={form} isLoading={register.isPending} t={t} />
         <RegisterConfirmPasswordField form={form} isLoading={register.isPending} t={t} />
+        <RegisterCaptchaField form={form} isLoading={register.isPending} t={t} />
         <RegisterSubmitButton form={form} isLoading={register.isPending} t={t} />
         <RegisterSwitchButton onSwitch={onSwitchToLogin} isLoading={register.isPending} />
       </form>
@@ -123,6 +126,27 @@ const RegisterConfirmPasswordField: React.FC<RegisterFieldProps> = ({ form, isLo
         required
       />
     </FormControl>
+    <FormMessage />
+  </FormField>
+);
+
+const RegisterCaptchaField: React.FC<RegisterFieldProps> = ({ form, isLoading, t }) => (
+  <FormField name="captcha" error={form.errors.captcha}>
+    <MathCaptcha
+      name="captcha"
+      difficulty="medium"
+      disabled={isLoading}
+      hideLabel={true}
+      onAnswerChange={(answer) => form.setValue('captcha', answer)}
+      onVerificationChange={(isVerified) => form.setValue('captchaVerified', isVerified)}
+      labels={{
+        question: t('captcha.question'),
+        placeholder: t('captcha.placeholder'),
+        refresh: t('captcha.refresh'),
+        verification: t('captcha.verification'),
+        error: t('captcha.error'),
+      }}
+    />
     <FormMessage />
   </FormField>
 );

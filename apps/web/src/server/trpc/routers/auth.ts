@@ -9,7 +9,7 @@ import {
 } from '@repo/exchange-core';
 import {
   registerApiSchema,
-  loginSchema,
+  loginApiSchema,
   resetPasswordSchema,
   confirmResetPasswordSchema,
   confirmEmailSchema,
@@ -90,7 +90,7 @@ export const authRouter = createTRPCRouter({
     }),
 
   // Вход в систему
-  login: rateLimitMiddleware.login.input(loginSchema).mutation(async ({ input, ctx }) => {
+  login: rateLimitMiddleware.login.input(loginApiSchema).mutation(async ({ input, ctx }) => {
     // Имитация задержки
     await new Promise(resolve => setTimeout(resolve, AUTH_CONSTANTS.LOGIN_REQUEST_DELAY_MS));
 

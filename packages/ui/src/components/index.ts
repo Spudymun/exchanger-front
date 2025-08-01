@@ -30,6 +30,7 @@ export {
   DropdownMenuShortcut,
 } from './ui/dropdown-menu';
 export { Input } from './ui/input';
+export { MathCaptcha, type MathCaptchaProps } from './ui/math-captcha';
 export { Label } from './ui/label';
 export {
   Select,

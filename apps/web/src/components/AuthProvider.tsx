@@ -38,7 +38,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (email: string, password: string): Promise<void> => {
     setIsLoading(true);
     try {
-      const result = await loginMutation.mutateAsync({ email, password });
+      const result = await loginMutation.mutateAsync({ 
+        email, 
+        password,
+      });
       setUser(result.user);
     } finally {
       setIsLoading(false);

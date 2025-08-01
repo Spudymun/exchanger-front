@@ -210,11 +210,21 @@ export const getOrderHistoryByEmailSchema = z.object({
 // === АУТЕНТИФИКАЦИЯ ===
 
 /**
+ * Схема для API входа (без CAPTCHA)
+ */
+export const loginApiSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+});
+
+/**
  * Схема для входа
  */
 export const loginSchema = z.object({
   email: emailSchema,
   password: passwordSchema,
+  captcha: z.string().min(1),
+  captchaVerified: z.boolean().refine(val => val === true),
 });
 
 /**
@@ -233,10 +243,16 @@ export const registerSchema = z
     email: emailSchema,
     password: newPasswordSchema,
     confirmPassword: z.string(),
+    captcha: z.string().min(1),
+    captchaVerified: z.boolean(),
   })
   .refine(data => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
     path: ['confirmPassword'],
+  })
+  .refine(data => data.captchaVerified, {
+    message: 'Подтвердите, что вы не робот',
+    path: ['captcha'],
   });
 
 /**

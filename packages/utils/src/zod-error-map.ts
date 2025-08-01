@@ -186,12 +186,33 @@ function getMessagesForLocale(locale: string): ZodErrorMessages {
 }
 
 /**
+ * Обрабатывает специальные случаи для полей
+ */
+function handleSpecialFieldCases(
+  issue: z.ZodIssueOptionalMessage,
+  locale: string
+): { message: string } | null {
+  // Специальная обработка для поля captcha
+  if (issue.path?.length === 1 && issue.path[0] === 'captcha' && issue.code === z.ZodIssueCode.too_small) {
+    const message = locale === 'ru' ? 'Заполните CAPTCHA' : 'Please fill CAPTCHA';
+    return { message };
+  }
+  return null;
+}
+
+/**
  * Создает error map для Zod на основе указанной локали
  */
 export function createZodErrorMap(locale: string = 'en'): z.ZodErrorMap {
   const messages = getMessagesForLocale(locale);
 
   return (issue, ctx) => {
+    // Проверяем специальные случаи сначала
+    const specialCase = handleSpecialFieldCases(issue, locale);
+    if (specialCase) {
+      return specialCase;
+    }
+
     let customMessage: string | null = null;
 
     switch (issue.code) {

@@ -1,7 +1,7 @@
 'use client';
 
 import { useForm, useNotifications } from '@repo/hooks/src/client-hooks';
-import { FormField, FormControl, FormLabel, FormMessage, Input, Button } from '@repo/ui';
+import { FormField, FormControl, FormLabel, FormMessage, Input, Button, MathCaptcha } from '@repo/ui';
 import { loginSchema } from '@repo/utils';
 import { useTranslations, useLocale } from 'next-intl';
 import React from 'react';
@@ -16,6 +16,8 @@ interface LoginFormProps {
 interface LoginFormData extends Record<string, unknown> {
   email: string;
   password: string;
+  captcha: string;
+  captchaVerified: boolean;
 }
 
 /**
@@ -33,9 +35,9 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
   const locale = useLocale();
 
   const form = useForm<LoginFormData>({
-    initialValues: { email: '', password: '' },
+    initialValues: { email: '', password: '', captcha: '', captchaVerified: false },
     validationSchema: loginSchema,
-    locale: locale, // Передаем локаль для локализации валидации
+    locale: locale, // Используем текущую локаль приложения для валидации
     onSubmit: async values => {
       try {
         await login.mutateAsync({
@@ -55,6 +57,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
       <form onSubmit={form.handleSubmit} className="space-y-4">
         <LoginEmailField form={form} isLoading={login.isPending} t={t} />
         <LoginPasswordField form={form} isLoading={login.isPending} t={t} />
+        <LoginCaptchaField form={form} isLoading={login.isPending} t={t} />
         <LoginSubmitButton form={form} isLoading={login.isPending} t={t} />
         <LoginSwitchButton onSwitch={onSwitchToRegister} isLoading={login.isPending} />
       </form>
@@ -105,6 +108,29 @@ const LoginPasswordField: React.FC<LoginFieldProps> = ({ form, isLoading, t }) =
     <FormMessage />
   </FormField>
 );
+
+const LoginCaptchaField: React.FC<LoginFieldProps> = ({ form, isLoading, t }) => {
+  return (
+    <FormField name="captcha" error={form.errors.captcha}>
+      <MathCaptcha
+        name="captcha"
+        difficulty="medium"
+        disabled={isLoading}
+        hideLabel={true}
+        onAnswerChange={(answer) => form.setValue('captcha', answer)}
+        onVerificationChange={(isVerified) => form.setValue('captchaVerified', isVerified)}
+        labels={{
+          question: t('captcha.question'),
+          placeholder: t('captcha.placeholder'),
+          refresh: t('captcha.refresh'),
+          verification: t('captcha.verification'),
+          error: t('captcha.error'),
+        }}
+      />
+      <FormMessage />
+    </FormField>
+  );
+};
 
 const LoginSubmitButton: React.FC<LoginFieldProps> = ({ form, isLoading, t }) => (
   <Button type="submit" className="w-full" disabled={isLoading || !form.isValid}>

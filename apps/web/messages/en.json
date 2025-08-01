@@ -163,6 +163,13 @@
           "label": "Password",
           "placeholder": "Enter your password"
         },
+        "captcha": {
+          "question": "Solve the example:",
+          "placeholder": "Enter answer",
+          "refresh": "Refresh example",
+          "verification": "Verification passed ✓",
+          "error": "Incorrect answer. Please try again."
+        },
         "submit": "Sign In",
         "submitting": "Signing in...",
         "switchToRegister": "Don't have an account? Sign up"
@@ -179,6 +186,13 @@
         "confirmPassword": {
           "label": "Confirm Password",
           "placeholder": "Repeat password"
+        },
+        "captcha": {
+          "question": "Solve the example:",
+          "placeholder": "Enter answer",
+          "refresh": "Refresh example",
+          "verification": "Verification passed ✓",
+          "error": "Incorrect answer. Please try again."
         },
         "submit": "Sign Up",
         "submitting": "Creating account...",
