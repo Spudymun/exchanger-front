@@ -22,14 +22,8 @@ import { useNotificationsWithTranslations } from './useNotificationsWithTranslat
 
 // Создаем локализованную схему для exchange формы
 const createLocalizedExchangeFormSchema = (
-    validationT: (key: string, values?: Record<string, string | number>) => string,
-    exchangeT: (key: string, values?: Record<string, string | number>) => string
+    _validationT: (key: string, values?: Record<string, string | number>) => string
 ) => {
-    const errorMap = createNextIntlZodErrorMap({
-        t: validationT,
-        locale: 'current'
-    });
-
     return z.object({
         fromCurrency: currencySchema,
         fromAmount: cryptoAmountStringSchema,
@@ -39,20 +33,56 @@ const createLocalizedExchangeFormSchema = (
     });
 };
 
+// Helper функции для валидации
+const processValidationErrors = (
+    errors: z.ZodError['errors'],
+    notifications: ReturnType<typeof useNotificationsWithTranslations>
+) => {
+    const errorMap: Record<string, string[]> = {};
+
+    for (const error of errors) {
+        const fieldName = String(error.path[0]);
+        const existingErrors = errorMap[fieldName];
+        if (!existingErrors) {
+            errorMap[fieldName] = [];
+        }
+        errorMap[fieldName].push(error.message);
+    }
+
+    const errorCount = Object.keys(errorMap).length;
+    if (errorCount > 1) {
+        notifications.showMultipleValidationErrors(errorCount);
+    } else {
+        notifications.showValidationError();
+    }
+};
+
+const getFieldSchema = (fieldName: string): z.ZodSchema<unknown> => {
+    switch (fieldName) {
+        case 'fromCurrency':
+            return currencySchema;
+        case 'fromAmount':
+            return cryptoAmountStringSchema;
+        case 'userEmail':
+            return emailSchema;
+        case 'cardNumber':
+            return z.string().min(1);
+        default:
+            return z.any();
+    }
+};
+
 export function useExchangeStoreWithTranslations() {
     const baseStore = useExchangeStore();
     const notifications = useNotificationsWithTranslations();
     const validationT = useTranslations('AdvancedExchangeForm.validation');
     const exchangeT = useTranslations('exchange');
 
-    // Создаем локализованную схему валидации
-    const exchangeFormSchema = createLocalizedExchangeFormSchema(validationT, exchangeT);
+    const exchangeFormSchema = createLocalizedExchangeFormSchema(validationT);
 
-    // Локализованная функция валидации
     const validateFormWithTranslations = () => {
         const { formData, calculation } = baseStore;
 
-        // Подготавливаем данные для валидации
         const validationData = {
             fromCurrency: formData.fromCurrency,
             fromAmount: formData.fromAmount,
@@ -61,7 +91,6 @@ export function useExchangeStoreWithTranslations() {
             agreementAccepted: formData.agreementAccepted
         };
 
-        // Валидируем с помощью локализованной схемы
         const errorMap = createNextIntlZodErrorMap({
             t: validationT,
             locale: 'current'
@@ -69,29 +98,10 @@ export function useExchangeStoreWithTranslations() {
         const result = exchangeFormSchema.safeParse(validationData, { errorMap });
 
         if (!result.success) {
-            // Преобразуем ошибки Zod в формат для уведомлений
-            const errors: Record<string, string[]> = {};
-
-            for (const error of result.error.errors) {
-                const fieldName = error.path[0] as string;
-                if (!errors[fieldName]) {
-                    errors[fieldName] = [];
-                }
-                errors[fieldName].push(error.message);
-            }
-
-            // Показываем ошибки через локализованные уведомления
-            const errorCount = Object.keys(errors).length;
-            if (errorCount > 1) {
-                notifications.showMultipleValidationErrors(errorCount);
-            } else {
-                notifications.showValidationError();
-            }
-
+            processValidationErrors(result.error.errors, notifications);
             return false;
         }
 
-        // Дополнительная проверка расчета
         if (!calculation?.isValid) {
             notifications.showCalculationError();
             return false;
@@ -100,9 +110,8 @@ export function useExchangeStoreWithTranslations() {
         return true;
     };
 
-    // Локализованные helper методы
     const getLocalizedStepInfo = (step: number) => {
-        const stepKeys = ['form', 'review', 'payment', 'completed'];
+        const stepKeys = ['form', 'review', 'payment', 'completed'] as const;
         const stepKey = stepKeys[step] || 'form';
 
         return {
@@ -115,25 +124,11 @@ export function useExchangeStoreWithTranslations() {
         return exchangeT(`orderStatus.${status.toLowerCase()}`);
     };
 
-    // Локализованные методы валидации отдельных полей
     const validateField = (fieldName: string, value: unknown) => {
-        let schema: z.ZodSchema<unknown>;
+        const schema = getFieldSchema(fieldName);
 
-        switch (fieldName) {
-            case 'fromCurrency':
-                schema = currencySchema;
-                break;
-            case 'fromAmount':
-                schema = cryptoAmountStringSchema;
-                break;
-            case 'userEmail':
-                schema = emailSchema;
-                break;
-            case 'cardNumber':
-                schema = z.string().min(1);
-                break;
-            default:
-                return { isValid: true, error: null };
+        if (fieldName === 'unknown') {
+            return { isValid: true, error: null };
         }
 
         const errorMap = createNextIntlZodErrorMap({
@@ -155,36 +150,16 @@ export function useExchangeStoreWithTranslations() {
     };
 
     return {
-        // Все методы и свойства базового store
         ...baseStore,
-
-        // Переопределяем validateForm с локализацией
         validateForm: validateFormWithTranslations,
-
-        // Добавляем локализованные методы
         validateField,
         getLocalizedStepInfo,
         getLocalizedOrderStatus,
-
-        // Локализованные уведомления
         notifications,
-
-        // Локализованные методы для работы с заказами
-        showOrderCreated: (orderId: string) => {
-            notifications.showOrderCreated(orderId);
-        },
-
-        showOrderCompleted: (orderId: string) => {
-            notifications.showOrderCompleted(orderId);
-        },
-
-        showExchangeSuccess: () => {
-            notifications.showExchangeSuccess();
-        },
-
-        showExchangeError: (message?: string) => {
-            notifications.showExchangeError(message);
-        }
+        showOrderCreated: (orderId: string) => notifications.showOrderCreated(orderId),
+        showOrderCompleted: (orderId: string) => notifications.showOrderCompleted(orderId),
+        showExchangeSuccess: () => notifications.showExchangeSuccess(),
+        showExchangeError: (message?: string) => notifications.showExchangeError(message)
     };
 }
 

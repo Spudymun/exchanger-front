@@ -14,36 +14,43 @@ import { getTranslations } from 'next-intl/server';
  * @param values - Interpolation values
  * @returns Promise<string> - Localized message
  */
-export async function getServerErrorMessage(
-    keyPath: string,
+async function tryGetTranslation(
     locale: SupportedLocale,
+    keyPath: string,
     values?: Record<string, string | number>
-): Promise<string> {
+): Promise<string | null> {
     try {
         const t = await getTranslations({
             locale,
             namespace: 'server.errors'
         });
-
         return values ? t(keyPath, values) : t(keyPath);
     } catch {
-        // Fallback to English if translation fails
-        if (locale !== 'en') {
-            try {
-                const t = await getTranslations({
-                    locale: 'en',
-                    namespace: 'server.errors'
-                });
-                return values ? t(keyPath, values) : t(keyPath);
-            } catch {
-                // Ultimate fallback to key path
-                return keyPath;
-            }
-        }
-
-        // Ultimate fallback to key path
-        return keyPath;
+        return null;
     }
+}
+
+export async function getServerErrorMessage(
+    keyPath: string,
+    locale: SupportedLocale,
+    values?: Record<string, string | number>
+): Promise<string> {
+    // Try with requested locale
+    const localizedMessage = await tryGetTranslation(locale, keyPath, values);
+    if (localizedMessage) {
+        return localizedMessage;
+    }
+
+    // Fallback to English if not already English
+    if (locale !== 'en') {
+        const englishMessage = await tryGetTranslation('en', keyPath, values);
+        if (englishMessage) {
+            return englishMessage;
+        }
+    }
+
+    // Ultimate fallback to key path
+    return keyPath;
 }
 
 /**
