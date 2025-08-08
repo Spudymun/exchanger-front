@@ -41,7 +41,7 @@ const FormField = React.forwardRef<HTMLDivElement, FormFieldProps>(
 
     return (
       <FormContext.Provider value={contextValue}>
-        <div ref={ref} className={cn('space-y-2', className)} {...props}>
+        <div ref={ref} className={cn('form-field-container', className)} {...props}>
           {children}
         </div>
       </FormContext.Provider>
@@ -75,7 +75,7 @@ const formLabelVariants = cva(
 
 export interface FormLabelProps
   extends React.LabelHTMLAttributes<HTMLLabelElement>,
-    VariantProps<typeof formLabelVariants> {
+  VariantProps<typeof formLabelVariants> {
   required?: boolean;
 }
 
@@ -162,8 +162,11 @@ function enhanceChildElement(child: React.ReactNode, context: FormContextValue |
 const FormControl = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, children, ...props }, ref) => {
     const context = useFormContext();
-    const enhancedChildren = React.Children.map(children, child =>
-      enhanceChildElement(child, context)
+
+    // ОПТИМИЗАЦИЯ: Мемоизируем обработку children для предотвращения лишних вычислений
+    const enhancedChildren = React.useMemo(() =>
+      React.Children.map(children, child => enhanceChildElement(child, context)),
+      [children, context]
     );
 
     return (
@@ -192,7 +195,7 @@ const formMessageVariants = cva('text-sm font-medium', {
 
 export interface FormMessageProps
   extends React.HTMLAttributes<HTMLParagraphElement>,
-    VariantProps<typeof formMessageVariants> {}
+  VariantProps<typeof formMessageVariants> { }
 
 function getMessageVariant(
   variant: 'default' | 'error' | 'success' | null | undefined,

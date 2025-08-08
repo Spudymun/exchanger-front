@@ -6,6 +6,7 @@ interface AuthUser {
   id: string;
   email: string;
   isVerified: boolean;
+  role?: string; // Роль пользователя для проверки прав
 }
 
 interface AuthContextType {
@@ -20,59 +21,81 @@ interface AuthContextType {
 /**
  * Enhanced Auth Hook
  *
- * Integrates with existing AuthProvider and adds business logic
- * Note: This hook expects AuthProvider to be available in the React context
+ * УСТАРЕЛ: Этот хук использовал хардкоженные сообщения.
+ * Теперь используйте локализованные уведомления напрямую в компонентах через useTranslations.
+ * 
+ * @deprecated Используйте useAuthMutations с локализованными переводами
  */
 export function useEnhancedAuth(baseAuth: AuthContextType) {
   const notifications = useNotifications();
 
-  // Extended login with notifications and redirect
-  const loginWithNotifications = async (email: string, password: string) => {
-    try {
-      await baseAuth.login(email, password);
-      notifications.success('Добро пожаловать!', `Вы вошли как ${email}`);
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : UI_NUMERIC_CONSTANTS.DEFAULT_ERROR_MESSAGE;
-      notifications.error('Ошибка входа', errorMessage);
-      throw error;
-    }
-  };
-
-  // Extended register with notifications
-  const registerWithNotifications = async (email: string, password: string) => {
-    try {
-      await baseAuth.register(email, password);
-      notifications.success('Регистрация успешна!', 'Проверьте email для подтверждения аккаунта', {
-        duration: BUSINESS_LIMITS.ERROR_NOTIFICATION_DURATION_MS,
-      });
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : UI_NUMERIC_CONSTANTS.DEFAULT_ERROR_MESSAGE;
-      notifications.error('Ошибка регистрации', errorMessage);
-      throw error;
-    }
-  };
-
-  // Extended logout with notifications
-  const logoutWithNotifications = async () => {
-    try {
-      await baseAuth.logout();
-      notifications.info('Выход выполнен', 'До свидания!');
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : UI_NUMERIC_CONSTANTS.DEFAULT_ERROR_MESSAGE;
-      notifications.error('Ошибка выхода', errorMessage);
-    }
-  };
-
   return {
     ...baseAuth,
-    login: loginWithNotifications,
-    register: registerWithNotifications,
-    logout: logoutWithNotifications,
+    login: createLoginWithNotifications(baseAuth, notifications),
+    register: createRegisterWithNotifications(baseAuth, notifications),
+    logout: createLogoutWithNotifications(baseAuth, notifications),
     hasPermission: usePermissionChecker(baseAuth),
     requireAuth: () => baseAuth.isLoggedIn,
+  };
+}
+
+// Helper function: Login with notifications
+function createLoginWithNotifications(
+  baseAuth: AuthContextType,
+  notifications: ReturnType<typeof useNotifications>
+) {
+  return async (email: string, password: string) => {
+    try {
+      await baseAuth.login(email, password);
+      // DEPRECATED: Use localized translations in components
+      notifications.success('Welcome!', `Logged in as ${email}`);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : UI_NUMERIC_CONSTANTS.DEFAULT_ERROR_MESSAGE;
+      notifications.error('Login error', errorMessage);
+      throw error;
+    }
+  };
+}
+
+// Helper function: Register with notifications
+function createRegisterWithNotifications(
+  baseAuth: AuthContextType,
+  notifications: ReturnType<typeof useNotifications>
+) {
+  return async (email: string, password: string) => {
+    try {
+      await baseAuth.register(email, password);
+      notifications.success(
+        'Registration successful!',
+        'Check your email to confirm your account',
+        {
+          duration: BUSINESS_LIMITS.ERROR_NOTIFICATION_DURATION_MS,
+        }
+      );
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : UI_NUMERIC_CONSTANTS.DEFAULT_ERROR_MESSAGE;
+      notifications.error('Registration error', errorMessage);
+      throw error;
+    }
+  };
+}
+
+// Helper function: Logout with notifications  
+function createLogoutWithNotifications(
+  baseAuth: AuthContextType,
+  notifications: ReturnType<typeof useNotifications>
+) {
+  return async () => {
+    try {
+      await baseAuth.logout();
+      notifications.info('Logged out', 'Goodbye!');
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : UI_NUMERIC_CONSTANTS.DEFAULT_ERROR_MESSAGE;
+      notifications.error('Logout error', errorMessage);
+    }
   };
 }
 
@@ -81,7 +104,8 @@ function usePermissionChecker(baseAuth: AuthContextType) {
   return (permission: string) => {
     if (!baseAuth.isLoggedIn || !baseAuth.user) return false;
 
-    const isAdmin = baseAuth.user.email.includes('admin');
+    // ИСПРАВЛЕНО: Безопасная проверка прав через роль пользователя
+    const isAdmin = baseAuth.user.role === 'admin';
 
     switch (permission) {
       case 'admin':

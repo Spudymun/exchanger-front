@@ -151,7 +151,31 @@
       "loginSubtitle": "Войдите в свой аккаунт для продолжения",
       "registerSubtitle": "Создайте новый аккаунт для начала работы",
       "loginButton": "Вход",
-      "registerButton": "Регистрация"
+      "registerButton": "Регистрация",
+      "messages": {
+        "loginSuccess": "Добро пожаловать!",
+        "loginSuccessDescription": "Вы успешно вошли в систему",
+        "loginError": "Ошибка входа",
+        "logoutSuccess": "Выход выполнен",
+        "logoutSuccessDescription": "До свидания!",
+        "logoutError": "Ошибка выхода",
+        "registerSuccess": "Регистрация успешна",
+        "registerSuccessDescription": "Проверьте email для подтверждения аккаунта",
+        "registerError": "Ошибка регистрации",
+        "passwordResetSent": "Инструкции отправлены",
+        "passwordResetSentDescription": "Проверьте email",
+        "passwordChanged": "Пароль изменен",
+        "passwordChangedDescription": "Вы можете войти с новым паролем",
+        "emailVerified": "Email подтвержден",
+        "emailVerifiedDescription": "Ваш аккаунт активирован"
+      }
+    },
+    "captcha": {
+      "question": "Решите пример:",
+      "placeholder": "Введите ответ",
+      "refresh": "Обновить пример",
+      "verification": "Проверка пройдена ✓",
+      "error": "Неправильный ответ. Попробуйте еще раз."
     },
     "forms": {
       "login": {
@@ -162,13 +186,6 @@
         "password": {
           "label": "Пароль",
           "placeholder": "Введите пароль"
-        },
-        "captcha": {
-          "question": "Решите пример:",
-          "placeholder": "Введите ответ",
-          "refresh": "Обновить пример",
-          "verification": "Проверка пройдена ✓",
-          "error": "Неправильный ответ. Попробуйте еще раз."
         },
         "submit": "Войти",
         "submitting": "Вход...",
@@ -186,13 +203,6 @@
         "confirmPassword": {
           "label": "Подтвердите пароль",
           "placeholder": "Повторите пароль"
-        },
-        "captcha": {
-          "question": "Решите пример:",
-          "placeholder": "Введите ответ",
-          "refresh": "Обновить пример",
-          "verification": "Проверка пройдена ✓",
-          "error": "Неправильный ответ. Попробуйте еще раз."
         },
         "submit": "Зарегистрироваться",
         "submitting": "Регистрация...",
@@ -271,6 +281,10 @@
       "processing": "Время обработки: 15-30 минут"
     },
     "exchange": "Обменять",
+    "password": {
+      "label": "Пароль",
+      "placeholder": "Введите пароль"
+    },
     "validation": {
       "enterAmount": "Введите сумму",
       "selectBank": "Выберите банк",
@@ -279,36 +293,56 @@
         "required": "Email обязателен"
       },
       "password": {
-        "minLength": "Пароль должен содержать минимум {{min}} символов",
-        "required": "Пароль обязателен"
+        "minLength": "Пароль должен содержать минимум {min} символов",
+        "minLengthTemplate": "Пароль должен содержать минимум",
+        "minLengthSuffix": "символов",
+        "required": "Пароль обязателен",
+        "mismatch": "Пароли не совпадают",
+        "weak": "Пароль должен содержать заглавные и строчные буквы, цифры",
+        "invalid": "Некорректный пароль"
       },
       "confirmPassword": {
         "noMatch": "Пароли не совпадают",
         "required": "Подтверждение пароля обязательно"
       },
       "username": {
-        "minLength": "Имя пользователя должно содержать минимум {{min}} символов",
-        "maxLength": "Имя пользователя не должно превышать {{max}} символов",
+        "minLength": "Имя пользователя должно содержать минимум {min} символов",
+        "maxLength": "Имя пользователя не должно превышать {max} символов",
         "required": "Имя пользователя обязательно"
       },
       "firstName": {
-        "minLength": "Имя должно содержать минимум {{min}} символов",
-        "maxLength": "Имя не должно превышать {{max}} символов",
+        "minLength": "Имя должно содержать минимум {min} символов",
+        "maxLength": "Имя не должно превышать {max} символов",
         "required": "Имя обязательно"
       },
       "lastName": {
-        "minLength": "Фамилия должна содержать минимум {{min}} символов",
-        "maxLength": "Фамилия не должна превышать {{max}} символов",
+        "minLength": "Фамилия должна содержать минимум {min} символов",
+        "maxLength": "Фамилия не должна превышать {max} символов",
         "required": "Фамилия обязательна"
       },
       "phone": {
         "invalid": "Некорректный номер телефона",
         "required": "Номер телефона обязателен"
       },
+      "captcha": {
+        "required": "Заполните CAPTCHA",
+        "notVerified": "Подтвердите, что вы не робот"
+      },
       "amount": {
-        "minValue": "Минимальная сумма: {{min}}",
-        "maxValue": "Максимальная сумма: {{max}}",
-        "required": "Сумма обязательна"
+        "minValue": "Минимальная сумма: {min}",
+        "maxValue": "Максимальная сумма: {max}",
+        "required": "Сумма обязательна",
+        "format": "Некорректный формат суммы",
+        "positive": "Сумма должна быть больше 0"
+      },
+      "crypto": {
+        "format": "Некорректный формат суммы криптовалюты",
+        "positive": "Сумма должна быть больше 0",
+        "minAmount": "Минимальная сумма: {min}",
+        "maxAmount": "Максимальная сумма: {max}"
+      },
+      "bank": {
+        "required": "Выберите банк"
       },
       "required": "Это поле обязательно",
       "invalid": "Некорректное значение"
@@ -322,5 +356,138 @@
   "ExchangePage": {
     "title": "Продвинутый обмен",
     "description": "Профессиональный обмен криптовалют с поддержкой фиатных валют и интеграцией с банками"
+  },
+  "server": {
+    "errors": {
+      "rateLimit": {
+        "CREATE_ORDER": "Превышен лимит создания заявок. Попробуйте через час.",
+        "REGISTER": "Превышен лимит регистраций. Попробуйте завтра.",
+        "LOGIN": "Слишком много попыток входа. Попробуйте через 15 минут.",
+        "RESET_PASSWORD": "Превышен лимит сброса пароля. Попробуйте через час.",
+        "general": "Превышен лимит: {limit}",
+        "exceeded": "Превышен лимит: {limit}"
+      },
+      "validation": {
+        "field": "Ошибка валидации поля \"{field}\": {issue}",
+        "fieldError": "Ошибка валидации поля \"{field}\": {issue}",
+        "invalidAmount": "Некорректная сумма",
+        "captcha": "CAPTCHA не заполнена",
+        "invalidPassword": "Неверный текущий пароль",
+        "verification": "Ошибка верификации",
+        "passwordValidation": "Ошибка валидации пароля"
+      },
+      "auth": {
+        "required": "Требуется авторизация",
+        "forbidden": "Недостаточно прав для выполнения действия: {action}",
+        "insufficientPermissions": "Недостаточно прав для выполнения действия: {action}",
+        "invalidCredentials": "Неверные учетные данные"
+      },
+      "notFound": {
+        "resource": "{resource} не найден(а)",
+        "resourceWithId": "{resource} с идентификатором \"{identifier}\" не найден(а)",
+        "session": "Сессия не найдена",
+        "user": "Пользователь не найден",
+        "order": "Заявка не найдена",
+        "ticket": "Тикет поддержки не найден"
+      },
+      "internal": {
+        "operation": "Ошибка при выполнении операции: {operation}",
+        "general": "Внутренняя ошибка сервера"
+      },
+      "conflict": {
+        "resource": "Конфликт при работе с {resource}: {reason}",
+        "resourceConflict": "Конфликт при работе с {resource}: {reason}",
+        "userExists": "Пользователь с таким email уже существует"
+      },
+      "business": {
+        "order": "Заявка",
+        "user": "Пользователь",
+        "session": "Сессия",
+        "supportTicket": "Тикет поддержки",
+        "userExists": "пользователь с таким email уже существует",
+        "orderCannotCancel": "Заявку нельзя отменить в текущем статусе",
+        "orderUpdate": "обновление заявки",
+        "orderAccess": "доступ к заявке",
+        "invalidPassword": "Неверный текущий пароль",
+        "verificationFailed": "Ошибка верификации",
+        "security": "операция безопасности",
+        "ticketAccess": "просмотр тикета поддержки",
+        "invalidTicketStatus": "Недопустимый статус тикета",
+        "statusTransition": "Невозможно изменить статус с {currentStatus} на {newStatus}",
+        "txHashRequired": "Для завершения заказа требуется хеш транзакции",
+        "orderUpdateFailed": "Ошибка обновления заявки",
+        "orderAccessDenied": "Доступ к заявке запрещен",
+        "unsupportedCurrency": "Неподдерживаемая криптовалюта: {currency}",
+        "exchangeCalculationError": "Ошибка расчета суммы обмена",
+        "exchangeValidationError": "Ошибка валидации заявки",
+        "orderProcessing": "Заявка уже обрабатывается или завершена",
+        "bankNotFound": "Банк не найден: {bankId}",
+        "parameterRequired": "Требуется параметр {parameter}",
+        "unknownAction": "Неизвестное действие"
+      }
+    }
+  },
+  "notifications": {
+    "api": {
+      "success": "Успешно",
+      "error": "Ошибка API",
+      "loading": "Загрузка...",
+      "unknownError": "Произошла неизвестная ошибка"
+    },
+    "theme": {
+      "changed": "Тема изменена",
+      "changedDescription": "Переключено на {themeName} тему",
+      "light": "светлую",
+      "dark": "темную",
+      "system": "системную"
+    },
+    "exchange": {
+      "success": "Заявка на обмен создана успешно",
+      "error": "Ошибка обмена",
+      "orderCreated": "Заявка {orderId} создана",
+      "orderCompleted": "Заявка {orderId} завершена",
+      "calculationError": "Ошибка расчета"
+    },
+    "validation": {
+      "error": "Ошибка валидации",
+      "multipleErrors": "{count} ошибок валидации",
+      "formError": "Ошибка отправки формы"
+    }
+  },
+  "exchange": {
+    "validation": {
+      "selectCurrency": "Выберите валюту для обмена",
+      "enterAmount": "Введите корректную сумму",
+      "enterCardNumber": "Введите номер карты",
+      "acceptAgreement": "Необходимо принять соглашение",
+      "enterEmail": "Введите email",
+      "invalidCalculation": "Некорректный расчет обмена"
+    },
+    "steps": {
+      "form": {
+        "title": "Данные обмена",
+        "description": "Введите данные для обмена валют"
+      },
+      "review": {
+        "title": "Проверка данных",
+        "description": "Проверьте правильность введенных данных"
+      },
+      "payment": {
+        "title": "Оплата",
+        "description": "Отправьте криптовалюту на указанный адрес"
+      },
+      "completed": {
+        "title": "Готово",
+        "description": "Обмен успешно завершен"
+      }
+    },
+    "orderStatus": {
+      "pending": "Заявка ожидает оплаты",
+      "paid": "Заявка оплачена",
+      "processing": "Заявка обрабатывается",
+      "completed": "Заявка успешно завершена!",
+      "cancelled": "Заявка была отменена",
+      "failed": "Заявка не выполнена"
+    }
   }
 }

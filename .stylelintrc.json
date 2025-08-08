@@ -3,6 +3,14 @@
   "plugins": ["stylelint-order"],
   "rules": {
     "at-rule-no-deprecated": null,
+    "rule-empty-line-before": [
+      "always-multi-line",
+      {
+        "except": ["first-nested"],
+        "ignore": ["after-comment", "inside-block"]
+      }
+    ],
+    "comment-empty-line-before": null,
     "no-descending-specificity": [
       true,
       {

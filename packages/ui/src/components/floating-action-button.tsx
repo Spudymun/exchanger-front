@@ -66,15 +66,19 @@ function createOffsetStyles(
     };
 }
 
+// Интерфейс для параметров создания классов контейнера
+interface ContainerClassParams {
+    position: keyof typeof POSITION_CLASSES;
+    animate: boolean;
+    show: boolean;
+    pulse: boolean;
+    pulseType: keyof typeof PULSE_ANIMATION_CLASSES;
+    className?: string;
+}
+
 // Функция для создания классов контейнера
-function createContainerClasses(
-    position: keyof typeof POSITION_CLASSES,
-    animate: boolean,
-    show: boolean,
-    pulse: boolean,
-    pulseType: keyof typeof PULSE_ANIMATION_CLASSES,
-    className?: string
-) {
+function createContainerClasses(params: ContainerClassParams) {
+    const { position, animate, show, pulse, pulseType, className } = params;
     // Безопасное получение класса позиции
     const positionClass = position === POSITION_KEYS.BOTTOM_RIGHT
         ? POSITION_CLASSES[POSITION_KEYS.BOTTOM_RIGHT]
@@ -83,6 +87,7 @@ function createContainerClasses(
             : POSITION_CLASSES[POSITION_KEYS.BOTTOM_CENTER];
 
     // Получение класса анимации пульсации
+    // eslint-disable-next-line security/detect-object-injection
     const pulseClass = PULSE_ANIMATION_CLASSES[pulseType];
 
 
@@ -118,7 +123,14 @@ export function FloatingActionButton({
     ...buttonProps
 }: FloatingActionButtonProps) {
     const offsetStyles = createOffsetStyles(position, offset);
-    const containerClasses = createContainerClasses(position, animate, show, pulse, pulseType, className);
+    const containerClasses = createContainerClasses({
+        position,
+        animate,
+        show,
+        pulse,
+        pulseType,
+        className,
+    });
 
     return (
         <div

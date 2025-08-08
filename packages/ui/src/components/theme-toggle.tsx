@@ -27,10 +27,10 @@ export function ThemeToggle({ labels }: ThemeToggleProps = {}) {
 
   // Default labels (can be overridden by parent for i18n)
   const defaultLabels = {
-    light: 'Светлая',
-    dark: 'Темная',
-    system: 'Система',
-    toggle: 'Переключить тему',
+    light: 'Light',
+    dark: 'Dark',
+    system: 'System',
+    toggle: 'Toggle theme',
   };
 
   const themeLabels = { ...defaultLabels, ...labels };

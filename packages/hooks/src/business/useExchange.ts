@@ -1,6 +1,6 @@
 import { UI_DEBOUNCE_CONSTANTS } from '@repo/constants';
 import type { CryptoCurrency } from '@repo/exchange-core';
-import { validateEmail } from '@repo/exchange-core';
+import { emailSchema } from '@repo/utils';
 
 import React from 'react';
 
@@ -49,29 +49,29 @@ function useFormValidator(exchangeStore: ExchangeStore) {
     const { formData, calculation } = exchangeStore;
     const errors: string[] = [];
 
-    // Use centralized email validation
+    // Use Zod schema for email validation
     if (!formData.userEmail) {
-      errors.push('Укажите email для получения уведомлений');
+      errors.push('Enter email for notifications');
     } else {
-      const emailValidation = validateEmail(formData.userEmail);
-      if (!emailValidation.isValid) {
-        errors.push('Введите корректный email адрес');
+      const result = emailSchema.safeParse(formData.userEmail);
+      if (!result.success) {
+        errors.push('Enter correct email address');
       }
     }
 
     // Amount validation
     if (!formData.fromAmount || isNaN(Number(formData.fromAmount))) {
-      errors.push('Введите корректную сумму');
+      errors.push('Enter correct amount');
     } else {
       const amount = Number(formData.fromAmount);
       if (amount <= 0) {
-        errors.push('Сумма должна быть больше 0');
+        errors.push('Amount must be greater than 0');
       }
     }
 
     // Calculation required
     if (!calculation || !calculation.isValid) {
-      errors.push('Необходимо рассчитать сумму обмена');
+      errors.push('Exchange calculation required');
     }
 
     return { isValid: errors.length === 0, errors };
@@ -93,7 +93,7 @@ function useDisplayRateHelper(exchangeStore: ExchangeStore) {
       rate: rate.uahRate,
       commission: rate.commission,
       formattedRate: `1 ${fromCurrency} = ${rate.uahRate.toLocaleString()} UAH`,
-      formattedCommission: `Комиссия: ${rate.commission}%`,
+      formattedCommission: `Commission: ${rate.commission}%`,
     };
   };
 }

@@ -263,6 +263,17 @@ export default [
     })),
   },
 
+  // === ГЛАВНЫЙ ESLINT CONFIG (СПЕЦИАЛЬНЫЙ ЛИМИТ) ===
+  {
+    name: 'main-eslint-config',
+    files: ['eslint.config.mjs'],
+    rules: lazyLoadConfig('main-eslint-config-rules', () => ({
+      'max-lines': ['error', { max: FILE_SIZE_LIMITS.ESLINT_CONFIG }], // 400 строк для архитектурных секций
+      'no-console': 'off', // Разрешено для performance мониторинга
+      'sonarjs/no-duplicate-string': 'off', // Разрешено дублирование в архитектурных overrides
+    })),
+  },
+
   // === SECURITY FALSE POSITIVES OVERRIDES ===
   {
     name: 'crypto-enum-access',

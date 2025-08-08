@@ -1,23 +1,24 @@
-import { AUTH_CONSTANTS, VALIDATION_LIMITS } from '@repo/constants/validation';
+import { AUTH_CONSTANTS, VALIDATION_LIMITS } from '@repo/constants';
 import {
   generateSessionId,
   sanitizeEmail,
-  validateEmail,
-  validatePassword,
   userManager,
   isAuthenticatedUser,
 } from '@repo/exchange-core';
 import {
-  registerApiSchema,
-  loginApiSchema,
+  registerSchema, // ИСПОЛЬЗУЕМ ПОЛНУЮ СХЕМУ С CAPTCHA
+  loginSchema,    // ИСПОЛЬЗУЕМ ПОЛНУЮ СХЕМУ С CAPTCHA
   resetPasswordSchema,
   confirmResetPasswordSchema,
   confirmEmailSchema,
   createUserError,
+  passwordSchema,
   createValidationError,
   createBadRequestError,
 } from '@repo/utils';
 import bcrypt from 'bcryptjs';
+
+import { createDelay } from '../../utils/delay';
 
 import { createTRPCRouter, publicProcedure } from '../init';
 import { rateLimitMiddleware } from '../middleware/rateLimit';
@@ -25,27 +26,19 @@ import { rateLimitMiddleware } from '../middleware/rateLimit';
 export const authRouter = createTRPCRouter({
   // Регистрация нового пользователя
   register: rateLimitMiddleware.register
-    .input(registerApiSchema)
+    .input(registerSchema)
     .mutation(async ({ input, ctx }) => {
       // Имитация задержки
-      await new Promise(resolve => setTimeout(resolve, AUTH_CONSTANTS.AUTH_REQUEST_DELAY_MS));
+      await createDelay(AUTH_CONSTANTS.AUTH_REQUEST_DELAY_MS);
 
+      // КРИТИЧНО: Проверяем CAPTCHA первым делом - простая проверка на заполненность
+      if (!input.captcha || input.captcha.trim() === '') {
+        throw createValidationError('CAPTCHA not filled');
+      }
+
+      // ИСПРАВЛЕНО: Убираем дублирование валидации
+      // tRPC уже валидирует input через registerSchema, дополнительная валидация избыточна
       const sanitizedEmail = sanitizeEmail(input.email);
-
-      // Валидация данных
-      const emailValidation = validateEmail(sanitizedEmail);
-      const passwordValidation = validatePassword(input.password);
-
-      if (!emailValidation.isValid) {
-        throw createValidationError('email', emailValidation.errors[0] || 'Неверный формат email');
-      }
-
-      if (!passwordValidation.isValid) {
-        throw createValidationError(
-          'password',
-          passwordValidation.errors[0] || 'Неверный формат пароля'
-        );
-      }
 
       // Проверяем, не существует ли уже пользователь
       const existingUser = userManager.findByEmail(sanitizedEmail);
@@ -74,10 +67,10 @@ export const authRouter = createTRPCRouter({
         `sessionId=${sessionId}; HttpOnly; Path=/; Max-Age=${AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS}; SameSite=Lax`
       );
 
-      console.log(`👤 Зарегистрирован новый пользователь: ${sanitizedEmail}`);
+      console.log(`👤 New user registered: ${sanitizedEmail}`);
 
       // Имитация отправки email подтверждения
-      console.log(`📧 Email подтверждения отправлен на ${sanitizedEmail}`);
+      console.log(`📧 Confirmation email sent to ${sanitizedEmail}`);
 
       return {
         user: {
@@ -90,9 +83,14 @@ export const authRouter = createTRPCRouter({
     }),
 
   // Вход в систему
-  login: rateLimitMiddleware.login.input(loginApiSchema).mutation(async ({ input, ctx }) => {
+  login: rateLimitMiddleware.login.input(loginSchema).mutation(async ({ input, ctx }) => {
     // Имитация задержки
-    await new Promise(resolve => setTimeout(resolve, AUTH_CONSTANTS.LOGIN_REQUEST_DELAY_MS));
+    await createDelay(AUTH_CONSTANTS.LOGIN_REQUEST_DELAY_MS);
+
+    // КРИТИЧНО: Проверяем CAPTCHA первым делом - простая проверка на заполненность
+    if (!input.captcha || input.captcha.trim() === '') {
+      throw createValidationError('CAPTCHA not filled');
+    }
 
     const sanitizedEmail = sanitizeEmail(input.email);
 
@@ -121,7 +119,7 @@ export const authRouter = createTRPCRouter({
       `sessionId=${sessionId}; HttpOnly; Path=/; Max-Age=${AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS}; SameSite=Lax`
     );
 
-    console.log(`🔐 Пользователь вошел в систему: ${sanitizedEmail}`);
+    console.log(`🔐 User logged in: ${sanitizedEmail}`);
 
     return {
       user: {
@@ -138,10 +136,10 @@ export const authRouter = createTRPCRouter({
     // Очищаем cookie
     ctx.res.setHeader('Set-Cookie', `sessionId=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax`);
 
-    console.log(`🔓 Пользователь вышел из системы`);
+    console.log(`🔓 User logged out`);
 
     return {
-      message: 'Выход выполнен успешно',
+      message: 'Logout successful',
     };
   }),
 
@@ -169,7 +167,7 @@ export const authRouter = createTRPCRouter({
     .input(resetPasswordSchema)
     .mutation(async ({ input }) => {
       // Имитация задержки
-      await new Promise(resolve => setTimeout(resolve, AUTH_CONSTANTS.LOGIN_REQUEST_DELAY_MS));
+      await createDelay(AUTH_CONSTANTS.LOGIN_REQUEST_DELAY_MS);
 
       const sanitizedEmail = sanitizeEmail(input.email);
 
@@ -177,21 +175,21 @@ export const authRouter = createTRPCRouter({
       const user = userManager.findByEmail(sanitizedEmail);
       if (!user) {
         // Не раскрываем информацию о существовании пользователя
-        console.log(`🔒 Попытка сброса пароля для несуществующего email: ${sanitizedEmail}`);
+        console.log(`🔒 Password reset attempt for non-existent email: ${sanitizedEmail}`);
       } else {
-        console.log(`🔑 Запрос на сброс пароля для: ${sanitizedEmail}`);
+        console.log(`🔑 Password reset request for: ${sanitizedEmail}`);
 
         // Имитация отправки email с кодом восстановления
         const resetCode = Math.random()
           .toString(AUTH_CONSTANTS.RESET_CODE_BASE)
           .substring(AUTH_CONSTANTS.RESET_CODE_START, AUTH_CONSTANTS.RESET_CODE_END)
           .toUpperCase();
-        console.log(`📧 Код восстановления для ${sanitizedEmail}: ${resetCode}`);
+        console.log(`📧 Recovery code for ${sanitizedEmail}: ${resetCode}`);
       }
 
       // Всегда возвращаем успешный ответ для безопасности
       return {
-        message: 'Если указанный email существует, на него будет отправлен код восстановления',
+        message: 'If the specified email exists, a recovery code will be sent to it',
       };
     }),
 
@@ -200,16 +198,15 @@ export const authRouter = createTRPCRouter({
     .input(confirmResetPasswordSchema)
     .mutation(async ({ input, ctx }) => {
       // Имитация задержки
-      await new Promise(resolve => setTimeout(resolve, AUTH_CONSTANTS.LOGIN_REQUEST_DELAY_MS));
+      await createDelay(AUTH_CONSTANTS.LOGIN_REQUEST_DELAY_MS);
 
       const sanitizedEmail = sanitizeEmail(input.email);
 
-      // Валидация нового пароля
-      const passwordValidation = validatePassword(input.newPassword);
-      if (!passwordValidation.isValid) {
+      // Валидация нового пароля с помощью Zod схемы
+      const passwordResult = passwordSchema.safeParse(input.newPassword);
+      if (!passwordResult.success) {
         throw createValidationError(
-          'password',
-          passwordValidation.errors[0] || 'Неверный формат пароля'
+          passwordResult.error.issues[0]?.message || 'Invalid new password format'
         );
       }
 
@@ -217,7 +214,7 @@ export const authRouter = createTRPCRouter({
       // Для мока просто проверяем существование пользователя
       const user = userManager.findByEmail(sanitizedEmail);
       if (!user) {
-        throw createBadRequestError('Неверный код восстановления');
+        throw createBadRequestError('Invalid recovery code');
       }
 
       // Хешируем новый пароль
@@ -241,7 +238,7 @@ export const authRouter = createTRPCRouter({
         `sessionId=${sessionId}; HttpOnly; Path=/; Max-Age=${AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS}; SameSite=Lax`
       );
 
-      console.log(`🔓 Пароль изменен для пользователя: ${sanitizedEmail}`);
+      console.log(`🔓 Password changed for user: ${sanitizedEmail}`);
 
       return {
         user: {
@@ -264,7 +261,7 @@ export const authRouter = createTRPCRouter({
 
     if (user.isVerified) {
       return {
-        message: 'Email уже подтвержден',
+        message: 'Email already confirmed',
         isVerified: true,
       };
     }
@@ -275,10 +272,10 @@ export const authRouter = createTRPCRouter({
       isVerified: true,
     });
 
-    console.log(`✅ Email подтвержден для пользователя: ${sanitizedEmail}`);
+    console.log(`✅ Email confirmed for user: ${sanitizedEmail}`);
 
     return {
-      message: 'Email успешно подтвержден',
+      message: 'Email successfully confirmed',
       isVerified: true,
     };
   }),

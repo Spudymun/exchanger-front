@@ -1,6 +1,12 @@
 // SSR-safe exports - only types and non-store utilities
 export type { UseFormOptions, UseFormReturn, FormField } from './business/useForm';
-export { FORM_VALIDATION_SCHEMAS } from './business/useForm';
+
+// NEW: Next-intl integrated form system
+export { useFormWithNextIntl } from './business/useFormWithNextIntl';
+export type { 
+  UseFormWithNextIntlParams, 
+  UseFormWithNextIntlReturn 
+} from './business/useFormWithNextIntl';
 
 // Селекторы (pure functions, SSR-safe)
 export * from './state/exchange-selectors';

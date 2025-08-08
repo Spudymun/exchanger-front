@@ -74,14 +74,14 @@ export function isAmountWithinLimits(
   if (usdAmount < AMOUNT_LIMITS.MIN_USD) {
     return {
       isValid: false,
-      reason: `Минимальная сумма: $${AMOUNT_LIMITS.MIN_USD}`,
+      reason: `Min amount: $${AMOUNT_LIMITS.MIN_USD}`, // English fallback
     };
   }
 
   if (usdAmount > AMOUNT_LIMITS.MAX_USD) {
     return {
       isValid: false,
-      reason: `Максимальная сумма: $${AMOUNT_LIMITS.MAX_USD}`,
+      reason: `Max amount: $${AMOUNT_LIMITS.MAX_USD}`, // English fallback
     };
   }
 

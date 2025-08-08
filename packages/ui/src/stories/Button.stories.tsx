@@ -11,7 +11,7 @@ const meta: Meta<typeof Button> = {
     docs: {
       description: {
         component:
-          'Универсальный компонент кнопки с различными вариантами, размерами, состояниями и поддержкой иконок.',
+          'Universal button component with various variants, sizes, states and icon support.',
       },
     },
   },
@@ -20,12 +20,12 @@ const meta: Meta<typeof Button> = {
     variant: {
       control: 'select',
       options: ['default', 'destructive', 'outline', 'secondary', 'ghost', 'link'],
-      description: 'Вариант оформления кнопки',
+      description: 'Button styling variant',
     },
     size: {
       control: 'select',
       options: ['default', 'sm', 'lg', 'icon'],
-      description: 'Размер кнопки',
+      description: 'Button size',
     },
     disabled: {
       control: 'boolean',

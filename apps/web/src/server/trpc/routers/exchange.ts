@@ -31,6 +31,7 @@ import {
 } from '@repo/utils';
 import { z } from 'zod';
 
+import { type Context } from '../context';
 import { createTRPCRouter, publicProcedure } from '../init';
 import { rateLimitMiddleware } from '../middleware/rateLimit';
 
@@ -39,9 +40,11 @@ import { rateLimitMiddleware } from '../middleware/rateLimit';
 /**
  * Type guard для проверки валидности криптовалюты
  */
-function assertValidCurrency(currency: string): asserts currency is CryptoCurrency {
+async function assertValidCurrency(currency: string, ctx: Context): Promise<void> {
   if (!CRYPTOCURRENCIES.includes(currency as CryptoCurrency)) {
-    throw createBadRequestError(`Неподдерживаемая криптовалюта: ${currency}`);
+    throw createBadRequestError(
+      await ctx.getErrorMessage('server.errors.business.unsupportedCurrency', { currency })
+    );
   }
 }
 
@@ -122,10 +125,11 @@ export const exchangeRouter = createTRPCRouter({
   }),
 
   // Получить лимиты для криптовалюты
-  getLimits: publicProcedure.input(getCurrencyRateSchema).query(async ({ input }) => {
-    assertValidCurrency(input.currency);
-    const limits = getCurrencyLimits(input.currency);
-    const rate = getExchangeRate(input.currency);
+  getLimits: publicProcedure.input(getCurrencyRateSchema).query(async ({ input, ctx }) => {
+    await assertValidCurrency(input.currency, ctx);
+    const currency = input.currency as CryptoCurrency;
+    const limits = getCurrencyLimits(currency);
+    const rate = getExchangeRate(currency);
 
     return {
       currency: input.currency,
@@ -138,14 +142,15 @@ export const exchangeRouter = createTRPCRouter({
   }),
 
   // Рассчитать сумму обмена
-  calculateExchange: publicProcedure.input(calculateAmountSchema).query(async ({ input }) => {
+  calculateExchange: publicProcedure.input(calculateAmountSchema).query(async ({ input, ctx }) => {
     const { amount, currency, direction } = input;
-    assertValidCurrency(currency);
+    await assertValidCurrency(currency, ctx);
+    const validCurrency = currency as CryptoCurrency;
 
     try {
       if (direction === 'crypto-to-uah') {
-        const uahAmount = calculateUahAmount(amount, currency);
-        const rate = getExchangeRate(currency);
+        const uahAmount = calculateUahAmount(amount, validCurrency);
+        const rate = getExchangeRate(validCurrency);
 
         return {
           cryptoAmount: amount,
@@ -156,8 +161,8 @@ export const exchangeRouter = createTRPCRouter({
             amount * rate.uahRate * (rate.commission / PERCENTAGE_CALCULATIONS.PERCENT_BASE),
         };
       } else {
-        const cryptoAmount = calculateCryptoAmount(amount, currency);
-        const rate = getExchangeRate(currency);
+        const cryptoAmount = calculateCryptoAmount(amount, validCurrency);
+        const rate = getExchangeRate(validCurrency);
 
         return {
           cryptoAmount,
@@ -168,7 +173,9 @@ export const exchangeRouter = createTRPCRouter({
         };
       }
     } catch {
-      throw createBadRequestError('Ошибка расчета суммы обмена');
+      throw createBadRequestError(
+        await ctx.getErrorMessage('server.errors.business.exchangeCalculationError')
+      );
     }
   }),
 
@@ -184,12 +191,12 @@ export const exchangeRouter = createTRPCRouter({
           .optional(),
       })
     )
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       // Имитация задержки
       await new Promise(resolve => setTimeout(resolve, ORDER_CREATION_DELAY_MS));
 
       // Валидация типа валюты
-      assertValidCurrency(input.currency);
+      await assertValidCurrency(input.currency, ctx);
 
       // Подготавливаем данные заявки с правильным типом
       const orderRequest = prepareOrderRequest({
@@ -200,7 +207,9 @@ export const exchangeRouter = createTRPCRouter({
       // Валидация заявки
       const validation = validateCreateOrder(orderRequest);
       if (!validation.isValid) {
-        throw createBadRequestError(validation.errors[0] || 'Ошибка валидации заявки');
+        throw createBadRequestError(
+          validation.errors[0] || await ctx.getErrorMessage('server.errors.business.exchangeValidationError')
+        );
       }
 
       // Обеспечиваем существование пользователя

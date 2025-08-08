@@ -19,6 +19,7 @@ import {
 import { createBadRequestError } from '@repo/utils';
 import { z } from 'zod';
 
+import { type Context } from '../context';
 import { createTRPCRouter, publicProcedure } from '../init';
 
 // === TYPE GUARDS ===
@@ -26,9 +27,11 @@ import { createTRPCRouter, publicProcedure } from '../init';
 /**
  * Type guard для проверки валидности криптовалюты
  */
-function assertValidCurrency(currency: string): asserts currency is CryptoCurrency {
+async function assertValidCurrency(currency: string, ctx: Context): Promise<void> {
   if (!CRYPTOCURRENCIES.includes(currency as CryptoCurrency)) {
-    throw createBadRequestError(`Неподдерживаемая криптовалюта: ${currency}`);
+    throw createBadRequestError(
+      await ctx.getErrorMessage('server.errors.business.unsupportedCurrency', { currency })
+    );
   }
 }
 
@@ -83,13 +86,15 @@ export const fiatRouter = createTRPCRouter({
         currency: z.enum(FIAT_CURRENCIES),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       // Имитация задержки API
       await new Promise(resolve => setTimeout(resolve, API_DELAY_MS));
 
       const bank = getBankById(input.bankId);
       if (!bank) {
-        throw createBadRequestError(`Банк не найден: ${input.bankId}`);
+        throw createBadRequestError(
+          await ctx.getErrorMessage('server.errors.business.bankNotFound', { bankId: input.bankId })
+        );
       }
 
       const reserve = getBankReserve(input.bankId, input.currency as FiatCurrency);
@@ -121,18 +126,20 @@ export const fiatRouter = createTRPCRouter({
         bankId: z.string(),
       })
     )
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       // Имитация задержки API
       await new Promise(resolve => setTimeout(resolve, API_DELAY_MS));
 
       const { cryptoAmount, fromCurrency, toCurrency, bankId } = input;
 
-      assertValidCurrency(fromCurrency as string);
+      await assertValidCurrency(fromCurrency as string, ctx);
 
       // Проверяем банк
       const bank = getBankById(bankId);
       if (!bank) {
-        throw createBadRequestError(`Банк не найден: ${bankId}`);
+        throw createBadRequestError(
+          await ctx.getErrorMessage('server.errors.business.bankNotFound', { bankId })
+        );
       }
 
       // Получаем базовый курс криптовалюты в UAH

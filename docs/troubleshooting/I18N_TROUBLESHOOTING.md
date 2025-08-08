@@ -168,6 +168,76 @@ export function generateStaticParams() {
 }
 ```
 
+### 🚨 Проблема 6: MALFORMED_ARGUMENT - Ошибка интерполяции
+
+**Симптомы:**
+
+- `Error: INVALID_MESSAGE: MALFORMED_ARGUMENT (Password must contain at least {{min}} characters)`
+- Сообщения валидации не отображаются корректно
+- Параметры в фигурных скобках не заменяются значениями
+
+**Причина:**
+
+**КРИТИЧНО**: В `next-intl` используются **одинарные фигурные скобки** `{parameter}`, а НЕ двойные `{{parameter}}`!
+
+**Неправильно:**
+
+```json
+{
+  "validation": {
+    "password": {
+      "minLength": "Password must contain at least {{min}} characters"
+    }
+  }
+}
+```
+
+**Правильно:**
+
+```json
+{
+  "validation": {
+    "password": {
+      "minLength": "Password must contain at least {min} characters"
+    }
+  }
+}
+```
+
+**Решение:**
+
+1. **Исправить все файлы переводов** - заменить `{{parameter}}` на `{parameter}`:
+
+```powershell
+# Поиск всех двойных скобок:
+Select-String -Pattern "\{\{.*\}\}" -Path "messages/*.json"
+```
+
+2. **Правильное использование в коде**:
+
+```typescript
+// ✅ Правильно:
+t('validation.password.minLength', { min: 8 });
+// Результат: "Password must contain at least 8 characters"
+
+// ❌ Неправильно:
+t('validation.password.minLength', { min: '8' }); // Может не работать в некоторых случаях
+```
+
+3. **Проверить все интерполяции в проекте**:
+
+```typescript
+// Типичные случаи для исправления:
+{
+  "minLength": "Minimum {min} characters",     // ✅ Правильно
+  "maxLength": "Maximum {max} characters",     // ✅ Правильно
+  "minAmount": "Minimum amount: {min}",        // ✅ Правильно
+  "maxAmount": "Maximum amount: {max}"         // ✅ Правильно
+}
+```
+
+**Документация**: [next-intl Interpolation Guide](https://next-intl-docs.vercel.app/docs/usage/messages#interpolation-of-dynamic-values)
+
 ## 🔧 Диагностические команды
 
 ### Проверка структуры файлов:
@@ -227,6 +297,13 @@ Test-Path "messages/ru.json"
 - [ ] NextIntlClientProvider без messages prop
 - [ ] Правильная конфигурация request.ts
 - [ ] suppressHydrationWarning в html теге
+
+### При ошибках интерполяции (MALFORMED_ARGUMENT):
+
+- [ ] Все интерполяции используют одинарные скобки `{parameter}`
+- [ ] Нет двойных скобок `{{parameter}}` в файлах переводов
+- [ ] Параметры передаются как числа или строки: `{ min: 8 }`
+- [ ] Проверены все файлы переводов: messages/en.json, messages/ru.json
 
 ## 🎯 Финальная проверка
 

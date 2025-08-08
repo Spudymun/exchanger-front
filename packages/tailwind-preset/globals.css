@@ -42,6 +42,18 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
+    /* Success states */
+    --success: 142 76% 36%;
+    --success-foreground: 210 40% 98%;
+
+    /* Warning states */
+    --warning: 38 92% 50%;
+    --warning-foreground: 210 40% 98%;
+
+    /* Info states */
+    --info: 220 90% 50%;
+    --info-foreground: 210 40% 98%;
+
     /* Visible borders */
     --border: 220 13% 85%;
 
@@ -89,6 +101,18 @@
     /* Error states */
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
+
+    /* Success states */
+    --success: 142 76% 36%;
+    --success-foreground: 210 40% 98%;
+
+    /* Warning states */
+    --warning: 38 92% 50%;
+    --warning-foreground: 210 40% 98%;
+
+    /* Info states */
+    --info: 220 90% 50%;
+    --info-foreground: 210 40% 98%;
 
     /* Visible borders */
     --border: 217.2 32.6% 12%;
@@ -213,5 +237,63 @@
   .exchange-connector {
     @apply absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10;
     @apply bg-background border-2 border-border rounded-full p-2 shadow-sm;
+  }
+
+  /* Auth Components */
+  .auth-field-container {
+    @apply space-y-4;
+  }
+
+  .auth-form-container {
+    @apply w-full max-w-md mx-auto;
+  }
+
+  .auth-form-wrapper {
+    @apply bg-background border rounded-lg shadow-md p-6;
+  }
+
+  .auth-form-fields {
+    @apply space-y-4;
+  }
+
+  .auth-switch-container {
+    @apply text-center;
+  }
+
+  .auth-switch-button {
+    @apply text-sm text-info hover:text-info/80 underline transition-colors;
+  }
+
+  /* Text Utilities */
+  .text-center-with-margin {
+    @apply text-center mb-6;
+  }
+
+  /* Submit Button - общий класс для всех submit кнопок */
+  .submit-button {
+    @apply w-full;
+  }
+
+  /* Logo Components */
+  .logo-mobile {
+    @apply bg-primary rounded-lg flex items-center justify-center;
+
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    max-width: 36px;
+    max-height: 36px;
+  }
+
+  .logo-desktop {
+    @apply bg-primary rounded-lg flex items-center justify-center;
+
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    max-width: 40px;
+    max-height: 40px;
   }
 }

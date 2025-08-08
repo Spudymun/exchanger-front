@@ -109,10 +109,11 @@ function useUserAnswer() {
   // Reset verification status when answer changes
   const setUserAnswerWithReset = useCallback((answer: string) => {
     setUserAnswer(answer);
-    setIsVerified(false); // Сбрасываем верификацию при любом изменении
+    // НЕ сбрасываем isVerified здесь - это будет делать основной useEffect
     // Сбрасываем состояние blur только если поле очищается
     if (answer === '') {
       setHasBlurred(false);
+      setIsVerified(false); // Только при очистке поля
     }
   }, []);
 
@@ -204,10 +205,12 @@ export function useMathCaptcha(config: MathCaptchaConfig = DEFAULT_CONFIG): UseM
     return hasBlurred && userAnswer.trim() !== '' && !isValid;
   }, [hasBlurred, userAnswer, isValid]);
   
-  // Автоматически устанавливаем isVerified при правильном ответе
+  // Управляем isVerified состоянием
   useEffect(() => {
     if (isValid && userAnswer.trim() !== '') {
       setIsVerified(true);
+    } else {
+      setIsVerified(false);
     }
   }, [isValid, userAnswer, setIsVerified]);
   

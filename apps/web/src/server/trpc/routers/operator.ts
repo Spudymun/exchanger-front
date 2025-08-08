@@ -69,7 +69,9 @@ export const operatorRouter = createTRPCRouter({
       }
 
       if (order.status !== 'pending') {
-        throw createBadRequestError('Заявка уже обрабатывается или завершена');
+        throw createBadRequestError(
+          await ctx.getErrorMessage('server.errors.business.orderProcessing')
+        );
       }
 
       // Обновляем статус заявки на processing
@@ -123,8 +125,7 @@ export const operatorRouter = createTRPCRouter({
       }
 
       console.log(
-        `🔄 Статус заявки ${input.orderId} изменен на ${input.status} оператором ${ctx.user.email}${
-          input.comment ? `. Комментарий: ${input.comment}` : ''
+        `🔄 Статус заявки ${input.orderId} изменен на ${input.status} оператором ${ctx.user.email}${input.comment ? `. Комментарий: ${input.comment}` : ''
         }`
       );
 

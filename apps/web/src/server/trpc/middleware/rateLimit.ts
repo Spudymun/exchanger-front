@@ -1,4 +1,4 @@
-import { RATE_LIMITS, RATE_LIMIT_MESSAGES, TIME_CONSTANTS } from '@repo/constants';
+import { RATE_LIMITS, TIME_CONSTANTS } from '@repo/constants';
 import { createRateLimitError } from '@repo/utils';
 
 import { publicProcedure } from '../init';
@@ -43,7 +43,10 @@ function getClientIp(ip: string | undefined): string {
   return ip || 'unknown';
 }
 
-export function createRateLimiter(action: keyof typeof RATE_LIMITS) {
+export function createRateLimiter(
+  action: keyof typeof RATE_LIMITS,
+  getErrorMessage: (key: string, values?: Record<string, string | number>) => Promise<string>
+) {
   // eslint-disable-next-line security/detect-object-injection
   const config = RATE_LIMITS[action];
 
@@ -66,8 +69,8 @@ export function createRateLimiter(action: keyof typeof RATE_LIMITS) {
 
     // Если превышен лимит
     if (current.count >= config.points) {
-      // eslint-disable-next-line security/detect-object-injection
-      throw createRateLimitError(RATE_LIMIT_MESSAGES[action]);
+      const errorKey = `server.errors.rateLimit.${action}`;
+      throw createRateLimitError(await getErrorMessage(errorKey));
     }
 
     // Увеличиваем счетчик
@@ -79,22 +82,22 @@ export function createRateLimiter(action: keyof typeof RATE_LIMITS) {
 // Middleware для разных типов действий
 export const rateLimitMiddleware = {
   createOrder: publicProcedure.use(async ({ ctx, next }) => {
-    await createRateLimiter('CREATE_ORDER')(getClientIp(ctx.ip));
+    await createRateLimiter('CREATE_ORDER', async (key, values) => await ctx.getErrorMessage(key, values))(getClientIp(ctx.ip));
     return next();
   }),
 
   register: publicProcedure.use(async ({ ctx, next }) => {
-    await createRateLimiter('REGISTER')(getClientIp(ctx.ip));
+    await createRateLimiter('REGISTER', async (key, values) => await ctx.getErrorMessage(key, values))(getClientIp(ctx.ip));
     return next();
   }),
 
   login: publicProcedure.use(async ({ ctx, next }) => {
-    await createRateLimiter('LOGIN')(getClientIp(ctx.ip));
+    await createRateLimiter('LOGIN', async (key, values) => await ctx.getErrorMessage(key, values))(getClientIp(ctx.ip));
     return next();
   }),
 
   resetPassword: publicProcedure.use(async ({ ctx, next }) => {
-    await createRateLimiter('RESET_PASSWORD')(getClientIp(ctx.ip));
+    await createRateLimiter('RESET_PASSWORD', async (key, values) => await ctx.getErrorMessage(key, values))(getClientIp(ctx.ip));
     return next();
   }),
 };

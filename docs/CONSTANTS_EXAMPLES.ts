@@ -8,8 +8,10 @@ import {
   ORDER_STATUS_CONFIG,
   ALERT_VARIANTS,
   VALIDATION_LIMITS,
-  VALIDATION_PATTERNS,
 } from '@repo/constants';
+
+// ✅ ОБНОВЛЕНО: Используем Zod схемы вместо VALIDATION_PATTERNS
+import { emailSchema } from '@repo/utils';
 
 // ✅ Использование API констант
 export async function fetchUser(id: string) {
@@ -43,13 +45,14 @@ export function createAlert(variant: keyof typeof ALERT_VARIANTS, message: strin
   };
 }
 
-// ✅ Использование констант валидации
+// ✅ ОБНОВЛЕНО: Использование Zod схем вместо regex паттернов
 export function validateEmail(email: string): boolean {
   if (email.length > VALIDATION_LIMITS.EMAIL_MAX_LENGTH) {
     return false;
   }
 
-  return VALIDATION_PATTERNS.EMAIL.test(email);
+  // Используем Zod схему вместо regex
+  return emailSchema.safeParse(email).success;
 }
 
 // ✅ Пример проверки статуса заказа

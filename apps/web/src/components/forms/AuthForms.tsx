@@ -1,4 +1,4 @@
-import { Button } from '@repo/ui';
+import { AuthFormLayout } from '@repo/ui';
 import { useTranslations } from 'next-intl';
 import React from 'react';
 
@@ -18,90 +18,38 @@ interface AuthFormsProps {
  * - Переключение между режимами входа и регистрации
  * - Общий layout и обработка успешной аутентификации
  * - Все формы используют централизованные хуки и валидацию
+ * - Оптимизирован с помощью React.memo для предотвращения лишних ре-рендеров
  */
-export function AuthForms({ onAuthSuccess, defaultMode = 'login' }: AuthFormsProps) {
+export const AuthForms = React.memo<AuthFormsProps>(({ onAuthSuccess, defaultMode = 'login' }) => {
   const [mode, setMode] = React.useState<'login' | 'register'>(defaultMode);
   const t = useTranslations('Layout.auth');
 
-  const switchToLogin = () => setMode('login');
-  const switchToRegister = () => setMode('register');
+  const handleModeChange = React.useCallback((newMode: 'login' | 'register') => {
+    setMode(newMode);
+  }, []);
 
   return (
-    <div className="w-full max-w-md mx-auto">
-      <div className="bg-background border rounded-lg shadow-md p-6">
-        <AuthFormsHeader mode={mode} t={t} />
-        <AuthFormsToggle mode={mode} onSwitch={{ switchToLogin, switchToRegister }} t={t} />
-        <AuthFormsContent
-          mode={mode}
-          onAuthSuccess={onAuthSuccess}
-          onSwitch={{ switchToLogin, switchToRegister }}
-        />
-      </div>
-    </div>
+    <AuthFormLayout mode={mode} onModeChange={handleModeChange} t={t}>
+      <AuthFormsContent mode={mode} onAuthSuccess={onAuthSuccess} />
+    </AuthFormLayout>
   );
-}
+});
 
-interface AuthFormsHeaderProps {
-  mode: 'login' | 'register';
-  t: (key: string) => string;
-}
+AuthForms.displayName = 'AuthForms';
 
-const AuthFormsHeader: React.FC<AuthFormsHeaderProps> = ({ mode, t }) => (
-  <div className="text-center mb-6">
-    <h2 className="text-2xl font-bold text-foreground">
-      {mode === 'login' ? t('loginTitle') : t('registerTitle')}
-    </h2>
-    <p className="text-sm text-muted-foreground mt-2">
-      {mode === 'login' ? t('loginSubtitle') : t('registerSubtitle')}
-    </p>
-  </div>
-);
 
-interface AuthFormsToggleProps {
-  mode: 'login' | 'register';
-  onSwitch: {
-    switchToLogin: () => void;
-    switchToRegister: () => void;
-  };
-  t: (key: string) => string;
-}
-
-const AuthFormsToggle: React.FC<AuthFormsToggleProps> = ({ mode, onSwitch, t }) => (
-  <div className="flex rounded-lg bg-muted p-1 mb-6">
-    <Button
-      variant={mode === 'login' ? 'default' : 'ghost'}
-      size="compact"
-      className="flex-1"
-      onClick={onSwitch.switchToLogin}
-      type="button"
-    >
-      {t('loginButton')}
-    </Button>
-    <Button
-      variant={mode === 'register' ? 'default' : 'ghost'}
-      size="compact"
-      className="flex-1"
-      onClick={onSwitch.switchToRegister}
-      type="button"
-    >
-      {t('registerButton')}
-    </Button>
-  </div>
-);
 
 interface AuthFormsContentProps {
   mode: 'login' | 'register';
   onAuthSuccess?: () => void;
-  onSwitch: {
-    switchToLogin: () => void;
-    switchToRegister: () => void;
-  };
 }
 
-const AuthFormsContent: React.FC<AuthFormsContentProps> = ({ mode, onAuthSuccess, onSwitch }) => {
+const AuthFormsContent: React.FC<AuthFormsContentProps> = React.memo(({ mode, onAuthSuccess }) => {
   if (mode === 'login') {
-    return <LoginForm onSuccess={onAuthSuccess} onSwitchToRegister={onSwitch.switchToRegister} />;
+    return <LoginForm onSuccess={onAuthSuccess} />;
   }
 
-  return <RegisterForm onSuccess={onAuthSuccess} onSwitchToLogin={onSwitch.switchToLogin} />;
-};
+  return <RegisterForm onSuccess={onAuthSuccess} />;
+});
+
+AuthFormsContent.displayName = 'AuthFormsContent';

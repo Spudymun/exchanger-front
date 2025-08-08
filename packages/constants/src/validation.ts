@@ -55,100 +55,23 @@ export const VALIDATION_LIMITS = {
   DEFAULT_PAGE_SIZE: 20,
 } as const;
 
-export const VALIDATION_PATTERNS = {
-  // Email regex (basic)
-  EMAIL: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-
-  // Password requirements: at least 8 chars, 1 uppercase, 1 lowercase, 1 number
-  PASSWORD: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/,
-
-  // Username: alphanumeric and underscores only
-  USERNAME: /^[a-zA-Z0-9_]{3,30}$/,
-
-  // Phone number (international format)
-  PHONE: /^\+?[1-9]\d{1,14}$/,
-
-  // Crypto wallet addresses (consolidated from regex-patterns.ts)
-  BTC_ADDRESS: /^(?:[13][a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-z0-9]{39,59})$/,
-  ETH_ADDRESS: /^0x[a-fA-F0-9]{40}$/,
-  USDT_ADDRESS: /^0x[a-fA-F0-9]{40}$/, // USDT uses Ethereum format
-  LTC_ADDRESS: /^[LM3][a-km-zA-HJ-NP-Z1-9]{26,33}$|^ltc1[a-z0-9]{39,59}$/,
-
-  // Card validation
-  CARD_NUMBER: /^\d{16}$/,
-
-  // URLs - using function instead of regex for security (prevents ReDoS attacks)
-  URL: (() => {
-    const urlValidator = (url: string): boolean => {
-      try {
-        const parsed = new URL(url);
-        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
-      } catch {
-        return false;
-      }
-    };
-    // Create regex-like object with test method for compatibility
-    return { test: urlValidator };
-  })(),
-
-  // Numbers (safe regex patterns to prevent ReDoS attacks)
-  POSITIVE_NUMBER: /^\d+\.?\d*$/,
-  INTEGER: /^\d+$/,
-
-  // Amount format validation (centralized from exchange.ts and useForm.ts)
-  CRYPTO_AMOUNT_STRING: /^\d+\.?\d{0,8}$/,
-  UAH_AMOUNT_STRING: /^\d+\.?\d{0,2}$/,
-
-  // Alphanumeric only
-  ALPHANUMERIC: /^[a-zA-Z0-9]+$/,
-} as const;
-
-export const VALIDATION_MESSAGES = {
-  // Required fields
-  FIELD_REQUIRED: 'Это поле обязательно',
-  EMAIL_REQUIRED: 'Email обязателен',
-  PASSWORD_REQUIRED: 'Пароль обязателен',
-
-  // Format errors
-  EMAIL_INVALID: 'Неверный формат email',
-  PASSWORD_WEAK:
-    'Пароль должен содержать минимум 8 символов, включая заглавную букву, строчную букву и цифру',
-  USERNAME_INVALID: 'Имя пользователя может содержать только буквы, цифры и подчеркивания',
-  PHONE_INVALID: 'Неверный формат номера телефона',
-  URL_INVALID: 'Неверный формат URL',
-
-  // Length errors
-  TOO_SHORT: 'Слишком короткое значение',
-  TOO_LONG: 'Слишком длинное значение',
-  EMAIL_TOO_LONG: 'Email не может быть длиннее 255 символов',
-  PASSWORD_TOO_SHORT: 'Пароль должен быть не менее 8 символов',
-  USERNAME_TOO_SHORT: 'Имя пользователя должно быть не менее 3 символов',
-
-  // Number errors
-  NUMBER_INVALID: 'Введите корректное число',
-  NUMBER_TOO_SMALL: 'Значение слишком маленькое',
-  NUMBER_TOO_LARGE: 'Значение слишком большое',
-  AMOUNT_INVALID: 'Неверная сумма',
-
-  // File upload errors
-  FILE_TOO_LARGE: 'Файл слишком большой',
-  FILE_FORMAT_UNSUPPORTED: 'Неподдерживаемый формат файла',
-
-  // Business logic errors
-  INSUFFICIENT_BALANCE: 'Недостаточно средств',
-  ORDER_AMOUNT_TOO_SMALL: 'Сумма заказа слишком мала',
-  ORDER_AMOUNT_TOO_LARGE: 'Сумма заказа слишком велика',
-
-  // Authentication errors
-  INVALID_CREDENTIALS: 'Неверные учетные данные',
-  ACCOUNT_LOCKED: 'Аккаунт заблокирован',
-  TOKEN_EXPIRED: 'Токен истек',
-
-  // Generic errors
-  SOMETHING_WENT_WRONG: 'Что-то пошло не так',
-  NETWORK_ERROR: 'Ошибка сети',
-  SERVER_ERROR: 'Ошибка сервера',
-} as const;
+// ===== ДУБЛИРУЮЩИЕ СИСТЕМЫ ВАЛИДАЦИИ УДАЛЕНЫ =====
+// 
+// VALIDATION_PATTERNS - УДАЛЕНЫ: Заменены на Zod схемы в @repo/utils
+// VALIDATION_MESSAGES - УДАЛЕНЫ: Заменены на next-intl переводы
+// VALIDATION_HELPERS - УДАЛЕНЫ: Не использовались
+//
+// МИГРАЦИЯ ЗАВЕРШЕНА:
+// ✅ crypto.ts - обновлен для использования createCryptoAddressSchema
+// ✅ business-validators.ts - обновлен для прямых сообщений
+// ✅ trpc-errors.ts - обновлен для прямых сообщений  
+// ✅ CONSTANTS_EXAMPLES.ts - обновлен для использования Zod
+//
+// ИСПОЛЬЗУЙТЕ ВМЕСТО УДАЛЕННЫХ СИСТЕМ:
+// - Zod схемы из @repo/utils/validation-schemas
+// - next-intl переводы из apps/web/messages/*.json
+// - createNextIntlZodErrorMap для интеграции
+// =================================================
 
 // Authentication constants
 export const AUTH_CONSTANTS = {
@@ -169,17 +92,3 @@ export const AUTH_CONSTANTS = {
   // HTTP headers
   SET_COOKIE_HEADER: 'Set-Cookie',
 } as const;
-
-// Validation helper functions
-export const VALIDATION_HELPERS = {
-  isEmail: (value: string) => VALIDATION_PATTERNS.EMAIL.test(value),
-  isStrongPassword: (value: string) => VALIDATION_PATTERNS.PASSWORD.test(value),
-  isValidUsername: (value: string) => VALIDATION_PATTERNS.USERNAME.test(value),
-  isPositiveNumber: (value: string) => VALIDATION_PATTERNS.POSITIVE_NUMBER.test(value),
-  isWithinLength: (value: string, min: number, max: number) =>
-    value.length >= min && value.length <= max,
-} as const;
-
-// Type exports
-export type ValidationPattern = (typeof VALIDATION_PATTERNS)[keyof typeof VALIDATION_PATTERNS];
-export type ValidationMessage = (typeof VALIDATION_MESSAGES)[keyof typeof VALIDATION_MESSAGES];

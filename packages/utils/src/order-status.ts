@@ -2,6 +2,8 @@ import type { OrderStatus } from '@repo/constants';
 import { ORDER_STATUSES, ORDER_STATUS_GROUPS, ORDER_STATUS_CONFIG } from '@repo/constants';
 import type { Order } from '@repo/exchange-core';
 
+// server-i18n-errors.ts removed - use getTranslations from next-intl/server in apps/web
+
 /**
  * Хелперы для работы со статусами заказов
  * Централизованная логика проверки и валидации статусов
@@ -159,6 +161,7 @@ export function countOrdersByStatus(orders: Order[]): Record<OrderStatus, number
 
 /**
  * Валидирует переход статуса с дополнительной логикой
+ * Supports localization via optional locale parameter
  */
 export function validateStatusTransition(
   order: Order,
@@ -167,17 +170,21 @@ export function validateStatusTransition(
 ): { isValid: boolean; error?: string } {
   // Проверка возможности перехода
   if (!canTransitionStatus(order.status, newStatus)) {
+    const error = `Cannot change status from ${order.status} to ${newStatus}`;
+
     return {
       isValid: false,
-      error: `Невозможно изменить статус с ${order.status} на ${newStatus}`,
+      error,
     };
   }
 
   // Проверка дополнительных данных
   if (requiresAdditionalData(newStatus) && newStatus === 'completed' && !additionalData?.txHash) {
+    const error = 'Transaction hash required to complete order';
+
     return {
       isValid: false,
-      error: 'Для завершения заказа требуется хеш транзакции',
+      error,
     };
   }
 

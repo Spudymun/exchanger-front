@@ -66,8 +66,8 @@ export const UI_NUMERIC_CONSTANTS = {
   WEB_CARD_BORDER_RADIUS: '8px',
   WEB_GRID_GAP: '20px',
 
-  // UI строковые константы
-  DEFAULT_ERROR_MESSAGE: 'Неизвестная ошибка',
+  // UI string constants
+  DEFAULT_ERROR_MESSAGE: 'Unknown error',
 } as const;
 
 // ============================================================================
@@ -223,27 +223,27 @@ export const COLOR_SCALE_KEYS = {
 
 export const TRANSACTION_STATUS_CONFIG = {
   pending: {
-    label: 'Ожидает',
+    label: 'Pending',
     color: 'yellow',
     icon: 'clock',
   },
   processing: {
-    label: 'Обрабатывается',
+    label: 'Processing',
     color: 'blue',
     icon: 'loader',
   },
   completed: {
-    label: 'Завершена',
+    label: 'Completed',
     color: 'green',
     icon: 'check',
   },
   failed: {
-    label: 'Ошибка',
+    label: 'Failed',
     color: 'red',
     icon: 'x',
   },
   cancelled: {
-    label: 'Отменена',
+    label: 'Cancelled',
     color: 'gray',
     icon: 'x-circle',
   },

@@ -1,163 +1,95 @@
 'use client';
 
-import { useForm, useNotifications } from '@repo/hooks/src/client-hooks';
-import { FormField, FormControl, FormLabel, FormMessage, Input, Button, MathCaptcha } from '@repo/ui';
+import { AUTH_FIELD_IDS } from '@repo/constants';
+import { LoginFormData, LoginFormProps } from '@repo/exchange-core';
+import { useFormWithNextIntl } from '@repo/hooks';
+import {
+  AuthEmailField,
+  AuthPasswordField,
+  AuthCaptchaField,
+  AuthSubmitButton,
+  AuthSwitchButton
+} from '@repo/ui';
 import { loginSchema } from '@repo/utils';
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import React from 'react';
 
-import { useAuthMutation } from '../../hooks/useAuthMutation';
-
-interface LoginFormProps {
-  onSuccess?: () => void;
-  onSwitchToRegister?: () => void;
-}
-
-interface LoginFormData extends Record<string, unknown> {
-  email: string;
-  password: string;
-  captcha: string;
-  captchaVerified: boolean;
-}
+import { createAuthFormSubmitHandler, createAuthFormErrorHandler } from '../../hooks/useAuthFormConfig';
+import { useAuthMutationAdapter } from '../../hooks/useAuthMutationAdapter';
 
 /**
  * Login Form Component
- * Использует централизованные решения:
- * - useForm для управления формой и валидации
- * - useAuthMutation для авторизации через tRPC
- * - useNotifications для уведомлений
- * - loginSchema для валидации из @repo/utils
+ * Рефакторинг: использует переиспользуемые компоненты полей
+ * - AuthEmailField, AuthPasswordField, AuthCaptchaField - устраняют дублирование
+ * - Централизованные константы из @repo/constants
+ * - Типы из @repo/exchange-core
  */
-export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
-  const { login } = useAuthMutation();
-  const notifications = useNotifications();
-  const t = useTranslations('Layout.forms.login');
-  const locale = useLocale();
+// Custom hook для логики формы логина согласно CODE_STYLE_GUIDE.md
+function useLoginForm(onSuccess?: () => void) {
+  const { login } = useAuthMutationAdapter();
+  const tValidation = useTranslations('AdvancedExchangeForm');
 
-  const form = useForm<LoginFormData>({
-    initialValues: { email: '', password: '', captcha: '', captchaVerified: false },
+  const form = useFormWithNextIntl<LoginFormData>({
+    initialValues: { email: '', password: '', captcha: '' },
     validationSchema: loginSchema,
-    locale: locale, // Используем текущую локаль приложения для валидации
-    onSubmit: async values => {
+    t: tValidation,
+    onSubmit: async (values: LoginFormData) => {
       try {
         await login.mutateAsync({
           email: values.email,
           password: values.password,
+          captcha: values.captcha,
         });
-        notifications.handleLoginSuccess();
-        onSuccess?.();
+        if (onSuccess) {
+          createAuthFormSubmitHandler(onSuccess)();
+        }
       } catch (error) {
-        notifications.handleLoginError(error);
+        createAuthFormErrorHandler()(error);
       }
     },
   });
 
+  return { form, tValidation };
+}
+
+export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
+  const { form, tValidation } = useLoginForm(onSuccess);
+  const { login } = useAuthMutationAdapter();
+  const t = useTranslations('Layout.forms.login');
+  const tCaptcha = useTranslations('Layout.captcha');
+
   return (
-    <div className="w-full max-w-md mx-auto">
-      <form onSubmit={form.handleSubmit} className="space-y-4">
-        <LoginEmailField form={form} isLoading={login.isPending} t={t} />
-        <LoginPasswordField form={form} isLoading={login.isPending} t={t} />
-        <LoginCaptchaField form={form} isLoading={login.isPending} t={t} />
-        <LoginSubmitButton form={form} isLoading={login.isPending} t={t} />
-        <LoginSwitchButton onSwitch={onSwitchToRegister} isLoading={login.isPending} />
+    <div className="auth-form-container">
+      <form onSubmit={form.handleSubmit} className="auth-form-fields">
+        <AuthEmailField
+          form={form}
+          isLoading={login.isPending}
+          t={t}
+          fieldId={AUTH_FIELD_IDS.LOGIN.EMAIL}
+        />
+        <AuthPasswordField
+          form={form}
+          isLoading={login.isPending}
+          t={tValidation}
+          fieldId={AUTH_FIELD_IDS.LOGIN.PASSWORD}
+        />
+        <AuthCaptchaField
+          form={form}
+          isLoading={login.isPending}
+          t={tCaptcha}
+        />
+        <AuthSubmitButton
+          form={form}
+          isLoading={login.isPending}
+          t={t}
+        />
+        <AuthSwitchButton
+          onSwitch={onSwitchToRegister}
+          isLoading={login.isPending}
+        >
+          {t('switchToRegister')}
+        </AuthSwitchButton>
       </form>
     </div>
   );
 }
-
-interface LoginFieldProps {
-  form: ReturnType<typeof useForm<LoginFormData>>;
-  isLoading: boolean;
-  t: (key: string) => string;
-}
-
-const LoginEmailField: React.FC<LoginFieldProps> = ({ form, isLoading, t }) => (
-  <FormField name="email" error={form.errors.email}>
-    <FormLabel htmlFor="login-email" className="required">
-      {t('email.label')}
-    </FormLabel>
-    <FormControl>
-      <Input
-        {...form.getFieldProps('email')}
-        id="login-email"
-        type="email"
-        placeholder={t('email.placeholder')}
-        disabled={isLoading}
-        required
-      />
-    </FormControl>
-    <FormMessage />
-  </FormField>
-);
-
-const LoginPasswordField: React.FC<LoginFieldProps> = ({ form, isLoading, t }) => (
-  <FormField name="password" error={form.errors.password}>
-    <FormLabel htmlFor="login-password" className="required">
-      {t('password.label')}
-    </FormLabel>
-    <FormControl>
-      <Input
-        {...form.getFieldProps('password')}
-        id="login-password"
-        type="password"
-        placeholder={t('password.placeholder')}
-        disabled={isLoading}
-        required
-      />
-    </FormControl>
-    <FormMessage />
-  </FormField>
-);
-
-const LoginCaptchaField: React.FC<LoginFieldProps> = ({ form, isLoading, t }) => {
-  return (
-    <FormField name="captcha" error={form.errors.captcha}>
-      <MathCaptcha
-        name="captcha"
-        difficulty="medium"
-        disabled={isLoading}
-        hideLabel={true}
-        onAnswerChange={(answer) => form.setValue('captcha', answer)}
-        onVerificationChange={(isVerified) => form.setValue('captchaVerified', isVerified)}
-        labels={{
-          question: t('captcha.question'),
-          placeholder: t('captcha.placeholder'),
-          refresh: t('captcha.refresh'),
-          verification: t('captcha.verification'),
-          error: t('captcha.error'),
-        }}
-      />
-      <FormMessage />
-    </FormField>
-  );
-};
-
-const LoginSubmitButton: React.FC<LoginFieldProps> = ({ form, isLoading, t }) => (
-  <Button type="submit" className="w-full" disabled={isLoading || !form.isValid}>
-    {isLoading ? t('submitting') : t('submit')}
-  </Button>
-);
-
-interface LoginSwitchButtonProps {
-  onSwitch?: () => void;
-  isLoading: boolean;
-}
-
-const LoginSwitchButton: React.FC<LoginSwitchButtonProps> = ({ onSwitch, isLoading }) => {
-  const t = useTranslations('Layout.forms.login');
-
-  if (!onSwitch) return null;
-
-  return (
-    <div className="text-center">
-      <button
-        type="button"
-        onClick={onSwitch}
-        className="text-sm text-blue-600 hover:text-blue-800 underline"
-        disabled={isLoading}
-      >
-        {t('switchToRegister')}
-      </button>
-    </div>
-  );
-};

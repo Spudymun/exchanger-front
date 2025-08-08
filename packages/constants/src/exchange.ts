@@ -26,10 +26,10 @@ export const EXCHANGE_VALIDATION_PATTERNS = {
 
 // Сообщения валидации ExchangeGO
 export const EXCHANGE_VALIDATION_MESSAGES = {
-  AMOUNT_TOO_LOW: `Минимальная сумма: $${AMOUNT_LIMITS.MIN_USD}`,
-  AMOUNT_TOO_HIGH: `Максимальная сумма: $${AMOUNT_LIMITS.MAX_USD}`,
-  CURRENCY_INVALID: 'Неподдерживаемая криптовалюта',
-  CARD_NUMBER_INVALID: 'Некорректный номер карты',
+  AMOUNT_TOO_LOW: `Min amount: $${AMOUNT_LIMITS.MIN_USD}`, // English fallback
+  AMOUNT_TOO_HIGH: `Max amount: $${AMOUNT_LIMITS.MAX_USD}`, // English fallback
+  CURRENCY_INVALID: 'Unsupported cryptocurrency', // English fallback
+  CARD_NUMBER_INVALID: 'Invalid card number', // English fallback
 } as const;
 
 // Exchange router constants (derived from centralized order statuses)

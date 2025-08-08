@@ -2,7 +2,7 @@ import { THEME_MODES, type ThemeMode } from '@repo/constants';
 import { useCallback } from 'react';
 
 import { useNotifications } from './useNotifications';
-import { useUIStore } from './useUIStore';
+import { useUIStoreEnhanced } from './useUIStore';
 
 /**
  * Enhanced theme hook with notifications and centralized state
@@ -27,7 +27,7 @@ import { useUIStore } from './useUIStore';
  * ```
  */
 export function useTheme() {
-  const { theme, setTheme: setStoreTheme } = useUIStore();
+  const { theme, setTheme: setStoreTheme } = useUIStoreEnhanced();
   const { success } = useNotifications();
 
   const setTheme = useCallback(
@@ -35,12 +35,12 @@ export function useTheme() {
       setStoreTheme(newTheme);
 
       const themeNames = {
-        [THEME_MODES.LIGHT]: 'светлую',
-        [THEME_MODES.DARK]: 'темную',
-        [THEME_MODES.SYSTEM]: 'системную',
+        [THEME_MODES.LIGHT]: 'light',
+        [THEME_MODES.DARK]: 'dark',
+        [THEME_MODES.SYSTEM]: 'system',
       };
 
-      success('Тема изменена', `Переключено на ${themeNames[newTheme]} тему`);
+      success('Theme changed', `Switched to ${themeNames[newTheme]} theme`);
     },
     [setStoreTheme, success]
   );

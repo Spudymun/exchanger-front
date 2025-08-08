@@ -173,6 +173,17 @@ export {
   useFooterContext,
 } from './footer-compound';
 
+// Auth Components
+export {
+  AuthEmailField,
+  AuthPasswordField,
+  AuthConfirmPasswordField,
+  AuthCaptchaField,
+  AuthSubmitButton,
+  AuthSwitchButton,
+  AuthFormLayout,
+} from './auth';
+
 // Utils
 export { cn } from '../lib/utils';
 

@@ -7,7 +7,8 @@ import {
   type FiatCurrency,
   getDefaultTokenStandard,
 } from '@repo/constants';
-import { useForm } from '@repo/hooks/src/client-hooks';
+import { useFormWithNextIntl } from '@repo/hooks';
+import { cryptoAmountStringSchema } from '@repo/utils';
 import { useMemo } from 'react';
 import { z } from 'zod';
 
@@ -16,20 +17,20 @@ import type { HeroExchangeFormData } from '../HeroExchangeForm';
 const EXCHANGE_RATE = 40.5;
 const MIN_AMOUNTS = { from: 10, to: 100 };
 
-const createSchema = (t: (key: string) => string) =>
-  z.object({
-    fromAmount: z.string().min(1, t('validation.enterAmount')),
-    fromCurrency: z.enum(CRYPTOCURRENCIES),
-    tokenStandard: z.string().optional(),
-    toCurrency: z.enum(FIAT_CURRENCIES),
-    selectedBankId: z.string().min(1, t('validation.selectBank')),
-  });
+// Чистая Zod схема БЕЗ хардкода сообщений
+const heroExchangeSchema = z.object({
+  fromAmount: cryptoAmountStringSchema,
+  fromCurrency: z.enum(CRYPTOCURRENCIES),
+  tokenStandard: z.string().optional(),
+  toCurrency: z.enum(FIAT_CURRENCIES),
+  selectedBankId: z.string().min(1),
+});
 
 export function useHeroExchangeForm(
   t: (key: string) => string,
   onExchange?: (data: HeroExchangeFormData) => void
 ) {
-  const form = useForm<HeroExchangeFormData>({
+  const form = useFormWithNextIntl<HeroExchangeFormData>({
     initialValues: {
       fromAmount: '',
       fromCurrency: 'USDT',
@@ -37,7 +38,8 @@ export function useHeroExchangeForm(
       toCurrency: 'UAH',
       selectedBankId: '',
     },
-    validationSchema: createSchema(t),
+    validationSchema: heroExchangeSchema,
+    t,
     onSubmit: async values => onExchange?.(values),
   });
 

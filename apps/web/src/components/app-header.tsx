@@ -35,23 +35,24 @@ function useAuthDialogs() {
   const [isLoginDialogOpen, setIsLoginDialogOpen] = React.useState(false);
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = React.useState(false);
 
-  const handleOpenLogin = () => {
+  // ИСПРАВЛЕНИЕ: Мемоизируем все callback функции для предотвращения бесконечного цикла
+  const handleOpenLogin = React.useCallback(() => {
     setIsRegisterDialogOpen(false);
     setIsLoginDialogOpen(true);
-  };
+  }, []);
 
-  const handleOpenRegister = () => {
+  const handleOpenRegister = React.useCallback(() => {
     setIsLoginDialogOpen(false);
     setIsRegisterDialogOpen(true);
-  };
+  }, []);
 
-  const handleCloseLogin = () => setIsLoginDialogOpen(false);
-  const handleCloseRegister = () => setIsRegisterDialogOpen(false);
+  const handleCloseLogin = React.useCallback(() => setIsLoginDialogOpen(false), []);
+  const handleCloseRegister = React.useCallback(() => setIsRegisterDialogOpen(false), []);
 
-  const handleAuthSuccess = () => {
+  const handleAuthSuccess = React.useCallback(() => {
     setIsLoginDialogOpen(false);
     setIsRegisterDialogOpen(false);
-  };
+  }, []);
 
   return {
     session,
@@ -177,17 +178,7 @@ function AppHeaderLogoMobile() {
   return (
     <Header.Logo>
       <Link href="/" className="flex items-center">
-        <div
-          className="bg-primary rounded-lg flex items-center justify-center"
-          style={{
-            width: '36px',
-            height: '36px',
-            minWidth: '36px',
-            minHeight: '36px',
-            maxWidth: '36px',
-            maxHeight: '36px',
-          }}
-        >
+        <div className="logo-mobile">
           <span className="text-primary-foreground font-bold text-sm">EG</span>
         </div>
       </Link>
@@ -199,17 +190,7 @@ function AppHeaderLogoDesktop() {
   return (
     <Header.Logo>
       <Link href="/" className="flex items-center space-x-2 sm:space-x-3">
-        <div
-          className="bg-primary rounded-lg flex items-center justify-center"
-          style={{
-            width: '40px',
-            height: '40px',
-            minWidth: '40px',
-            minHeight: '40px',
-            maxWidth: '40px',
-            maxHeight: '40px',
-          }}
-        >
+        <div className="logo-desktop">
           <span className="text-primary-foreground font-bold text-sm">EG</span>
         </div>
         <span className="font-bold text-lg sm:text-xl">ExchangeGO</span>

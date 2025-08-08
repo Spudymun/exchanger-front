@@ -69,12 +69,13 @@ const getVariantIcon = (variant: 'default' | 'success' | 'error' | 'warning' | '
 
 export interface NotificationProps
   extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof notificationVariants> {
+  VariantProps<typeof notificationVariants> {
   title?: string;
   description?: string;
   onClose?: () => void;
   showIcon?: boolean;
   closable?: boolean;
+  closeLabel?: string;
 }
 
 // Helper functions to reduce complexity
@@ -104,7 +105,8 @@ const renderContent = (
 const renderCloseButton = (
   closable: boolean,
   onClose: (() => void) | undefined,
-  size: NotificationProps['size']
+  size: NotificationProps['size'],
+  closeLabel?: string
 ) => {
   if (!closable || !onClose) return null;
 
@@ -116,7 +118,7 @@ const renderCloseButton = (
         'flex-shrink-0 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
         size === 'sm' ? 'h-4 w-4' : size === 'lg' ? 'h-6 w-6' : 'h-5 w-5'
       )}
-      aria-label="Close notification"
+      aria-label={closeLabel || 'Close notification'}
     >
       <X className="h-full w-full" />
     </button>
@@ -134,6 +136,7 @@ const Notification = React.forwardRef<HTMLDivElement, NotificationProps>(
       onClose,
       showIcon = true,
       closable = true,
+      closeLabel,
       children,
       ...props
     },
@@ -150,7 +153,7 @@ const Notification = React.forwardRef<HTMLDivElement, NotificationProps>(
       >
         {renderIcon(variant || 'default', size, showIcon)}
         {renderContent(title, description, children)}
-        {renderCloseButton(closable, onClose, size)}
+        {renderCloseButton(closable, onClose, size, closeLabel)}
       </div>
     );
   }

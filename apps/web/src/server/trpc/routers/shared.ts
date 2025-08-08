@@ -124,7 +124,7 @@ export const sharedRouter = createTRPCRouter({
   }),
 
   // Быстрые действия
-  quickActions: operatorAndSupport.input(quickActionsSchema).mutation(async ({ input }) => {
+  quickActions: operatorAndSupport.input(quickActionsSchema).mutation(async ({ input, ctx }) => {
     const { action, params } = input;
 
     switch (action) {
@@ -144,7 +144,9 @@ export const sharedRouter = createTRPCRouter({
       case 'SEND_NOTIFICATION':
         // Имитация отправки уведомления
         if (!params?.message) {
-          throw new Error('Требуется параметр message');
+          throw new Error(
+            await ctx.getErrorMessage('server.errors.business.parameterRequired', { parameter: 'message' })
+          );
         }
         return {
           success: true,
@@ -153,7 +155,9 @@ export const sharedRouter = createTRPCRouter({
         };
 
       default:
-        throw new Error('Неизвестное действие');
+        throw new Error(
+          await ctx.getErrorMessage('server.errors.business.unknownAction')
+        );
     }
   }),
 });

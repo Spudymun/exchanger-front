@@ -1,4 +1,4 @@
-import { createUserError, createOrderError } from '@repo/utils';
+import { createNotFoundError, createForbiddenError } from '@repo/utils';
 
 import { userManager, orderManager } from '../data';
 import type { User, Order } from '../types';
@@ -17,7 +17,7 @@ import type { User, Order } from '../types';
 export function validateUserAccess(userId: string): User {
   const user = userManager.findById(userId);
   if (!user) {
-    throw createUserError('not_found', userId);
+    throw createNotFoundError(`User with ID "${userId}" not found`);
   }
   return user;
 }
@@ -32,11 +32,11 @@ export function validateUserAccess(userId: string): User {
 export function validateOrderAccess(orderId: string, userEmail: string): Order {
   const order = orderManager.findById(orderId);
   if (!order) {
-    throw createOrderError('not_found', orderId);
+    throw createNotFoundError(`Order with ID "${orderId}" not found`);
   }
 
   if (order.email !== userEmail) {
-    throw createOrderError('access_denied');
+    throw createForbiddenError('Access to order denied');
   }
 
   return order;

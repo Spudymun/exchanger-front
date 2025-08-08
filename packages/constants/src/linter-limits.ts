@@ -37,6 +37,8 @@ export const FILE_SIZE_LIMITS = {
   UI_LIBRARY: 400,
   /** Увеличенный лимит для основных страниц */
   MAIN_PAGES: 350,
+  /** Лимит для главного ESLint конфига (допустимо превышение базового из-за архитектурных секций) */
+  ESLINT_CONFIG: 500,
 } as const;
 
 export const DEPTH_LIMITS = {

@@ -54,8 +54,11 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   // Enable static rendering
   setRequestLocale(locale);
 
+  // Load messages for client components
+  const messages = (await import(`../../messages/${locale}.json`)).default;
+
   return (
-    <NextIntlClientProvider>
+    <NextIntlClientProvider locale={locale} messages={messages}>
       <AppLayout>{children}</AppLayout>
     </NextIntlClientProvider>
   );

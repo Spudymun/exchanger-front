@@ -6,10 +6,9 @@ import {
   CURRENCY_SYMBOLS,
   CURRENCY_FULL_NAMES,
   DECIMAL_PRECISION,
-  VALIDATION_PATTERNS,
 } from '@repo/constants';
 
-import { formatCryptoAmountForUI } from '@repo/utils';
+import { formatCryptoAmountForUI, createCryptoAddressSchema } from '@repo/utils';
 
 import { generateCryptoDepositAddress } from '../services';
 
@@ -25,19 +24,11 @@ export function generateDepositAddress(currency: CryptoCurrency): string {
 
 /**
  * Валидация формата крипто-адреса (базовая проверка)
+ * ОБНОВЛЕНО: Использует Zod схемы вместо VALIDATION_PATTERNS
  */
 export function validateCryptoAddress(address: string, currency: CryptoCurrency): boolean {
-  switch (currency) {
-    case 'BTC':
-      return VALIDATION_PATTERNS.BTC_ADDRESS.test(address);
-    case 'ETH':
-    case 'USDT':
-      return VALIDATION_PATTERNS.ETH_ADDRESS.test(address);
-    case 'LTC':
-      return VALIDATION_PATTERNS.LTC_ADDRESS.test(address);
-    default:
-      return false;
-  }
+  const schema = createCryptoAddressSchema(currency);
+  return schema.safeParse(address).success;
 }
 
 /**

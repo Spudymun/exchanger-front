@@ -1,4 +1,4 @@
-import { validateEmail } from '@repo/exchange-core';
+import { emailSchema } from '@repo/utils';
 
 import {
   useExchangeStore as useExchangeStoreBase,
@@ -11,32 +11,32 @@ const validateBasicFields = (formData: ExchangeStore['formData']) => {
   const errors: Record<string, string[]> = {};
 
   if (!formData.fromCurrency) {
-    errors.fromCurrency = ['Выберите валюту для обмена'];
+    errors.fromCurrency = ['Select currency to exchange'];
   }
 
   if (!formData.fromAmount || parseFloat(formData.fromAmount) <= 0) {
-    errors.fromAmount = ['Введите корректную сумму'];
+    errors.fromAmount = ['Enter correct amount'];
   }
 
   if (!formData.recipientData.cardNumber) {
-    errors.cardNumber = ['Введите номер карты'];
+    errors.cardNumber = ['Enter card number'];
   }
 
   if (!formData.agreementAccepted) {
-    errors.agreement = ['Необходимо принять соглашение'];
+    errors.agreement = ['Agreement must be accepted'];
   }
 
   return errors;
 };
 
-// Helper function to validate email using centralized utilities
+// Helper function to validate email using Zod schema
 const validateEmailField = (userEmail: string) => {
   if (!userEmail) {
-    return ['Введите email'];
+    return ['Enter email'];
   }
 
-  const emailValidation = validateEmail(userEmail);
-  return emailValidation.isValid ? [] : emailValidation.errors;
+  const result = emailSchema.safeParse(userEmail);
+  return result.success ? [] : result.error.issues.map(issue => issue.message);
 };
 
 // Validation helper using centralized validation utilities
@@ -55,7 +55,7 @@ const createValidationFunction = (
     }
 
     if (!calculation?.isValid) {
-      errors.calculation = ['Некорректный расчет обмена'];
+      errors.calculation = ['Invalid exchange calculation'];
     }
 
     if (Object.keys(errors).length > 0) {

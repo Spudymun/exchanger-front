@@ -1,6 +1,5 @@
-import { VALIDATION_PATTERNS } from '@repo/constants';
-import { createZodErrorMap } from '@repo/utils';
-import { useCallback, useMemo, useState, useEffect } from 'react';
+import { I18N_CONFIG } from '@repo/constants';
+import { useCallback, useMemo, useState } from 'react';
 import { z } from 'zod';
 
 import { useNotifications } from '../useNotifications';
@@ -11,6 +10,7 @@ import { UseFormOptions, UseFormReturn, checkObjectEquality } from './useFormTyp
 export type { FormField, UseFormOptions, UseFormReturn } from './useFormTypes';
 
 /**
+ * @deprecated Используйте useFormWithNextIntl для новых компонентов
  * Universal form hook with Zod validation integration
  */
 export function useForm<T extends Record<string, unknown>>({
@@ -18,7 +18,8 @@ export function useForm<T extends Record<string, unknown>>({
   validationSchema,
   onSubmit,
   validateOnBlur = true,
-  locale = 'en', // Добавляем locale с дефолтным значением
+  locale = I18N_CONFIG.FALLBACK_LOCALE, // Используем константу вместо хардкода
+  captchaMessages, // Добавляем внешние переводы для CAPTCHA
 }: UseFormOptions<T>): UseFormReturn<T> {
   const notifications = useNotifications();
 
@@ -27,15 +28,14 @@ export function useForm<T extends Record<string, unknown>>({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Устанавливаем глобальный error map при изменении локали
-  useEffect(() => {
-    if (locale) {
-      z.setErrorMap(createZodErrorMap(locale));
-    }
-  }, [locale]);
-
   // Validation methods
-  const validation = useFormValidation(validationSchema, values, setErrors, locale);
+  const validation = useFormValidation({
+    validationSchema,
+    values,
+    setErrors,
+    locale,
+    captchaMessages
+  });
 
   // Derived state
   const isDirty = useMemo(
@@ -106,18 +106,23 @@ function handleFieldValidationError(error: z.ZodError, fieldName: string): strin
 }
 
 // Валидация всей формы
-function validateFormWithErrorMap<T extends Record<string, unknown>>(
-  validationSchema: z.ZodSchema<T>,
-  values: T,
-  locale?: string
-): { isValid: boolean; errors: Record<string, string> } {
-  // Устанавливаем error map для текущей локали
-  if (locale) {
-    z.setErrorMap(createZodErrorMap(locale));
-  }
+function validateFormWithErrorMap<T extends Record<string, unknown>>(params: {
+  validationSchema: z.ZodSchema<T>;
+  values: T;
+  locale?: string;
+  captchaMessages?: Record<string, string>; // Deprecated
+}): { isValid: boolean; errors: Record<string, string> } {
+  const { validationSchema, values } = params;
+  // DEPRECATED: Используем базовую валидацию без кастомных сообщений
+  // Новый код должен использовать useFormWithNextIntl
+  const errorMap = undefined;
 
   try {
-    validationSchema.parse(values);
+    if (errorMap) {
+      validationSchema.parse(values, { errorMap });
+    } else {
+      validationSchema.parse(values);
+    }
     return { isValid: true, errors: {} };
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -129,19 +134,24 @@ function validateFormWithErrorMap<T extends Record<string, unknown>>(
 }
 
 // Валидация отдельного поля
-function validateFieldWithErrorMap<T extends Record<string, unknown>>(
-  validationSchema: z.ZodSchema<T>,
-  values: T,
-  fieldName: string,
-  locale?: string
-): { isValid: boolean; error: string | null } {
-  // Устанавливаем error map для текущей локали
-  if (locale) {
-    z.setErrorMap(createZodErrorMap(locale));
-  }
+function validateFieldWithErrorMap<T extends Record<string, unknown>>(params: {
+  validationSchema: z.ZodSchema<T>;
+  values: T;
+  fieldName: string;
+  locale?: string;
+  captchaMessages?: Record<string, string>; // Deprecated
+}): { isValid: boolean; error: string | null } {
+  const { validationSchema, values, fieldName } = params;
+  // DEPRECATED: Используем базовую валидацию без кастомных сообщений
+  // Новый код должен использовать useFormWithNextIntl
+  const errorMap = undefined;
 
   try {
-    validationSchema.parse(values);
+    if (errorMap) {
+      validationSchema.parse(values, { errorMap });
+    } else {
+      validationSchema.parse(values);
+    }
     return { isValid: true, error: null };
   } catch (error) {
     if (!(error instanceof z.ZodError)) {
@@ -154,25 +164,34 @@ function validateFieldWithErrorMap<T extends Record<string, unknown>>(
 }
 
 // Separate validation hook
-function useFormValidation<T extends Record<string, unknown>>(
-  validationSchema: z.ZodSchema<T> | undefined,
-  values: T,
-  setErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>,
-  locale?: string
-) {
+function useFormValidation<T extends Record<string, unknown>>(params: {
+  validationSchema: z.ZodSchema<T> | undefined;
+  values: T;
+  setErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  locale?: string;
+  captchaMessages?: Record<string, string>; // Deprecated
+}) {
+  const { validationSchema, values, setErrors, locale, captchaMessages } = params;
+
   const validateForm = useCallback((): boolean => {
     if (!validationSchema) return true;
 
-    const result = validateFormWithErrorMap(validationSchema, values, locale);
+    const result = validateFormWithErrorMap({ validationSchema, values, locale, captchaMessages });
     setErrors(result.errors);
     return result.isValid;
-  }, [validationSchema, values, setErrors, locale]);
+  }, [validationSchema, values, setErrors, locale, captchaMessages]);
 
   const validateField = useCallback(
     (field: string): boolean => {
       if (!validationSchema) return true;
 
-      const result = validateFieldWithErrorMap(validationSchema, values, field, locale);
+      const result = validateFieldWithErrorMap({
+        validationSchema,
+        values,
+        fieldName: field,
+        locale,
+        captchaMessages
+      });
 
       if (result.isValid) {
         setErrors(prev => removeFieldFromErrors(prev, field));
@@ -185,7 +204,7 @@ function useFormValidation<T extends Record<string, unknown>>(
 
       return result.isValid;
     },
-    [validationSchema, values, setErrors]
+    [validationSchema, values, setErrors, locale, captchaMessages]
   );
 
   return { validateForm, validateField };
@@ -282,7 +301,7 @@ function useFormSubmitAction<T extends Record<string, unknown>>(params: {
       if (!validation.validateForm()) {
         const firstError = Object.values(errors)[0];
         if (firstError) {
-          notifications.error('Ошибка валидации', firstError);
+          notifications.error('Validation error', firstError);
         }
         return;
       }
@@ -293,8 +312,8 @@ function useFormSubmitAction<T extends Record<string, unknown>>(params: {
       try {
         await onSubmit(values);
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Неизвестная ошибка';
-        notifications.error('Ошибка отправки формы', message);
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        notifications.error('Form submission error', message);
       } finally {
         setIsSubmitting(false);
       }
@@ -331,20 +350,4 @@ function useFormFieldProps<T extends Record<string, unknown>>(params: {
   return { getFieldProps };
 }
 
-const MIN_PASSWORD_LENGTH = 8;
-
-// Validation schemas
-export const FORM_VALIDATION_SCHEMAS = {
-  email: z.string().email('Введите корректный email адрес'),
-  password: z
-    .string()
-    .min(MIN_PASSWORD_LENGTH, 'Пароль должен содержать минимум 8 символов')
-    .regex(/[A-Z]/, 'Пароль должен содержать заглавную букву')
-    .regex(/[a-z]/, 'Пароль должен содержать строчную букву')
-    .regex(/[0-9]/, 'Пароль должен содержать цифру'),
-  amount: z
-    .string()
-    .regex(VALIDATION_PATTERNS.CRYPTO_AMOUNT_STRING, 'Введите корректную сумму')
-    .refine(val => Number(val) > 0, 'Сумма должна быть больше 0'),
-  phone: z.string().regex(/^\+380\d{9}$/, 'Введите номер телефона в формате +380XXXXXXXXX'),
-};
+// FORM_VALIDATION_SCHEMAS УДАЛЕНЫ - заменены централизованными схемами из @repo/utils

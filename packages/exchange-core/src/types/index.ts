@@ -1,4 +1,5 @@
 // Экспорт всех типов
+export * from './auth';
 export * from './contact';
 export * from './currency';
 export * from './fiat';

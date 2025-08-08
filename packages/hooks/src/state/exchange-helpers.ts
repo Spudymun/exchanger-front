@@ -22,7 +22,7 @@ export const calculateExchangeRate = (
       commissionAmount: 0,
       finalAmount: 0,
       isValid: false,
-      errors: ['Некорректная сумма'],
+      errors: ['Invalid amount'],
     };
   }
 

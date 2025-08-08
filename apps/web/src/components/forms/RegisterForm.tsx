@@ -1,182 +1,105 @@
 'use client';
 
-import { useForm, useNotifications } from '@repo/hooks/src/client-hooks';
-import { FormField, FormControl, FormLabel, FormMessage, Input, Button, MathCaptcha } from '@repo/ui';
+import { AUTH_FIELD_IDS } from '@repo/constants';
+import { RegisterFormData, RegisterFormProps } from '@repo/exchange-core';
+import { useFormWithNextIntl } from '@repo/hooks';
+import {
+  AuthEmailField,
+  AuthPasswordField,
+  AuthConfirmPasswordField,
+  AuthCaptchaField,
+  AuthSubmitButton,
+  AuthSwitchButton
+} from '@repo/ui';
 import { registerSchema } from '@repo/utils';
-import { useTranslations, useLocale } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import React from 'react';
 
-import { useAuthMutation } from '../../hooks/useAuthMutation';
+import { createAuthFormSubmitHandler, createAuthFormErrorHandler } from '../../hooks/useAuthFormConfig';
+import { useAuthMutationAdapter } from '../../hooks/useAuthMutationAdapter';
 
-interface RegisterFormProps {
-  onSuccess?: () => void;
-  onSwitchToLogin?: () => void;
-}
-
-interface RegisterFormData extends Record<string, unknown> {
-  email: string;
-  password: string;
-  confirmPassword: string;
-  captcha: string;
-  captchaVerified: boolean;
-}
 
 /**
  * Register Form Component
- * Использует централизованные решения:
- * - useForm для управления формой и валидации
- * - useAuthMutation для регистрации через tRPC
- * - useNotifications для уведомлений
- * - registerSchema для валидации из @repo/utils
+ * Рефакторинг: использует переиспользуемые компоненты полей
+ * - AuthEmailField, AuthPasswordField, AuthConfirmPasswordField, AuthCaptchaField - устраняют дублирование
+ * - Централизованные константы из @repo/constants
+ * - Типы из @repo/exchange-core
  */
-export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) {
-  const { register } = useAuthMutation();
-  const notifications = useNotifications();
-  const t = useTranslations('Layout.forms.register');
-  const locale = useLocale();
+// Custom hook для логики формы регистрации согласно CODE_STYLE_GUIDE.md
+function useRegisterForm(onSuccess?: () => void) {
+  const { register } = useAuthMutationAdapter();
+  const tValidation = useTranslations('AdvancedExchangeForm');
 
-  const form = useForm<RegisterFormData>({
-    initialValues: { email: '', password: '', confirmPassword: '', captcha: '', captchaVerified: false },
+  const form = useFormWithNextIntl<RegisterFormData>({
+    initialValues: { email: '', password: '', confirmPassword: '', captcha: '' },
     validationSchema: registerSchema,
-    locale: locale, // Используем текущую локаль приложения для валидации
-    onSubmit: async values => {
+    t: tValidation,
+    onSubmit: async (values: RegisterFormData) => {
       try {
         await register.mutateAsync({
           email: values.email,
           password: values.password,
+          confirmPassword: values.confirmPassword,
+          captcha: values.captcha,
+          // Убрано: captchaVerified - избыточность устранена
         });
-        notifications.success(t('successTitle'), t('successMessage'));
-        onSuccess?.();
-      } catch {
-        notifications.error(t('errorTitle'), t('errorMessage'));
+        if (onSuccess) {
+          createAuthFormSubmitHandler(onSuccess)();
+        }
+      } catch (error) {
+        createAuthFormErrorHandler()(error);
       }
     },
   });
 
+  return { form, tValidation };
+}
+
+export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) {
+  const { form, tValidation } = useRegisterForm(onSuccess);
+  const { register } = useAuthMutationAdapter();
+  const t = useTranslations('Layout.forms.register');
+  const tCaptcha = useTranslations('Layout.captcha');
+
   return (
-    <div className="w-full max-w-md mx-auto">
-      <form onSubmit={form.handleSubmit} className="space-y-4">
-        <RegisterEmailField form={form} isLoading={register.isPending} t={t} />
-        <RegisterPasswordField form={form} isLoading={register.isPending} t={t} />
-        <RegisterConfirmPasswordField form={form} isLoading={register.isPending} t={t} />
-        <RegisterCaptchaField form={form} isLoading={register.isPending} t={t} />
-        <RegisterSubmitButton form={form} isLoading={register.isPending} t={t} />
-        <RegisterSwitchButton onSwitch={onSwitchToLogin} isLoading={register.isPending} />
+    <div className="auth-form-container">
+      <form onSubmit={form.handleSubmit} className="auth-form-fields">
+        <AuthEmailField
+          form={form}
+          isLoading={register.isPending}
+          t={t}
+          fieldId={AUTH_FIELD_IDS.REGISTER.EMAIL}
+        />
+        <AuthPasswordField
+          form={form}
+          isLoading={register.isPending}
+          t={tValidation}
+          fieldId={AUTH_FIELD_IDS.REGISTER.PASSWORD}
+        />
+        <AuthConfirmPasswordField
+          form={form}
+          isLoading={register.isPending}
+          t={tValidation}
+          fieldId={AUTH_FIELD_IDS.REGISTER.CONFIRM_PASSWORD}
+        />
+        <AuthCaptchaField
+          form={form}
+          isLoading={register.isPending}
+          t={tCaptcha}
+        />
+        <AuthSubmitButton
+          form={form}
+          isLoading={register.isPending}
+          t={t}
+        />
+        <AuthSwitchButton
+          onSwitch={onSwitchToLogin}
+          isLoading={register.isPending}
+        >
+          {t('switchToLogin')}
+        </AuthSwitchButton>
       </form>
     </div>
   );
 }
-
-interface RegisterFieldProps {
-  form: ReturnType<typeof useForm<RegisterFormData>>;
-  isLoading: boolean;
-  t: (key: string) => string;
-}
-
-const RegisterEmailField: React.FC<RegisterFieldProps> = ({ form, isLoading, t }) => (
-  <FormField name="email" error={form.errors.email}>
-    <FormLabel htmlFor="register-email" className="required">
-      {t('email.label')}
-    </FormLabel>
-    <FormControl>
-      <Input
-        {...form.getFieldProps('email')}
-        id="register-email"
-        type="email"
-        placeholder={t('email.placeholder')}
-        disabled={isLoading}
-        required
-      />
-    </FormControl>
-    <FormMessage />
-  </FormField>
-);
-
-const RegisterPasswordField: React.FC<RegisterFieldProps> = ({ form, isLoading, t }) => (
-  <FormField name="password" error={form.errors.password}>
-    <FormLabel htmlFor="register-password" className="required">
-      {t('password.label')}
-    </FormLabel>
-    <FormControl>
-      <Input
-        {...form.getFieldProps('password')}
-        id="register-password"
-        type="password"
-        placeholder={t('password.placeholder')}
-        disabled={isLoading}
-        required
-      />
-    </FormControl>
-    <FormMessage />
-  </FormField>
-);
-
-const RegisterConfirmPasswordField: React.FC<RegisterFieldProps> = ({ form, isLoading, t }) => (
-  <FormField name="confirmPassword" error={form.errors.confirmPassword}>
-    <FormLabel htmlFor="register-confirm-password" className="required">
-      {t('confirmPassword.label')}
-    </FormLabel>
-    <FormControl>
-      <Input
-        {...form.getFieldProps('confirmPassword')}
-        id="register-confirm-password"
-        type="password"
-        placeholder={t('confirmPassword.placeholder')}
-        disabled={isLoading}
-        required
-      />
-    </FormControl>
-    <FormMessage />
-  </FormField>
-);
-
-const RegisterCaptchaField: React.FC<RegisterFieldProps> = ({ form, isLoading, t }) => (
-  <FormField name="captcha" error={form.errors.captcha}>
-    <MathCaptcha
-      name="captcha"
-      difficulty="medium"
-      disabled={isLoading}
-      hideLabel={true}
-      onAnswerChange={(answer) => form.setValue('captcha', answer)}
-      onVerificationChange={(isVerified) => form.setValue('captchaVerified', isVerified)}
-      labels={{
-        question: t('captcha.question'),
-        placeholder: t('captcha.placeholder'),
-        refresh: t('captcha.refresh'),
-        verification: t('captcha.verification'),
-        error: t('captcha.error'),
-      }}
-    />
-    <FormMessage />
-  </FormField>
-);
-
-const RegisterSubmitButton: React.FC<RegisterFieldProps> = ({ form, isLoading, t }) => (
-  <Button type="submit" className="w-full" disabled={isLoading || !form.isValid}>
-    {isLoading ? t('submitting') : t('submit')}
-  </Button>
-);
-
-interface RegisterSwitchButtonProps {
-  onSwitch?: () => void;
-  isLoading: boolean;
-}
-
-const RegisterSwitchButton: React.FC<RegisterSwitchButtonProps> = ({ onSwitch, isLoading }) => {
-  const t = useTranslations('Layout.forms.register');
-
-  if (!onSwitch) return null;
-
-  return (
-    <div className="text-center">
-      <button
-        type="button"
-        onClick={onSwitch}
-        className="text-sm text-blue-600 hover:text-blue-800 underline"
-        disabled={isLoading}
-      >
-        {t('switchToLogin')}
-      </button>
-    </div>
-  );
-};

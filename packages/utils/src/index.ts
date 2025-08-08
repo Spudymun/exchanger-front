@@ -6,8 +6,8 @@ export * from './order-utils';
 export * from './trpc-errors';
 export * from './order-status';
 export * from './validation-schemas';
-export * from './validation-messages';
-export * from './zod-error-map';
+export * from './next-intl-validation';
 export * from './store-factory';
 export * from './input-validation';
 export * from './scroll-utils';
+// server-i18n-errors.ts удален - используйте getTranslations из next-intl/server

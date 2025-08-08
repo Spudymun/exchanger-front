@@ -25,11 +25,3 @@ export const RATE_LIMITS = {
     blockDuration: 3600,
   },
 } as const;
-
-// Ошибки rate limiting
-export const RATE_LIMIT_MESSAGES = {
-  CREATE_ORDER: 'Превышен лимит создания заявок. Попробуйте через час.',
-  REGISTER: 'Превышен лимит регистраций. Попробуйте завтра.',
-  LOGIN: 'Слишком много попыток входа. Попробуйте через 15 минут.',
-  RESET_PASSWORD: 'Превышен лимит сброса пароля. Попробуйте через час.',
-} as const;

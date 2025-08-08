@@ -180,7 +180,7 @@ const createCalculationActions = (
           commissionAmount: 0,
           finalAmount: 0,
           isValid: false,
-          errors: ['Ошибка расчета'],
+          errors: ['Calculation error'],
         },
         isCalculating: false,
       }));

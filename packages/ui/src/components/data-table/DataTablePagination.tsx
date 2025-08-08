@@ -26,7 +26,7 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({
   return (
     <div className="flex items-center justify-between space-x-2 py-4">
       <div className="flex items-center space-x-2">
-        <p className="text-sm font-medium">Элементов на странице:</p>
+        <p className="text-sm font-medium">Items per page:</p>
         <select
           value={itemsPerPage}
           onChange={(e) => onItemsPerPageChange(Number(e.target.value))}
@@ -47,7 +47,7 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({
 
       <div className="flex items-center space-x-6 lg:space-x-8">
         <div className="flex w-[100px] items-center justify-center text-sm font-medium">
-          {startItem}-{endItem} из {totalItems}
+          {startItem}-{endItem} of {totalItems}
         </div>
         <div className="flex items-center space-x-2">
           <Button
@@ -56,7 +56,7 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage <= 1}
           >
-            Предыдущая
+            Previous
           </Button>
           <Button
             variant="outline"
@@ -64,7 +64,7 @@ export const DataTablePagination: React.FC<DataTablePaginationProps> = ({
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage >= totalPages}
           >
-            Следующая
+            Next
           </Button>
         </div>
       </div>

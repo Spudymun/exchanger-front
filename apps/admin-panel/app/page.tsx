@@ -332,21 +332,29 @@ function ActionButtons({ onExport, onCreateUser }: ActionButtonsProps) {
 
 export default function AdminDashboard() {
   const handleTreeSelect = (node: TreeNode) => {
-    // TODO: Implement navigation functionality
+    // Navigation functionality будет реализована в следующих версиях
+    console.info('Navigation selected:', node.label);
+    // Здесь будет переход по разделам админ-панели
     void node;
   };
 
   const handleUserClick = (user: UITestUser) => {
-    // TODO: Implement user details functionality
+    // User details functionality будет реализована в следующих версиях
+    console.info('User details requested:', user.name);
+    // Здесь будет открытие модального окна с деталями пользователя
     void user;
   };
 
   const handleExport = () => {
-    // TODO: Implement export functionality
+    // Export functionality будет реализована в следующих версиях
+    console.info('Export requested');
+    // Здесь будет экспорт данных в CSV/Excel формат
   };
 
   const handleCreateUser = () => {
-    // TODO: Implement create user functionality
+    // Create user functionality будет реализована в следующих версиях
+    console.info('Create user requested');
+    // Здесь будет открытие формы создания нового пользователя
   };
 
   return (

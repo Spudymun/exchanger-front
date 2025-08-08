@@ -5,7 +5,6 @@ import {
   VALIDATION_LIMITS,
 } from '@repo/constants';
 import {
-  validatePassword,
   userManager,
   orderManager,
   validateUserAccess,
@@ -45,10 +44,13 @@ export const securityRouter = createTRPCRouter({
         throw createSecurityError('invalid_password');
       }
 
-      // Валидация нового пароля
-      const passwordValidation = validatePassword(input.newPassword);
-      if (!passwordValidation.isValid) {
-        throw createBadRequestError(passwordValidation.errors[0] || 'Ошибка валидации пароля');
+      // Валидация нового пароля с помощью Zod схемы
+      const passwordResult = passwordSchema.safeParse(input.newPassword);
+      if (!passwordResult.success) {
+        throw createBadRequestError(
+          passwordResult.error.issues[0]?.message ||
+          await ctx.getErrorMessage('server.errors.validation.passwordValidation')
+        );
       }
 
       // Хешируем новый пароль

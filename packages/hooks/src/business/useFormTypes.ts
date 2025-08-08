@@ -1,3 +1,4 @@
+// DEPRECATED: используйте useFormWithNextIntl для новых компонентов
 import { z } from 'zod';
 
 // Form field interface
@@ -17,6 +18,7 @@ export interface UseFormOptions<T> {
   onSubmit?: (values: T) => void | Promise<void>;
   validateOnBlur?: boolean;
   locale?: string; // Добавляем поддержку локализации
+  captchaMessages?: Record<string, string>; // Deprecated: используйте useFormWithNextIntl
 }
 
 // Form hook return type
@@ -38,6 +40,20 @@ export interface UseFormReturn<T> {
 }
 
 // Helper function to check object equality
-export function checkObjectEquality<T>(obj1: T, obj2: T): boolean {
-  return JSON.stringify(obj1) === JSON.stringify(obj2);
+// ИСПРАВЛЕНО: Эффективная проверка равенства без JSON.stringify
+export function checkObjectEquality<T extends Record<string, unknown>>(obj1: T, obj2: T): boolean {
+  const keys1 = Object.keys(obj1);
+  const keys2 = Object.keys(obj2);
+
+  if (keys1.length !== keys2.length) {
+    return false;
+  }
+
+  for (const key of keys1) {
+    if (obj1[key] !== obj2[key]) {
+      return false;
+    }
+  }
+
+  return true;
 }

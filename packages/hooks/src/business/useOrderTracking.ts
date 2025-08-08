@@ -14,7 +14,7 @@ interface Order {
   userEmail: string;
 }
 
-const STATUS_CHANGE_MESSAGE = 'Статус заявки изменен';
+const STATUS_CHANGE_MESSAGE = 'Order status changed';
 
 /**
  * Order Tracking Hook
@@ -94,12 +94,12 @@ function useOrderStatusNotifications(order: Order | null, notifications: UseNoti
     }
 
     const statusMessages: Record<OrderStatus, string> = {
-      [ORDER_STATUSES.PENDING]: 'Заявка ожидает оплаты',
-      [ORDER_STATUSES.PAID]: 'Заявка оплачена',
-      [ORDER_STATUSES.PROCESSING]: 'Заявка поступила в обработку',
-      [ORDER_STATUSES.COMPLETED]: 'Заявка успешно выполнена!',
-      [ORDER_STATUSES.CANCELLED]: 'Заявка была отменена',
-      [ORDER_STATUSES.FAILED]: 'Заявка завершилась неудачно',
+      [ORDER_STATUSES.PENDING]: 'Order awaiting payment',
+      [ORDER_STATUSES.PAID]: 'Order paid',
+      [ORDER_STATUSES.PROCESSING]: 'Order is being processed',
+      [ORDER_STATUSES.COMPLETED]: 'Order successfully completed!',
+      [ORDER_STATUSES.CANCELLED]: 'Order was cancelled',
+      [ORDER_STATUSES.FAILED]: 'Order failed',
     };
 
     const message = statusMessages[order.status as OrderStatus];

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import process from 'process';
+import process from 'node:process';
 
 // Если запущено не интерактивно, пропускаем
 if (process.argv.includes('--skip-interactive')) {

@@ -5,9 +5,12 @@ import { createUnauthorizedError, createForbiddenError } from '@repo/utils';
 import { publicProcedure } from '../init';
 
 // Базовый middleware для проверки аутентификации
-export const authMiddleware = publicProcedure.use(({ ctx, next }) => {
+
+export const authMiddleware = publicProcedure.use(async ({ ctx, next }) => {
   if (!isAuthenticatedUser(ctx.user)) {
-    throw createUnauthorizedError('Необходима аутентификация');
+    throw createUnauthorizedError(
+      await ctx.getErrorMessage('server.errors.auth.required')
+    );
   }
 
   return next({
@@ -19,14 +22,15 @@ export const authMiddleware = publicProcedure.use(({ ctx, next }) => {
 });
 
 // Generic middleware для проверки роли
+
 export const roleMiddleware = (allowedRoles: string[]) => {
-  return authMiddleware.use(({ ctx, next }) => {
+  return authMiddleware.use(async ({ ctx, next }) => {
     if (!ctx.user.role) {
-      throw createForbiddenError('определение роли пользователя');
+      throw createForbiddenError(await ctx.getErrorMessage('server.errors.auth.roleRequired'));
     }
 
     if (!allowedRoles.includes(ctx.user.role)) {
-      throw createForbiddenError('выполнение действия с текущей ролью');
+      throw createForbiddenError(await ctx.getErrorMessage('server.errors.auth.insufficientRole'));
     }
 
     return next();
@@ -34,17 +38,24 @@ export const roleMiddleware = (allowedRoles: string[]) => {
 };
 
 // Специализированные middleware для ролей
+
 export const operatorMiddleware = roleMiddleware([USER_ROLES.OPERATOR]);
+
 export const supportMiddleware = roleMiddleware([USER_ROLES.SUPPORT]);
+
 export const operatorAndSupportMiddleware = roleMiddleware([
   USER_ROLES.OPERATOR,
   USER_ROLES.SUPPORT,
 ]);
 
 // Алиасы для удобства использования
+
 export const operatorOnly = operatorMiddleware;
+
 export const supportOnly = supportMiddleware;
+
 export const operatorAndSupport = operatorAndSupportMiddleware;
 
 // Экспорт типизированных процедур (сохраняем обратную совместимость)
+
 export const protectedProcedure = authMiddleware;

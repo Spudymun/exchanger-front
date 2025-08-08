@@ -141,7 +141,7 @@ interface SubmitButtonProps extends FormComponentProps {
 }
 
 const ExchangeSubmitButton: React.FC<SubmitButtonProps> = ({ form, isLoading }) => (
-  <Button type="submit" disabled={isLoading || !form.isValid} className="w-full">
+  <Button type="submit" disabled={isLoading || !form.isValid} className="submit-button">
     {isLoading ? 'Создание заявки...' : 'Создать заявку'}
   </Button>
 );

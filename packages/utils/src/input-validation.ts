@@ -1,14 +1,20 @@
 import { DECIMAL_PRECISION } from '@repo/constants';
 import { getCurrencyDecimals, type CryptoCurrency } from '@repo/exchange-core';
 
+// server-i18n-errors removed - use direct fallback messages
+import { cryptoAmountStringSchema, uahAmountStringSchema } from './validation-schemas';
+
 /**
- * INPUT VALIDATION UTILITIES
+ * INPUT VALIDATION UTILITIES - ИНТЕГРИРОВАНО С ZOD СХЕМАМИ
  * AC 5.1-5.4: Numeric input validation with decimal precision control
- * Quality-first approach using existing utilities
+ * 
+ * ИНТЕГРАЦИЯ: Использует централизованные Zod схемы для финальной валидации
+ * UI REGEX: Простые regex для проверки символов в реальном времени остаются
  */
 
 /**
  * Check if character is allowed for numeric input
+ * ПРИМЕЧАНИЕ: Простой regex для UI остается - это проверка символов в реальном времени
  */
 function isNumericChar(char: string): boolean {
   return /[0-9.]/.test(char);
@@ -120,5 +126,63 @@ export function useNumericInput(currency?: string) {
   return {
     handleKeyDown,
     formatValue,
+  };
+}
+// === ИНТЕГРАЦИЯ С ZOD СХЕМАМИ ===
+
+/**
+ * Валидирует crypto сумму используя централизованную Zod схему
+ * Интеграция UI валидации с бизнес-логикой
+ */
+export function validateCryptoAmountWithZod(value: string): { isValid: boolean; error: string | null } {
+  const result = cryptoAmountStringSchema.safeParse(value);
+
+  if (result.success) {
+    return { isValid: true, error: null };
+  }
+
+  const firstError = result.error.errors[0];
+  const fallbackError = 'Invalid amount';
+
+  return {
+    isValid: false,
+    error: firstError?.message || fallbackError
+  };
+}
+
+/**
+ * Валидирует UAH сумму используя централизованную Zod схему
+ * Интеграция UI валидации с бизнес-логикой
+ */
+export function validateUahAmountWithZod(value: string): { isValid: boolean; error: string | null } {
+  const result = uahAmountStringSchema.safeParse(value);
+
+  if (result.success) {
+    return { isValid: true, error: null };
+  }
+
+  const firstError = result.error.errors[0];
+  const fallbackError = 'Invalid amount';
+
+  return {
+    isValid: false,
+    error: firstError?.message || fallbackError
+  };
+}
+
+/**
+ * Расширенный хук с интеграцией Zod валидации
+ * Объединяет UI проверки с бизнес-валидацией
+ */
+export function useNumericInputWithZod(currency?: string, isCrypto: boolean = true) {
+  const basicHook = useNumericInput(currency);
+
+  const validateWithZod = (value: string) => {
+    return isCrypto ? validateCryptoAmountWithZod(value) : validateUahAmountWithZod(value);
+  };
+
+  return {
+    ...basicHook,
+    validateWithZod,
   };
 }

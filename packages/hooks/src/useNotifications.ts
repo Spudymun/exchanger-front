@@ -13,29 +13,29 @@ const extractErrorMessage = (error: unknown): string => {
   if (error && typeof error === 'object' && 'message' in error) {
     return String(error.message);
   }
-  return 'Произошла неизвестная ошибка';
+  return 'An unknown error occurred';
 };
 
 // === API HANDLERS (консолидированы из useNotificationHelpers.ts) ===
 
 const createApiHandlers = (store: NotificationStore) => ({
-  apiSuccess: (message: string) => store.success('Успешно', message),
+  apiSuccess: (message: string) => store.success('Success', message),
   apiError: (error: unknown) => {
     const message = extractErrorMessage(error);
-    store.error('Ошибка API', message);
+    store.error('API Error', message);
   },
-  apiLoading: (message: string) => store.info('Загрузка', message),
+  apiLoading: (message: string) => store.info('Loading', message),
 
   handleApiSuccess: (message: string, description?: string) => store.success(message, description),
   handleApiError: (error: unknown, context?: string) => {
     const errorMessage = extractErrorMessage(error);
-    const title = context ? `Ошибка: ${context}` : 'Ошибка';
+    const title = context ? `Error: ${context}` : 'Error';
     return store.error(title, errorMessage);
   },
   handleFormValidation: (errors: Record<string, string[]>) => {
     const errorCount = Object.keys(errors).length;
     if (errorCount === 0) return;
-    const title = errorCount === 1 ? 'Ошибка валидации' : `Ошибок валидации: ${errorCount}`;
+    const title = errorCount === 1 ? 'Validation error' : `Validation errors: ${errorCount}`;
     const description = Object.entries(errors)
       .map(([field, fieldErrors]) => `${field}: ${fieldErrors.join(', ')}`)
       .join('\n');
@@ -47,37 +47,21 @@ const createApiHandlers = (store: NotificationStore) => ({
 
 const createExchangeHandlers = (store: NotificationStore) => ({
   orderCreated: (orderId: string) =>
-    store.success('Заявка создана', `Заявка ${orderId} успешно создана`),
+    store.success('Order created', `Order ${orderId} created successfully`),
   orderCompleted: (orderId: string) =>
-    store.success('Заявка завершена', `Заявка ${orderId} успешно обработана`),
-  exchangeError: (error: string) => store.error('Ошибка обмена', error),
+    store.success('Order completed', `Order ${orderId} processed successfully`),
+  exchangeError: (error: string) => store.error('Exchange error', error),
 
   handleExchangeSuccess: (fromCurrency: string, toCurrency: string, amount: number) =>
-    store.success('Обмен создан успешно', `${amount} ${fromCurrency} → ${toCurrency}`),
+    store.success('Exchange created successfully', `${amount} ${fromCurrency} → ${toCurrency}`),
   handleExchangeError: (error: unknown) => {
     const message = extractErrorMessage(error);
-    return store.error('Ошибка обмена', message);
+    return store.error('Exchange error', message);
   },
 });
 
-// === AUTH HANDLERS (консолидированы из useNotificationHelpers.ts) ===
-
-const createAuthHandlers = (store: NotificationStore) => ({
-  loginSuccess: () => store.success('Вход выполнен', 'Добро пожаловать!'),
-  loginError: () => store.error('Ошибка входа', 'Неверные учетные данные'),
-  logoutSuccess: () => store.info('Выход выполнен', 'До свидания!'),
-
-  handleLoginSuccess: (username?: string) =>
-    store.success(
-      'Вход выполнен',
-      username ? `Добро пожаловать, ${username}!` : 'Добро пожаловать!'
-    ),
-  handleLoginError: (error?: unknown) => {
-    const message = error ? extractErrorMessage(error) : 'Неверные учетные данные';
-    return store.error('Ошибка входа', message);
-  },
-  handleLogoutSuccess: () => store.info('Выход выполнен', 'До свидания!'),
-});
+// === AUTH HANDLERS УДАЛЕНЫ ===
+// Теперь используются локализованные переводы в useAuthMutations.ts
 
 // === UTILITY METHODS (консолидированы из useNotificationUtils.ts) ===
 
@@ -86,7 +70,7 @@ const createUtilityMethods = (store: NotificationStore) => ({
     return store.warning(title, description, {
       persistent: true,
       action: {
-        label: 'Подтвердить',
+        label: 'Confirm',
         onClick: onConfirm,
         variant: 'destructive' as const,
       },
@@ -97,7 +81,7 @@ const createUtilityMethods = (store: NotificationStore) => ({
     return store.error(title, description, {
       persistent: true,
       action: {
-        label: 'Повторить',
+        label: 'Retry',
         onClick: onRetry,
         variant: 'default' as const,
       },
@@ -105,7 +89,7 @@ const createUtilityMethods = (store: NotificationStore) => ({
   },
 
   showProgress: (title: string, progress: number) => {
-    return store.info(title, `Прогресс: ${progress}%`, {
+    return store.info(title, `Progress: ${progress}%`, {
       persistent: true,
     });
   },
@@ -126,8 +110,7 @@ export const useNotifications = () => {
     // Exchange handlers
     ...createExchangeHandlers(store),
 
-    // Auth handlers
-    ...createAuthHandlers(store),
+    // Auth handlers удалены - используйте локализованные переводы
 
     // Utility methods
     ...createUtilityMethods(store),

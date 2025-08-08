@@ -1393,6 +1393,39 @@ export function LoadingButton() {
 }
 ```
 
+#### 🚨 КРИТИЧНО: Правильная интерполяция параметров
+
+**В next-intl используются ОДИНАРНЫЕ фигурные скобки `{parameter}`, НЕ двойные `{{parameter}}`!**
+
+```json
+// ✅ ПРАВИЛЬНО в messages/en.json:
+{
+  "validation": {
+    "password": {
+      "minLength": "Password must contain at least {min} characters"
+    }
+  }
+}
+
+// ❌ НЕПРАВИЛЬНО:
+{
+  "validation": {
+    "password": {
+      "minLength": "Password must contain at least {{min}} characters"
+    }
+  }
+}
+```
+
+```typescript
+// Использование в коде:
+const t = useTranslations('validation.password');
+const message = t('minLength', { min: 8 });
+// Результат: "Password must contain at least 8 characters"
+```
+
+**См. также**: [I18N Troubleshooting Guide](./troubleshooting/I18N_TROUBLESHOOTING.md#проблема-6-malformed_argument---ошибка-интерполяции)
+
 #### 10. Навигация между страницами:
 
 ```typescript
@@ -1435,6 +1468,7 @@ export function Navigation() {
 | "Cannot find module" | Неверный путь в next.config.js | Проверьте путь к request.ts    |
 | Missing translations | Отсутствие `setRequestLocale`  | Добавьте в layout и page       |
 | Hydration errors     | Неправильный ClientProvider    | Используйте без messages prop  |
+| MALFORMED_ARGUMENT   | Двойные скобки {{param}}       | Используйте одинарные {param}  |
 
 ### 🚨 Архитектура 404 страниц
 
