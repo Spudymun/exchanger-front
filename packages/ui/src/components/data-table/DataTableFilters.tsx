@@ -23,7 +23,7 @@ export const DataTableFilters: React.FC<DataTableFiltersProps> = ({
       <div className={tableStyles.filters.searchWrapper}>
         <Search className={tableStyles.filters.searchIcon} />
         <Input
-          placeholder="Search..."
+          placeholder="Поиск..."
           value={searchTerm}
           onChange={e => onSearchChange(e.target.value)}
           className={tableStyles.filters.searchInput}
@@ -36,7 +36,7 @@ export const DataTableFilters: React.FC<DataTableFiltersProps> = ({
         className={tableStyles.filters.filterButton}
       >
         <Filter className={tableStyles.filters.filterIcon} />
-        {showFilters ? 'Hide filters' : 'Show filters'}
+        {showFilters ? 'Скрыть фильтры' : 'Показать фильтры'}
       </Button>
     </div>
   );

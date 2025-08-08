@@ -1,6 +1,17 @@
-import { USER_SUCCESS_MESSAGES, USER_CONFIG, CANCELLABLE_ORDER_STATUSES } from '@repo/constants';
+import {
+  USER_SUCCESS_MESSAGES,
+  USER_CONFIG,
+  CANCELLABLE_ORDER_STATUSES,
+  ORDER_STATUSES,
+} from '@repo/constants';
 import { orderManager, validateUserAccess, validateOrderAccess } from '@repo/exchange-core';
-import { sortOrders, filterOrders, paginateOrders, createOrderError } from '@repo/utils';
+import {
+  sortOrders,
+  filterOrders,
+  paginateOrders,
+  createOrderError,
+  orderStatusSchema,
+} from '@repo/utils';
 
 import { z } from 'zod';
 
@@ -18,7 +29,7 @@ export const ordersRouter = createTRPCRouter({
           .max(USER_CONFIG.MAX_ORDERS_LIMIT)
           .default(USER_CONFIG.DEFAULT_ORDERS_LIMIT),
         offset: z.number().min(0).default(0),
-        status: z.enum(['pending', 'paid', 'processing', 'completed', 'cancelled']).optional(),
+        status: orderStatusSchema.optional(),
       })
     )
     .query(async ({ input, ctx }) => {
@@ -26,10 +37,19 @@ export const ordersRouter = createTRPCRouter({
       const allOrders = orderManager.findByEmail(user.email);
 
       // Используем централизованные утилиты для фильтрации, сортировки и пагинации
-      const result = paginateOrders(sortOrders(filterOrders(allOrders, { status: input.status })), {
-        limit: input.limit,
-        offset: input.offset,
-      });
+      const result = paginateOrders(
+        sortOrders(
+          filterOrders(allOrders, {
+            status: input.status as
+              | (typeof ORDER_STATUSES)[keyof typeof ORDER_STATUSES]
+              | undefined,
+          })
+        ),
+        {
+          limit: input.limit,
+          offset: input.offset,
+        }
+      );
 
       return {
         orders: result.items.map(order => ({
@@ -74,7 +94,7 @@ export const ordersRouter = createTRPCRouter({
         txHash: order.txHash,
         // История статусов (в будущем)
         statusHistory: [
-          { status: 'pending', timestamp: order.createdAt },
+          { status: ORDER_STATUSES.PENDING, timestamp: order.createdAt },
           ...(order.processedAt ? [{ status: order.status, timestamp: order.processedAt }] : []),
         ],
       };
@@ -102,7 +122,7 @@ export const ordersRouter = createTRPCRouter({
 
       // Отменяем заявку
       const updatedOrder = orderManager.update(order.id, {
-        status: 'cancelled',
+        status: ORDER_STATUSES.CANCELLED,
       });
 
       if (!updatedOrder) {

@@ -91,7 +91,7 @@ export function getAvailableTransitions(currentStatus: OrderStatus): OrderStatus
  */
 export function requiresAdditionalData(status: OrderStatus): boolean {
   // Например, для completed может требоваться txHash
-  return status === 'completed';
+  return status === ORDER_STATUSES.COMPLETED;
 }
 
 /**
@@ -179,7 +179,11 @@ export function validateStatusTransition(
   }
 
   // Проверка дополнительных данных
-  if (requiresAdditionalData(newStatus) && newStatus === 'completed' && !additionalData?.txHash) {
+  if (
+    requiresAdditionalData(newStatus) &&
+    newStatus === ORDER_STATUSES.COMPLETED &&
+    !additionalData?.txHash
+  ) {
     const error = 'Transaction hash required to complete order';
 
     return {

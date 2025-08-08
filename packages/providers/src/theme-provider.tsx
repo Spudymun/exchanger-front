@@ -1,7 +1,7 @@
 'use client';
 
 import { THEME_MODES, type ThemeMode } from '@repo/constants';
-import { useUIStore } from '@repo/hooks/src/state/ui-store';
+import { useUIStore } from '@repo/hooks/src/client-hooks';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 interface ThemeContextType {

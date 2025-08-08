@@ -2,6 +2,7 @@ import {
   UI_NUMERIC_CONSTANTS,
   TIME_CONSTANTS,
   TICKET_STATUSES,
+  ORDER_STATUSES,
   type TicketStatus,
 } from '@repo/constants';
 import { userManager, orderManager } from '@repo/exchange-core';
@@ -206,14 +207,14 @@ export const supportRouter = createTRPCRouter({
         },
         stats: {
           totalOrders: userOrders.length,
-          completedOrders: userOrders.filter(o => o.status === 'completed').length,
+          completedOrders: userOrders.filter(o => o.status === ORDER_STATUSES.COMPLETED).length,
           totalVolume: userOrders.reduce((sum, o) => sum + o.uahAmount, 0),
           registrationDays: Math.floor(
             (Date.now() - user.createdAt.getTime()) /
-            (TIME_CONSTANTS.HOURS_IN_DAY *
-              TIME_CONSTANTS.MINUTES_IN_HOUR *
-              TIME_CONSTANTS.SECONDS_IN_MINUTE *
-              UI_NUMERIC_CONSTANTS.MILLISECONDS_PER_SECOND)
+              (TIME_CONSTANTS.HOURS_IN_DAY *
+                TIME_CONSTANTS.MINUTES_IN_HOUR *
+                TIME_CONSTANTS.SECONDS_IN_MINUTE *
+                UI_NUMERIC_CONSTANTS.MILLISECONDS_PER_SECOND)
           ),
         },
         recentOrders: userOrders

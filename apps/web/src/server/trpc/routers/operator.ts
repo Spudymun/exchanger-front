@@ -1,4 +1,4 @@
-import { ORDER_STATUS_CONFIG, VALIDATION_LIMITS } from '@repo/constants';
+import { ORDER_STATUS_CONFIG, VALIDATION_LIMITS, ORDER_STATUSES } from '@repo/constants';
 import { orderManager } from '@repo/exchange-core';
 import {
   paginateOrders,
@@ -9,6 +9,8 @@ import {
   createBadRequestError,
   filterOrdersForOperator,
   canTransitionStatus,
+  operatorOrdersSchema,
+  updateOrderStatusSchema,
 } from '@repo/utils';
 import { z } from 'zod';
 
@@ -31,7 +33,7 @@ export const operatorRouter = createTRPCRouter({
           .max(VALIDATION_LIMITS.ORDER_ITEMS_MAX)
           .default(VALIDATION_LIMITS.DEFAULT_PAGE_SIZE),
         cursor: z.string().optional(),
-        status: z.enum(['pending', 'processing']).optional(),
+        status: operatorOrdersSchema.shape.status,
       })
     )
     .query(async ({ input }) => {
@@ -68,7 +70,7 @@ export const operatorRouter = createTRPCRouter({
         throw createOrderError('not_found', input.orderId);
       }
 
-      if (order.status !== 'pending') {
+      if (order.status !== ORDER_STATUSES.PENDING) {
         throw createBadRequestError(
           await ctx.getErrorMessage('server.errors.business.orderProcessing')
         );
@@ -76,7 +78,7 @@ export const operatorRouter = createTRPCRouter({
 
       // Обновляем статус заявки на processing
       const updatedOrder = orderManager.update(input.orderId, {
-        status: 'processing',
+        status: ORDER_STATUSES.PROCESSING,
       });
 
       if (!updatedOrder) {
@@ -94,13 +96,7 @@ export const operatorRouter = createTRPCRouter({
 
   // Обновить статус заявки
   updateOrderStatus: operatorOnly
-    .input(
-      z.object({
-        orderId: z.string(),
-        status: z.enum(['processing', 'completed', 'cancelled']),
-        comment: z.string().optional(),
-      })
-    )
+    .input(updateOrderStatusSchema)
     .mutation(async ({ input, ctx }) => {
       const order = orderManager.findById(input.orderId);
 
@@ -117,7 +113,7 @@ export const operatorRouter = createTRPCRouter({
 
       const updatedOrder = orderManager.update(input.orderId, {
         status: input.status,
-        ...(input.status === 'completed' && { processedAt: new Date() }),
+        ...(input.status === ORDER_STATUSES.COMPLETED && { processedAt: new Date() }),
       });
 
       if (!updatedOrder) {
@@ -125,7 +121,8 @@ export const operatorRouter = createTRPCRouter({
       }
 
       console.log(
-        `🔄 Статус заявки ${input.orderId} изменен на ${input.status} оператором ${ctx.user.email}${input.comment ? `. Комментарий: ${input.comment}` : ''
+        `🔄 Статус заявки ${input.orderId} изменен на ${input.status} оператором ${ctx.user.email}${
+          input.comment ? `. Комментарий: ${input.comment}` : ''
         }`
       );
 

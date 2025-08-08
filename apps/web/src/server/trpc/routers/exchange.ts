@@ -5,6 +5,7 @@ import {
   CURRENCY_NAMES,
   UI_NUMERIC_CONSTANTS,
   PERCENTAGE_CALCULATIONS,
+  ORDER_STATUSES,
 } from '@repo/constants';
 import {
   validateCreateOrder,
@@ -102,7 +103,7 @@ function createOrderInSystem(orderRequest: {
     cryptoAmount: orderRequest.cryptoAmount,
     currency: orderRequest.currency,
     uahAmount: orderRequest.uahAmount,
-    status: 'pending',
+    status: ORDER_STATUSES.PENDING,
     depositAddress,
     recipientData: orderRequest.recipientData,
   });
@@ -208,7 +209,8 @@ export const exchangeRouter = createTRPCRouter({
       const validation = validateCreateOrder(orderRequest);
       if (!validation.isValid) {
         throw createBadRequestError(
-          validation.errors[0] || await ctx.getErrorMessage('server.errors.business.exchangeValidationError')
+          validation.errors[0] ||
+            (await ctx.getErrorMessage('server.errors.business.exchangeValidationError'))
         );
       }
 

@@ -3,6 +3,7 @@ import {
   USER_SUCCESS_MESSAGES,
   USER_CONFIG,
   VALIDATION_LIMITS,
+  CANCELLABLE_ORDER_STATUSES,
 } from '@repo/constants';
 import {
   userManager,
@@ -49,7 +50,7 @@ export const securityRouter = createTRPCRouter({
       if (!passwordResult.success) {
         throw createBadRequestError(
           passwordResult.error.issues[0]?.message ||
-          await ctx.getErrorMessage('server.errors.validation.passwordValidation')
+            (await ctx.getErrorMessage('server.errors.validation.passwordValidation'))
         );
       }
 
@@ -115,9 +116,10 @@ export const securityRouter = createTRPCRouter({
       }
 
       // Проверяем активные заявки
+      type Cancellable = (typeof CANCELLABLE_ORDER_STATUSES)[number];
       const activeOrders = orderManager
         .findByEmail(user.email)
-        .filter(order => ['pending', 'processing'].includes(order.status));
+        .filter(order => CANCELLABLE_ORDER_STATUSES.includes(order.status as Cancellable));
 
       if (activeOrders.length > 0) {
         throw createBadRequestError(USER_MESSAGES.ACTIVE_ORDERS_EXIST(activeOrders.length));
