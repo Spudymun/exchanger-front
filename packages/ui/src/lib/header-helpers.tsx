@@ -1,7 +1,8 @@
 import * as React from 'react';
 
-import type { HeaderContextValue } from '../components/header-compound';
 import { Button } from '../components/ui/button';
+
+import type { HeaderContextValue } from './header-types';
 
 export function renderAuthenticatedUser(
   userName: string | undefined,

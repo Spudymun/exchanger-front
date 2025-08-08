@@ -3,23 +3,13 @@
 import * as React from 'react';
 
 import { enhanceChildWithContext } from '../lib/header-helpers';
+import type { HeaderContextValue } from '../lib/header-types';
 import { cn } from '../lib/utils';
 
 const FLEX_ITEMS_CENTER_SPACE_X_2 = 'flex items-center space-x-2';
 
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
-
-export interface HeaderContextValue {
-  isMenuOpen?: boolean;
-  currentLocale?: string;
-  isAuthenticated?: boolean;
-  userName?: string;
-  onToggleMenu?: () => void;
-  onLocaleChange?: (locale: string) => void;
-  onSignIn?: () => void;
-  onSignOut?: () => void;
-}
 
 const HeaderContext = React.createContext<HeaderContextValue | undefined>(undefined);
 

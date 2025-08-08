@@ -1,18 +1,58 @@
 import {
   VALIDATION_LIMITS,
-  CRYPTOCURRENCIES,
   UI_NUMERIC_CONSTANTS,
   VALIDATION_BOUNDS,
   MAX_CRYPTO_AMOUNT,
   ORDER_STATUS_VALUES,
   TICKET_STATUS_VALUES,
   ORDER_STATUSES,
+  EXCHANGE_VALIDATION_PATTERNS,
 } from '@repo/constants';
-import {
-  type CryptoCurrency,
-} from '@repo/exchange-core';
 
 import { z } from 'zod';
+
+// Импорт схем для использования в этом файле
+import {
+  idSchema,
+  emailSchema,
+  passwordSchema,
+  newPasswordSchema,
+  legacyPasswordSchema,
+  searchQuerySchema,
+} from './validation/schemas-basic';
+
+import { currencySchema } from './validation/schemas-crypto';
+
+/**
+ * Централизованные схемы валидации
+ * Используют константы из @repo/constants для единообразия
+ * Сообщения переводов управляются через createNextIntlZodErrorMap или createZodErrorMap
+ */
+
+// === РЕЭКСПОРТ БАЗОВЫХ СХЕМ ===
+export { usernameSchema, phoneInternationalSchema } from './validation/schemas-basic';
+
+export {
+  btcAddressSchema,
+  ethAddressSchema,
+  ltcAddressSchema,
+  createCryptoAddressSchema,
+  cryptoAmountStringSchema,
+} from './validation/schemas-crypto';
+
+// === ЭКСПОРТ ИМПОРТИРОВАННЫХ СХЕМ ===
+// Экспортируем схемы, которые мы импортировали для использования в этом файле
+export {
+  idSchema,
+  emailSchema,
+  passwordSchema,
+  newPasswordSchema,
+  legacyPasswordSchema,
+  searchQuerySchema,
+  currencySchema,
+};
+
+// === СПЕЦИФИЧНЫЕ СХЕМЫ (остающиеся в этом файле) ===
 
 // === КОНСТАНТЫ ===
 // Centralized constants from @repo/constants
@@ -28,139 +68,12 @@ const OPERATOR_CHANGEABLE_STATUSES = [
   ORDER_STATUSES.CANCELLED,
 ] as const;
 
-/**
- * Централизованные Zod схемы валидации для tRPC роутеров
- * Устраняет дублирование валидационной логики
- * Сообщения об ошибках предоставляются через Zod error map для поддержки i18n
- */
-
-// === БАЗОВЫЕ ТИПЫ ===
-
-// === УСИЛЕННЫЕ БАЗОВЫЕ СХЕМЫ ===
-
-/**
- * Email валидация - строгая Zod валидация БЕЗ хардкода сообщений
- * Сообщения обрабатываются через createNextIntlZodErrorMap
- */
-export const emailSchema = z
-  .string()
-  .min(1)
-  .max(VALIDATION_LIMITS.EMAIL_MAX_LENGTH)
-  .email();
-
-/**
- * Пароль - УСИЛЕННАЯ валидация (строже чем текущая)
- * Требования: минимум 8 символов, заглавная, строчная, цифра, спецсимвол
- * ИСПРАВЛЕНО: Использует i18n ключи через error map вместо хардкода
- */
-export const passwordSchema = z
-  .string()
-  .min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH)
-  .max(VALIDATION_LIMITS.PASSWORD_MAX_LENGTH)
-  .regex(/[a-z]/)
-  .regex(/[A-Z]/)
-  .regex(/\d/)
-  .regex(/[@$!%*?&]/);
-
-/**
- * Новый пароль - та же усиленная валидация что и обычный пароль
- */
-export const newPasswordSchema = passwordSchema;
-
-/**
- * Миграционная схема для существующих паролей (без спецсимволов)
- * Используется для входа существующих пользователей
- * ИСПРАВЛЕНО: Использует i18n ключи через error map
- */
-export const legacyPasswordSchema = z
-  .string()
-  .min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH)
-  .regex(/[a-z]/)
-  .regex(/[A-Z]/)
-  .regex(/\d/);
-
-/**
- * Валидация имени пользователя
- */
-export const usernameSchema = z
-  .string()
-  .min(VALIDATION_LIMITS.USERNAME_MIN_LENGTH)
-  .max(VALIDATION_LIMITS.USERNAME_MAX_LENGTH);
-
-/**
- * Валидация ID (обычно UUID или строка) БЕЗ хардкода сообщений
- */
-export const idSchema = z.string().min(1);
-
-// === CRYPTO ВАЛИДАЦИЯ ===
-
-/**
- * Bitcoin адрес - поддержка Legacy и Bech32
- */
-/**
- * Bitcoin адрес (legacy и bech32)
- */
-export const btcAddressSchema = z
-  .string()
-  .regex(
-    /^(?:[13][a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-z0-9]{39,59})$/
-  );
-
-/**
- * Ethereum адрес (также для USDT)
- */
-export const ethAddressSchema = z
-  .string()
-  .regex(/^0x[a-fA-F0-9]{40}$/);
-
-/**
- * Litecoin адрес
- */
-export const ltcAddressSchema = z
-  .string()
-  .regex(
-    /^[LM3][a-km-zA-HJ-NP-Z1-9]{26,33}$|^ltc1[a-z0-9]{39,59}$/
-  );
-
-/**
- * Универсальная валидация crypto адреса по валюте
- */
-export const createCryptoAddressSchema = (currency: CryptoCurrency) => {
-  switch (currency) {
-    case 'BTC':
-      return btcAddressSchema;
-    case 'ETH':
-    case 'USDT':
-      return ethAddressSchema;
-    case 'LTC':
-      return ltcAddressSchema;
-    default:
-      return z.string().min(1);
-  }
-};
-
-/**
- * Валидация поискового запроса
- */
-export const searchQuerySchema = z
-  .string()
-  .min(2);
-
-// === ТЕЛЕФОННЫЕ НОМЕРА ===
+// === УНИКАЛЬНЫЕ СХЕМЫ ЭТОГО ФАЙЛА ===
 
 /**
  * Украинский номер телефона
  */
-export const phoneUkraineSchema = z
-  .string()
-  .regex(/^\+380\d{9}$/);
-
-/**
- * Международный номер телефона
- */
-export const phoneInternationalSchema = z
-  .string()
-  .regex(/^\+?[1-9]\d{1,14}$/);
+export const phoneUkraineSchema = z.string().regex(/^\+380\d{9}$/);
 
 // === ПАГИНАЦИЯ ===
 
@@ -194,35 +107,12 @@ export const universalPaginationSchema = z.object({
 /**
  * Валидация криптовалютной суммы (числовая)
  */
-export const cryptoAmountSchema = z
-  .number()
-  .positive()
-  .max(MAX_CRYPTO_AMOUNT);
+export const cryptoAmountSchema = z.number().positive().max(MAX_CRYPTO_AMOUNT);
 
 /**
  * Валидация суммы в гривнах (числовая)
  */
-export const uahAmountSchema = z
-  .number()
-  .positive()
-  .max(MAX_UAH_AMOUNT);
-
-// === СТРОКОВЫЕ СХЕМЫ ДЛЯ ФОРМ ===
-
-/**
- * Crypto сумма - строгая валидация с точностью до 8 знаков
- * Используется в формах для строковых инпутов
- */
-export const cryptoAmountStringSchema = z
-  .string()
-  .regex(/^\d+\.?\d{0,8}$/)
-  .refine(val => Number(val) > 0)
-  .refine(
-    val => Number(val) >= VALIDATION_BOUNDS.MIN_ORDER_AMOUNT
-  )
-  .refine(
-    val => Number(val) <= VALIDATION_BOUNDS.MAX_ORDER_AMOUNT
-  );
+export const uahAmountSchema = z.number().positive().max(MAX_UAH_AMOUNT);
 
 /**
  * UAH сумма - строгая валидация с точностью до 2 знаков
@@ -232,14 +122,7 @@ export const uahAmountStringSchema = z
   .string()
   .regex(/^\d+\.?\d{0,2}$/)
   .refine(val => Number(val) > 0)
-  .refine(
-    val => Number(val) <= VALIDATION_BOUNDS.MAX_UAH_AMOUNT
-  );
-
-/**
- * Валидация криптовалюты
- */
-export const currencySchema = z.enum(CRYPTOCURRENCIES as unknown as [string, ...string[]]);
+  .refine(val => Number(val) <= VALIDATION_BOUNDS.MAX_UAH_AMOUNT);
 
 // === ЗАКАЗЫ ===
 
@@ -309,7 +192,13 @@ export const createExchangeOrderSchema = z.object({
   currency: currencySchema,
   paymentDetails: z
     .object({
-      cardNumber: z.string().optional(),
+      cardNumber: z
+        .string()
+        .regex(
+          EXCHANGE_VALIDATION_PATTERNS.CARD_NUMBER,
+          'Номер карты должен содержать точно 16 цифр'
+        )
+        .optional(),
       bankDetails: z.string().optional(),
     })
     .optional(),
@@ -346,16 +235,14 @@ export const loginApiSchema = z.object({
 export const captchaSchema = z
   .string()
   .min(1)
-  .refine(
-    (value) => {
-      // Базовая проверка на заполненность
-      if (!value || value.trim() === '') {
-        return false;
-      }
-      // Дополнительная валидация делается через состояние компонента
-      return true;
+  .refine(value => {
+    // Базовая проверка на заполненность
+    if (!value || value.trim() === '') {
+      return false;
     }
-  );
+    // Дополнительная валидация делается через состояние компонента
+    return true;
+  });
 
 /**
  * Схема для входа - УСИЛЕННАЯ валидация
@@ -472,12 +359,8 @@ export const ticketStatusSchema = z.enum(TICKET_STATUS_VALUES as [string, ...str
  * Схема для создания тикета поддержки
  */
 export const createTicketSchema = z.object({
-  subject: z
-    .string()
-    .min(VALIDATION_LIMITS.USERNAME_MIN_LENGTH),
-  description: z
-    .string()
-    .min(MIN_DESCRIPTION_LENGTH),
+  subject: z.string().min(VALIDATION_LIMITS.USERNAME_MIN_LENGTH),
+  description: z.string().min(MIN_DESCRIPTION_LENGTH),
   priority: ticketPrioritySchema.default('MEDIUM'),
 });
 
@@ -486,12 +369,8 @@ export const createTicketSchema = z.object({
  */
 export const createTicketAdminSchema = z.object({
   userId: idSchema,
-  subject: z
-    .string()
-    .min(VALIDATION_LIMITS.USERNAME_MIN_LENGTH),
-  description: z
-    .string()
-    .min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH),
+  subject: z.string().min(VALIDATION_LIMITS.USERNAME_MIN_LENGTH),
+  description: z.string().min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH),
   priority: ticketPrioritySchema.default('MEDIUM'),
   category: z.string().min(1),
 });
@@ -538,125 +417,12 @@ export const updateNotificationsSchema = z.object({
     .optional(),
 });
 
-// === БЫСТРЫЕ ДЕЙСТВИЯ ===
+// === РЕЭКСПОРТ СОСТАВНЫХ СХЕМ ===
+export {
+  createOrderEnhancedSchema,
+  changePasswordEnhancedSchema,
+  createOrderWithAddressSchema,
+  updateUserProfileSchema,
+} from './validation/schemas-composed';
 
-/**
- * Схема для быстрых действий администратора
- */
-export const quickActionsSchema = z.object({
-  action: z.enum(['REFRESH_RATES', 'CLEAR_CACHE', 'SEND_NOTIFICATION']),
-  params: z.record(z.any()).optional(),
-});
-
-// === СОСТАВНЫЕ СХЕМЫ ===
-
-/**
- * Универсальная схема для получения элемента по ID
- */
-export const getByIdSchema = z.object({
-  id: idSchema,
-});
-
-/**
- * Схема для операций с заказом (по ID)
- */
-export const orderByIdSchema = z.object({
-  orderId: idSchema,
-});
-
-/**
- * Схема для фильтрации по дате
- */
-export const dateRangeSchema = z.object({
-  dateFrom: z.string().optional(),
-  dateTo: z.string().optional(),
-});
-
-// === ВАЛИДАТОРЫ-ХЕЛПЕРЫ ===
-
-/**
- * Создает схему с ограничением по времени (например, для rate limiting)
- */
-export function createTimestampSchema() {
-  return z.number().int().positive();
-}
-
-/**
- * Создает схему для опциональной строки с минимальной длиной
- */
-export function createOptionalStringSchema(minLength = 1) {
-  return z
-    .string()
-    .min(minLength)
-    .optional();
-}
-
-/**
- * Создает схему для массива ID
- */
-export function createIdsArraySchema(maxItems = 100) {
-  return z.array(idSchema).max(maxItems);
-}
-
-/**
- * Создает схему для диапазона чисел
- */
-export function createNumberRangeSchema(min: number, max: number) {
-  return z
-    .number()
-    .min(min)
-    .max(max);
-}
-// === ДОПОЛНИТЕЛЬНЫЕ СОСТАВНЫЕ СХЕМЫ ===
-
-/**
- * Создание заказа - усиленная валидация
- */
-export const createOrderEnhancedSchema = z.object({
-  email: emailSchema,
-  cryptoAmount: cryptoAmountStringSchema, // Строгая валидация суммы
-  currency: currencySchema,
-  recipientAddress: z.string().min(1),
-});
-
-/**
- * Смена пароля - усиленная валидация
- */
-export const changePasswordEnhancedSchema = z
-  .object({
-    currentPassword: legacyPasswordSchema, // Текущий пароль может быть legacy
-    newPassword: newPasswordSchema, // Новый пароль должен быть усиленным
-    confirmPassword: z.string(),
-  })
-  .refine(data => data.newPassword === data.confirmPassword, {
-    path: ['confirmPassword'],
-  })
-  .refine(data => data.currentPassword !== data.newPassword, {
-    path: ['newPassword'],
-  });
-
-/**
- * Схема для создания заказа с crypto адресом
- */
-export const createOrderWithAddressSchema = z.object({
-  email: emailSchema,
-  cryptoAmount: cryptoAmountStringSchema,
-  currency: currencySchema,
-}).refine(async (data) => {
-  // Валидация crypto адреса в зависимости от валюты
-  const _addressSchema = createCryptoAddressSchema(data.currency as CryptoCurrency);
-  return true; // Placeholder - реальная валидация будет в компоненте
-});
-
-/**
- * Схема для обновления профиля пользователя
- */
-export const updateUserProfileSchema = z.object({
-  email: emailSchema.optional(),
-  phone: phoneInternationalSchema.optional(),
-  firstName: z.string().min(1).optional(),
-  lastName: z.string().min(1).optional(),
-}).refine(data => {
-  // Хотя бы одно поле должно быть заполнено
-  return Object.values(data).some(value => value !== undefined && value !== '');
-});
+// === КОНЕЦ ФАЙЛА ===
