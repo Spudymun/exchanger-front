@@ -285,6 +285,10 @@
       "label": "Password",
       "placeholder": "Enter password"
     },
+    "confirmPassword": {
+      "label": "Confirm Password",
+      "placeholder": "Confirm password"
+    },
     "validation": {
       "required": "This field is required",
       "invalid": "Invalid value",

@@ -285,6 +285,10 @@
       "label": "Пароль",
       "placeholder": "Введите пароль"
     },
+    "confirmPassword": {
+      "label": "Подтверждение пароля",
+      "placeholder": "Подтвердите пароль"
+    },
     "validation": {
       "enterAmount": "Введите сумму",
       "selectBank": "Выберите банк",
