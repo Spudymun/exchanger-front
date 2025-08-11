@@ -1,14 +1,39 @@
-import { LAYOUT_SHARED_CONFIG, I18N_CONFIG, GLOBAL_CSS_CLASSES } from '@repo/constants';
+import {
+  LAYOUT_SHARED_CONFIG,
+  I18N_CONFIG,
+  GLOBAL_CSS_CLASSES,
+  META_DEFAULTS,
+} from '@repo/constants';
 import { ThemeScript } from '@repo/providers';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import './globals.css';
 
+// App-specific metadata content (не выносится в общие константы согласно seo.ts комментариям)
+const APP_TITLE = 'ExchangeGO - Enterprise Crypto Exchange';
+const APP_DESCRIPTION =
+  'Modern cryptocurrency exchange platform built with Next.js, tRPC, and enterprise-grade architecture';
+
 export const metadata: Metadata = {
-  title: 'ExchangeGO - Enterprise Crypto Exchange',
-  description:
-    'Modern cryptocurrency exchange platform built with Next.js, tRPC, and enterprise-grade architecture',
+  title: APP_TITLE,
+  description: APP_DESCRIPTION,
   keywords: 'crypto, exchange, trading, blockchain, nextjs, trpc, enterprise, exchangego',
+  openGraph: {
+    title: APP_TITLE,
+    description: APP_DESCRIPTION,
+    type: META_DEFAULTS.OPEN_GRAPH.TYPE,
+    locale: META_DEFAULTS.OPEN_GRAPH.LOCALE,
+    siteName: 'ExchangeGO',
+  },
+  twitter: {
+    card: META_DEFAULTS.TWITTER.CARD,
+    title: APP_TITLE,
+    description: APP_DESCRIPTION,
+  },
+  robots: {
+    index: META_DEFAULTS.ROBOTS.INDEX,
+    follow: META_DEFAULTS.ROBOTS.FOLLOW,
+  },
 };
 
 export const viewport = LAYOUT_SHARED_CONFIG.VIEWPORT;
