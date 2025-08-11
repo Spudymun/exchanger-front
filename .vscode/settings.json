@@ -1,23 +1,21 @@
 {
-    "editor.formatOnSave": true,
-    "css.validate": false,
-    "scss.validate": false,
-    "stylelint.enable": true,
-    "stylelint.validate": [
-        "css",
-        "scss"
-    ],
-    "editor.codeActionsOnSave": {
-        "source.fixAll.stylelint": "explicit",
-        "source.fixAll.eslint": "explicit"
-    },
-    "files.associations": {
-        "*.css": "tailwindcss"
-    },
-    "[css]": {
-        "editor.defaultFormatter": "vscode.css-language-features"
-    },
-    "[scss]": {
-        "editor.defaultFormatter": "vscode.css-language-features"
-    }
+  "editor.formatOnSave": true,
+  "css.validate": false,
+  "scss.validate": false,
+  "stylelint.enable": true,
+  "stylelint.validate": ["css", "scss"],
+  "editor.codeActionsOnSave": {
+    "source.fixAll.stylelint": "explicit",
+    "source.fixAll.eslint": "explicit"
+  },
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "vscode.css-language-features"
+  },
+  "[scss]": {
+    "editor.defaultFormatter": "vscode.css-language-features"
+  },
+  "typescript.autoClosingTags": false
 }

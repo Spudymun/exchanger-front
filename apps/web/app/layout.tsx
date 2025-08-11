@@ -1,3 +1,4 @@
+import { LAYOUT_SHARED_CONFIG, I18N_CONFIG, GLOBAL_CSS_CLASSES } from '@repo/constants';
 import { ThemeScript } from '@repo/providers';
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
@@ -10,22 +11,30 @@ export const metadata: Metadata = {
   keywords: 'crypto, exchange, trading, blockchain, nextjs, trpc, enterprise, exchangego',
 };
 
-export const viewport = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
+export const viewport = LAYOUT_SHARED_CONFIG.VIEWPORT;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Get locale from middleware header
+  // Get locale from middleware header with centralized fallback
   const headersList = await headers();
-  const locale = headersList.get('x-locale') || 'en';
+  const locale = headersList.get('x-locale') || I18N_CONFIG.DEFAULT_LOCALE;
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning={GLOBAL_CSS_CLASSES.HTML_SUPPRESS_HYDRATION}>
       <head>
-        <meta name="color-scheme" content="light dark" />
-        <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+        <meta name="color-scheme" content={LAYOUT_SHARED_CONFIG.COLOR_SCHEME} />
+        <meta
+          name="theme-color"
+          content={LAYOUT_SHARED_CONFIG.THEME_COLORS.LIGHT}
+          media="(prefers-color-scheme: light)"
+        />
+        <meta
+          name="theme-color"
+          content={LAYOUT_SHARED_CONFIG.THEME_COLORS.DARK}
+          media="(prefers-color-scheme: dark)"
+        />
         <ThemeScript />
       </head>
-      <body className="antialiased">{children}</body>
+      <body className={GLOBAL_CSS_CLASSES.BODY_BASE}>{children}</body>
     </html>
   );
 }

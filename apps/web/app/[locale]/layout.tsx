@@ -1,3 +1,4 @@
+import { LAYOUT_SHARED_CONFIG, META_DEFAULTS } from '@repo/constants';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
@@ -9,30 +10,32 @@ import { routing } from '../../src/i18n/routing';
 const SITE_TITLE = 'ExchangeGO - Enterprise Crypto Exchange';
 const SITE_DESCRIPTION =
   'Modern cryptocurrency exchange platform built with Next.js, tRPC, and enterprise-grade architecture';
+const SITE_KEYWORDS = 'crypto, exchange, trading, blockchain, nextjs, trpc, enterprise, exchangego';
+const SITE_NAME = 'ExchangeGO';
 
 export const metadata: Metadata = {
   title: SITE_TITLE,
   description: SITE_DESCRIPTION,
-  keywords: 'crypto, exchange, trading, blockchain, nextjs, trpc, enterprise, exchangego',
+  keywords: SITE_KEYWORDS,
   openGraph: {
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
-    type: 'website',
-    locale: 'en_US',
-    siteName: 'ExchangeGO',
+    type: META_DEFAULTS.OPEN_GRAPH.TYPE,
+    locale: META_DEFAULTS.OPEN_GRAPH.LOCALE,
+    siteName: SITE_NAME,
   },
   twitter: {
-    card: 'summary_large_image',
+    card: META_DEFAULTS.TWITTER.CARD,
     title: SITE_TITLE,
     description: SITE_DESCRIPTION,
   },
   robots: {
-    index: true,
-    follow: true,
+    index: META_DEFAULTS.ROBOTS.INDEX,
+    follow: META_DEFAULTS.ROBOTS.FOLLOW,
   },
 };
 
-export const viewport = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no';
+export const viewport = LAYOUT_SHARED_CONFIG.VIEWPORT;
 
 export function generateStaticParams() {
   return routing.locales.map(locale => ({ locale }));

@@ -1,4 +1,4 @@
-import { type SupportedLocale, SUPPORTED_LOCALES } from '@repo/constants';
+import { type SupportedLocale, SUPPORTED_LOCALES, I18N_CONFIG } from '@repo/constants';
 import { type User, userManager } from '@repo/exchange-core';
 import { type inferAsyncReturnType } from '@trpc/server';
 import { type CreateNextContextOptions } from '@trpc/server/adapters/next';
@@ -10,7 +10,7 @@ import { createErrorMessageFunction } from '../utils/i18n-errors';
  */
 function getLocaleFromAcceptLanguage(acceptLanguage: string): SupportedLocale {
   if (!acceptLanguage) {
-    return 'en';
+    return I18N_CONFIG.FALLBACK_LOCALE;
   }
 
   const languages = acceptLanguage
@@ -32,7 +32,7 @@ function getLocaleFromAcceptLanguage(acceptLanguage: string): SupportedLocale {
     }
   }
 
-  return 'en'; // Default fallback
+  return I18N_CONFIG.FALLBACK_LOCALE; // Default fallback
 }
 
 export const createContext = async (opts: CreateNextContextOptions) => {

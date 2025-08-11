@@ -21,7 +21,21 @@ export interface Colors {
   success: ColorScale;
   warning: ColorScale;
   error: ColorScale;
-  neutral: ColorScale;
+  gray: ColorScale;
+  bitcoin: Partial<ColorScale>;
+  ethereum: Partial<ColorScale>;
+  usdt: Partial<ColorScale>;
+  litecoin: Partial<ColorScale>;
+  gradients: {
+    primary: string;
+    secondary: string;
+    success: string;
+    crypto: string;
+  };
+  white: string;
+  black: string;
+  transparent: string;
+  current: string;
 }
 
 export interface Typography {

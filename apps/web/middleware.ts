@@ -1,3 +1,4 @@
+import { I18N_CONFIG } from '@repo/constants';
 import { NextRequest, NextResponse } from 'next/server';
 import createMiddleware from 'next-intl/middleware';
 
@@ -11,7 +12,9 @@ export default function middleware(request: NextRequest) {
 
   // Extract locale from pathname
   const pathname = request.nextUrl.pathname;
-  const locale = pathname.startsWith('/ru') ? 'ru' : 'en';
+  const locale = pathname.startsWith(`/${I18N_CONFIG.DEFAULT_LOCALE}`)
+    ? I18N_CONFIG.DEFAULT_LOCALE
+    : I18N_CONFIG.FALLBACK_LOCALE;
 
   // Add locale header for root layout
   if (response instanceof NextResponse) {

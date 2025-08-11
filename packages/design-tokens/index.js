@@ -16,13 +16,7 @@ export {
 } from './form-patterns.js';
 
 // === COMPONENTS EXPORT ===
-export {
-  DesignSystemClasses,
-  ExchangeArrow,
-  FormContainer,
-  cn,
-  createStateClasses,
-} from './components.js';
+// Components removed - use @repo/ui instead
 
 // === COMBINED DEFAULT EXPORT ===
 import { colors } from './colors.js';

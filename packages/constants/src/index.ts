@@ -26,3 +26,6 @@ export * from './business-limits';
 
 // Contact information and social links
 export * from './contacts';
+
+// SEO and metadata configuration
+export * from './seo';
