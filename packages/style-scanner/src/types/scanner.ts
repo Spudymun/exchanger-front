@@ -242,7 +242,7 @@ export interface ConfigStats {
  */
 export interface TailwindConfigScanResult {
   readonly configPath: string;
-  readonly configType: 'root' | 'app-specific' | 'preset';
+  readonly configType: 'root' | 'app-specific' | 'preset' | 'package-specific';
   readonly issues: readonly ConfigIssue[];
   readonly stats: ConfigStats;
   readonly errors: readonly ScanError[];

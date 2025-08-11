@@ -239,14 +239,14 @@ Style Scanner автоматически анализирует все конф�
 - **Total Issues Found**: 2
 - **Total Errors**: 3
 
-### Root Configurations
+### Preset Configurations
 
-#### `tailwind.config.cjs`
+#### `packages/tailwind-preset/preset.js`
 
-- **Type**: root
-- **Content Paths**: 6
-- **Valid Paths**: 5
-- **Issues**: 2
+- **Type**: preset
+- **Content Paths**: Defined per application
+- **Valid Paths**: Validated per application
+- **Issues**: 0
 - **Errors**: 0
 
 **⚠️ Issues Found:**

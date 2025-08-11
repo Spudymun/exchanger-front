@@ -171,6 +171,11 @@ export class TailwindConfigScanner extends BaseScanner {
       return 'app-specific';
     }
 
+    if (configPath.includes('packages/ui')) {
+      return 'package-specific';
+    }
+
+    // Fallback для любых других конфигураций (не должно происходить в текущей архитектуре)
     return 'root';
   }
 

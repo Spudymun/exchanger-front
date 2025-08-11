@@ -269,9 +269,10 @@ ${
 
     // Группируем по типам конфигураций
     const configsByType = {
-      root: tailwindConfigs.filter(c => c.configType === 'root'),
-      'app-specific': tailwindConfigs.filter(c => c.configType === 'app-specific'),
       preset: tailwindConfigs.filter(c => c.configType === 'preset'),
+      'app-specific': tailwindConfigs.filter(c => c.configType === 'app-specific'),
+      'package-specific': tailwindConfigs.filter(c => c.configType === 'package-specific'),
+      root: tailwindConfigs.filter(c => c.configType === 'root'), // Legacy, не должно использоваться
     };
 
     for (const [type, configs] of Object.entries(configsByType)) {

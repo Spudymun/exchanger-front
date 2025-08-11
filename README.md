@@ -9,8 +9,7 @@
 - `turbo.json`: Конфигурация Turborepo.
 - `package.json`: Зависимости и скрипты.
 - `tsconfig.json`: Общая конфигурация TypeScript.
-- `tailwind.config.js`: Конфигурация Tailwind CSS с интеграцией Design Tokens.
-- `postcss.config.js`: Конфигурация PostCSS.
+- `postcss.config.cjs`: Конфигурация PostCSS с автоматическим обнаружением Tailwind.
 - `.gitignore`: Игнорируемые файлы.
 
 ### Приложения (`apps/`)
@@ -22,7 +21,8 @@
 ### Пакеты (`packages/`)
 
 - `ui/`: Общая UI-библиотека.
-- `design-tokens/`: Цветовые схемы, типографика и spacing для Tailwind CSS.
+- `design-tokens/`: Цветовые схемы, типографика и spacing для дизайн-системы.
+- `tailwind-preset/`: Централизованная конфигурация Tailwind CSS с preset архитектурой.
 - `hooks/`: Переиспользуемые хуки.
 - `api-client/`: Клиенты для API.
 - `utils/`: Утилиты.
@@ -34,7 +34,7 @@
 - **Turborepo**: Монорепозиторий с оптимизацией сборки
 - **Next.js 15**: React-фреймворк с App Router
 - **TypeScript**: Типизация
-- **Tailwind CSS 4**: Utility-first CSS фреймворк
+- **Tailwind CSS 3.4**: Utility-first CSS фреймворк с preset архитектурой
 - **Design Tokens**: Централизованная система дизайна
 - **PostCSS**: CSS постпроцессор
 
@@ -84,9 +84,23 @@
    npm run check-types
    ```
 
-## Design Tokens
+## Design Tokens и Tailwind CSS
 
-Проект использует централизованную систему дизайна с Design Tokens в пакете `@repo/design-tokens`. Все токены автоматически интегрированы в Tailwind CSS.
+Проект использует **централизованную preset архитектуру** для Tailwind CSS:
+
+- **`@repo/design-tokens`** - цветовые схемы, типографика, spacing
+- **`@repo/tailwind-preset`** - централизованная конфигурация Tailwind с CSS переменными
+- **Каждое приложение** имеет свой `tailwind.config.cjs` с preset импортом
+
+### Архитектура конфигурации:
+
+```javascript
+// apps/*/tailwind.config.cjs
+module.exports = {
+  presets: [require('@repo/tailwind-preset/preset')],
+  content: ['./app/**/*.{ts,tsx}', '../../packages/ui/src/**/*.{ts,tsx}'],
+};
+```
 
 ### Доступные токены:
 
@@ -128,13 +142,22 @@ packages/ui/
 
 ### Модификация Design Tokens
 
-Все токены находятся в `packages/design-tokens/`:
+**Централизованные токены** в `packages/design-tokens/`:
 
 - `colors.js` - цветовые схемы
 - `typography.js` - настройки типографики
 - `spacing.js` - отступы и размеры
 
-После изменения токенов они автоматически применяются во всех приложениях через Tailwind CSS.
+**Централизованная конфигурация** в `packages/tailwind-preset/`:
+
+- `preset.js` - основная конфигурация Tailwind
+- `globals.css` - CSS переменные для тем (единый источник истины)
+
+**Применение изменений:**
+
+1. Изменения в `design-tokens` требуют обновления `tailwind-preset`
+2. Изменения в `tailwind-preset` автоматически применяются во всех приложениях
+3. CSS переменные в `globals.css` поддерживают автоматическое переключение тем
 
 ## Документация
 
