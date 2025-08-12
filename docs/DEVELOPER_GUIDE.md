@@ -1066,9 +1066,36 @@ module.exports = {
     },
   },
 };
-````
+```
 
-2. **Использовать в CSS**:
+2. **⚠️ ОБЯЗАТЕЛЬНО: Обновить package.json при изменении структуры пакета**:
+
+```json
+// packages/design-tokens/package.json
+{
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "colors.js",
+    "typography.js",
+    "spacing.js",
+    "form-patterns.js",
+    "new-file.js"  // ← Добавить новый файл
+  ],
+  "dependencies": {
+    "@repo/constants": "*",  // ← Добавить если используете типы из constants
+    "@repo/new-package": "*" // ← Добавить новые зависимости
+  }
+}
+```
+
+**Когда обновлять package.json:**
+- ✅ **Добавили новый .js файл** → добавить в `files` массив
+- ✅ **Используете типы из другого пакета** → добавить в `dependencies`
+- ✅ **Импортируете из другого internal пакета** → добавить зависимость
+- ❌ **Только изменили содержимое существующих файлов** → обновление не нужно`
+
+3. **Использовать в CSS**:
 
 ```css
 /* Автоматически доступно как Tailwind класс */
@@ -1077,11 +1104,45 @@ module.exports = {
 }
 ```
 
-3. **В компонентах**:
+4. **В компонентах**:
 
 ```typescript
 <div className="bg-success-50 border border-success-200 text-success-800">
   Success message
+</div>
+```
+
+#### Как добавить новые семантические паттерны:
+
+1. **Добавить в form-patterns.js**:
+
+```javascript
+// packages/design-tokens/form-patterns.js
+export const newPatterns = {
+  customCard: {
+    base: 'bg-card text-card-foreground border border-border rounded-lg p-4',
+    variants: {
+      highlighted: 'border-primary/50 shadow-primary/10',
+      subtle: 'bg-muted/50 border-muted',
+    }
+  }
+};
+```
+
+2. **Экспортировать в index.js**:
+
+```javascript
+// packages/design-tokens/index.js
+export { newPatterns } from './form-patterns.js';
+```
+
+3. **Использовать в компонентах**:
+
+```typescript
+import { newPatterns } from '@repo/design-tokens';
+
+<div className={newPatterns.customCard.base}>
+  Контент
 </div>
 ```
 
@@ -2160,3 +2221,4 @@ export function UserCard() {
 ```
 
 ##
+````

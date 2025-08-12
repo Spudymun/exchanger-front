@@ -10,13 +10,17 @@
     "index.d.ts",
     "colors.js",
     "typography.js",
-    "spacing.js"
+    "spacing.js",
+    "form-patterns.js"
   ],
   "scripts": {
     "lint": "eslint . --max-warnings 0",
     "lint:strict": "eslint . --max-warnings 0",
     "lint:styles": "echo 'No CSS files to lint in @repo/design-tokens'",
     "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@repo/constants": "*"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",

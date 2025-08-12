@@ -14,16 +14,14 @@ Design tokens служат **единым источником истины** д
 
 ## 🏗️ Архитектура пакета
 
-### Гибридная структура (JS + TSX + TypeScript)
+### Структура пакета (JavaScript + TypeScript)
 
 ```
 packages/design-tokens/
 ├── colors.js           # Цветовые токены (JS объекты)
 ├── typography.js       # Типографические токены (JS объекты)
 ├── spacing.js          # Пространственные токены (JS объекты)
-├── form-patterns.js    # CSS классы и паттерны (строки)
-├── components.tsx      # React компоненты (TSX)
-├── components.js       # Реэкспорт для совместимости (JS)
+├── form-patterns.js    # CSS классы и семантические паттерны (JS объекты)
 ├── index.js           # Главный экспорт (JS)
 ├── index.d.ts         # TypeScript типизация
 └── package.json       # Конфигурация пакета
@@ -33,9 +31,9 @@ packages/design-tokens/
 
 #### **JavaScript файлы (.js)**
 
-- **Назначение**: Build-time использование в конфигурациях
-- **Потребители**: Tailwind CSS, webpack, другие build tools
-- **Преимущества**: Простые объекты без зависимостей от React
+- **Назначение**: Build-time использование в конфигурациях и runtime паттерны
+- **Потребители**: Tailwind CSS, webpack, React компоненты
+- **Преимущества**: Простые объекты без сложных зависимостей
 
 ```javascript
 // colors.js - используется в tailwind.config.cjs
@@ -43,21 +41,13 @@ export const colors = {
   primary: { 500: '#3b82f6' },
   // ...
 };
-```
 
-#### **TypeScript React файл (.tsx)**
-
-- **Назначение**: Runtime использование в React компонентах
-- **Потребители**: React приложения, Storybook
-- **Преимущества**: Полная типизация, JSX поддержка
-
-```typescript
-// components.tsx - используется в React
-export const ExchangeArrow = ({ size = 'default' }) => (
-  <div className="flex justify-center">
-    {/* JSX компонент */}
-  </div>
-);
+// form-patterns.js - используется в React компонентах
+export const formContainers = {
+  exchangeForm: {
+    base: 'bg-card text-card-foreground border border-border rounded-2xl shadow-standard p-6 space-y-6',
+  },
+};
 ```
 
 #### **TypeScript типы (.d.ts)**
@@ -102,13 +92,15 @@ module.exports = {
 
 ```typescript
 // В React компонентах
-import { ExchangeArrow, DesignSystemClasses } from '@repo/design-tokens';
+import { formContainers, visualConnectors } from '@repo/design-tokens';
 
 export function ExchangeForm() {
   return (
-    <div className={DesignSystemClasses.exchangeForm.compact}>
+    <div className={formContainers.exchangeForm.compact}>
       <div>Отправляете</div>
-      <ExchangeArrow />
+      <div className={visualConnectors.exchangeIcon.base}>
+        <RefreshCw className="w-4 h-4" />
+      </div>
       <div>Получаете</div>
     </div>
   );
@@ -191,27 +183,35 @@ boxShadow.sm; // '0 1px 2px 0 rgb(0 0 0 / 0.05)'
 boxShadow.md; // '0 4px 6px -1px rgb(0 0 0 / 0.1)'
 ```
 
-### Готовые компоненты (`components.tsx`)
+### Семантические паттерны (`form-patterns.js`)
 
 ```typescript
 import {
-  ExchangeArrow,
-  FormContainer,
-  DesignSystemClasses
+  formContainers,
+  visualConnectors,
+  enhancedCards,
+  componentGroups
 } from '@repo/design-tokens';
 
-// React компоненты
-<ExchangeArrow size="large" showGlow={true} />
+// Контейнеры форм
+<div className={formContainers.exchangeForm.base}>
+  Содержимое формы
+</div>
 
-// CSS классы
-<div className={DesignSystemClasses.exchangeCard.sending}>
+// Визуальные соединители
+<div className={visualConnectors.exchangeIcon.base}>
+  <RefreshCw className="w-4 h-4" />
+</div>
+
+// Улучшенные карточки
+<div className={enhancedCards.exchangeCard.sending}>
   Отправка
 </div>
 
-// Контейнеры
-<FormContainer.ExchangeHero>
-  Содержимое формы
-</FormContainer.ExchangeHero>
+// Группировка компонентов
+<div className={componentGroups.actionGroup.container}>
+  <button>Обменять</button>
+</div>
 ```
 
 ## 🔧 Интеграция с другими пакетами
@@ -240,10 +240,16 @@ UI компоненты используют токены для консист�
 
 ```typescript
 // packages/ui/src/components/Button.tsx
-import { DesignSystemClasses } from '@repo/design-tokens';
+import { colors, spacing } from '@repo/design-tokens';
 
 export const Button = ({ variant }) => (
-  <button className={DesignSystemClasses.button.base}>
+  <button
+    className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md"
+    style={{
+      backgroundColor: colors.primary[500],
+      padding: `${spacing[2]} ${spacing[4]}`
+    }}
+  >
     {children}
   </button>
 );
@@ -297,18 +303,22 @@ export interface Colors {
 // Автоматически подхватывается через импорт
 ```
 
-### 4. Добавление компонентов
+### 4. Добавление новых паттернов
 
-```typescript
-// packages/design-tokens/components.tsx
-export const NewComponent = ({ children }) => (
-  <div className="bg-accent-500 text-white">
-    {children}
-  </div>
-);
+```javascript
+// packages/design-tokens/form-patterns.js
+export const newPatterns = {
+  customCard: {
+    base: 'bg-card text-card-foreground border border-border rounded-lg p-4',
+    variants: {
+      highlighted: 'border-primary/50 shadow-primary/10',
+      subtle: 'bg-muted/50 border-muted',
+    },
+  },
+};
 
 // Обновить экспорт в index.js
-export { NewComponent } from './components.tsx';
+export { newPatterns } from './form-patterns.js';
 ```
 
 ## 🔍 Отладка и разработка
@@ -354,9 +364,13 @@ const styles = {
   padding: spacing[4],
 };
 
-// Использование готовых компонентов
-import { ExchangeArrow } from '@repo/design-tokens';
-<ExchangeArrow size="default" />
+// Использование семантических паттернов
+import { formContainers, enhancedCards } from '@repo/design-tokens';
+<div className={formContainers.exchangeForm.base}>
+  <div className={enhancedCards.exchangeCard.sending}>
+    Контент
+  </div>
+</div>
 ```
 
 ### ❌ Не рекомендуется
@@ -365,11 +379,11 @@ import { ExchangeArrow } from '@repo/design-tokens';
 // Хардкод значений
 const styles = {
   background: '#3b82f6', // Используйте colors.primary[500]
-  padding: '1rem',       // Используйте spacing[4]
+  padding: '1rem', // Используйте spacing[4]
 };
 
-// Дублирование компонентов
-const MyArrow = () => <div>→</div>; // Используйте ExchangeArrow
+// Дублирование паттернов
+const myCard = 'bg-white border rounded p-4'; // Используйте enhancedCards
 ```
 
 ## 🔄 Workflow изменений
