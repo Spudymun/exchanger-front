@@ -2,7 +2,7 @@
 
 import { getDefaultTokenStandard, isMultiNetworkToken, getTokenStandards } from '@repo/constants';
 import { validateCryptoAmount, type CryptoCurrency } from '@repo/exchange-core';
-import { useForm } from '@repo/hooks/src/client-hooks';
+import { useFormWithNextIntl } from '@repo/hooks/src/client-hooks';
 import {
   FormField,
   FormLabel,
@@ -25,7 +25,7 @@ import React, { useState } from 'react';
 import type { HeroExchangeFormData } from '../HeroExchangeForm';
 
 interface SendingCardProps {
-  form: ReturnType<typeof useForm<HeroExchangeFormData>>;
+  form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>;
   t: (key: string) => string;
   exchangeRate: number;
   minAmount: number;
@@ -35,7 +35,7 @@ export function TokenStandardSelector({
   form,
   t,
 }: {
-  form: ReturnType<typeof useForm<HeroExchangeFormData>>;
+  form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>;
   t: (key: string) => string;
 }) {
   const currency = form.values.fromCurrency as string;
@@ -76,7 +76,7 @@ function AmountInput({
   form,
   t,
 }: {
-  form: ReturnType<typeof useForm<HeroExchangeFormData>>;
+  form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>;
   t: (key: string) => string;
 }) {
   const [inputError, setInputError] = useState<string>('');
@@ -136,7 +136,7 @@ export function CurrencySelector({
   form,
   t,
 }: {
-  form: ReturnType<typeof useForm<HeroExchangeFormData>>;
+  form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>;
   t: (key: string) => string;
 }) {
   return (
@@ -178,7 +178,7 @@ function SendingInfo({
   exchangeRate,
   minAmount,
 }: {
-  form: ReturnType<typeof useForm<HeroExchangeFormData>>;
+  form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>;
   t: (key: string) => string;
   exchangeRate: number;
   minAmount: number;
