@@ -634,7 +634,7 @@ export function SomeComponent() {
 export function useExchange() {
   const { formData, setFormData, calculation, setCalculation } = useExchangeStore();
   const { success, error } = useNotifications();
-  const { user } = useAuth();
+  const t = useTranslations('exchange');
 
   const calculateExchange = useCallback(
     async (data: ExchangeFormData) => {
@@ -1079,11 +1079,10 @@ export function OrderStatus({ order }: Props) {
    // ❌
    export function UserProfile() {
      const [user, setUser] = useState(null); // Дублирование store!
-     const { user: storeUser } = useAuthStore();
+     const { user: storeUser } = useUIStore(); // Используем централизованный store
 
      useEffect(() => {
        setUser(storeUser); // Синхронизация вручную!
-     }, [storeUser]);
    }
    ```
 

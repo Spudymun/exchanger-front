@@ -156,12 +156,14 @@ function TradingPage() {
 ### Hooks and State
 
 ```typescript
-import { useUIStore, useTradingStore, useAuthStore } from '@repo/hooks'
+import { useUIStore, useTradingStore, useNotifications } from '@repo/hooks/src/client-hooks'
+import { useTranslations } from 'next-intl'
 
 // In components
 function TradingPanel() {
   const { portfolio, currentPair, setTradingPair } = useTradingStore()
-  const { user, isAuthenticated } = useAuthStore()
+  const notifications = useNotifications()
+  const t = useTranslations('trading')
 
   return (
     <div>

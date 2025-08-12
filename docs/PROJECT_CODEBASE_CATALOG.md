@@ -92,7 +92,7 @@
 
 ## packages/hooks
 
-- src/business/ — useAuth, useExchange, useOrderTracking, useForm, useFormWithNextIntl, useMathCaptcha, authMessages
+- src/business/ — useExchange, useOrderTracking, useFormWithNextIntl, useFormTypes, useMathCaptcha, authMessages
 - src/state/ — exchange-store, notification-store, trading-store, ui-store, селекторы/хелперы
 - src/ui/ — useScrollVisibility
 - src/client-hooks.ts — клиентские реэкспорты (useUIStore, useNotifications, useExchangeStore и др.)
@@ -180,7 +180,7 @@
   - packages/utils: validation-schemas.ts, validation-helpers.ts, validation/schemas-crypto.ts, validation/schemas/basic.ts, validation/handlers.ts, input-validation.ts, formatting.ts, calculations.ts, order-utils.ts, order-status.ts
   - packages/ui: components/ui/_, components/data-table/_, components/auth/\*, theme-toggle.tsx, floating-action-button.tsx, TreeNodeItem.tsx
   - packages/providers: src/theme-provider.tsx
-  - packages/hooks: useTheme.ts, state/\* (ui-store.ts, trading-store.ts, exchange-store.ts), business/useOrderTracking.ts, useForm.ts/useAuth.ts/useExchange.ts
+  - packages/hooks: useTheme.ts, state/\* (ui-store.ts, trading-store.ts, exchange-store.ts), business/useOrderTracking.ts, useFormWithNextIntl.ts/useExchange.ts
   - packages/exchange-core: types/_ (user.ts, transaction.ts, order.ts, fiat.ts, currency.ts), utils/_, services/\*, data/manager.ts
   - apps/web: server/trpc/middleware/_, server/trpc/routers/_ (auth.ts, exchange.ts, fiat.ts, operator.ts, shared.ts, support.ts, user/_), components/_ (OrderStatus.tsx, ExchangeRates.tsx, forms/_), server/utils/i18n-errors.ts, i18n/_
   - apps/admin-panel: app/page.tsx
@@ -298,7 +298,7 @@
 - ui/
   - index.ts, useScrollVisibility.ts — UI-утилиты
 - business/
-  - authMessages.ts, useAuth.ts, useExchange.ts, useForm.ts, useFormTypes.ts, useFormWithNextIntl.ts, useMathCaptcha.ts, useOrderTracking.ts
+  - authMessages.ts, useExchange.ts, useFormTypes.ts, useFormWithNextIntl.ts, useMathCaptcha.ts, useOrderTracking.ts
 - state/
   - exchange-constants.ts, exchange-fiat-actions.ts, exchange-helpers.ts, exchange-selectors.ts, exchange-store.ts, index.ts, notification-store.ts, trading-store.ts, ui-store.ts
 
