@@ -1146,6 +1146,35 @@ import { newPatterns } from '@repo/design-tokens';
 </div>
 ```
 
+#### Как обновлять exports в eslint-config:
+
+**⚠️ ВАЖНО**: При добавлении новых модулей ESLint обновляйте exports в package.json:
+
+```json
+// packages/eslint-config/package.json
+{
+  "exports": {
+    "./base": "./base.js",
+    "./api": "./api.js",
+    "./react": "./react.js",
+    "./testing": "./testing.js",
+    "./utils": "./utils.js",
+    "./configs": "./configs.js",
+    "./ignores": "./ignores.js",
+    "./lazy-loading": "./lazy-loading.js",
+    "./shared-rules": "./shared-rules.js",
+    "./performance-benchmark": "./performance-benchmark.js",
+    "./new-module": "./new-module.js"  // ← Добавить новый модуль
+  }
+}
+```
+
+**Когда обновлять exports:**
+- ✅ **Добавили новый .js модуль** → добавить в exports
+- ✅ **Модуль используется в eslint.config.mjs** → добавить в exports
+- ✅ **Модуль может использоваться извне** → добавить в exports
+- ❌ **Модуль только для внутреннего использования** → можно не добавлять
+
 #### Кастомные CSS компоненты:
 
 ```css

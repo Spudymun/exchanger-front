@@ -189,3 +189,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     })
     .catch(console.error);
 }
+
+// Export for npm script usage
+export { runPerformanceBenchmark, testLazyLoadingPerformance, testCachePerformance };

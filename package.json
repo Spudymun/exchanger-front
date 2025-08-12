@@ -29,6 +29,7 @@
     "scan-styles:verbose": "node packages/style-scanner/bin/style-scanner.js scan --out style-docs --verbose",
     "scan-styles:quick": "node packages/style-scanner/bin/style-scanner.js scan --out style-docs",
     "scan-styles:dry": "node packages/style-scanner/bin/style-scanner.js scan --dry-run --verbose",
+    "lint:benchmark": "node packages/eslint-config/performance-benchmark.js",
     "prepare": "husky"
   },
   "devDependencies": {

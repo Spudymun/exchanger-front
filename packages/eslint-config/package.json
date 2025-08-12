@@ -5,9 +5,15 @@
   "private": true,
   "exports": {
     "./base": "./base.js",
-    "./next-js": "./next.js",
-    "./react-internal": "./react-internal.js",
-    "./ui-library": "./ui-library.js"
+    "./api": "./api.js",
+    "./react": "./react.js",
+    "./testing": "./testing.js",
+    "./utils": "./utils.js",
+    "./configs": "./configs.js",
+    "./ignores": "./ignores.js",
+    "./lazy-loading": "./lazy-loading.js",
+    "./shared-rules": "./shared-rules.js",
+    "./performance-benchmark": "./performance-benchmark.js"
   },
   "devDependencies": {
     "@eslint/js": "^9.29.0",
