@@ -7,9 +7,19 @@
     "./ui": "./src/ui/index.ts",
     "./state": "./src/state/index.ts",
     "./src/client-hooks": "./src/client-hooks.ts",
-    "./src/state/ui-store": "./src/state/ui-store.ts"
+    "./src/state/ui-store": "./src/state/ui-store.ts",
+    "./src/state/exchange-store": "./src/state/exchange-store.ts",
+    "./src/state/notification-store": "./src/state/notification-store.ts",
+    "./src/state/trading-store": "./src/state/trading-store.ts",
+    "./src/business/useFormWithNextIntl": "./src/business/useFormWithNextIntl.ts",
+    "./src/business/useMathCaptcha": "./src/business/useMathCaptcha.ts",
+    "./src/business/useExchange": "./src/business/useExchange.ts",
+    "./src/business/useOrderTracking": "./src/business/useOrderTracking.ts"
   },
   "scripts": {
+    "build": "tsc",
+    "build:clean": "tsc --build --clean",
+    "build:force": "tsc --build --force",
     "lint": "eslint . --max-warnings 0",
     "lint:strict": "eslint . --max-warnings 0",
     "lint:styles": "echo 'No CSS files to lint in @repo/hooks'",

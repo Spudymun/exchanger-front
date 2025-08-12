@@ -1146,9 +1146,11 @@ import { newPatterns } from '@repo/design-tokens';
 </div>
 ```
 
-#### Как обновлять exports в eslint-config:
+#### Как обновлять exports в пакетах:
 
-**⚠️ ВАЖНО**: При добавлении новых модулей ESLint обновляйте exports в package.json:
+**⚠️ ВАЖНО**: При добавлении новых модулей обновляйте exports в package.json:
+
+##### ESLint Config
 
 ```json
 // packages/eslint-config/package.json
@@ -1174,6 +1176,29 @@ import { newPatterns } from '@repo/design-tokens';
 - ✅ **Модуль используется в eslint.config.mjs** → добавить в exports
 - ✅ **Модуль может использоваться извне** → добавить в exports
 - ❌ **Модуль только для внутреннего использования** → можно не добавлять
+
+##### Hooks Package
+
+```json
+// packages/hooks/package.json
+{
+  "exports": {
+    ".": "./src/index.ts",                                    // SSR-safe exports (типы)
+    "./src/client-hooks": "./src/client-hooks.ts",           // Client-only hooks
+    "./src/state/ui-store": "./src/state/ui-store.ts",       // UI состояние
+    "./src/state/exchange-store": "./src/state/exchange-store.ts", // Бизнес-логика
+    "./src/business/useFormWithNextIntl": "./src/business/useFormWithNextIntl.ts", // Современные формы
+    "./src/business/useMathCaptcha": "./src/business/useMathCaptcha.ts" // CAPTCHA
+  }
+}
+```
+
+**Правила для hooks exports:**
+- ✅ **SSR-safe архитектура** - разделение server/client exports
+- ✅ **Активно используемые модули** → добавить в exports
+- ✅ **Business hooks** → добавить для прямого доступа
+- ✅ **State stores** → добавить для прямого доступа
+- ❌ **Deprecated модули** → НЕ добавлять в exports
 
 #### Кастомные CSS компоненты:
 
