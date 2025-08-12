@@ -4,8 +4,9 @@
 export * from './useTheme';
 export * from './useNotifications';
 export * from './useExchangeStore';
-export * from './business/useForm';
-export * from './business/useAuth';
+// DEPRECATED hooks removed - use modern alternatives:
+// - Instead of useForm, use useFormWithNextIntl
+// - Instead of useAuth, use localized translations directly
 
 export * from './business/useExchange';
 export * from './business/useOrderTracking';
