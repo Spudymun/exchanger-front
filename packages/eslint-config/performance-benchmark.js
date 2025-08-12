@@ -162,10 +162,10 @@ export function testLazyLoadingPerformance() {
 }
 
 // === CACHE PERFORMANCE TEST ===
-export function testCachePerformance() {
+export async function testCachePerformance() {
   console.log('💾 Testing Cache Performance...\n');
 
-  const { performanceMetrics } = require('./lazy-loading.js');
+  const { performanceMetrics } = await import('./lazy-loading.js');
   const report = performanceMetrics.getReport();
 
   console.log('Cache Performance Report:');
@@ -180,15 +180,12 @@ export function testCachePerformance() {
   }
 }
 
-// Main execution if run directly
-if (import.meta.url === `file://${process.argv[1]}`) {
-  runPerformanceBenchmark()
-    .then(() => {
-      testLazyLoadingPerformance();
-      testCachePerformance();
-    })
-    .catch(console.error);
-}
+// Main execution - run benchmark when called directly
+runPerformanceBenchmark()
+  .then(() => {
+    testLazyLoadingPerformance();
+    return testCachePerformance();
+  })
+  .catch(console.error);
 
-// Export for npm script usage
-export { runPerformanceBenchmark, testLazyLoadingPerformance, testCachePerformance };
+// Functions are already exported above individually
