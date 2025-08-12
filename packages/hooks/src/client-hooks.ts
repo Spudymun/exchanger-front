@@ -4,6 +4,13 @@
 export * from './useTheme';
 export * from './useNotifications';
 export * from './useExchangeStore';
+// Modern form hooks with i18n support
+export { useFormWithNextIntl } from './business/useFormWithNextIntl';
+export type {
+  UseFormWithNextIntlParams,
+  UseFormWithNextIntlReturn,
+} from './business/useFormWithNextIntl';
+
 // DEPRECATED hooks removed - use modern alternatives:
 // - Instead of useForm, use useFormWithNextIntl
 // - Instead of useAuth, use localized translations directly

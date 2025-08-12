@@ -1,7 +1,7 @@
 'use client';
 
 import { FIAT_CURRENCIES, getBanksForCurrency } from '@repo/constants';
-import { useForm } from '@repo/hooks/src/client-hooks';
+import { useFormWithNextIntl } from '@repo/hooks/src/client-hooks';
 import {
   FormField,
   FormLabel,
@@ -23,7 +23,7 @@ import React from 'react';
 import type { HeroExchangeFormData } from '../HeroExchangeForm';
 
 interface ReceivingCardProps {
-  form: ReturnType<typeof useForm<HeroExchangeFormData>>;
+  form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>;
   banks: ReturnType<typeof getBanksForCurrency>;
   calculatedAmount: number;
   t: (key: string) => string;
@@ -33,7 +33,7 @@ export function FiatCurrencySelector({
   form,
   t,
 }: {
-  form: ReturnType<typeof useForm<HeroExchangeFormData>>;
+  form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>;
   t: (key: string) => string;
 }) {
   return (
@@ -69,7 +69,7 @@ export function BankSelector({
   banks,
   t,
 }: {
-  form: ReturnType<typeof useForm<HeroExchangeFormData>>;
+  form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>;
   banks: ReturnType<typeof getBanksForCurrency>;
   t: (key: string) => string;
 }) {
@@ -102,7 +102,7 @@ function ReceivingInfo({
   form,
   t,
 }: {
-  form: ReturnType<typeof useForm<HeroExchangeFormData>>;
+  form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>;
   t: (key: string) => string;
 }) {
   return (

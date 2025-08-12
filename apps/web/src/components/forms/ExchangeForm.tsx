@@ -1,7 +1,7 @@
 'use client';
 
 import { CRYPTOCURRENCIES } from '@repo/constants';
-import { useForm, useNotifications } from '@repo/hooks/src/client-hooks';
+import { useFormWithNextIntl, useNotifications } from '@repo/hooks/src/client-hooks';
 import {
   FormField,
   FormControl,
@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@repo/ui';
+import { useTranslations } from 'next-intl';
 import React from 'react';
 import { z } from 'zod';
 
@@ -38,6 +39,8 @@ interface ExchangeFormData extends Record<string, unknown> {
 
 export const ExchangeForm: React.FC = () => {
   const notifications = useNotifications();
+  const t = useTranslations('forms');
+
   const exchangeMutation = useExchangeMutation({
     onSuccess: order => {
       // Используем правильные свойства из типов ответа
@@ -49,13 +52,14 @@ export const ExchangeForm: React.FC = () => {
     },
   });
 
-  const form = useForm<ExchangeFormData>({
+  const form = useFormWithNextIntl<ExchangeFormData>({
     initialValues: {
       currency: 'BTC',
       cryptoAmount: '',
       email: '',
     },
     validationSchema: exchangeFormSchema,
+    t,
     onSubmit: async values => {
       // Для создания заказа нужен uahAmount, который нужно вычислить
       // В реальном приложении это может быть отдельный API call или вычисление
@@ -83,7 +87,7 @@ export const ExchangeForm: React.FC = () => {
 };
 
 interface FormComponentProps {
-  form: ReturnType<typeof useForm<ExchangeFormData>>;
+  form: ReturnType<typeof useFormWithNextIntl<ExchangeFormData>>;
 }
 
 const ExchangeCurrencyField: React.FC<FormComponentProps> = ({ form }) => (
