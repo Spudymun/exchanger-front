@@ -74,8 +74,7 @@ export {
   inlineSpinnerVariants,
 } from './ui/spinner';
 
-// Compound Components
-export { DataTable, type DataTableProps, type Column } from './data-table';
+// Compound Components (Primary exports)
 export { FloatingActionButton, type FloatingActionButtonProps } from './floating-action-button';
 export { TreeView, type TreeViewProps, type TreeNode } from './tree-view';
 export { ThemeToggle } from './theme-toggle';
@@ -100,9 +99,9 @@ export {
   useExchangeFormContext,
 } from './exchange-form';
 
-// New Data Table Compound Components
+// Data Table Compound Components (Primary export)
 export {
-  DataTableCompound as DataTableNew,
+  DataTableCompound as DataTable,
   Root as DataTableRoot,
   Container as DataTableContainer,
   Header as DataTableHeader,
@@ -198,3 +197,29 @@ export {
   type AdaptiveWidthProps,
   type AdaptiveContainerProps,
 } from './adaptive-container';
+
+// === LEGACY EXPORTS (DEPRECATED) ===
+// These exports are deprecated and will be removed in future versions
+// Use compound components instead
+
+export {
+  DataTable as DataTableLegacy,
+  type DataTableProps as DataTableLegacyProps,
+  type Column as DataTableColumn,
+} from './data-table';
+
+export {
+  Footer as FooterLegacy,
+  FooterSection as FooterSectionLegacy,
+  FooterLink as FooterLinkLegacy,
+  FooterSocial as FooterSocialLegacy,
+  FooterCompanyInfo as FooterCompanyInfoLegacy,
+  FooterLegal as FooterLegalLegacy,
+  FooterLayout as FooterLayoutLegacy,
+  type FooterProps as FooterLegacyProps,
+  type FooterSectionProps as FooterSectionLegacyProps,
+  type FooterLinkProps as FooterLinkLegacyProps,
+  type FooterSocialProps as FooterSocialLegacyProps,
+  type FooterCompanyInfoProps as FooterCompanyInfoLegacyProps,
+  type FooterLegalProps as FooterLegalLegacyProps,
+} from './footer';

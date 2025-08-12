@@ -1,7 +1,12 @@
 import { createUITestUsers, type UITestUser } from '@repo/exchange-core';
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 
-import { DataTable, type Column } from '../components/data-table';
+import { type Column } from '../components/data-table';
+import { DataTableCompound as DataTable } from '../components/data-table-compound';
+
+// Constants for story configuration
+const COMPACT_TABLE_ROWS = 5;
+const COMPACT_TABLE_COLUMNS = 4;
 
 // Sample data из централизованной фабрики
 const sampleData: UITestUser[] = createUITestUsers();
@@ -56,15 +61,15 @@ const columns: Array<Column<UITestUser>> = [
   },
 ];
 
-const meta: Meta<typeof DataTable<UITestUser>> = {
+const meta: Meta<typeof DataTable> = {
   title: 'Complex/DataTable',
-  component: DataTable<UITestUser>,
+  component: DataTable,
   parameters: {
     layout: 'fullscreen',
     docs: {
       description: {
         component:
-          'A comprehensive data table component with sorting, filtering, search, and pagination capabilities.',
+          'Compound DataTable component with flexible composition, search, sorting, and pagination.',
       },
     },
   },
@@ -74,23 +79,24 @@ const meta: Meta<typeof DataTable<UITestUser>> = {
       description: 'Array of data objects to display in the table',
       control: false,
     },
-    columns: {
-      description: 'Array of column configurations defining table structure',
-      control: false,
-    },
-    searchable: {
-      description: 'Enable/disable global search functionality',
+    isLoading: {
+      description: 'Loading state for the table',
       control: 'boolean',
-      defaultValue: true,
+      defaultValue: false,
     },
-    pagination: {
-      description: 'Enable/disable pagination controls',
-      control: 'boolean',
-      defaultValue: true,
+    searchTerm: {
+      description: 'Current search term',
+      control: 'text',
     },
-    onRowClick: {
-      description: 'Callback function when a table row is clicked',
-      action: 'row-clicked',
+    currentPage: {
+      description: 'Current page number',
+      control: 'number',
+      defaultValue: 1,
+    },
+    itemsPerPage: {
+      description: 'Number of items per page',
+      control: 'number',
+      defaultValue: 10,
     },
   },
 };
@@ -99,50 +105,159 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
-  args: {
-    data: sampleData,
-    columns: columns,
-  },
+  render: () => (
+    <DataTable data={sampleData}>
+      <DataTable.Container>
+        <DataTable.Header title="Users" description="Manage your team members" />
+        <DataTable.Filters />
+        <DataTable.Content>
+          <DataTable.TableWrapper>
+            <thead>
+              <tr>
+                {columns.map(column => (
+                  <th key={String(column.key)} className="text-left p-4 font-medium">
+                    {column.header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sampleData.map((item, index) => (
+                <tr key={index} className="border-t">
+                  {columns.map(column => (
+                    <DataTable.CellWrapper key={String(column.key)}>
+                      {column.render ? column.render(item) : String(item[column.key])}
+                    </DataTable.CellWrapper>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </DataTable.TableWrapper>
+        </DataTable.Content>
+        <DataTable.Pagination />
+      </DataTable.Container>
+    </DataTable>
+  ),
 };
 
 export const WithoutSearch: Story = {
-  args: {
-    data: sampleData,
-    columns: columns,
-    searchable: false,
-  },
+  render: () => (
+    <DataTable data={sampleData}>
+      <DataTable.Container>
+        <DataTable.Header title="Users" />
+        <DataTable.Filters showSearch={false} />
+        <DataTable.Content>
+          <DataTable.TableWrapper>
+            <thead>
+              <tr>
+                {columns.map(column => (
+                  <th key={String(column.key)} className="text-left p-4 font-medium">
+                    {column.header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sampleData.map((item, index) => (
+                <tr key={index} className="border-t">
+                  {columns.map(column => (
+                    <DataTable.CellWrapper key={String(column.key)}>
+                      {column.render ? column.render(item) : String(item[column.key])}
+                    </DataTable.CellWrapper>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </DataTable.TableWrapper>
+        </DataTable.Content>
+        <DataTable.Pagination />
+      </DataTable.Container>
+    </DataTable>
+  ),
 };
 
 export const Loading: Story = {
-  args: {
-    data: [],
-    columns: columns,
-    emptyMessage: 'Loading data...',
-  },
+  render: () => (
+    <DataTable data={[]} isLoading={true}>
+      <DataTable.Container>
+        <DataTable.Header title="Users" />
+        <DataTable.Filters />
+        <DataTable.Content>
+          <DataTable.TableWrapper>
+            <div>Loading...</div>
+          </DataTable.TableWrapper>
+        </DataTable.Content>
+      </DataTable.Container>
+    </DataTable>
+  ),
 };
 
 export const WithoutPagination: Story = {
-  args: {
-    data: sampleData,
-    columns: columns,
-    pagination: false,
-  },
+  render: () => (
+    <DataTable data={sampleData}>
+      <DataTable.Container>
+        <DataTable.Header title="Users" />
+        <DataTable.Filters />
+        <DataTable.Content>
+          <DataTable.TableWrapper>
+            <thead>
+              <tr>
+                {columns.map(column => (
+                  <th key={String(column.key)} className="text-left p-4 font-medium">
+                    {column.header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sampleData.map((item, index) => (
+                <tr key={index} className="border-t">
+                  {columns.map(column => (
+                    <DataTable.CellWrapper key={String(column.key)}>
+                      {column.render ? column.render(item) : String(item[column.key])}
+                    </DataTable.CellWrapper>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </DataTable.TableWrapper>
+        </DataTable.Content>
+        {/* No Pagination component */}
+      </DataTable.Container>
+    </DataTable>
+  ),
 };
 
-export const EmptyState: Story = {
-  args: {
-    data: [],
-    columns: columns,
-    emptyMessage: 'No users found',
-  },
-};
-
-export const WithClickHandler: Story = {
-  args: {
-    data: sampleData,
-    columns: columns,
-    onRowClick: (row: UITestUser) => {
-      alert(`Clicked on ${row.name}`);
-    },
-  },
+export const Compact: Story = {
+  render: () => (
+    <DataTable data={sampleData.slice(0, COMPACT_TABLE_ROWS)}>
+      <DataTable.Container variant="compact">
+        <DataTable.Header title="Compact Table" />
+        <DataTable.Content>
+          <DataTable.TableWrapper>
+            <thead>
+              <tr>
+                {columns.slice(0, COMPACT_TABLE_COLUMNS).map(column => (
+                  <th key={String(column.key)} className="text-left p-2 font-medium text-sm">
+                    {column.header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {sampleData.slice(0, COMPACT_TABLE_ROWS).map((item, index) => (
+                <tr key={index} className="border-t">
+                  {columns.slice(0, COMPACT_TABLE_COLUMNS).map(column => (
+                    <DataTable.CellWrapper key={String(column.key)} className="p-2 text-sm">
+                      {column.render ? column.render(item) : String(item[column.key])}
+                    </DataTable.CellWrapper>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </DataTable.TableWrapper>
+        </DataTable.Content>
+      </DataTable.Container>
+    </DataTable>
+  ),
 };

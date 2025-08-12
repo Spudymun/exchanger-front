@@ -212,6 +212,14 @@ export const DataTable = <T extends Record<string, unknown>>({
   emptyMessage = 'Нет данных для отображения',
   onRowClick,
 }: DataTableProps<T>) => {
+  // Deprecation warning
+  if (process.env.NODE_ENV === 'development') {
+    console.warn(
+      '⚠️ DataTable is deprecated. Use DataTableNew (compound component) instead.\n' +
+        'Migration guide: docs/COMPOUND_COMPONENTS_MIGRATION_GUIDE.md\n' +
+        'New usage: import { DataTableNew as DataTable } from "@repo/ui"'
+    );
+  }
   const {
     searchTerm,
     setSearchTerm,
