@@ -1,6 +1,7 @@
 {
   "name": "@repo/providers",
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Централизованная система React провайдеров для ExchangeGO монорепозитория с SSR-safe архитектурой",
   "private": true,
   "exports": {
     ".": "./src/index.tsx"
