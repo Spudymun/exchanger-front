@@ -1,5 +1,17 @@
 /**
  * Обработчики валидации для различных типов полей
+ *
+ * АРХИТЕКТУРА NEXT-INTL ВАЛИДАЦИИ:
+ *
+ * 1. Формы используют: useTranslations('AdvancedExchangeForm') → создает функцию t
+ * 2. Handlers используют: t('validation.captcha.required')
+ * 3. Next-intl автоматически ищет: AdvancedExchangeForm.validation.captcha.required
+ * 4. Ключ найден в JSON: возвращается переведенное сообщение
+ *
+ * ПОЧЕМУ ЭТО РАБОТАЕТ:
+ * - useTranslations('AdvancedExchangeForm') создает функцию t с префиксом
+ * - Все ключи в handlers.ts автоматически получают префикс формы
+ * - Переводы лежат в структуре: FormName.validation.field.error
  */
 
 import { VALIDATION_LIMITS } from '@repo/constants';
@@ -9,6 +21,12 @@ import { NextIntlValidationConfig, VALIDATION_KEYS } from './constants';
 
 /**
  * Обрабатывает специальные случаи валидации CAPTCHA
+ *
+ * МЕХАНИЗМ РАБОТЫ:
+ * - Функция t получена из useTranslations('AdvancedExchangeForm')
+ * - Ключ 'validation.captcha.required' превращается в 'AdvancedExchangeForm.validation.captcha.required'
+ * - Next-intl ищет этот ключ в messages/ru.json и messages/en.json
+ * - Возвращает переведенное сообщение или fallback
  */
 export function handleCaptchaValidation(
   issue: z.ZodIssueOptionalMessage,
@@ -31,32 +49,18 @@ export function handleCaptchaValidation(
 
 /**
  * Создает сообщение о необходимости заполнить CAPTCHA
- * Graceful fallback если next-intl недоступен
+ * УПРОЩЕННАЯ ЛОГИКА: Доверяем next-intl, убираем сложную проверку fallback
  */
 function createCaptchaRequiredMessage(t: NextIntlValidationConfig['t']): { message: string } {
-  const result = t(VALIDATION_KEYS.CAPTCHA_REQUIRED);
-
-  // Если вернулся сырой ключ, используем английский fallback (универсальный)
-  if (result.includes(VALIDATION_KEYS.CAPTCHA_REQUIRED)) {
-    return { message: 'Please fill CAPTCHA' };
-  }
-
-  return { message: result };
+  return { message: t(VALIDATION_KEYS.CAPTCHA_REQUIRED) };
 }
 
 /**
  * Создает сообщение о необходимости подтвердить CAPTCHA
- * Graceful fallback если next-intl недоступен
+ * УПРОЩЕННАЯ ЛОГИКА: Доверяем next-intl, убираем сложную проверку fallback
  */
 function createCaptchaNotVerifiedMessage(t: NextIntlValidationConfig['t']): { message: string } {
-  const result = t(VALIDATION_KEYS.CAPTCHA_NOT_VERIFIED);
-
-  // Если вернулся сырой ключ, используем английский fallback (универсальный)
-  if (result.includes(VALIDATION_KEYS.CAPTCHA_NOT_VERIFIED)) {
-    return { message: 'Please confirm you are not a robot' };
-  }
-
-  return { message: result };
+  return { message: t(VALIDATION_KEYS.CAPTCHA_NOT_VERIFIED) };
 }
 
 /**
