@@ -12,6 +12,7 @@ import {
 } from '../validation-schemas';
 
 import { NextIntlValidationConfig, VALIDATION_KEYS } from './constants';
+import { isEmptyString } from './validation-utils';
 
 /**
  * Валидирует email поле отдельно
@@ -88,7 +89,7 @@ export function validateSingleConfirmPassword(
   passwordValue: string,
   config: NextIntlValidationConfig
 ): { isValid: boolean; error: string | null } {
-  if (!value || value.trim() === '') {
+  if (isEmptyString(value)) {
     return { isValid: false, error: config.t(VALIDATION_KEYS.CONFIRM_PASSWORD_REQUIRED) };
   }
 

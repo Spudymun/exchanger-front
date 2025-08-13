@@ -8,6 +8,7 @@ export * from './field-validation';
 export * from './handlers';
 export * from './hooks';
 export * from './single-field';
+export * from './validation-utils';
 export * from './schemas-basic';
 export * from './schemas-crypto';
 export * from './schemas-composed';

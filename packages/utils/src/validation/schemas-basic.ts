@@ -3,7 +3,7 @@
  * Извлечено из validation-schemas.ts для улучшения поддерживаемости
  */
 
-import { VALIDATION_LIMITS } from '@repo/constants';
+import { VALIDATION_LIMITS, VALIDATION_PATTERNS } from '@repo/constants';
 import { z } from 'zod';
 
 // === КОНСТАНТЫ ===
@@ -18,36 +18,10 @@ export const USERNAME_MAX_LENGTH = VALIDATION_LIMITS.USERNAME_MAX_LENGTH;
 export const SEARCH_QUERY_MAX_LENGTH = VALIDATION_LIMITS.SEARCH_QUERY_MAX_LENGTH;
 
 /**
- * Regex паттерны для валидации
- * АРХИТЕКТУРНОЕ РЕШЕНИЕ: Централизованные паттерны для переиспользования
+ * АРХИТЕКТУРНОЕ РЕШЕНИЕ: Regex паттерны перенесены в @repo/constants
+ * Для обратной совместимости экспортируем PATTERNS как алиас
  */
-export const PATTERNS = {
-  /**
-   * Email валидация - упрощенный безопасный паттерн
-   * Формат: text@domain.extension
-   * Исключает пробелы и требует @ и точку в домене
-   */
-  EMAIL: /^[^\s@]+@[^\s@]+\.[^\s@]+$/u,
-
-  /**
-   * Bitcoin адреса - поддерживает Legacy и Bech32 форматы
-   * Legacy: начинается с 1 или 3, длина 25-34 символа, Base58
-   * Bech32: начинается с bc1, длина 39-59 символов, только строчные
-   */
-  BTC_ADDRESS: /^([13][a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-z0-9]{39,59})$/u,
-
-  /**
-   * Ethereum адреса - стандартный формат
-   * Начинается с 0x, затем 40 hex символов (0-9, a-f, A-F)
-   */
-  ETH_ADDRESS: /^0x[a-fA-F0-9]{40}$/u,
-
-  /**
-   * Litecoin адреса - Legacy формат
-   * Начинается с L, M или 3, длина 26-33 символа, Base58
-   */
-  LTC_ADDRESS: /^[LM3][a-km-zA-HJ-NP-Z1-9]{26,33}$/u,
-} as const;
+export const PATTERNS = VALIDATION_PATTERNS;
 
 // === БАЗОВЫЕ ТИПЫ ===
 export const idSchema = z.string().min(1);
@@ -64,7 +38,7 @@ export const emailSchema = z
   .min(1)
   .email()
   .max(VALIDATION_LIMITS.EMAIL_MAX_LENGTH)
-  .regex(PATTERNS.EMAIL);
+  .regex(VALIDATION_PATTERNS.EMAIL);
 
 /**
  * Новая система паролей - усиленные требования безопасности

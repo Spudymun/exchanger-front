@@ -11,6 +11,8 @@ import {
 
 import { z } from 'zod';
 
+// Импорт централизованных утилит валидации
+
 // Импорт схем для использования в этом файле
 import {
   idSchema,
@@ -22,6 +24,7 @@ import {
 } from './validation/schemas-basic';
 
 import { currencySchema } from './validation/schemas-crypto';
+import { isEmptyString } from './validation/validation-utils';
 
 /**
  * Централизованные схемы валидации
@@ -236,8 +239,8 @@ export const captchaSchema = z
   .string()
   .min(1)
   .refine(value => {
-    // Базовая проверка на заполненность
-    if (!value || value.trim() === '') {
+    // Базовая проверка на заполненность через централизованную утилиту
+    if (isEmptyString(value)) {
       return false;
     }
     // Дополнительная валидация делается через состояние компонента

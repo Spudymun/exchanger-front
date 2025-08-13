@@ -57,6 +57,39 @@ export const VALIDATION_LIMITS = {
   DEFAULT_PAGE_SIZE: 20,
 } as const;
 
+/**
+ * Regex паттерны для валидации
+ * АРХИТЕКТУРНОЕ РЕШЕНИЕ: Централизованные паттерны для переиспользования
+ * Перенесены из packages/utils/src/validation/schemas-basic.ts
+ */
+export const VALIDATION_PATTERNS = {
+  /**
+   * Email валидация - упрощенный безопасный паттерн
+   * Формат: text@domain.extension
+   * Исключает пробелы и требует @ и точку в домене
+   */
+  EMAIL: /^[^\s@]+@[^\s@]+\.[^\s@]+$/u,
+
+  /**
+   * Bitcoin адреса - поддерживает Legacy и Bech32 форматы
+   * Legacy: начинается с 1 или 3, длина 25-34 символа, Base58
+   * Bech32: начинается с bc1, длина 39-59 символов, только строчные
+   */
+  BTC_ADDRESS: /^([13][a-km-zA-HJ-NP-Z1-9]{25,34}|bc1[a-z0-9]{39,59})$/u,
+
+  /**
+   * Ethereum адреса - стандартный формат
+   * Начинается с 0x, затем 40 hex символов (0-9, a-f, A-F)
+   */
+  ETH_ADDRESS: /^0x[a-fA-F0-9]{40}$/u,
+
+  /**
+   * Litecoin адреса - Legacy формат
+   * Начинается с L, M или 3, длина 26-33 символа, Base58
+   */
+  LTC_ADDRESS: /^[LM3][a-km-zA-HJ-NP-Z1-9]{26,33}$/u,
+} as const;
+
 // ===== ДУБЛИРУЮЩИЕ СИСТЕМЫ ВАЛИДАЦИИ УДАЛЕНЫ =====
 //
 // VALIDATION_PATTERNS - УДАЛЕНЫ: Заменены на Zod схемы в @repo/utils

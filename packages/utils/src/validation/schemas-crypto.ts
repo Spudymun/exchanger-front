@@ -3,40 +3,37 @@
  * Извлечено из validation-schemas.ts для улучшения поддерживаемости
  */
 
-import { CRYPTOCURRENCIES, VALIDATION_BOUNDS } from '@repo/constants';
+import { CRYPTOCURRENCIES, VALIDATION_BOUNDS, VALIDATION_PATTERNS } from '@repo/constants';
 import type { CryptoCurrency } from '@repo/exchange-core';
 import { z } from 'zod';
-
-import { PATTERNS } from './schemas-basic';
 
 // === CRYPTO ВАЛИДАЦИЯ ===
 
 /**
  * Bitcoin адрес валидация
+ * АРХИТЕКТУРНОЕ РЕШЕНИЕ: Используется только для программной валидации в exchange-core
+ * Не используется в формах пользователя, поэтому без хардкод сообщений
  */
-export const btcAddressSchema = z
-  .string()
-  .min(1, { message: 'Bitcoin address is required' })
-  .regex(PATTERNS.BTC_ADDRESS, { message: 'Invalid Bitcoin address format' });
+export const btcAddressSchema = z.string().min(1).regex(VALIDATION_PATTERNS.BTC_ADDRESS);
 
 /**
  * Ethereum адрес валидация
+ * АРХИТЕКТУРНОЕ РЕШЕНИЕ: Используется только для программной валидации в exchange-core
+ * Не используется в формах пользователя, поэтому без хардкод сообщений
  */
-export const ethAddressSchema = z
-  .string()
-  .min(1, { message: 'Ethereum address is required' })
-  .regex(PATTERNS.ETH_ADDRESS, { message: 'Invalid Ethereum address format' });
+export const ethAddressSchema = z.string().min(1).regex(VALIDATION_PATTERNS.ETH_ADDRESS);
 
 /**
  * Litecoin адрес валидация
+ * АРХИТЕКТУРНОЕ РЕШЕНИЕ: Используется только для программной валидации в exchange-core
+ * Не используется в формах пользователя, поэтому без хардкод сообщений
  */
-export const ltcAddressSchema = z
-  .string()
-  .min(1, { message: 'Litecoin address is required' })
-  .regex(PATTERNS.LTC_ADDRESS, { message: 'Invalid Litecoin address format' });
+export const ltcAddressSchema = z.string().min(1).regex(VALIDATION_PATTERNS.LTC_ADDRESS);
 
 /**
  * Динамическая функция для создания схемы криптоадреса
+ * АРХИТЕКТУРНОЕ РЕШЕНИЕ: Используется только в exchange-core для validateCryptoAddress()
+ * Программная валидация без пользовательских сообщений
  */
 export const createCryptoAddressSchema = (currency: CryptoCurrency) => {
   switch (currency) {
@@ -48,7 +45,7 @@ export const createCryptoAddressSchema = (currency: CryptoCurrency) => {
     case 'LTC':
       return ltcAddressSchema;
     default:
-      return z.string().min(1, { message: 'Crypto address is required' });
+      return z.string().min(1);
   }
 };
 
