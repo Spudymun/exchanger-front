@@ -15,6 +15,7 @@ export const VALIDATION_LIMITS = {
   USERNAME_MAX_LENGTH: 30,
 
   // Password security
+  LEGACY_PASSWORD_MIN_LENGTH: 6, // Для совместимости с существующими паролями
   BCRYPT_SALT_ROUNDS: 10,
 
   // Names
@@ -56,7 +57,7 @@ export const VALIDATION_LIMITS = {
 } as const;
 
 // ===== ДУБЛИРУЮЩИЕ СИСТЕМЫ ВАЛИДАЦИИ УДАЛЕНЫ =====
-// 
+//
 // VALIDATION_PATTERNS - УДАЛЕНЫ: Заменены на Zod схемы в @repo/utils
 // VALIDATION_MESSAGES - УДАЛЕНЫ: Заменены на next-intl переводы
 // VALIDATION_HELPERS - УДАЛЕНЫ: Не использовались
@@ -64,7 +65,7 @@ export const VALIDATION_LIMITS = {
 // МИГРАЦИЯ ЗАВЕРШЕНА:
 // ✅ crypto.ts - обновлен для использования createCryptoAddressSchema
 // ✅ business-validators.ts - обновлен для прямых сообщений
-// ✅ trpc-errors.ts - обновлен для прямых сообщений  
+// ✅ trpc-errors.ts - обновлен для прямых сообщений
 // ✅ CONSTANTS_EXAMPLES.ts - обновлен для использования Zod
 //
 // ИСПОЛЬЗУЙТЕ ВМЕСТО УДАЛЕННЫХ СИСТЕМ:

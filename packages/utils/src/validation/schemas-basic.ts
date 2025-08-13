@@ -3,15 +3,14 @@
  * Извлечено из validation-schemas.ts для улучшения поддерживаемости
  */
 
+import { VALIDATION_LIMITS } from '@repo/constants';
 import { z } from 'zod';
 
 // === КОНСТАНТЫ ===
 export const PASSWORD_MIN_LENGTH = 8;
-export const LEGACY_PASSWORD_MIN_LENGTH = 6;
 export const PASSWORD_MAX_LENGTH = 128;
 export const USERNAME_MIN_LENGTH = 3;
 export const USERNAME_MAX_LENGTH = 30;
-export const EMAIL_MAX_LENGTH = 254; // RFC 5321 limit
 export const SEARCH_QUERY_MAX_LENGTH = 100;
 
 export const PATTERNS = {
@@ -37,7 +36,7 @@ export const emailSchema = z
   .string()
   .min(1, { message: 'Email is required' })
   .email({ message: 'Invalid email format' })
-  .max(EMAIL_MAX_LENGTH)
+  .max(VALIDATION_LIMITS.EMAIL_MAX_LENGTH)
   .regex(PATTERNS.EMAIL, { message: 'Invalid email format' });
 
 /**
@@ -61,7 +60,7 @@ export const newPasswordSchema = passwordSchema;
  */
 export const legacyPasswordSchema = z
   .string()
-  .min(LEGACY_PASSWORD_MIN_LENGTH) // Минимум для совместимости
+  .min(VALIDATION_LIMITS.LEGACY_PASSWORD_MIN_LENGTH) // Минимум для совместимости
   .max(PASSWORD_MAX_LENGTH);
 
 /**
