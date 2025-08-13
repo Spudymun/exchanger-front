@@ -7,15 +7,9 @@ import { DECIMAL_PRECISION, PERCENTAGE_CALCULATIONS } from '@repo/constants';
 
 /**
  * Format UAH amount with proper decimal places
+ * Also used for commission amounts (same precision)
  */
 export function formatUahAmount(amount: number): string {
-  return amount.toFixed(PERCENTAGE_CALCULATIONS.UAH_ROUNDING_PRECISION);
-}
-
-/**
- * Format commission amount (same as UAH)
- */
-export function formatCommissionAmount(amount: number): string {
   return amount.toFixed(PERCENTAGE_CALCULATIONS.UAH_ROUNDING_PRECISION);
 }
 

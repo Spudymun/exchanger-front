@@ -29,10 +29,3 @@ export function calculateGrossAmountFromNet(netAmount: number, commissionRate: n
   // Therefore: grossAmount = netAmount / (1 - commissionRate/100)
   return netAmount / (1 - commissionRate / PERCENTAGE_CALCULATIONS.PERCENT_BASE);
 }
-
-/**
- * Calculate commission rate as percentage for display
- */
-export function formatCommissionRate(commissionRate: number): string {
-  return `${commissionRate}%`;
-}
