@@ -1,4 +1,9 @@
-import { createValidationResult, mergeValidationResults, type ValidationResult } from '@repo/utils';
+import {
+  createValidationResult,
+  mergeValidationResults,
+  type ValidationResult,
+  validateWithZodSchema,
+} from '@repo/utils';
 import { emailSchema, passwordSchema } from '@repo/utils';
 
 import type { CreateOrderRequest, CreateUserRequest } from '../types';
@@ -15,22 +20,14 @@ import { validateRecipientData } from './composite-validators';
  * Helper to validate email using Zod schema
  */
 function validateEmailWithZod(email: string): ValidationResult {
-  const result = emailSchema.safeParse(email);
-  if (result.success) {
-    return createValidationResult([]);
-  }
-  return createValidationResult(result.error.issues.map(issue => issue.message));
+  return validateWithZodSchema(emailSchema, email);
 }
 
 /**
  * Helper to validate password using Zod schema
  */
 function validatePasswordWithZod(password: string): ValidationResult {
-  const result = passwordSchema.safeParse(password);
-  if (result.success) {
-    return createValidationResult([]);
-  }
-  return createValidationResult(result.error.issues.map(issue => issue.message));
+  return validateWithZodSchema(passwordSchema, password);
 }
 
 /**

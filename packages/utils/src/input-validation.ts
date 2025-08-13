@@ -2,12 +2,13 @@ import { DECIMAL_PRECISION } from '@repo/constants';
 import { getCurrencyDecimals, type CryptoCurrency } from '@repo/exchange-core';
 
 // server-i18n-errors removed - use direct fallback messages
+import { validateWithZodSchemaUI } from './validation';
 import { cryptoAmountStringSchema, uahAmountStringSchema } from './validation-schemas';
 
 /**
  * INPUT VALIDATION UTILITIES - ИНТЕГРИРОВАНО С ZOD СХЕМАМИ
  * AC 5.1-5.4: Numeric input validation with decimal precision control
- * 
+ *
  * ИНТЕГРАЦИЯ: Использует централизованные Zod схемы для финальной валидации
  * UI REGEX: Простые regex для проверки символов в реальном времени остаются
  */
@@ -134,40 +135,22 @@ export function useNumericInput(currency?: string) {
  * Валидирует crypto сумму используя централизованную Zod схему
  * Интеграция UI валидации с бизнес-логикой
  */
-export function validateCryptoAmountWithZod(value: string): { isValid: boolean; error: string | null } {
-  const result = cryptoAmountStringSchema.safeParse(value);
-
-  if (result.success) {
-    return { isValid: true, error: null };
-  }
-
-  const firstError = result.error.errors[0];
-  const fallbackError = 'Invalid amount';
-
-  return {
-    isValid: false,
-    error: firstError?.message || fallbackError
-  };
+export function validateCryptoAmountWithZod(value: string): {
+  isValid: boolean;
+  error: string | null;
+} {
+  return validateWithZodSchemaUI(cryptoAmountStringSchema, value);
 }
 
 /**
  * Валидирует UAH сумму используя централизованную Zod схему
  * Интеграция UI валидации с бизнес-логикой
  */
-export function validateUahAmountWithZod(value: string): { isValid: boolean; error: string | null } {
-  const result = uahAmountStringSchema.safeParse(value);
-
-  if (result.success) {
-    return { isValid: true, error: null };
-  }
-
-  const firstError = result.error.errors[0];
-  const fallbackError = 'Invalid amount';
-
-  return {
-    isValid: false,
-    error: firstError?.message || fallbackError
-  };
+export function validateUahAmountWithZod(value: string): {
+  isValid: boolean;
+  error: string | null;
+} {
+  return validateWithZodSchemaUI(uahAmountStringSchema, value);
 }
 
 /**
