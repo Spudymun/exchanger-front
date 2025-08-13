@@ -120,7 +120,8 @@ export const Default: Story = {
   args: {
     data: sampleData,
     onSelect: (node: TreeNode) => {
-      console.log('Selected:', node);
+      // Handle node selection in development
+      void node;
     },
   },
 };
@@ -129,7 +130,8 @@ export const WithoutIcons: Story = {
   args: {
     data: sampleData,
     onSelect: (node: TreeNode) => {
-      console.log('Selected:', node);
+      // Handle node selection in development
+      void node;
     },
   },
 };
@@ -139,7 +141,8 @@ export const ExpandedByDefault: Story = {
     data: sampleData,
     defaultExpanded: ['1', '2', '3'],
     onSelect: (node: TreeNode) => {
-      console.log('Selected:', node);
+      // Handle node selection in development
+      void node;
     },
   },
 };
@@ -150,7 +153,8 @@ export const WithSelection: Story = {
     selectedId: '4',
     defaultExpanded: ['1', '2', '3'],
     onSelect: (node: TreeNode) => {
-      console.log('Selected:', node);
+      // Handle node selection in development
+      void node;
     },
   },
 };

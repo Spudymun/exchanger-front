@@ -1,5 +1,14 @@
 'use client';
 
+// Simple Column type definition for admin panel
+interface Column<T> {
+  key: keyof T;
+  header: string;
+  sortable?: boolean;
+  filterable?: boolean;
+  render?: (item: T) => React.ReactNode;
+}
+
 import {
   Card,
   CardContent,
@@ -8,8 +17,6 @@ import {
   CardTitle,
   Button,
   DataTable,
-  DataTableNew,
-  type Column,
   TreeView,
   type TreeNode,
   ThemeToggle,
@@ -274,12 +281,12 @@ function UsersTableNew({ users, columns, onRowClick }: UsersTableProps) {
         <CardDescription>Управление пользователями системы</CardDescription>
       </CardHeader>
       <CardContent>
-        <DataTableNew data={users}>
-          <DataTableNew.Container variant="bordered">
-            <DataTableNew.Header title="Список пользователей" />
-            <DataTableNew.Filters searchPlaceholder="Поиск пользователей..." />
-            <DataTableNew.Content>
-              <DataTableNew.TableWrapper>
+        <DataTable data={users}>
+          <DataTable.Container variant="bordered">
+            <DataTable.Header title="Список пользователей" />
+            <DataTable.Filters searchPlaceholder="Поиск пользователей..." />
+            <DataTable.Content>
+              <DataTable.TableWrapper>
                 <thead className="[&_tr]:border-b">
                   <tr>
                     {columns.map(column => (
@@ -300,20 +307,20 @@ function UsersTableNew({ users, columns, onRowClick }: UsersTableProps) {
                       className="border-b transition-colors hover:bg-muted/50 cursor-pointer"
                     >
                       {columns.map(column => (
-                        <DataTableNew.CellWrapper key={String(column.key)}>
+                        <DataTable.CellWrapper key={String(column.key)}>
                           {column.render
                             ? column.render(user)
                             : String(user[column.key as keyof UITestUser])}
-                        </DataTableNew.CellWrapper>
+                        </DataTable.CellWrapper>
                       ))}
                     </tr>
                   ))}
                 </tbody>
-              </DataTableNew.TableWrapper>
-            </DataTableNew.Content>
-            <DataTableNew.Pagination showInfo={true} />
-          </DataTableNew.Container>
-        </DataTableNew>
+              </DataTable.TableWrapper>
+            </DataTable.Content>
+            <DataTable.Pagination showInfo={true} />
+          </DataTable.Container>
+        </DataTable>
       </CardContent>
     </Card>
   );

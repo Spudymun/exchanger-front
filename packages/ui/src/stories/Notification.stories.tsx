@@ -72,7 +72,10 @@ export const WithCloseButton: Story = {
     variant: 'info',
     title: 'Новое обновление',
     description: 'Доступна новая версия приложения.',
-    onClose: () => alert('Уведомление закрыто'),
+    onClose: () => {
+      // Handle notification close in development
+      void 0;
+    },
   },
 };
 

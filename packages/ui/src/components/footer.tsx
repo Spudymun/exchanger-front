@@ -50,16 +50,27 @@ export interface FooterLegalProps {
 
 // Main Footer Component
 export const Footer = React.forwardRef<HTMLElement, FooterProps>(
-  ({ className, children, ...props }, ref) => (
-    <footer
-      ref={ref}
-      className={cn('bg-background border-t border-border mt-auto', className)}
-      role="contentinfo"
-      {...props}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</div>
-    </footer>
-  )
+  ({ className, children, ...props }, ref) => {
+    // Deprecation warning
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(
+        '⚠️ Footer is deprecated. Use FooterCompound (compound component) instead.\n' +
+          'Migration guide: docs/COMPOUND_COMPONENTS_MIGRATION_GUIDE.md\n' +
+          'New usage: import { Footer } from "@repo/ui" (already uses compound version)'
+      );
+    }
+
+    return (
+      <footer
+        ref={ref}
+        className={cn('bg-background border-t border-gray-200 mt-auto', className)}
+        role="contentinfo"
+        {...props}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</div>
+      </footer>
+    );
+  }
 );
 Footer.displayName = 'Footer';
 

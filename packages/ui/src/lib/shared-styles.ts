@@ -132,6 +132,15 @@ export function combineStyles(...styles: Array<string | undefined | false>): str
 }
 
 /**
+ * Общие стили для Storybook демонстраций - устранение CSS дублирования
+ */
+export const storyBookStyles = {
+  demoBox: 'bg-blue-500 text-white text-sm rounded px-3 py-1',
+  demoButton: 'bg-blue-500 text-white px-4 py-2 rounded text-sm',
+  spacingContainer: 'bg-gray-100 dark:bg-gray-800 rounded',
+} as const;
+
+/**
  * Типы для type-safe использования стилей
  */
 export type CardStyleKeys = keyof typeof cardStyles;
@@ -140,3 +149,4 @@ export type StatusStyleKeys = keyof typeof statusStyles;
 export type LayoutStyleKeys = keyof typeof layoutStyles;
 export type PageStyleKeys = keyof typeof pageStyles;
 export type TableStyleKeys = keyof typeof tableStyles;
+export type StoryBookStyleKeys = keyof typeof storyBookStyles;

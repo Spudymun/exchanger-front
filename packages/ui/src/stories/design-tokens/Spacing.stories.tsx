@@ -1,6 +1,8 @@
 import { spacing } from '@repo/design-tokens';
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 
+import { storyBookStyles } from '../../lib/shared-styles';
+
 // Spacing scale section
 const SpacingScaleSection = ({ spacingValues }: { spacingValues: Record<string, string> }) => (
   <section className="mb-12">
@@ -51,22 +53,22 @@ const UsageExamplesSection = () => (
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
-            <div className="bg-gray-100 dark:bg-gray-800 rounded p-2">
-              <div className="bg-blue-500 text-white text-sm rounded px-3 py-1">p-2 (8px)</div>
+            <div className={storyBookStyles.spacingContainer + ' p-2'}>
+              <div className={storyBookStyles.demoBox}>p-2 (8px)</div>
             </div>
-            <div className="bg-gray-100 dark:bg-gray-800 rounded p-4">
-              <div className="bg-blue-500 text-white text-sm rounded px-3 py-1">p-4 (16px)</div>
+            <div className={storyBookStyles.spacingContainer + ' p-4'}>
+              <div className={storyBookStyles.demoBox}>p-4 (16px)</div>
             </div>
-            <div className="bg-gray-100 dark:bg-gray-800 rounded p-6">
-              <div className="bg-blue-500 text-white text-sm rounded px-3 py-1">p-6 (24px)</div>
+            <div className={storyBookStyles.spacingContainer + ' p-6'}>
+              <div className={storyBookStyles.demoBox}>p-6 (24px)</div>
             </div>
           </div>
           <div className="space-y-4">
-            <div className="bg-gray-100 dark:bg-gray-800 rounded p-8">
-              <div className="bg-blue-500 text-white text-sm rounded px-3 py-1">p-8 (32px)</div>
+            <div className={storyBookStyles.spacingContainer + ' p-8'}>
+              <div className={storyBookStyles.demoBox}>p-8 (32px)</div>
             </div>
-            <div className="bg-gray-100 dark:bg-gray-800 rounded p-12">
-              <div className="bg-blue-500 text-white text-sm rounded px-3 py-1">p-12 (48px)</div>
+            <div className={storyBookStyles.spacingContainer + ' p-12'}>
+              <div className={storyBookStyles.demoBox}>p-12 (48px)</div>
             </div>
           </div>
         </div>
@@ -85,9 +87,7 @@ const UsageExamplesSection = () => (
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
               This card uses our design system spacing values for consistent layout.
             </p>
-            <button className="bg-blue-500 text-white px-4 py-2 rounded text-sm">
-              Action Button
-            </button>
+            <button className={storyBookStyles.demoButton}>Action Button</button>
           </div>
         </div>
       </div>
