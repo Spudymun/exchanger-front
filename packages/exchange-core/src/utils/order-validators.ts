@@ -17,25 +17,11 @@ import { validateRecipientData } from './composite-validators';
  */
 
 /**
- * Helper to validate email using Zod schema
- */
-function validateEmailWithZod(email: string): ValidationResult {
-  return validateWithZodSchema(emailSchema, email);
-}
-
-/**
- * Helper to validate password using Zod schema
- */
-function validatePasswordWithZod(password: string): ValidationResult {
-  return validateWithZodSchema(passwordSchema, password);
-}
-
-/**
  * Validate complete order creation request
  */
 export function validateCreateOrder(request: CreateOrderRequest): ValidationResult {
   // Validate basic data using Zod schemas
-  const emailValidation = validateEmailWithZod(request.email);
+  const emailValidation = validateWithZodSchema(emailSchema, request.email);
   const currencyValidation = validateCurrency(request.currency);
 
   // Validate amount only if currency is valid
@@ -59,12 +45,12 @@ export function validateCreateOrder(request: CreateOrderRequest): ValidationResu
  * Validate user creation request
  */
 export function validateCreateUser(request: CreateUserRequest): ValidationResult {
-  const emailValidation = validateEmailWithZod(request.email);
+  const emailValidation = validateWithZodSchema(emailSchema, request.email);
 
   // Password validation is optional
   let passwordValidation: ValidationResult = createValidationResult([]);
   if (request.password) {
-    passwordValidation = validatePasswordWithZod(request.password);
+    passwordValidation = validateWithZodSchema(passwordSchema, request.password);
   }
 
   return mergeValidationResults(emailValidation, passwordValidation);
