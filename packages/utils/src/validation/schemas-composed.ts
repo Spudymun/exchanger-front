@@ -3,7 +3,7 @@
  * Сложные схемы которые комбинируют базовые
  */
 
-import type { CryptoCurrency } from '@repo/exchange-core';
+import type { CryptoCurrency } from '@repo/constants';
 import { z } from 'zod';
 
 import {

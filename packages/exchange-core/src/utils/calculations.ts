@@ -3,6 +3,7 @@ import {
   AMOUNT_LIMITS,
   MOCK_EXCHANGE_RATES,
   PERCENTAGE_CALCULATIONS,
+  type CryptoCurrency,
 } from '@repo/constants';
 import {
   calculateNetAmount,
@@ -12,7 +13,7 @@ import {
   parseFormattedAmount,
 } from '@repo/utils';
 
-import type { CryptoCurrency, ExchangeRate } from '../types';
+import type { ExchangeRate } from '../types';
 
 import { formatCryptoAmount } from './crypto';
 

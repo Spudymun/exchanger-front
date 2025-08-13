@@ -1,6 +1,7 @@
-import { CRYPTOCURRENCIES } from '@repo/constants';
+import { type CryptoCurrency } from '@repo/constants';
 
-export type CryptoCurrency = (typeof CRYPTOCURRENCIES)[number];
+// Re-export the centralized type for backward compatibility
+export type { CryptoCurrency };
 
 export interface CurrencyInfo {
   symbol: CryptoCurrency;

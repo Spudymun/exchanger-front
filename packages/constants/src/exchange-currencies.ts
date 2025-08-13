@@ -171,3 +171,14 @@ export const MOCK_CRYPTO_ADDRESSES = {
     'LTC_ADDRESS_FOR_TESTING_PURPOSES_ONLY',
   ],
 } as const;
+
+// Type definitions
+export type CryptoCurrency = (typeof CRYPTOCURRENCIES)[number];
+
+/**
+ * Get decimal places for a cryptocurrency
+ * Moved from exchange-core to break circular dependency
+ */
+export function getCurrencyDecimals(currency: CryptoCurrency): number {
+  return CURRENCY_DECIMALS[currency as keyof typeof CURRENCY_DECIMALS];
+}

@@ -2,10 +2,9 @@ import {
   CRYPTOCURRENCIES,
   EXCHANGE_VALIDATION_MESSAGES,
   VALIDATION_BOUNDS,
+  type CryptoCurrency,
 } from '@repo/constants';
 import { createValidationResult, type ValidationResult } from '@repo/utils';
-
-import type { CryptoCurrency } from '../types';
 
 import { isAmountWithinLimits } from './calculations';
 

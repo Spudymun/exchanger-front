@@ -4,7 +4,7 @@
  */
 
 import { CRYPTOCURRENCIES, VALIDATION_BOUNDS, VALIDATION_PATTERNS } from '@repo/constants';
-import type { CryptoCurrency } from '@repo/exchange-core';
+import type { CryptoCurrency } from '@repo/constants';
 import { z } from 'zod';
 
 // === CRYPTO ВАЛИДАЦИЯ ===

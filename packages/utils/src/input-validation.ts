@@ -1,5 +1,4 @@
-import { DECIMAL_PRECISION } from '@repo/constants';
-import { getCurrencyDecimals, type CryptoCurrency } from '@repo/exchange-core';
+import { DECIMAL_PRECISION, getCurrencyDecimals, type CryptoCurrency } from '@repo/constants';
 
 // server-i18n-errors removed - use direct fallback messages
 import { validateWithZodSchemaUI } from './validation';

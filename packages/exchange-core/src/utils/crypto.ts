@@ -1,18 +1,17 @@
 import {
   EXPLORER_URLS,
   NETWORK_NAMES,
-  CURRENCY_DECIMALS,
   MIN_TRANSACTION_AMOUNTS,
   CURRENCY_SYMBOLS,
   CURRENCY_FULL_NAMES,
   DECIMAL_PRECISION,
+  getCurrencyDecimals,
+  type CryptoCurrency,
 } from '@repo/constants';
 
 import { formatCryptoAmountForUI, createCryptoAddressSchema } from '@repo/utils';
 
 import { generateCryptoDepositAddress } from '../services';
-
-import type { CryptoCurrency } from '../types';
 
 /**
  * Получить случайный адрес для депозита (мок)
@@ -43,13 +42,6 @@ export function getTransactionExplorerUrl(txHash: string, currency: CryptoCurren
  */
 export function getNetworkName(currency: CryptoCurrency): string {
   return NETWORK_NAMES[currency];
-}
-
-/**
- * Получить количество десятичных знаков для криптовалюты
- */
-export function getCurrencyDecimals(currency: CryptoCurrency): number {
-  return CURRENCY_DECIMALS[currency];
 }
 
 /**
