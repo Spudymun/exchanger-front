@@ -198,28 +198,6 @@ export {
   type AdaptiveContainerProps,
 } from './adaptive-container';
 
-// === LEGACY EXPORTS (DEPRECATED) ===
-// These exports are deprecated and will be removed in future versions
-// Use compound components instead
-
-export {
-  DataTable as DataTableLegacy,
-  type DataTableProps as DataTableLegacyProps,
-  type Column as DataTableColumn,
-} from './data-table';
-
-export {
-  Footer as FooterLegacy,
-  FooterSection as FooterSectionLegacy,
-  FooterLink as FooterLinkLegacy,
-  FooterSocial as FooterSocialLegacy,
-  FooterCompanyInfo as FooterCompanyInfoLegacy,
-  FooterLegal as FooterLegalLegacy,
-  FooterLayout as FooterLayoutLegacy,
-  type FooterProps as FooterLegacyProps,
-  type FooterSectionProps as FooterSectionLegacyProps,
-  type FooterLinkProps as FooterLinkLegacyProps,
-  type FooterSocialProps as FooterSocialLegacyProps,
-  type FooterCompanyInfoProps as FooterCompanyInfoLegacyProps,
-  type FooterLegalProps as FooterLegalLegacyProps,
-} from './footer';
+// === LEGACY EXPORTS REMOVED ===
+// Legacy components have been successfully removed and migrated to compound versions
+// All legacy exports have been cleaned up

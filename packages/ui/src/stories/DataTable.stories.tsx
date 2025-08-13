@@ -1,7 +1,15 @@
 import { createUITestUsers, type UITestUser } from '@repo/exchange-core';
 import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 
-import { type Column } from '../components/data-table';
+// Simple Column type definition for stories
+interface Column<T> {
+  key: keyof T;
+  header: string;
+  sortable?: boolean;
+  filterable?: boolean;
+  render?: (item: T) => React.ReactNode;
+}
+
 import { DataTableCompound as DataTable } from '../components/data-table-compound';
 
 // Constants for story configuration

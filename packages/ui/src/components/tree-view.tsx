@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
 import React, { useState, useCallback } from 'react';
 
-import { TreeNodeItem, type TreeNode } from './TreeNodeItem';
+import { TreeNodeItem, type TreeNode } from './tree-view/TreeNodeItem';
 
 export type { TreeNode };
 
@@ -20,12 +20,10 @@ export interface TreeViewProps {
 
 // Хук для управления состоянием развернутых узлов
 const useExpandedNodes = (defaultExpanded: string[]) => {
-  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(
-    new Set(defaultExpanded)
-  );
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(defaultExpanded));
 
   const toggleNode = useCallback((nodeId: string) => {
-    setExpandedNodes((prev) => {
+    setExpandedNodes(prev => {
       const newSet = new Set(prev);
       if (newSet.has(nodeId)) {
         newSet.delete(nodeId);
@@ -43,18 +41,21 @@ const useExpandedNodes = (defaultExpanded: string[]) => {
 const useCheckedNodes = (onCheck: (checkedKeys: string[]) => void) => {
   const [checkedNodes, setCheckedNodes] = useState<Set<string>>(new Set());
 
-  const handleCheck = useCallback((nodeId: string, checked: boolean) => {
-    setCheckedNodes((prev) => {
-      const newSet = new Set(prev);
-      if (checked) {
-        newSet.add(nodeId);
-      } else {
-        newSet.delete(nodeId);
-      }
-      onCheck(Array.from(newSet));
-      return newSet;
-    });
-  }, [onCheck]);
+  const handleCheck = useCallback(
+    (nodeId: string, checked: boolean) => {
+      setCheckedNodes(prev => {
+        const newSet = new Set(prev);
+        if (checked) {
+          newSet.add(nodeId);
+        } else {
+          newSet.delete(nodeId);
+        }
+        onCheck(Array.from(newSet));
+        return newSet;
+      });
+    },
+    [onCheck]
+  );
 
   return { checkedNodes, handleCheck };
 };
@@ -74,7 +75,7 @@ const renderTreeNodes = (
     handleCheck: (nodeId: string, checked: boolean) => void;
   }
 ) => {
-  return nodes.map((node) => (
+  return nodes.map(node => (
     <TreeNodeItem
       key={node.id}
       node={node}

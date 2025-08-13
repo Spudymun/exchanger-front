@@ -40,11 +40,7 @@ const ExpandCollapseButton: React.FC<{
           onClick={onToggle}
           className="w-4 h-4 flex items-center justify-center hover:bg-muted rounded-sm"
         >
-          {isExpanded ? (
-            <ChevronDown className="w-3 h-3" />
-          ) : (
-            <ChevronRight className="w-3 h-3" />
-          )}
+          {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
         </button>
       ) : showLines ? (
         <div className="w-3 h-3" />
@@ -70,7 +66,7 @@ const TreeNodeCheckbox: React.FC<{
       onChange={onCheck}
       disabled={isDisabled}
       className="mr-2"
-      onClick={(e) => e.stopPropagation()}
+      onClick={e => e.stopPropagation()}
     />
   );
 };
@@ -81,11 +77,7 @@ const TreeNodeContent: React.FC<{
 }> = ({ node }) => {
   return (
     <div className="flex items-center flex-1 min-w-0">
-      {node.icon && (
-        <div className="w-4 h-4 mr-2 flex-shrink-0">
-          {node.icon}
-        </div>
-      )}
+      {node.icon && <div className="w-4 h-4 mr-2 flex-shrink-0">{node.icon}</div>}
       <span className="truncate">{node.label}</span>
     </div>
   );
@@ -96,14 +88,25 @@ const TreeNodeChildren: React.FC<{
   hasChildren: boolean;
   isExpanded: boolean;
   children?: TreeNode[];
-  parentProps: Pick<TreeNodeItemProps, 'onSelect' | 'onToggle' | 'expandedNodes' | 'levelPadding' | 'showLines' | 'checkable' | 'checkedNodes' | 'onCheck' | 'isSelected'>;
+  parentProps: Pick<
+    TreeNodeItemProps,
+    | 'onSelect'
+    | 'onToggle'
+    | 'expandedNodes'
+    | 'levelPadding'
+    | 'showLines'
+    | 'checkable'
+    | 'checkedNodes'
+    | 'onCheck'
+    | 'isSelected'
+  >;
   level: number;
 }> = ({ hasChildren, isExpanded, children, parentProps, level }) => {
   if (!hasChildren || !isExpanded || !children) return null;
 
   return (
     <div>
-      {children.map((child) => (
+      {children.map(child => (
         <TreeNodeItem
           key={child.id}
           node={child}
@@ -174,7 +177,7 @@ const useTreeNodeHandlers = (params: {
 };
 
 // Основной компонент узла дерева
-export const TreeNodeItem: React.FC<TreeNodeItemProps> = (props) => {
+export const TreeNodeItem: React.FC<TreeNodeItemProps> = props => {
   const {
     node,
     level,
@@ -213,12 +216,7 @@ export const TreeNodeItem: React.FC<TreeNodeItemProps> = (props) => {
 
   return (
     <>
-      <TreeNodeLayout
-        node={node}
-        level={level}
-        isSelected={isSelected}
-        onClick={handleClick}
-      >
+      <TreeNodeLayout node={node} level={level} isSelected={isSelected} onClick={handleClick}>
         <ExpandCollapseButton
           hasChildren={hasChildren || false}
           isExpanded={isExpanded}
