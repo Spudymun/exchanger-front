@@ -1,25 +1,28 @@
-import { EXCHANGE_VALIDATION_PATTERNS, EXCHANGE_VALIDATION_MESSAGES } from '@repo/constants';
+import { recipientDataSchema } from '@repo/utils';
 import { createValidationResult, type ValidationResult } from '@repo/utils';
 
 import type { RecipientData } from '../types';
 
 /**
  * Complex validation functions for composite data structures
- * Separated from simple validators for better organization
+ * Updated to use centralized Zod schemas per VALIDATION_ARCHITECTURE_GUIDE.md
  */
 
 /**
  * Validate recipient data for order creation
+ * Uses centralized Zod schema instead of custom validation (Rule 20)
  */
 export function validateRecipientData(recipientData?: RecipientData): ValidationResult {
-  const errors: string[] = [];
-
-  if (
-    recipientData?.cardNumber &&
-    !EXCHANGE_VALIDATION_PATTERNS.CARD_NUMBER.test(recipientData.cardNumber)
-  ) {
-    errors.push(EXCHANGE_VALIDATION_MESSAGES.CARD_NUMBER_INVALID);
+  if (!recipientData) {
+    return createValidationResult([]);
   }
 
+  const result = recipientDataSchema.safeParse(recipientData);
+
+  if (result.success) {
+    return createValidationResult([]);
+  }
+
+  const errors = result.error.errors.map(err => err.message);
   return createValidationResult(errors);
 }

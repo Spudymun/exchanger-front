@@ -192,6 +192,20 @@ export const createExchangeOrderSchema = z.object({
 });
 
 /**
+ * Схема для валидации данных получателя
+ * Централизованная схема согласно VALIDATION_ARCHITECTURE_GUIDE.md
+ */
+export const recipientDataSchema = z.object({
+  cardNumber: z
+    .string()
+    .regex(EXCHANGE_VALIDATION_PATTERNS.CARD_NUMBER, 'Номер карты должен содержать точно 16 цифр')
+    .optional(),
+  bankDetails: z.string().optional(),
+  recipientName: z.string().optional(),
+  phone: z.string().optional(),
+});
+
+/**
  * Схема для получения истории заказов по email
  */
 export const getOrderHistoryByEmailSchema = z.object({
