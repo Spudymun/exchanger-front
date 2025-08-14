@@ -30,12 +30,23 @@ packages/ui/src/
 │   │   ├── card.tsx           # Container cards
 │   │   ├── dialog.tsx         # Modal dialogs
 │   │   ├── table.tsx          # Basic tables
-│   │   └── ...                # Other primitives
+│   │   ├── dropdown-menu.tsx  # Dropdown menus
+│   │   ├── form.tsx          # Form components
+│   │   ├── label.tsx         # Form labels
+│   │   ├── select.tsx        # Select dropdowns
+│   │   ├── textarea.tsx      # Text areas
+│   │   ├── spinner.tsx       # Loading spinners
+│   │   ├── notification.tsx  # Notification components
+│   │   └── math-captcha.tsx  # Math CAPTCHA component
 │   │
 │   ├── auth/                   # 🔐 Domain Components
 │   │   ├── AuthEmailField.tsx
 │   │   ├── AuthPasswordField.tsx
+│   │   ├── AuthConfirmPasswordField.tsx
 │   │   ├── AuthCaptchaField.tsx
+│   │   ├── AuthSubmitButton.tsx
+│   │   ├── AuthSwitchButton.tsx
+│   │   ├── AuthFormLayout.tsx
 │   │   └── index.ts           # Barrel export
 │   │
 │   ├── tree-view/             # 🌳 Sub-components
@@ -47,6 +58,9 @@ packages/ui/src/
 │   ├── admin-panel-compound.tsx   # 🎛️  Business compounds
 │   ├── exchange-form.tsx          # 💱 Business logic
 │   ├── tree-view.tsx              # 🌳 Complex UI
+│   ├── adaptive-container.tsx     # 📱 Responsive containers
+│   ├── floating-action-button.tsx # 🎯 FAB component
+│   ├── theme-toggle.tsx           # 🌙 Theme switching
 │   └── index.ts                   # Main exports
 │
 ├── lib/                       # 🛠️ Utilities & Helpers
@@ -58,7 +72,20 @@ packages/ui/src/
 │
 ├── stories/                   # 📚 Storybook Documentation
 │   ├── Button.stories.tsx
+│   ├── Card.stories.tsx
 │   ├── DataTable.stories.tsx
+│   ├── Dialog.stories.tsx
+│   ├── DropdownMenu.stories.tsx
+│   ├── Footer.stories.tsx
+│   ├── Form.stories.tsx
+│   ├── Input.stories.tsx
+│   ├── Label.stories.tsx
+│   ├── Notification.stories.tsx
+│   ├── Select.stories.tsx
+│   ├── Spinner.stories.tsx
+│   ├── Table.stories.tsx
+│   ├── Textarea.stories.tsx
+│   ├── TreeView.stories.tsx
 │   ├── design-tokens/        # Design system demos
 │   └── ...
 │
