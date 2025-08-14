@@ -1,7 +1,6 @@
 'use client';
 
 import { getDefaultTokenStandard, isMultiNetworkToken, getTokenStandards } from '@repo/constants';
-import { validateCryptoAmount, type CryptoCurrency } from '@repo/exchange-core';
 import { useFormWithNextIntl } from '@repo/hooks/src/client-hooks';
 import {
   FormField,
@@ -20,7 +19,7 @@ import {
   CardTitle,
 } from '@repo/ui';
 import { useNumericInput } from '@repo/utils';
-import React, { useState } from 'react';
+import React from 'react';
 
 import type { HeroExchangeFormData } from '../HeroExchangeForm';
 
@@ -79,52 +78,21 @@ function AmountInput({
   form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>;
   t: (key: string) => string;
 }) {
-  const [inputError, setInputError] = useState<string>('');
-  const { handleKeyDown, formatValue } = useNumericInput(form.values.fromCurrency as string);
-
-  const validateAmount = (value: string) => {
-    if (!value) return '';
-
-    const numericValue = Number(value);
-    const currency = form.values.fromCurrency as CryptoCurrency;
-
-    const validation = validateCryptoAmount(numericValue, currency);
-
-    if (!validation.isValid && validation.errors.length > 0) {
-      return validation.errors[0];
-    }
-
-    return '';
-  };
-
-  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value;
-    const formattedValue = formatValue(rawValue);
-
-    if (inputError) setInputError('');
-
-    form.setValue('fromAmount', formattedValue);
-
-    const validationError = validateAmount(formattedValue);
-    if (validationError) {
-      setInputError(validationError);
-    }
-  };
+  const { handleKeyDown } = useNumericInput(form.values.fromCurrency as string);
 
   const handleAmountKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     handleKeyDown(e, form.values.fromAmount as string);
   };
 
   return (
-    <FormField name="fromAmount" error={form.errors.fromAmount || inputError}>
+    <FormField name="fromAmount" error={form.errors.fromAmount}>
       <FormLabel>{t('sending.amount')}</FormLabel>
       <FormControl>
         <Input
-          value={form.values.fromAmount as string}
-          onChange={handleAmountChange}
+          {...form.getFieldProps('fromAmount')}
           onKeyDown={handleAmountKeyDown}
           placeholder={t('sending.placeholder')}
-          aria-invalid={!!(form.errors.fromAmount || inputError)}
+          aria-invalid={!!form.errors.fromAmount}
         />
       </FormControl>
       <FormMessage />

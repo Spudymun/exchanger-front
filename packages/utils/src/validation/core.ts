@@ -26,6 +26,7 @@ import {
   handlePasswordValidation,
   handleConfirmPasswordValidation,
   handleAmountValidation,
+  handleCurrencyValidation,
   handleGeneralValidation,
 } from './handlers';
 
@@ -43,6 +44,7 @@ function handleValidationIssue(
     handlePasswordValidation(issue, t) ||
     handleConfirmPasswordValidation(issue, t) ||
     handleAmountValidation(issue, t) ||
+    handleCurrencyValidation(issue, t) ||
     handleGeneralValidation(issue, t)
   );
 }

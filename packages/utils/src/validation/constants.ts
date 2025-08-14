@@ -28,6 +28,9 @@ export const VALIDATION_KEYS = {
   AMOUNT_FORMAT: 'validation.amount.format',
   AMOUNT_POSITIVE: 'validation.amount.positive',
   AMOUNT_REQUIRED: 'validation.amount.required',
+  AMOUNT_MIN_VALUE: 'validation.amount.minValue',
+  AMOUNT_MAX_VALUE: 'validation.amount.maxValue',
+  CURRENCY_INVALID: 'validation.currency.invalid',
 } as const;
 
 /**

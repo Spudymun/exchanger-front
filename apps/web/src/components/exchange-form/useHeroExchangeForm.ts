@@ -6,9 +6,9 @@ import {
   getBanksForCurrency,
   type FiatCurrency,
   getDefaultTokenStandard,
+  VALIDATION_BOUNDS,
 } from '@repo/constants';
 import { useFormWithNextIntl } from '@repo/hooks';
-import { cryptoAmountStringSchema } from '@repo/utils';
 import { useMemo } from 'react';
 import { z } from 'zod';
 
@@ -16,10 +16,42 @@ import type { HeroExchangeFormData } from '../HeroExchangeForm';
 
 const EXCHANGE_RATE = 40.5;
 const MIN_AMOUNTS = { from: 10, to: 100 };
+const MAX_DECIMAL_PLACES = 8;
+
+// Специальная схема для HeroExchangeForm с правильным минимумом
+const heroExchangeCryptoAmountSchema = z
+  .string()
+  .refine(
+    val => {
+      // Allow empty string
+      if (val === '') return true;
+      // Check if it's a valid number
+      const num = Number(val);
+      if (Number.isNaN(num)) return false;
+      // Check if it has reasonable decimal places (up to 8)
+      const decimalParts = val.split('.');
+      if (decimalParts.length > 2) return false;
+      if (
+        decimalParts.length === 2 &&
+        decimalParts[1] &&
+        decimalParts[1].length > MAX_DECIMAL_PLACES
+      )
+        return false;
+      return true;
+    },
+    { message: 'AMOUNT_FORMAT' }
+  )
+  .refine(val => val === '' || Number(val) > 0, { message: 'AMOUNT_POSITIVE' })
+  .refine(val => val === '' || Number(val) >= MIN_AMOUNTS.from, {
+    message: `AMOUNT_MIN_VALUE:${MIN_AMOUNTS.from}`,
+  })
+  .refine(val => val === '' || Number(val) <= VALIDATION_BOUNDS.MAX_ORDER_AMOUNT, {
+    message: `AMOUNT_MAX_VALUE:${VALIDATION_BOUNDS.MAX_ORDER_AMOUNT}`,
+  });
 
 // Чистая Zod схема БЕЗ хардкода сообщений
 const heroExchangeSchema = z.object({
-  fromAmount: cryptoAmountStringSchema,
+  fromAmount: heroExchangeCryptoAmountSchema,
   fromCurrency: z.enum(CRYPTOCURRENCIES),
   tokenStandard: z.string().optional(),
   toCurrency: z.enum(FIAT_CURRENCIES),

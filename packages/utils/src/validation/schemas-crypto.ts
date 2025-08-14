@@ -9,6 +9,8 @@ import { z } from 'zod';
 
 // === CRYPTO ВАЛИДАЦИЯ ===
 
+const MAX_CRYPTO_DECIMAL_PLACES = 8;
+
 /**
  * Bitcoin адрес валидация
  * АРХИТЕКТУРНОЕ РЕШЕНИЕ: Используется только для программной валидации в exchange-core
@@ -54,10 +56,33 @@ export const createCryptoAddressSchema = (currency: CryptoCurrency) => {
  */
 export const cryptoAmountStringSchema = z
   .string()
-  .regex(/^\d+\.?\d{0,8}$/)
-  .refine(val => Number(val) > 0)
-  .refine(val => Number(val) >= VALIDATION_BOUNDS.MIN_ORDER_AMOUNT)
-  .refine(val => Number(val) <= VALIDATION_BOUNDS.MAX_ORDER_AMOUNT);
+  .refine(
+    val => {
+      // Allow empty string
+      if (val === '') return true;
+      // Simple numeric validation without unsafe regex
+      const num = Number(val);
+      if (Number.isNaN(num)) return false;
+      // Check decimal places
+      const decimalParts = val.split('.');
+      if (decimalParts.length > 2) return false;
+      if (
+        decimalParts.length === 2 &&
+        decimalParts[1] &&
+        decimalParts[1].length > MAX_CRYPTO_DECIMAL_PLACES
+      )
+        return false;
+      return true;
+    },
+    { message: 'AMOUNT_FORMAT' }
+  )
+  .refine(val => val === '' || Number(val) > 0, { message: 'AMOUNT_POSITIVE' })
+  .refine(val => val === '' || Number(val) >= VALIDATION_BOUNDS.MIN_ORDER_AMOUNT, {
+    message: `AMOUNT_MIN_VALUE:${VALIDATION_BOUNDS.MIN_ORDER_AMOUNT}`,
+  })
+  .refine(val => val === '' || Number(val) <= VALIDATION_BOUNDS.MAX_ORDER_AMOUNT, {
+    message: `AMOUNT_MAX_VALUE:${VALIDATION_BOUNDS.MAX_ORDER_AMOUNT}`,
+  });
 
 /**
  * Валидация криптовалюты

@@ -164,6 +164,25 @@ export function handleAmountValidation(
   return getAmountValidationMessage(issue, t);
 }
 
+function handleCustomAmountError(
+  issue: z.ZodIssueOptionalMessage,
+  t: NextIntlValidationConfig['t']
+): { message: string } {
+  if (issue.message === 'AMOUNT_POSITIVE') {
+    return { message: t(VALIDATION_KEYS.AMOUNT_POSITIVE) };
+  }
+  if (issue.message?.startsWith('AMOUNT_MIN_VALUE:')) {
+    const min = issue.message.split(':')[1] || '0.01';
+    return { message: t(VALIDATION_KEYS.AMOUNT_MIN_VALUE, { min }) };
+  }
+  if (issue.message?.startsWith('AMOUNT_MAX_VALUE:')) {
+    const max = issue.message.split(':')[1] || '1000000';
+    return { message: t(VALIDATION_KEYS.AMOUNT_MAX_VALUE, { max }) };
+  }
+  // Fallback for other custom errors
+  return { message: t(VALIDATION_KEYS.AMOUNT_POSITIVE) };
+}
+
 function getAmountValidationMessage(
   issue: z.ZodIssueOptionalMessage,
   t: NextIntlValidationConfig['t']
@@ -173,7 +192,7 @@ function getAmountValidationMessage(
   }
 
   if (issue.code === z.ZodIssueCode.custom) {
-    return { message: t(VALIDATION_KEYS.AMOUNT_POSITIVE) };
+    return handleCustomAmountError(issue, t);
   }
 
   if (issue.code === z.ZodIssueCode.too_small) {
@@ -181,6 +200,25 @@ function getAmountValidationMessage(
   }
 
   return { message: t(VALIDATION_KEYS.INVALID) };
+}
+
+/**
+ * Обрабатывает валидацию поля валюты (currency)
+ */
+export function handleCurrencyValidation(
+  issue: z.ZodIssueOptionalMessage,
+  t: NextIntlValidationConfig['t']
+): { message: string } | null {
+  const fieldName = issue.path?.[0];
+  if (typeof fieldName !== 'string' || !fieldName.toLowerCase().includes('currency')) {
+    return null;
+  }
+
+  if (issue.code === z.ZodIssueCode.custom) {
+    return { message: t(VALIDATION_KEYS.CURRENCY_INVALID) };
+  }
+
+  return null;
 }
 
 /**

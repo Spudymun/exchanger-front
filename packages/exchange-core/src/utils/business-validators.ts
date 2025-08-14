@@ -4,7 +4,11 @@ import {
   VALIDATION_BOUNDS,
   type CryptoCurrency,
 } from '@repo/constants';
-import { createValidationResult, type ValidationResult } from '@repo/utils';
+import {
+  createValidationResult,
+  type ValidationResult,
+  type NextIntlValidationConfig,
+} from '@repo/utils';
 
 import { isAmountWithinLimits } from './calculations';
 
@@ -40,6 +44,52 @@ export function validateCryptoAmount(amount: number, currency: CryptoCurrency): 
     if (!limitCheck.isValid && limitCheck.reason) {
       errors.push(limitCheck.reason);
     }
+  }
+
+  return createValidationResult(errors);
+}
+
+/**
+ * Validate cryptocurrency amount with localized messages
+ * NEW: Localized version using next-intl system like in auth modals
+ */
+export function validateCryptoAmountWithIntl(
+  amount: number,
+  currency: CryptoCurrency,
+  t: NextIntlValidationConfig['t']
+): ValidationResult {
+  const errors: string[] = [];
+
+  if (!amount || amount <= VALIDATION_BOUNDS.MIN_VALUE) {
+    errors.push(t('validation.crypto.positive'));
+    return createValidationResult(errors);
+  }
+
+  const limitCheck = isAmountWithinLimits(amount, currency);
+  if (!limitCheck.isValid) {
+    // Use localization if available, fallback to reason
+    if (limitCheck.localizationKey && limitCheck.params) {
+      errors.push(t(limitCheck.localizationKey, limitCheck.params));
+    } else if (limitCheck.reason) {
+      errors.push(limitCheck.reason);
+    }
+  }
+
+  return createValidationResult(errors);
+}
+
+/**
+ * Validate currency with localized messages
+ * NEW: Localized version using next-intl system
+ */
+export function validateCurrencyWithIntl(
+  currency: string,
+  t: NextIntlValidationConfig['t']
+): ValidationResult {
+  const errors: string[] = [];
+
+  if (!CRYPTOCURRENCIES.includes(currency as CryptoCurrency)) {
+    errors.push(t('validation.currency.invalid'));
   }
 
   return createValidationResult(errors);

@@ -64,25 +64,35 @@ export function calculateCommission(cryptoAmount: number, currency: CryptoCurren
 }
 
 /**
- * Проверить, что сумма в пределах лимитов
+ * Проверить, попадает ли сумма в допустимые лимиты
+ * ОБНОВЛЕНО: Интеграция с next-intl - возвращает ключи локализации
  */
 export function isAmountWithinLimits(
   cryptoAmount: number,
   currency: CryptoCurrency
-): { isValid: boolean; reason?: string } {
+): {
+  isValid: boolean;
+  reason?: string;
+  localizationKey?: string;
+  params?: Record<string, string | number>;
+} {
   const usdAmount = cryptoAmount * getExchangeRate(currency).usdRate;
 
   if (usdAmount < AMOUNT_LIMITS.MIN_USD) {
     return {
       isValid: false,
-      reason: `Min amount: $${AMOUNT_LIMITS.MIN_USD}`, // English fallback
+      reason: `Min amount: $${AMOUNT_LIMITS.MIN_USD}`, // English fallback for backward compatibility
+      localizationKey: 'validation.crypto.minAmount',
+      params: { min: `$${AMOUNT_LIMITS.MIN_USD}` },
     };
   }
 
   if (usdAmount > AMOUNT_LIMITS.MAX_USD) {
     return {
       isValid: false,
-      reason: `Max amount: $${AMOUNT_LIMITS.MAX_USD}`, // English fallback
+      reason: `Max amount: $${AMOUNT_LIMITS.MAX_USD}`, // English fallback for backward compatibility
+      localizationKey: 'validation.crypto.maxAmount',
+      params: { max: `$${AMOUNT_LIMITS.MAX_USD}` },
     };
   }
 

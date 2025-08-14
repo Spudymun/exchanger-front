@@ -340,6 +340,12 @@
         "required": "Amount is required",
         "format": "Invalid amount format",
         "positive": "Amount must be greater than 0"
+      },
+      "crypto": {
+        "format": "Invalid cryptocurrency amount format",
+        "positive": "Cryptocurrency amount must be greater than 0",
+        "minAmount": "Minimum amount: {min}",
+        "maxAmount": "Maximum amount: {max}"
       }
     },
     "fiatNames": {
