@@ -34,5 +34,5 @@ export interface Transaction {
   updatedAt: Date;
 }
 
-export type TransactionType = Transaction['type'];
-export type TransactionStatus = Transaction['status'];
+// Types re-exported from centralized constants (Rule 20)
+export type { TransactionType, TransactionStatus } from '@repo/constants';
