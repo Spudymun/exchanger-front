@@ -4,12 +4,10 @@ import {
   MIN_TRANSACTION_AMOUNTS,
   CURRENCY_SYMBOLS,
   CURRENCY_FULL_NAMES,
-  DECIMAL_PRECISION,
-  getCurrencyDecimals,
   type CryptoCurrency,
 } from '@repo/constants';
 
-import { formatCryptoAmountForUI, createCryptoAddressSchema } from '@repo/utils';
+import { createCryptoAddressSchema } from '@repo/utils';
 
 import { generateCryptoDepositAddress } from '../services';
 
@@ -42,17 +40,6 @@ export function getTransactionExplorerUrl(txHash: string, currency: CryptoCurren
  */
 export function getNetworkName(currency: CryptoCurrency): string {
   return NETWORK_NAMES[currency];
-}
-
-/**
- * Форматирование суммы криптовалюты с правильным количеством знаков
- */
-export function formatCryptoAmount(amount: number, currency: CryptoCurrency): string {
-  const decimals = getCurrencyDecimals(currency);
-  return formatCryptoAmountForUI(
-    amount,
-    Math.min(decimals, DECIMAL_PRECISION.UI_MAX_DECIMAL_PLACES)
-  );
 }
 
 /**

@@ -3,6 +3,8 @@ import {
   AMOUNT_LIMITS,
   MOCK_EXCHANGE_RATES,
   PERCENTAGE_CALCULATIONS,
+  DECIMAL_PRECISION,
+  getCurrencyDecimals,
   type CryptoCurrency,
 } from '@repo/constants';
 import {
@@ -11,11 +13,10 @@ import {
   calculateCommissionAmount,
   formatUahAmount,
   parseFormattedAmount,
+  formatCryptoAmountForUI,
 } from '@repo/utils';
 
 import type { ExchangeRate } from '../types';
-
-import { formatCryptoAmount } from './crypto';
 
 /**
  * Получить текущий курс криптовалюты
@@ -50,7 +51,12 @@ export function calculateCryptoAmount(uahAmount: number, currency: CryptoCurrenc
   const rate = getExchangeRate(currency);
   const grossAmount = calculateGrossAmountFromNet(uahAmount, rate.commission);
   const cryptoAmount = grossAmount / rate.uahRate;
-  return parseFormattedAmount(formatCryptoAmount(cryptoAmount, currency));
+  const decimals = getCurrencyDecimals(currency);
+  const formattedAmount = formatCryptoAmountForUI(
+    cryptoAmount,
+    Math.min(decimals, DECIMAL_PRECISION.UI_MAX_DECIMAL_PLACES)
+  );
+  return parseFormattedAmount(formattedAmount);
 }
 
 /**
