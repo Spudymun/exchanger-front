@@ -16,10 +16,3 @@ export function sanitizeEmail(email: string): string {
 export function sanitizeInput(input: string): string {
   return input.trim();
 }
-
-/**
- * Sanitize currency code to uppercase
- */
-export function sanitizeCurrency(currency: string): string {
-  return currency.toUpperCase().trim();
-}

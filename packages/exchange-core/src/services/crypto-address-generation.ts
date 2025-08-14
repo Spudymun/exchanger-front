@@ -60,14 +60,6 @@ export class CryptoAddressGenerationService {
     const addresses = this.getAddressesForCurrency(currency);
     return this.selectRandomAddress(addresses, currency);
   }
-
-  /**
-   * Generate new wallet address (placeholder for future implementation)
-   */
-  generateNewWalletAddress(currency: CryptoCurrency): string {
-    // This would integrate with actual wallet generation in production
-    return this.generateDepositAddress(currency);
-  }
 }
 
 // Export convenience function for backward compatibility
