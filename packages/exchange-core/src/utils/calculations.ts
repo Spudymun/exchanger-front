@@ -76,23 +76,23 @@ export function isAmountWithinLimits(
   localizationKey?: string;
   params?: Record<string, string | number>;
 } {
-  const usdAmount = cryptoAmount * getExchangeRate(currency).usdRate;
+  const limits = getCurrencyLimits(currency);
 
-  if (usdAmount < AMOUNT_LIMITS.MIN_USD) {
+  if (cryptoAmount < limits.minCrypto) {
     return {
       isValid: false,
-      reason: `Min amount: $${AMOUNT_LIMITS.MIN_USD}`, // English fallback for backward compatibility
-      localizationKey: 'validation.crypto.minAmount',
-      params: { min: `$${AMOUNT_LIMITS.MIN_USD}` },
+      reason: 'Amount too low',
+      localizationKey: 'server.errors.business.amountTooLow',
+      params: { min: limits.minCrypto.toString() },
     };
   }
 
-  if (usdAmount > AMOUNT_LIMITS.MAX_USD) {
+  if (cryptoAmount > limits.maxCrypto) {
     return {
       isValid: false,
-      reason: `Max amount: $${AMOUNT_LIMITS.MAX_USD}`, // English fallback for backward compatibility
-      localizationKey: 'validation.crypto.maxAmount',
-      params: { max: `$${AMOUNT_LIMITS.MAX_USD}` },
+      reason: 'Amount too high',
+      localizationKey: 'server.errors.business.amountTooHigh',
+      params: { max: limits.maxCrypto.toString() },
     };
   }
 

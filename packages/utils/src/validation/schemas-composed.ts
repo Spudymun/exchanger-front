@@ -6,12 +6,7 @@
 import type { CryptoCurrency } from '@repo/constants';
 import { z } from 'zod';
 
-import {
-  emailSchema,
-  legacyPasswordSchema,
-  newPasswordSchema,
-  phoneInternationalSchema,
-} from './schemas-basic';
+import { emailSchema, passwordSchema, phoneInternationalSchema } from './schemas-basic';
 import {
   cryptoAmountStringSchema,
   currencySchema,
@@ -35,8 +30,8 @@ export const createOrderEnhancedSchema = z.object({
  */
 export const changePasswordEnhancedSchema = z
   .object({
-    currentPassword: legacyPasswordSchema, // Текущий пароль может быть legacy
-    newPassword: newPasswordSchema, // Новый пароль должен быть усиленным
+    currentPassword: passwordSchema, // Используем строгую валидацию для всех паролей
+    newPassword: passwordSchema, // Используем строгую валидацию для всех паролей
     confirmPassword: z.string(),
   })
   .refine(data => data.newPassword === data.confirmPassword, {

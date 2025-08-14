@@ -61,19 +61,6 @@ export const passwordSchema = z
   .regex(/[^A-Za-z0-9]/); // Специальный символ
 
 /**
- * Новые пароли используют усиленную схему
- */
-export const newPasswordSchema = passwordSchema;
-
-/**
- * Легаси пароли - более мягкие требования для существующих пользователей
- */
-export const legacyPasswordSchema = z
-  .string()
-  .min(VALIDATION_LIMITS.LEGACY_PASSWORD_MIN_LENGTH) // Минимум для совместимости
-  .max(VALIDATION_LIMITS.PASSWORD_MAX_LENGTH);
-
-/**
  * Имя пользователя
  * АРХИТЕКТУРНОЕ РЕШЕНИЕ: Без хардкод сообщений - используется createNextIntlZodErrorMap
  *

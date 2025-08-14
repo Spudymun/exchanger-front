@@ -3,7 +3,7 @@
  * Извлечено из validation-schemas.ts для улучшения поддерживаемости
  */
 
-import { CRYPTOCURRENCIES, VALIDATION_BOUNDS, VALIDATION_PATTERNS } from '@repo/constants';
+import { CRYPTOCURRENCIES, VALIDATION_PATTERNS } from '@repo/constants';
 import type { CryptoCurrency } from '@repo/constants';
 import { z } from 'zod';
 
@@ -76,13 +76,7 @@ export const cryptoAmountStringSchema = z
     },
     { message: 'AMOUNT_FORMAT' }
   )
-  .refine(val => val === '' || Number(val) > 0, { message: 'AMOUNT_POSITIVE' })
-  .refine(val => val === '' || Number(val) >= VALIDATION_BOUNDS.MIN_ORDER_AMOUNT, {
-    message: `AMOUNT_MIN_VALUE:${VALIDATION_BOUNDS.MIN_ORDER_AMOUNT}`,
-  })
-  .refine(val => val === '' || Number(val) <= VALIDATION_BOUNDS.MAX_ORDER_AMOUNT, {
-    message: `AMOUNT_MAX_VALUE:${VALIDATION_BOUNDS.MAX_ORDER_AMOUNT}`,
-  });
+  .refine(val => val === '' || Number(val) > 0, { message: 'AMOUNT_POSITIVE' });
 
 /**
  * Валидация криптовалюты

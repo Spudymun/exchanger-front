@@ -15,7 +15,6 @@ export const VALIDATION_LIMITS = {
   USERNAME_MAX_LENGTH: 30,
 
   // Password security
-  LEGACY_PASSWORD_MIN_LENGTH: 6, // Для совместимости с существующими паролями
   BCRYPT_SALT_ROUNDS: 10,
 
   // Names

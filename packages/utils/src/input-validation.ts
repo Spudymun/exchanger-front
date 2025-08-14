@@ -1,8 +1,6 @@
 import { DECIMAL_PRECISION, getCurrencyDecimals, type CryptoCurrency } from '@repo/constants';
 
 // server-i18n-errors removed - use direct fallback messages
-import { validateWithZodSchemaUI } from './validation';
-import { cryptoAmountStringSchema, uahAmountStringSchema } from './validation-schemas';
 
 /**
  * INPUT VALIDATION UTILITIES - ИНТЕГРИРОВАНО С ZOD СХЕМАМИ
@@ -129,42 +127,3 @@ export function useNumericInput(currency?: string) {
   };
 }
 // === ИНТЕГРАЦИЯ С ZOD СХЕМАМИ ===
-
-/**
- * Валидирует crypto сумму используя централизованную Zod схему
- * Интеграция UI валидации с бизнес-логикой
- */
-export function validateCryptoAmountWithZod(value: string): {
-  isValid: boolean;
-  error: string | null;
-} {
-  return validateWithZodSchemaUI(cryptoAmountStringSchema, value);
-}
-
-/**
- * Валидирует UAH сумму используя централизованную Zod схему
- * Интеграция UI валидации с бизнес-логикой
- */
-export function validateUahAmountWithZod(value: string): {
-  isValid: boolean;
-  error: string | null;
-} {
-  return validateWithZodSchemaUI(uahAmountStringSchema, value);
-}
-
-/**
- * Расширенный хук с интеграцией Zod валидации
- * Объединяет UI проверки с бизнес-валидацией
- */
-export function useNumericInputWithZod(currency?: string, isCrypto: boolean = true) {
-  const basicHook = useNumericInput(currency);
-
-  const validateWithZod = (value: string) => {
-    return isCrypto ? validateCryptoAmountWithZod(value) : validateUahAmountWithZod(value);
-  };
-
-  return {
-    ...basicHook,
-    validateWithZod,
-  };
-}

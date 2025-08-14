@@ -18,8 +18,6 @@ import {
   idSchema,
   emailSchema,
   passwordSchema,
-  newPasswordSchema,
-  legacyPasswordSchema,
   searchQuerySchema,
 } from './validation/schemas-basic';
 
@@ -45,15 +43,7 @@ export {
 
 // === ЭКСПОРТ ИМПОРТИРОВАННЫХ СХЕМ ===
 // Экспортируем схемы, которые мы импортировали для использования в этом файле
-export {
-  idSchema,
-  emailSchema,
-  passwordSchema,
-  newPasswordSchema,
-  legacyPasswordSchema,
-  searchQuerySchema,
-  currencySchema,
-};
+export { idSchema, emailSchema, passwordSchema, searchQuerySchema, currencySchema };
 
 // === СПЕЦИФИЧНЫЕ СХЕМЫ (остающиеся в этом файле) ===
 
@@ -74,9 +64,8 @@ const OPERATOR_CHANGEABLE_STATUSES = [
 // === УНИКАЛЬНЫЕ СХЕМЫ ЭТОГО ФАЙЛА ===
 
 /**
- * Украинский номер телефона
+ * Украинский номер телефона - УДАЛЕНО: не используется в проекте
  */
-export const phoneUkraineSchema = z.string().regex(/^\+380\d{9}$/);
 
 // === ПАГИНАЦИЯ ===
 
@@ -97,13 +86,8 @@ export const cursorPaginationSchema = z.object({
 });
 
 /**
- * Универсальная схема пагинации (поддерживает оба типа)
+ * Универсальная схема пагинации - УДАЛЕНО: не используется в проекте
  */
-export const universalPaginationSchema = z.object({
-  limit: z.number().min(1).max(100).default(DEFAULT_PAGINATION_LIMIT),
-  offset: z.number().min(0).default(0).optional(),
-  cursor: z.string().optional(),
-});
 
 // === ФИНАНСОВЫЕ ДАННЫЕ ===
 
@@ -218,12 +202,8 @@ export const getOrderHistoryByEmailSchema = z.object({
 // === АУТЕНТИФИКАЦИЯ ===
 
 /**
- * Схема для API входа (без CAPTCHA)
+ * Схема для API входа - УДАЛЕНО: не используется в проекте
  */
-export const loginApiSchema = z.object({
-  email: emailSchema,
-  password: passwordSchema,
-});
 
 /**
  * Кастомная валидация CAPTCHA - ЛОКАЛИЗУЕМАЯ версия
@@ -252,17 +232,13 @@ export const captchaSchema = z
  */
 export const loginSchema = z.object({
   email: emailSchema,
-  password: legacyPasswordSchema, // Используем legacy для входа существующих пользователей
+  password: passwordSchema, // Используем строгую валидацию для всех пользователей
   captcha: captchaSchema,
 });
 
 /**
- * Схема для API регистрации (без подтверждения пароля)
+ * Схема для API регистрации - УДАЛЕНО: не используется в проекте
  */
-export const registerApiSchema = z.object({
-  email: emailSchema,
-  password: newPasswordSchema,
-});
 
 /**
  * Схема для регистрации с подтверждением - УСИЛЕННАЯ валидация
@@ -270,7 +246,7 @@ export const registerApiSchema = z.object({
 export const registerSchema = z
   .object({
     email: emailSchema,
-    password: newPasswordSchema, // Усиленная валидация для новых пользователей
+    password: passwordSchema, // Строгая валидация для всех паролей
     confirmPassword: z.string(),
     captcha: captchaSchema,
   })
@@ -291,7 +267,7 @@ export const resetPasswordSchema = z.object({
 export const confirmResetPasswordSchema = z.object({
   email: emailSchema,
   resetCode: z.string().min(1),
-  newPassword: newPasswordSchema,
+  newPassword: passwordSchema,
 });
 
 /**
@@ -310,7 +286,7 @@ export const confirmEmailSchema = z.object({
 export const changePasswordSchema = z
   .object({
     currentPassword: passwordSchema,
-    newPassword: newPasswordSchema,
+    newPassword: passwordSchema,
     confirmPassword: z.string(),
   })
   .refine(data => data.newPassword === data.confirmPassword, {

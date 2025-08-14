@@ -8,7 +8,6 @@ import {
   ORDER_STATUSES,
 } from '@repo/constants';
 import {
-  validateCreateOrder,
   calculateUahAmount,
   calculateCryptoAmount,
   getExchangeRate,
@@ -17,6 +16,7 @@ import {
   sanitizeEmail,
   orderManager,
   userManager,
+  isAmountWithinLimits,
   type CryptoCurrency,
 } from '@repo/exchange-core';
 import {
@@ -205,12 +205,12 @@ export const exchangeRouter = createTRPCRouter({
         currency: input.currency as CryptoCurrency,
       });
 
-      // Валидация заявки
-      const validation = validateCreateOrder(orderRequest);
-      if (!validation.isValid) {
+      // Проверяем только бизнес-условия (лимиты, курсы)
+      // Input validation уже выполнена Zod schemas в input()
+      const limitCheck = isAmountWithinLimits(input.cryptoAmount, input.currency as CryptoCurrency);
+      if (!limitCheck.isValid && limitCheck.localizationKey) {
         throw createBadRequestError(
-          validation.errors[0] ||
-            (await ctx.getErrorMessage('server.errors.business.exchangeValidationError'))
+          await ctx.getErrorMessage(limitCheck.localizationKey, limitCheck.params)
         );
       }
 
