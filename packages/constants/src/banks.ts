@@ -3,10 +3,7 @@
  * Based on exchanger_AC.md requirements for different fiat currencies
  */
 
-import type { FIAT_CURRENCIES } from './fiat-currencies';
-
-// Type for fiat currency keys
-export type FiatCurrency = (typeof FIAT_CURRENCIES)[number];
+import type { FiatCurrency } from './fiat-currencies';
 
 // Bank configurations for each fiat currency
 export const BANKS_BY_CURRENCY = {

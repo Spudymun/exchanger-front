@@ -6,6 +6,9 @@
 // Поддерживаемые фиатные валюты
 export const FIAT_CURRENCIES = ['UAH', 'USD', 'EUR'] as const;
 
+// Type definition (centralized in constants following Rule 20)
+export type FiatCurrency = (typeof FIAT_CURRENCIES)[number];
+
 // Display names for fiat currencies
 export const FIAT_CURRENCY_NAMES = {
   UAH: 'Українська гривня',

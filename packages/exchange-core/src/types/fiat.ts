@@ -1,6 +1,7 @@
-import { FIAT_CURRENCIES } from '@repo/constants';
+import { type FiatCurrency } from '@repo/constants';
 
-export type FiatCurrency = (typeof FIAT_CURRENCIES)[number];
+// Re-export the centralized type for backward compatibility
+export type { FiatCurrency };
 
 export interface FiatCurrencyInfo {
   symbol: FiatCurrency;
