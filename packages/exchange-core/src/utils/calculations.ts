@@ -20,6 +20,11 @@ import type { ExchangeRate } from '../types';
 
 /**
  * Получить текущий курс криптовалюты
+ * @param currency - Тип криптовалюты
+ * @returns Объект с курсом валюты, комиссией и временной меткой
+ * @example
+ * const rate = getExchangeRate('BTC');
+ * console.log(rate.uahRate); // 1755000 (мок курс)
  */
 export function getExchangeRate(currency: CryptoCurrency): ExchangeRate {
   const mockRate = MOCK_EXCHANGE_RATES[currency];
@@ -35,6 +40,12 @@ export function getExchangeRate(currency: CryptoCurrency): ExchangeRate {
 /**
  * Рассчитать сумму в UAH с учетом комиссии
  * Uses centralized calculation utilities to eliminate code duplication
+ * @param cryptoAmount - Количество криптовалюты
+ * @param currency - Тип криптовалюты
+ * @returns Сумма в гривнах после вычета комиссии
+ * @example
+ * const uahAmount = calculateUahAmount(0.001, 'BTC');
+ * console.log(uahAmount); // 1702.45 (с учетом комиссии 3%)
  */
 export function calculateUahAmount(cryptoAmount: number, currency: CryptoCurrency): number {
   const rate = getExchangeRate(currency);
@@ -46,6 +57,12 @@ export function calculateUahAmount(cryptoAmount: number, currency: CryptoCurrenc
 /**
  * Рассчитать сумму криптовалюты из UAH
  * Uses centralized calculation utilities to eliminate code duplication
+ * @param uahAmount - Сумма в гривнах
+ * @param currency - Тип криптовалюты
+ * @returns Количество криптовалюты с учетом комиссии
+ * @example
+ * const btcAmount = calculateCryptoAmount(1000, 'BTC');
+ * console.log(btcAmount); // 0.000569 (с учетом комиссии)
  */
 export function calculateCryptoAmount(uahAmount: number, currency: CryptoCurrency): number {
   const rate = getExchangeRate(currency);
@@ -61,6 +78,12 @@ export function calculateCryptoAmount(uahAmount: number, currency: CryptoCurrenc
 
 /**
  * Рассчитать комиссию в UAH
+ * @param cryptoAmount - Количество криптовалюты
+ * @param currency - Тип криптовалюты
+ * @returns Размер комиссии в гривнах
+ * @example
+ * const commission = calculateCommission(0.001, 'BTC');
+ * console.log(commission); // 52.65 (3% от 1755 UAH)
  */
 export function calculateCommission(cryptoAmount: number, currency: CryptoCurrency): number {
   const rate = getExchangeRate(currency);
