@@ -325,39 +325,31 @@ export function AppLayout({ children }) {
 }
 ```
 
-**Проблема 3: Отсутствие Error Boundaries**
+**Проблема 3: Error Boundaries** ✅ ИСПРАВЛЕНО
 
-В приложении НЕТ НИ ОДНОГО Error Boundary! Это **критическая проблема безопасности**.
+Реализована полная система Error Boundaries на уровне приложения.
 
-**Последствия:**
+**Текущее состояние:**
 
-- Любая ошибка в компоненте крашит все приложение
-- Плохой пользовательский опыт
-- Отсутствие error reporting
-- Impossible graceful degradation
+- ✅ Специализированные Error Boundaries для разных типов компонентов
+- ✅ ExchangeErrorBoundary для форм обмена валют
+- ✅ LayoutErrorBoundary для критических layout компонентов
+- ✅ BaseErrorBoundary для универсальных случаев
+- ✅ Все compound components защищены Error Boundaries
 
-**ОБЯЗАТЕЛЬНО нужно добавить:**
+**Была добавлена система:**
 
 ```typescript
-// components/ErrorBoundary.tsx
-export class ErrorBoundary extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { hasError: false, error: null };
-  }
-
-  static getDerivedStateFromError(error) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error, errorInfo) {
-    // Log to monitoring service
-    logger.error('Component error boundary caught error', {
-      error: error.toString(),
-      errorInfo,
-      stack: error.stack,
-    });
-  }
+// packages/ui/src/components/error-boundaries/
+// Полная система Error Boundaries реализована:
+// - ExchangeErrorBoundary.tsx
+// - BaseErrorBoundary.tsx
+// - LayoutErrorBoundary.tsx
+// - index.ts с экспортами
+//
+// Все compound components защищены BaseErrorBoundary
+// Критические layout компоненты используют LayoutErrorBoundary
+// Формы обмена защищены ExchangeErrorBoundary
 
   render() {
     if (this.state.hasError) {
