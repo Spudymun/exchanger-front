@@ -4,6 +4,8 @@ import * as React from 'react';
 
 import { cn } from '../lib/utils';
 
+import { BaseErrorBoundary } from './error-boundaries';
+
 // ===== ADMIN PANEL COMPOUND COMPONENTS ARCHITECTURE v2.0 =====
 // Unified admin composition system extending ExchangeForm/DataTable pattern
 // Migrating from Manual Composition (6/10) to Compound Components (9.5/10)
@@ -64,11 +66,13 @@ const AdminPanel = React.forwardRef<HTMLDivElement, AdminPanelProps>(
     };
 
     return (
-      <AdminPanelContext.Provider value={contextValue}>
-        <div ref={ref} className={cn('min-h-screen bg-background', className)} {...props}>
-          {children}
-        </div>
-      </AdminPanelContext.Provider>
+      <BaseErrorBoundary componentName="AdminPanel">
+        <AdminPanelContext.Provider value={contextValue}>
+          <div ref={ref} className={cn('min-h-screen bg-background', className)} {...props}>
+            {children}
+          </div>
+        </AdminPanelContext.Provider>
+      </BaseErrorBoundary>
     );
   }
 );

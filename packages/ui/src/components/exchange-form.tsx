@@ -8,6 +8,7 @@ import AdaptiveContainer, {
   useAdaptivePreset,
   type AdaptiveWidthProps,
 } from './adaptive-container';
+import { ExchangeErrorBoundary } from './error-boundaries';
 
 // ===== COMPOUND COMPONENTS ARCHITECTURE v2.0 =====
 // Unified composition system extending form.tsx pattern
@@ -70,11 +71,13 @@ const ExchangeForm = React.forwardRef<HTMLFormElement, ExchangeFormProps>(
     };
 
     return (
-      <ExchangeFormContext.Provider value={contextValue}>
-        <form ref={ref} className={cn('space-y-6', className)} {...props}>
-          {children}
-        </form>
-      </ExchangeFormContext.Provider>
+      <ExchangeErrorBoundary>
+        <ExchangeFormContext.Provider value={contextValue}>
+          <form ref={ref} className={cn('space-y-6', className)} {...props}>
+            {children}
+          </form>
+        </ExchangeFormContext.Provider>
+      </ExchangeErrorBoundary>
     );
   }
 );

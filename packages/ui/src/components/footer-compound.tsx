@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { cn } from '../lib/utils';
 
+import { BaseErrorBoundary } from './error-boundaries';
 import { Button } from './ui/button';
 
 // ===== COMPOUND COMPONENTS ARCHITECTURE v2.0 =====
@@ -42,16 +43,18 @@ const Footer = React.forwardRef<HTMLElement, FooterProps>(
     };
 
     return (
-      <FooterContext.Provider value={contextValue}>
-        <footer
-          ref={ref}
-          className={cn('bg-background border-t border-border mt-auto', className)}
-          role="contentinfo"
-          {...props}
-        >
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</div>
-        </footer>
-      </FooterContext.Provider>
+      <BaseErrorBoundary componentName="Footer">
+        <FooterContext.Provider value={contextValue}>
+          <footer
+            ref={ref}
+            className={cn('bg-background border-t border-border mt-auto', className)}
+            role="contentinfo"
+            {...props}
+          >
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</div>
+          </footer>
+        </FooterContext.Provider>
+      </BaseErrorBoundary>
     );
   }
 );

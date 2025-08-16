@@ -198,6 +198,16 @@ export {
   type AdaptiveContainerProps,
 } from './adaptive-container';
 
+// Error Boundaries
+export {
+  ExchangeErrorBoundary,
+  BaseErrorBoundary,
+  LayoutErrorBoundary,
+  type ExchangeErrorBoundaryProps,
+  type BaseErrorBoundaryProps,
+  type LayoutErrorBoundaryProps,
+} from './error-boundaries';
+
 // === LEGACY EXPORTS REMOVED ===
 // Legacy components have been successfully removed and migrated to compound versions
 // All legacy exports have been cleaned up

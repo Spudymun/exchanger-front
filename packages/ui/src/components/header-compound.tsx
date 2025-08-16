@@ -8,6 +8,7 @@ import { cn } from '../lib/utils';
 
 const FLEX_ITEMS_CENTER_SPACE_X_2 = 'flex items-center space-x-2';
 
+import { BaseErrorBoundary } from './error-boundaries';
 import { ThemeToggle } from './theme-toggle';
 import { Button } from './ui/button';
 
@@ -45,32 +46,46 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
     },
     ref
   ) => {
-    const contextValue: HeaderContextValue = {
-      isMenuOpen,
-      currentLocale,
-      isAuthenticated,
-      userName,
-      onToggleMenu,
-      onLocaleChange,
-      onSignIn,
-      onSignOut,
-    };
+    const contextValue: HeaderContextValue = React.useMemo(
+      () => ({
+        isMenuOpen,
+        currentLocale,
+        isAuthenticated,
+        userName,
+        onToggleMenu,
+        onLocaleChange,
+        onSignIn,
+        onSignOut,
+      }),
+      [
+        isMenuOpen,
+        currentLocale,
+        isAuthenticated,
+        userName,
+        onToggleMenu,
+        onLocaleChange,
+        onSignIn,
+        onSignOut,
+      ]
+    );
 
     return (
-      <HeaderContext.Provider value={contextValue}>
-        <header
-          ref={ref}
-          className={cn(
-            'bg-background border-b border-border sticky top-0 z-50 shadow-sm',
-            className
-          )}
-          role="banner"
-        >
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="py-1 sm:py-2 md:py-2">{children}</div>
-          </div>
-        </header>
-      </HeaderContext.Provider>
+      <BaseErrorBoundary componentName="Header">
+        <HeaderContext.Provider value={contextValue}>
+          <header
+            ref={ref}
+            className={cn(
+              'bg-background border-b border-border sticky top-0 z-50 shadow-sm',
+              className
+            )}
+            role="banner"
+          >
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="py-1 sm:py-2 md:py-2">{children}</div>
+            </div>
+          </header>
+        </HeaderContext.Provider>
+      </BaseErrorBoundary>
     );
   }
 );

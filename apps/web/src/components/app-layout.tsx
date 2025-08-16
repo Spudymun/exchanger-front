@@ -1,4 +1,5 @@
 import { ThemeProvider } from '@repo/providers';
+import { LayoutErrorBoundary } from '@repo/ui';
 
 import { TRPCProvider } from '../../lib/trpc-provider';
 
@@ -12,16 +13,18 @@ interface AppLayoutProps {
 
 export function AppLayout({ children, className }: AppLayoutProps) {
   return (
-    <ThemeProvider>
-      <TRPCProvider>
-        <div className={`min-h-screen flex flex-col overflow-x-hidden ${className || ''}`}>
-          <AppHeader />
-          <main className="flex-1 overflow-x-hidden" role="main">
-            {children}
-          </main>
-          <AppFooter />
-        </div>
-      </TRPCProvider>
-    </ThemeProvider>
+    <LayoutErrorBoundary componentName="AppLayout">
+      <ThemeProvider>
+        <TRPCProvider>
+          <div className={`min-h-screen flex flex-col overflow-x-hidden ${className || ''}`}>
+            <AppHeader />
+            <main className="flex-1 overflow-x-hidden" role="main">
+              {children}
+            </main>
+            <AppFooter />
+          </div>
+        </TRPCProvider>
+      </ThemeProvider>
+    </LayoutErrorBoundary>
   );
 }

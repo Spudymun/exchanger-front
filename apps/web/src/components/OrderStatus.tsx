@@ -2,7 +2,7 @@
 
 import { ORDER_STATUS_CONFIG, ORDER_STATUSES, UI_REFRESH_INTERVALS } from '@repo/constants';
 import type { Order } from '@repo/exchange-core';
-import { statusStyles, textStyles, cardStyles, combineStyles } from '@repo/ui';
+import { statusStyles, textStyles, cardStyles, combineStyles, BaseErrorBoundary } from '@repo/ui';
 import { CheckCircle, Clock, Loader2, XCircle } from 'lucide-react';
 import { useMemo } from 'react';
 
@@ -171,9 +171,13 @@ export function OrderStatus({ orderId, showDetails = true }: OrderStatusProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <OrderStatusHeader orderData={typedOrderData} statusConfig={statusConfig} />
-      {showDetails && <OrderStatusDetails orderData={typedOrderData} statusConfig={statusConfig} />}
-    </div>
+    <BaseErrorBoundary componentName="OrderStatus">
+      <div className="space-y-4">
+        <OrderStatusHeader orderData={typedOrderData} statusConfig={statusConfig} />
+        {showDetails && (
+          <OrderStatusDetails orderData={typedOrderData} statusConfig={statusConfig} />
+        )}
+      </div>
+    </BaseErrorBoundary>
   );
 }

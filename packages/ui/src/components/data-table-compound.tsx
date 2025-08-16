@@ -4,6 +4,8 @@ import * as React from 'react';
 
 import { cn } from '../lib/utils';
 
+import { BaseErrorBoundary } from './error-boundaries';
+
 // ===== DATA TABLE COMPOUND COMPONENTS ARCHITECTURE v2.0 =====
 // Unified table composition system extending ExchangeForm pattern
 // Migrating from Custom Hooks (7.5/10) to Compound Components (9.5/10)
@@ -73,11 +75,13 @@ const DataTable = React.forwardRef<HTMLDivElement, DataTableProps>(
     };
 
     return (
-      <DataTableContext.Provider value={contextValue}>
-        <div ref={ref} className={cn('w-full space-y-4', className)} {...props}>
-          {children}
-        </div>
-      </DataTableContext.Provider>
+      <BaseErrorBoundary componentName="DataTable">
+        <DataTableContext.Provider value={contextValue}>
+          <div ref={ref} className={cn('w-full space-y-4', className)} {...props}>
+            {children}
+          </div>
+        </DataTableContext.Provider>
+      </BaseErrorBoundary>
     );
   }
 );
