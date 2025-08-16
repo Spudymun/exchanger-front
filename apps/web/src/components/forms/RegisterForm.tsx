@@ -2,22 +2,25 @@
 
 import { AUTH_FIELD_IDS } from '@repo/constants';
 import { RegisterFormData, RegisterFormProps } from '@repo/exchange-core';
-import { useFormWithNextIntl } from '@repo/hooks';
+import { useFormWithNextIntl, UseFormReturn } from '@repo/hooks';
 import {
+  AuthForm,
   AuthEmailField,
   AuthPasswordField,
   AuthConfirmPasswordField,
   AuthCaptchaField,
   AuthSubmitButton,
-  AuthSwitchButton
+  AuthSwitchButton,
 } from '@repo/ui';
 import { registerSchema } from '@repo/utils';
 import { useTranslations } from 'next-intl';
 import React from 'react';
 
-import { createAuthFormSubmitHandler, createAuthFormErrorHandler } from '../../hooks/useAuthFormConfig';
+import {
+  createAuthFormSubmitHandler,
+  createAuthFormErrorHandler,
+} from '../../hooks/useAuthFormConfig';
 import { useAuthMutationAdapter } from '../../hooks/useAuthMutationAdapter';
-
 
 /**
  * Register Form Component
@@ -60,46 +63,29 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
   const { form, tValidation } = useRegisterForm(onSuccess);
   const { register } = useAuthMutationAdapter();
   const t = useTranslations('Layout.forms.register');
-  const tCaptcha = useTranslations('Layout.captcha');
 
   return (
-    <div className="auth-form-container">
-      <form onSubmit={form.handleSubmit} className="auth-form-fields">
-        <AuthEmailField
-          form={form}
-          isLoading={register.isPending}
-          t={t}
-          fieldId={AUTH_FIELD_IDS.REGISTER.EMAIL}
-        />
-        <AuthPasswordField
-          form={form}
-          isLoading={register.isPending}
-          t={tValidation}
-          fieldId={AUTH_FIELD_IDS.REGISTER.PASSWORD}
-        />
-        <AuthConfirmPasswordField
-          form={form}
-          isLoading={register.isPending}
-          t={tValidation}
-          fieldId={AUTH_FIELD_IDS.REGISTER.CONFIRM_PASSWORD}
-        />
-        <AuthCaptchaField
-          form={form}
-          isLoading={register.isPending}
-          t={tCaptcha}
-        />
-        <AuthSubmitButton
-          form={form}
-          isLoading={register.isPending}
-          t={t}
-        />
-        <AuthSwitchButton
-          onSwitch={onSwitchToLogin}
-          isLoading={register.isPending}
-        >
-          {t('switchToLogin')}
-        </AuthSwitchButton>
-      </form>
-    </div>
+    <AuthForm
+      form={form as unknown as UseFormReturn<Record<string, unknown>>}
+      isLoading={register.isPending}
+      t={tValidation}
+      fieldId={AUTH_FIELD_IDS.REGISTER.EMAIL}
+      formType="register"
+    >
+      <AuthForm.FormWrapper>
+        <AuthForm.FieldWrapper>
+          <AuthEmailField />
+          <AuthPasswordField />
+          <AuthConfirmPasswordField />
+          <AuthCaptchaField />
+        </AuthForm.FieldWrapper>
+        <AuthForm.ActionsWrapper>
+          <AuthSubmitButton />
+          <AuthSwitchButton onSwitch={onSwitchToLogin} isLoading={register.isPending}>
+            {t('switchToLogin')}
+          </AuthSwitchButton>
+        </AuthForm.ActionsWrapper>
+      </AuthForm.FormWrapper>
+    </AuthForm>
   );
 }

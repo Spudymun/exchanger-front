@@ -55,6 +55,7 @@ packages/ui/src/
 │   ├── data-table-compound.tsx    # 📊 Compound Components
 │   ├── header-compound.tsx        # 🧭 Layout compounds
 │   ├── footer-compound.tsx        # 🦶 Layout compounds
+│   ├── auth-form-compound.tsx     # 🔐 Auth compound
 │   ├── admin-panel-compound.tsx   # 🎛️  Business compounds
 │   ├── exchange-form.tsx          # 💱 Business logic
 │   ├── tree-view.tsx              # 🌳 Complex UI
@@ -68,6 +69,7 @@ packages/ui/src/
 │   ├── shared-styles.ts      # Centralized CSS classes
 │   ├── header-helpers.tsx    # Context enhancement
 │   ├── header-types.ts       # TypeScript definitions
+│   ├── auth-helpers.tsx      # Auth context enhancement
 │   └── useMathCaptchaLocal.ts # Local CAPTCHA logic
 │
 ├── stories/                   # 📚 Storybook Documentation
@@ -95,6 +97,7 @@ packages/ui/src/
 │
 ├── types/                     # 📋 Type Definitions
 │   ├── auth-fields.ts        # Auth-related types
+│   ├── auth-form-compound.ts # AuthForm compound types
 │   └── jest.d.ts             # Test types
 │
 └── __tests__/                # 🧪 Unit Tests
@@ -240,7 +243,39 @@ function Dashboard() {
 }
 ```
 
-### Authentication Components
+### AuthForm Compound Component
+
+**✅ FULLY IMPLEMENTED** - DOM Props Filtering Enabled
+
+```tsx
+import { AuthForm } from '@repo/ui';
+import { useFormWithNextIntl } from '@repo/hooks/src/client-hooks';
+import { useTranslations } from 'next-intl';
+
+// Modern compound pattern with automatic context enhancement
+// ✅ All React DOM prop warnings eliminated with props filtering
+function LoginFormCompound() {
+  const form = useFormWithNextIntl(loginSchema);
+  const t = useTranslations('auth');
+
+  return (
+    <AuthForm form={form} isLoading={isLoading} t={t} fieldId="login">
+      <AuthForm.FormWrapper>
+        <AuthForm.FieldWrapper>
+          <AuthEmailField /> {/* Auto-enhanced with form */}
+          <AuthPasswordField /> {/* Auto-enhanced with form */}
+          <AuthCaptchaField /> {/* Auto-enhanced with context */}
+        </AuthForm.FieldWrapper>
+        <AuthForm.ActionsWrapper>
+          <AuthSubmitButton /> {/* Auto-enhanced with loading */}
+        </AuthForm.ActionsWrapper>
+      </AuthForm.FormWrapper>
+    </AuthForm>
+  );
+}
+```
+
+### Traditional Authentication Components
 
 ```tsx
 import {

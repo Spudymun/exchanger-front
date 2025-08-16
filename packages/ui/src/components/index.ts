@@ -173,6 +173,8 @@ export {
 } from './footer-compound';
 
 // Auth Components
+export { AuthForm } from './auth';
+
 export {
   AuthEmailField,
   AuthPasswordField,

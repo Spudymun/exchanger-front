@@ -13,6 +13,7 @@
 - **[HERO_SECTION_STYLING_GUIDE.md](HERO_SECTION_STYLING_GUIDE.md)** - **НОВОЕ** Полное руководство по стилизации Hero Section обменника для мобильных и десктопных устройств
 - **[HERO_SECTION_QUICK_REFERENCE.md](HERO_SECTION_QUICK_REFERENCE.md)** - **НОВОЕ** Быстрый справочник для изменения стилей Hero Section
 - **[MOBILE_ADAPTATION_GUIDELINES.md](MOBILE_ADAPTATION_GUIDELINES.md)** - Руководство по мобильной адаптации компонентов
+- **[AUTH_FORM_COMPOUND_MIGRATION.md](AUTH_FORM_COMPOUND_MIGRATION.md)** - **НОВОЕ** Руководство по использованию AuthForm compound компонента и миграции с традиционных auth форм
 
 ## Архитектура и разработка
 
@@ -30,6 +31,7 @@
 
 ## Отчеты и статус
 
+- **[AUTH_MIGRATION_COMPLETION_REPORT.md](AUTH_MIGRATION_COMPLETION_REPORT.md)** - **НОВОЕ** Итоговый отчет о миграции AUTH компонентов на Compound Components Pattern v2.0
 - **[AUDIT_COMPLETION.md](AUDIT_COMPLETION.md)** - Результаты технического аудита и рефакторинга
 - **[CLEANUP_REPORT.md](CLEANUP_REPORT.md)** - Отчет по оптимизации кода и удалению неиспользуемых зависимостей
 - **[I18N_STATUS.md](I18N_STATUS.md)** - Текущее состояние интернационализации

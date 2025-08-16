@@ -2,19 +2,23 @@
 
 import { AUTH_FIELD_IDS } from '@repo/constants';
 import { LoginFormData, LoginFormProps } from '@repo/exchange-core';
-import { useFormWithNextIntl } from '@repo/hooks';
+import { useFormWithNextIntl, UseFormReturn } from '@repo/hooks';
 import {
+  AuthForm,
   AuthEmailField,
   AuthPasswordField,
   AuthCaptchaField,
   AuthSubmitButton,
-  AuthSwitchButton
+  AuthSwitchButton,
 } from '@repo/ui';
 import { loginSchema } from '@repo/utils';
 import { useTranslations } from 'next-intl';
 import React from 'react';
 
-import { createAuthFormSubmitHandler, createAuthFormErrorHandler } from '../../hooks/useAuthFormConfig';
+import {
+  createAuthFormSubmitHandler,
+  createAuthFormErrorHandler,
+} from '../../hooks/useAuthFormConfig';
 import { useAuthMutationAdapter } from '../../hooks/useAuthMutationAdapter';
 
 /**
@@ -56,40 +60,28 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
   const { form, tValidation } = useLoginForm(onSuccess);
   const { login } = useAuthMutationAdapter();
   const t = useTranslations('Layout.forms.login');
-  const tCaptcha = useTranslations('Layout.captcha');
 
   return (
-    <div className="auth-form-container">
-      <form onSubmit={form.handleSubmit} className="auth-form-fields">
-        <AuthEmailField
-          form={form}
-          isLoading={login.isPending}
-          t={t}
-          fieldId={AUTH_FIELD_IDS.LOGIN.EMAIL}
-        />
-        <AuthPasswordField
-          form={form}
-          isLoading={login.isPending}
-          t={tValidation}
-          fieldId={AUTH_FIELD_IDS.LOGIN.PASSWORD}
-        />
-        <AuthCaptchaField
-          form={form}
-          isLoading={login.isPending}
-          t={tCaptcha}
-        />
-        <AuthSubmitButton
-          form={form}
-          isLoading={login.isPending}
-          t={t}
-        />
-        <AuthSwitchButton
-          onSwitch={onSwitchToRegister}
-          isLoading={login.isPending}
-        >
-          {t('switchToRegister')}
-        </AuthSwitchButton>
-      </form>
-    </div>
+    <AuthForm
+      form={form as unknown as UseFormReturn<Record<string, unknown>>}
+      isLoading={login.isPending}
+      t={tValidation}
+      fieldId={AUTH_FIELD_IDS.LOGIN.EMAIL}
+      formType="login"
+    >
+      <AuthForm.FormWrapper>
+        <AuthForm.FieldWrapper>
+          <AuthEmailField />
+          <AuthPasswordField />
+          <AuthCaptchaField />
+        </AuthForm.FieldWrapper>
+        <AuthForm.ActionsWrapper>
+          <AuthSubmitButton />
+          <AuthSwitchButton onSwitch={onSwitchToRegister} isLoading={login.isPending}>
+            {t('switchToRegister')}
+          </AuthSwitchButton>
+        </AuthForm.ActionsWrapper>
+      </AuthForm.FormWrapper>
+    </AuthForm>
   );
 }

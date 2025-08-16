@@ -9,36 +9,48 @@ import { Input } from '../ui/input';
  * Устраняет дублирование между LoginForm и RegisterForm
  */
 interface PasswordFormFields {
-    password: string;
+  password: string;
 }
 
 interface AuthPasswordFieldProps<T extends PasswordFormFields = PasswordFormFields> {
-    form: UseFormReturn<T>;
-    isLoading: boolean;
-    t: (key: string) => string;
-    fieldId: string;
+  form?: UseFormReturn<T>;
+  isLoading?: boolean;
+  t?: (key: string) => string;
+  fieldId?: string;
 }
 
 export const AuthPasswordField = <T extends PasswordFormFields = PasswordFormFields>({
-    form,
-    isLoading,
-    t,
-    fieldId
-}: AuthPasswordFieldProps<T>) => (
+  form,
+  isLoading = false,
+  t,
+  fieldId = 'password',
+}: AuthPasswordFieldProps<T>) => {
+  // Guard clause for required props when used without context
+  if (!form || !t) {
+    console.warn(
+      'AuthPasswordField: form and t props are required when used without AuthForm context'
+    );
+    return (
+      <div className="text-sm text-muted-foreground">Password field requires form context</div>
+    );
+  }
+
+  return (
     <FormField name="password" error={form.errors.password}>
-        <FormLabel htmlFor={fieldId} className="required">
-            {t('password.label')}
-        </FormLabel>
-        <FormControl>
-            <Input
-                {...form.getFieldProps('password')}
-                id={fieldId}
-                type="password"
-                placeholder={t('password.placeholder')}
-                disabled={isLoading}
-                required
-            />
-        </FormControl>
-        <FormMessage />
+      <FormLabel htmlFor={fieldId} className="required">
+        {t('password.label')}
+      </FormLabel>
+      <FormControl>
+        <Input
+          {...form.getFieldProps('password')}
+          id={fieldId}
+          type="password"
+          placeholder={t('password.placeholder')}
+          disabled={isLoading}
+          required
+        />
+      </FormControl>
+      <FormMessage />
     </FormField>
-);
+  );
+};

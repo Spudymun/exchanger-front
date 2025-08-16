@@ -5,40 +5,58 @@ import { FormField, FormControl, FormLabel, FormMessage } from '../ui/form';
 import { Input } from '../ui/input';
 
 /**
- * Поле подтверждения пароля для формы регистрации
- * Специфично для регистрации, но выделено для консистентности
+ * Переиспользуемое поле ConfirmPassword для форм аутентификации
+ * Устраняет дублирование между LoginForm и RegisterForm
  */
 interface ConfirmPasswordFormFields {
-    confirmPassword: string;
+  confirmPassword: string;
 }
 
-interface AuthConfirmPasswordFieldProps<T extends ConfirmPasswordFormFields = ConfirmPasswordFormFields> {
-    form: UseFormReturn<T>;
-    isLoading: boolean;
-    t: (key: string) => string;
-    fieldId: string;
+interface AuthConfirmPasswordFieldProps<
+  T extends ConfirmPasswordFormFields = ConfirmPasswordFormFields,
+> {
+  form?: UseFormReturn<T>;
+  isLoading?: boolean;
+  t?: (key: string) => string;
+  fieldId?: string;
 }
 
-export const AuthConfirmPasswordField = <T extends ConfirmPasswordFormFields = ConfirmPasswordFormFields>({
-    form,
-    isLoading,
-    t,
-    fieldId
-}: AuthConfirmPasswordFieldProps<T>) => (
+export const AuthConfirmPasswordField = <
+  T extends ConfirmPasswordFormFields = ConfirmPasswordFormFields,
+>({
+  form,
+  isLoading = false,
+  t,
+  fieldId = 'confirmPassword',
+}: AuthConfirmPasswordFieldProps<T>) => {
+  // Guard clause for required props when used without context
+  if (!form || !t) {
+    console.warn(
+      'AuthConfirmPasswordField: form and t props are required when used without AuthForm context'
+    );
+    return (
+      <div className="text-sm text-muted-foreground">
+        Confirm password field requires form context
+      </div>
+    );
+  }
+
+  return (
     <FormField name="confirmPassword" error={form.errors.confirmPassword}>
-        <FormLabel htmlFor={fieldId} className="required">
-            {t('confirmPassword.label')}
-        </FormLabel>
-        <FormControl>
-            <Input
-                {...form.getFieldProps('confirmPassword')}
-                id={fieldId}
-                type="password"
-                placeholder={t('confirmPassword.placeholder')}
-                disabled={isLoading}
-                required
-            />
-        </FormControl>
-        <FormMessage />
+      <FormLabel htmlFor={fieldId} className="required">
+        {t('confirmPassword.label')}
+      </FormLabel>
+      <FormControl>
+        <Input
+          {...form.getFieldProps('confirmPassword')}
+          id={fieldId}
+          type="password"
+          placeholder={t('confirmPassword.placeholder')}
+          disabled={isLoading}
+          required
+        />
+      </FormControl>
+      <FormMessage />
     </FormField>
-);
+  );
+};

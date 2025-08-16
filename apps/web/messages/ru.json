@@ -281,6 +281,17 @@
       "processing": "Время обработки: 15-30 минут"
     },
     "exchange": "Обменять",
+    "submit": "Отправить",
+    "submitting": "Отправка...",
+    "question": "Решите пример:",
+    "placeholder": "Введите ответ",
+    "refresh": "Обновить пример",
+    "verification": "Проверка пройдена ✓",
+    "error": "Неправильный ответ. Попробуйте еще раз.",
+    "email": {
+      "label": "Email",
+      "placeholder": "your@email.com"
+    },
     "password": {
       "label": "Пароль",
       "placeholder": "Введите пароль"

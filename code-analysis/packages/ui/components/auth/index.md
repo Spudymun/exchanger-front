@@ -2,13 +2,20 @@
 
 ## Краткое назначение
 
-Централизованный barrel export файл для всех authentication компонентов, предоставляющий единую точку импорта для переиспользуемых auth UI элементов в приложениях экосистемы.
+Централизованный barrel export файл для всех authentication компонентов, предоставляющий единую точку импорта для переиспользуемых auth UI элементов в приложениях экосистемы. Обновлен для поддержки нового AuthFormCompound.
 
 ## Подробное описание
 
-Файл служит как организационный hub для authentication компонентов, обеспечивая clean imports и централизованное управление экспортами. Включает специализированные компоненты для различных аспектов authentication workflow: field components (email, password, confirm password), interactive elements (captcha, buttons), и layout структуры. Следует barrel export pattern для упрощения import statements и better developer experience. Предоставляет consistent API для auth-related functionality через модульную архитектуру компонентов.
+Файл служит как организационный hub для authentication компонентов, обеспечивая clean imports и централизованное управление экспортами. Включает специализированные компоненты для различных аспектов authentication workflow: field components (email, password, confirm password), interactive elements (captcha, buttons), layout структуры, и новый compound компонент. С добавлением AuthFormCompound поддерживает как традиционные монолитные формы, так и современный compound pattern. Следует barrel export pattern для упрощения import statements и better developer experience. Предоставляет consistent API для auth-related functionality через модульную архитектуру компонентов.
 
 ## Экспортируемые сущности / API
+
+### Compound Components
+
+- `AuthForm` (AuthFormCompound) - современный compound компонент с Context API
+  - Устраняет prop drilling через автоматическое enhancement
+  - Централизует управление состоянием auth форм
+  - Соответствует Compound Components Pattern v2.0
 
 ### Field Components
 
@@ -32,6 +39,39 @@
 - Modular architecture для specific auth needs
 - Consistent naming conventions с Auth prefix
 - Clean separation между different auth concerns
+- **NEW**: Compound pattern support для modern forms
+
+## Миграционная стратегия
+
+### Традиционный подход (сохранен для backward compatibility)
+
+```tsx
+import { AuthEmailField, AuthPasswordField, AuthSubmitButton } from '@repo/ui';
+
+<form onSubmit={form.handleSubmit(onSubmit)}>
+  <AuthEmailField form={form} isLoading={isLoading} t={t} />
+  <AuthPasswordField form={form} isLoading={isLoading} t={t} />
+  <AuthSubmitButton isLoading={isLoading} t={t} />
+</form>;
+```
+
+### Современный compound подход (рекомендуется)
+
+```tsx
+import { AuthForm } from '@repo/ui';
+
+<AuthForm form={form} isLoading={isLoading} t={t}>
+  <AuthForm.FormWrapper>
+    <AuthForm.FieldWrapper>
+      <AuthEmailField /> {/* Auto-enhanced */}
+      <AuthPasswordField /> {/* Auto-enhanced */}
+    </AuthForm.FieldWrapper>
+    <AuthForm.ActionsWrapper>
+      <AuthSubmitButton /> {/* Auto-enhanced */}
+    </AuthForm.ActionsWrapper>
+  </AuthForm.FormWrapper>
+</AuthForm>;
+```
 
 ## Зависимости
 

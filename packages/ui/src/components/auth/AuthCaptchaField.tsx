@@ -12,88 +12,108 @@ import { MathCaptcha } from '../ui/math-captcha';
  * Устранена избыточность двойного поля captcha/captchaVerified
  */
 interface CaptchaFormFields {
-    captcha: string;
-    // Убрано: captchaVerified - избыточность устранена
+  captcha: string;
+  // Убрано: captchaVerified - избыточность устранена
 }
 
 interface AuthCaptchaFieldProps<T extends CaptchaFormFields = CaptchaFormFields> {
-    form: UseFormReturn<T>;
-    isLoading: boolean;
-    t: (key: string) => string;
+  form?: UseFormReturn<T>;
+  isLoading?: boolean;
+  t?: (key: string) => string;
 }
 
-export const AuthCaptchaField = <T extends CaptchaFormFields = CaptchaFormFields>({
-    form,
-    isLoading,
-    t
-}: AuthCaptchaFieldProps<T>) => {
-    // Use local CAPTCHA hook to avoid dependency on @repo/hooks
-    const config = CAPTCHA_CONFIGS_LOCAL[AUTH_CAPTCHA_CONFIG.DIFFICULTY] || CAPTCHA_CONFIGS_LOCAL.medium;
-    const captcha = useMathCaptchaLocal(config);
+/**
+ * Custom hook для управления CAPTCHA логикой
+ */
+function useCaptchaLogic<T extends CaptchaFormFields>(
+  form: UseFormReturn<T>,
+  t: (key: string) => string
+) {
+  // Use local CAPTCHA hook to avoid dependency on @repo/hooks
+  const config =
+    CAPTCHA_CONFIGS_LOCAL[AUTH_CAPTCHA_CONFIG.DIFFICULTY] || CAPTCHA_CONFIGS_LOCAL.medium;
+  const captcha = useMathCaptchaLocal(config);
 
-    // Объединяем ошибки от captcha поля (теперь все ошибки идут сюда)
-    const captchaError = form.errors.captcha;
+  // Мемоизированные callbacks
+  const updateCaptchaValue = React.useCallback(
+    (value: string) => {
+      form.setValue('captcha', value);
+    },
+    [form.setValue]
+  );
 
-    // Мемоизированный callback для обновления формы - БЕЗ ЦИКЛИЧЕСКИХ ЗАВИСИМОСТЕЙ
-    const updateCaptchaValue = React.useCallback((value: string) => {
-        form.setValue('captcha', value);
-    }, [form.setValue]);
+  const clearCaptchaError = React.useCallback(() => {
+    if (form.clearError) {
+      form.clearError('captcha');
+    }
+  }, [form.clearError]);
 
-    const clearCaptchaError = React.useCallback(() => {
-        if (form.clearError) {
-            form.clearError('captcha');
-        }
-    }, [form.clearError]);
+  const setCaptchaError = React.useCallback(
+    (message: string) => {
+      if (form.setError) {
+        form.setError('captcha', message);
+      }
+    },
+    [form.setError]
+  );
 
-    const setCaptchaError = React.useCallback((message: string) => {
-        if (form.setError) {
-            form.setError('captcha', message);
-        }
-    }, [form.setError]);
+  // Effects для управления состоянием
+  React.useEffect(() => {
+    updateCaptchaValue(captcha.userAnswer);
+  }, [captcha.userAnswer, updateCaptchaValue]);
 
-    // ИСПРАВЛЕНИЕ: Разделяем логику на отдельные useEffect для избежания циклов
-    
-    // 1. Обновление значения при изменении ответа пользователя
-    React.useEffect(() => {
-        updateCaptchaValue(captcha.userAnswer);
-    }, [captcha.userAnswer, updateCaptchaValue]);
+  React.useEffect(() => {
+    if (captcha.isVerified) {
+      clearCaptchaError();
+    }
+  }, [captcha.isVerified, clearCaptchaError]);
 
-    // 2. Очистка ошибки при успешной верификации
-    React.useEffect(() => {
-        if (captcha.isVerified) {
-            clearCaptchaError();
-        }
-    }, [captcha.isVerified, clearCaptchaError]);
+  React.useEffect(() => {
+    if (captcha.hasError && captcha.userAnswer.trim() !== '') {
+      setCaptchaError(t('error'));
+    }
+  }, [captcha.hasError, captcha.userAnswer, setCaptchaError, t]);
 
-    // 3. Установка ошибки при неверном ответе (только после blur)
-    React.useEffect(() => {
-        if (captcha.hasError && captcha.userAnswer.trim() !== '') {
-            setCaptchaError(t('error'));
-        }
-    }, [captcha.hasError, captcha.userAnswer, setCaptchaError, t]);
+  return { captcha, captchaError: form.errors.captcha };
+}
 
-    return (
-        <FormField name="captcha" error={captchaError}>
-            <MathCaptcha
-                name="captcha"
-                question={captcha.challenge.question}
-                userAnswer={captcha.userAnswer}
-                isVerified={captcha.isVerified}
-                hasError={captcha.hasError}
-                onAnswerChange={captcha.setUserAnswer}
-                onBlur={captcha.onBlur}
-                onRefresh={captcha.refreshChallenge}
-                disabled={isLoading}
-                hideLabel={AUTH_CAPTCHA_CONFIG.HIDE_LABEL}
-                labels={{
-                    question: t('question'),
-                    placeholder: t('placeholder'),
-                    refresh: t('refresh'),
-                    verification: t('verification'),
-                    error: t('error'),
-                }}
-            />
-            <FormMessage />
-        </FormField>
+export const AuthCaptchaField = <T extends CaptchaFormFields = CaptchaFormFields>(
+  props: AuthCaptchaFieldProps<T>
+) => {
+  const { form, isLoading = false, t } = props;
+
+  // Guard clause for required props when used without context
+  if (!form || !t) {
+    console.warn(
+      'AuthCaptchaField: form and t props are required when used without AuthForm context'
     );
+    return <div className="text-sm text-muted-foreground">Captcha field requires form context</div>;
+  }
+
+  const { captcha, captchaError } = useCaptchaLogic(form, t);
+
+  return (
+    <FormField name="captcha" error={captchaError}>
+      <MathCaptcha
+        name="captcha"
+        question={captcha.challenge.question}
+        userAnswer={captcha.userAnswer}
+        isVerified={captcha.isVerified}
+        hasError={captcha.hasError}
+        onAnswerChange={captcha.setUserAnswer}
+        onBlur={captcha.onBlur}
+        onRefresh={captcha.refreshChallenge}
+        disabled={isLoading}
+        hideLabel={AUTH_CAPTCHA_CONFIG.HIDE_LABEL}
+        labels={{
+          question: t('question'),
+          placeholder: t('placeholder'),
+          refresh: t('refresh'),
+          verification: t('verification'),
+          error: t('error'),
+        }}
+      />
+      <FormMessage />
+    </FormField>
+  );
 };
