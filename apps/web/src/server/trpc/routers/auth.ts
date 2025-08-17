@@ -6,17 +6,21 @@ import {
   isAuthenticatedUser,
 } from '@repo/exchange-core';
 import {
-  registerSchema, // ИСПОЛЬЗУЕМ ПОЛНУЮ СХЕМУ С CAPTCHA
-  loginSchema,    // ИСПОЛЬЗУЕМ ПОЛНУЮ СХЕМУ С CAPTCHA
-  resetPasswordSchema,
-  confirmResetPasswordSchema,
-  confirmEmailSchema,
+  securityEnhancedRegisterSchema, // ENHANCED SECURITY SCHEMA
+  securityEnhancedLoginSchema, // ENHANCED SECURITY SCHEMA
   createUserError,
-  passwordSchema,
   createValidationError,
   createBadRequestError,
 } from '@repo/utils';
+
 import bcrypt from 'bcryptjs';
+
+// Temporary direct imports for new schemas
+import {
+  securityEnhancedResetPasswordSchema,
+  securityEnhancedConfirmResetPasswordSchema,
+  securityEnhancedConfirmEmailSchema,
+} from '../../../../../../packages/utils/src/validation/security-enhanced-schemas';
 
 import { createDelay } from '../../utils/delay';
 
@@ -26,7 +30,7 @@ import { rateLimitMiddleware } from '../middleware/rateLimit';
 export const authRouter = createTRPCRouter({
   // Регистрация нового пользователя
   register: rateLimitMiddleware.register
-    .input(registerSchema)
+    .input(securityEnhancedRegisterSchema)
     .mutation(async ({ input, ctx }) => {
       // Имитация задержки
       await createDelay(AUTH_CONSTANTS.AUTH_REQUEST_DELAY_MS);
@@ -37,7 +41,7 @@ export const authRouter = createTRPCRouter({
       }
 
       // ИСПРАВЛЕНО: Убираем дублирование валидации
-      // tRPC уже валидирует input через registerSchema, дополнительная валидация избыточна
+      // tRPC уже валидирует input через securityEnhancedRegisterSchema, дополнительная валидация избыточна
       const sanitizedEmail = sanitizeEmail(input.email);
 
       // Проверяем, не существует ли уже пользователь
@@ -83,53 +87,55 @@ export const authRouter = createTRPCRouter({
     }),
 
   // Вход в систему
-  login: rateLimitMiddleware.login.input(loginSchema).mutation(async ({ input, ctx }) => {
-    // Имитация задержки
-    await createDelay(AUTH_CONSTANTS.LOGIN_REQUEST_DELAY_MS);
+  login: rateLimitMiddleware.login
+    .input(securityEnhancedLoginSchema)
+    .mutation(async ({ input, ctx }) => {
+      // Имитация задержки
+      await createDelay(AUTH_CONSTANTS.LOGIN_REQUEST_DELAY_MS);
 
-    // КРИТИЧНО: Проверяем CAPTCHA первым делом - простая проверка на заполненность
-    if (!input.captcha || input.captcha.trim() === '') {
-      throw createValidationError('CAPTCHA not filled');
-    }
+      // КРИТИЧНО: Проверяем CAPTCHA первым делом - простая проверка на заполненность
+      if (!input.captcha || input.captcha.trim() === '') {
+        throw createValidationError('CAPTCHA not filled');
+      }
 
-    const sanitizedEmail = sanitizeEmail(input.email);
+      const sanitizedEmail = sanitizeEmail(input.email);
 
-    // Поиск пользователя
-    const user = userManager.findByEmail(sanitizedEmail);
-    if (!user || !user.hashedPassword) {
-      throw createUserError('invalid_credentials');
-    }
+      // Поиск пользователя
+      const user = userManager.findByEmail(sanitizedEmail);
+      if (!user || !user.hashedPassword) {
+        throw createUserError('invalid_credentials');
+      }
 
-    // Проверка пароля
-    const isValidPassword = await bcrypt.compare(input.password, user.hashedPassword);
-    if (!isValidPassword) {
-      throw createUserError('invalid_credentials');
-    }
+      // Проверка пароля
+      const isValidPassword = await bcrypt.compare(input.password, user.hashedPassword);
+      if (!isValidPassword) {
+        throw createUserError('invalid_credentials');
+      }
 
-    // Генерируем новый session ID
-    const sessionId = generateSessionId();
-    userManager.update(user.id, {
-      sessionId,
-      lastLoginAt: new Date(),
-    });
+      // Генерируем новый session ID
+      const sessionId = generateSessionId();
+      userManager.update(user.id, {
+        sessionId,
+        lastLoginAt: new Date(),
+      });
 
-    // Устанавливаем cookie
-    ctx.res.setHeader(
-      AUTH_CONSTANTS.SET_COOKIE_HEADER,
-      `sessionId=${sessionId}; HttpOnly; Path=/; Max-Age=${AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS}; SameSite=Lax`
-    );
+      // Устанавливаем cookie
+      ctx.res.setHeader(
+        AUTH_CONSTANTS.SET_COOKIE_HEADER,
+        `sessionId=${sessionId}; HttpOnly; Path=/; Max-Age=${AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS}; SameSite=Lax`
+      );
 
-    console.log(`🔐 User logged in: ${sanitizedEmail}`);
+      console.log(`🔐 User logged in: ${sanitizedEmail}`);
 
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        isVerified: user.isVerified,
-      },
-      sessionId,
-    };
-  }),
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          isVerified: user.isVerified,
+        },
+        sessionId,
+      };
+    }),
 
   // Выход из системы
   logout: publicProcedure.mutation(async ({ ctx }) => {
@@ -164,7 +170,7 @@ export const authRouter = createTRPCRouter({
 
   // Восстановление пароля (шаг 1 - отправка кода)
   requestPasswordReset: rateLimitMiddleware.resetPassword
-    .input(resetPasswordSchema)
+    .input(securityEnhancedResetPasswordSchema) // SECURITY-ENHANCED VALIDATION
     .mutation(async ({ input }) => {
       // Имитация задержки
       await createDelay(AUTH_CONSTANTS.LOGIN_REQUEST_DELAY_MS);
@@ -195,15 +201,17 @@ export const authRouter = createTRPCRouter({
 
   // Восстановление пароля (шаг 2 - сброс с кодом)
   resetPassword: publicProcedure
-    .input(confirmResetPasswordSchema)
+    .input(securityEnhancedConfirmResetPasswordSchema) // SECURITY-ENHANCED VALIDATION
     .mutation(async ({ input, ctx }) => {
       // Имитация задержки
       await createDelay(AUTH_CONSTANTS.LOGIN_REQUEST_DELAY_MS);
 
       const sanitizedEmail = sanitizeEmail(input.email);
 
-      // Валидация нового пароля с помощью Zod схемы
-      const passwordResult = passwordSchema.safeParse(input.newPassword);
+      // Валидация нового пароля с помощью Security Enhanced Zod схемы
+      const passwordResult = securityEnhancedConfirmResetPasswordSchema.shape.newPassword.safeParse(
+        input.newPassword
+      );
       if (!passwordResult.success) {
         throw createValidationError(
           passwordResult.error.issues[0]?.message || 'Invalid new password format'
@@ -251,32 +259,35 @@ export const authRouter = createTRPCRouter({
     }),
 
   // Подтверждение email (упрощенная версия)
-  verifyEmail: publicProcedure.input(confirmEmailSchema).mutation(async ({ input }) => {
-    const sanitizedEmail = sanitizeEmail(input.email);
+  verifyEmail: publicProcedure
+    .input(securityEnhancedConfirmEmailSchema)
+    .mutation(async ({ input }) => {
+      // SECURITY-ENHANCED VALIDATION
+      const sanitizedEmail = sanitizeEmail(input.email);
 
-    const user = userManager.findByEmail(sanitizedEmail);
-    if (!user) {
-      throw createUserError('not_found');
-    }
+      const user = userManager.findByEmail(sanitizedEmail);
+      if (!user) {
+        throw createUserError('not_found');
+      }
 
-    if (user.isVerified) {
+      if (user.isVerified) {
+        return {
+          message: 'Email already confirmed',
+          isVerified: true,
+        };
+      }
+
+      // В реальном приложении здесь была бы проверка кода
+      // Для мока подтверждаем всех
+      userManager.update(user.id, {
+        isVerified: true,
+      });
+
+      console.log(`✅ Email confirmed for user: ${sanitizedEmail}`);
+
       return {
-        message: 'Email already confirmed',
+        message: 'Email successfully confirmed',
         isVerified: true,
       };
-    }
-
-    // В реальном приложении здесь была бы проверка кода
-    // Для мока подтверждаем всех
-    userManager.update(user.id, {
-      isVerified: true,
-    });
-
-    console.log(`✅ Email confirmed for user: ${sanitizedEmail}`);
-
-    return {
-      message: 'Email successfully confirmed',
-      isVerified: true,
-    };
-  }),
+    }),
 });

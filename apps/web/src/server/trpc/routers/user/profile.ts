@@ -1,6 +1,6 @@
 import { USER_SUCCESS_MESSAGES } from '@repo/constants';
 import { orderManager, validateUserAccess } from '@repo/exchange-core';
-import { getOrdersStatistics, updateNotificationsSchema } from '@repo/utils';
+import { getOrdersStatistics, securityEnhancedUpdateNotificationsSchema } from '@repo/utils';
 
 import { createTRPCRouter } from '../../init';
 import { protectedProcedure } from '../../middleware/auth';
@@ -28,18 +28,20 @@ export const profileRouter = createTRPCRouter({
   }),
 
   // Обновить профиль пользователя
-  updateProfile: protectedProcedure.input(updateNotificationsSchema).mutation(async ({ ctx }) => {
-    const user = validateUserAccess(ctx.user.id);
+  updateProfile: protectedProcedure
+    .input(securityEnhancedUpdateNotificationsSchema)
+    .mutation(async ({ ctx }) => {
+      const user = validateUserAccess(ctx.user.id);
 
-    // В текущей структуре User нет поля notifications
-    // Возвращаем успешный ответ без реального обновления
-    console.log(`👤 Профиль обновлен для пользователя: ${user.email}`);
+      // В текущей структуре User нет поля notifications
+      // Возвращаем успешный ответ без реального обновления
+      console.log(`👤 Профиль обновлен для пользователя: ${user.email}`);
 
-    return {
-      id: user.id,
-      email: user.email,
-      isVerified: user.isVerified,
-      message: USER_SUCCESS_MESSAGES.PROFILE_UPDATED,
-    };
-  }),
+      return {
+        id: user.id,
+        email: user.email,
+        isVerified: user.isVerified,
+        message: USER_SUCCESS_MESSAGES.PROFILE_UPDATED,
+      };
+    }),
 });

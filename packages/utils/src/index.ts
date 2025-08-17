@@ -4,7 +4,7 @@ export * from './validation-helpers';
 export * from './order-utils';
 export * from './trpc-errors';
 export * from './order-status';
-export * from './validation-schemas';
+// УДАЛЁН: export * from './validation-schemas'; // Legacy schemas - заменены на security-enhanced
 export * from './next-intl-validation';
 export * from './validation';
 export * from './store-factory';

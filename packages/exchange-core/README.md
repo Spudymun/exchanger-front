@@ -132,12 +132,12 @@ console.log(explorerUrl); // "https://blockstream.info/tx/abc123def456"
 
 ### ✅ Validation System
 
-Комплексная валидация с использованием Zod схем:
+Интеграция с security-enhanced validation из `@repo/utils`:
 
 ```typescript
 import { validateRecipientData, isAuthenticatedUser, sanitizeOrderData } from '@repo/exchange-core';
 
-// Валидация данных получателя
+// 🛡️ Валидация с использованием security-enhanced schemas из @repo/utils
 const recipientValidation = validateRecipientData({
   cardNumber: '5168742345671234',
   bankDetails: 'ПриватБанк',
@@ -151,12 +151,18 @@ if (recipientValidation.success) {
   console.log('Ошибки:', recipientValidation.errors);
 }
 
-// Type guards для пользователей
+// ✅ Type guards для пользователей
 const user = getUser();
 if (isAuthenticatedUser(user)) {
   // TypeScript знает, что user.sessionId существует
   console.log('Session ID:', user.sessionId);
 }
+
+// 🔗 Интеграция с security-enhanced schemas
+import { createCryptoAddressSchema } from '@repo/utils';
+
+const addressValidation = createCryptoAddressSchema('BTC');
+const isValidAddress = addressValidation.safeParse(address).success;
 ```
 
 ### 📊 Data Management
@@ -397,15 +403,31 @@ import { MOCK_CRYPTO_ADDRESSES } from '@repo/constants';
 
 - **v0.0.1**: Базовая архитектура с централизованными типами
 - Все типы теперь используют `@repo/constants`
-- Валидация мигрирована на Zod схемы из `@repo/utils`
+- **🛡️ Валидация мигрирована** на security-enhanced Zod схемы из `@repo/utils`
 - Улучшена JSDoc документация с примерами
+
+### Security Enhancement
+
+- ✅ Все validation интегрирована с `@repo/utils` security-enhanced schemas
+- ✅ XSS protection для text input полей
+- ✅ Строгие типы через `SecurityEnhanced*` patterns
 
 ## 📚 Связанная документация
 
+### 🛡️ Security & Validation
+
+- **[🛡️ Security-Enhanced Validation Guide](../../docs/SECURITY_ENHANCED_VALIDATION_GUIDE.md)** - **ОБЯЗАТЕЛЬНО** для всех разработчиков
+- **[Validation Architecture Guide](../../docs/VALIDATION_ARCHITECTURE_GUIDE.md)** - архитектурные принципы валидации
+
+### 📦 Packages
+
 - **[Constants Package](../constants/README.md)** - Бизнес-константы и типы
-- **[Utils Package](../utils/README.md)** - Валидационные схемы и утилиты
-- **[DEVELOPER_GUIDE.md](../../docs/DEVELOPER_GUIDE.md)** - Общее руководство разработчика
-- **[VALIDATION_ARCHITECTURE_GUIDE.md](../../docs/VALIDATION_ARCHITECTURE_GUIDE.md)** - Архитектура валидации
+- **[Utils Package](../utils/README.md)** - Security-enhanced валидационные схемы и утилиты
+
+### 🏗️ Architecture
+
+- **[Developer Guide](../../docs/DEVELOPER_GUIDE.md)** - Общее руководство разработчика
+- **[Architecture Guide](../../docs/ARCHITECTURE.md)** - Архитектура проекта
 - **[CODE_STYLE_GUIDE.md](../../docs/CODE_STYLE_GUIDE.md)** - Стандарты кода
 
 ## 📄 License

@@ -11,16 +11,13 @@ import {
   validateUserAccess,
   generateVerificationCode,
 } from '@repo/exchange-core';
-import {
-  changePasswordSchema,
-  passwordSchema,
-  createUserError,
-  createSecurityError,
-  createBadRequestError,
-} from '@repo/utils';
+import { createUserError, createSecurityError, createBadRequestError } from '@repo/utils';
 
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+
+// Security-enhanced schema
+import { securityEnhancedChangePasswordSchema } from '../../../../../../../packages/utils/src/validation/security-enhanced-schemas';
 
 import { createTRPCRouter } from '../../init';
 import { protectedProcedure } from '../../middleware/auth';
@@ -28,7 +25,7 @@ import { protectedProcedure } from '../../middleware/auth';
 export const securityRouter = createTRPCRouter({
   // Изменить пароль
   changePassword: protectedProcedure
-    .input(changePasswordSchema)
+    .input(securityEnhancedChangePasswordSchema) // SECURITY-ENHANCED VALIDATION
     .mutation(async ({ input, ctx }) => {
       const user = validateUserAccess(ctx.user.id);
 
@@ -45,14 +42,8 @@ export const securityRouter = createTRPCRouter({
         throw createSecurityError('invalid_password');
       }
 
-      // Валидация нового пароля с помощью Zod схемы
-      const passwordResult = passwordSchema.safeParse(input.newPassword);
-      if (!passwordResult.success) {
-        throw createBadRequestError(
-          passwordResult.error.issues[0]?.message ||
-            (await ctx.getErrorMessage('server.errors.validation.passwordValidation'))
-        );
-      }
+      // Валидация происходит автоматически через securityEnhancedChangePasswordSchema input
+      // Дополнительная валидация не нужна, так как input уже проверен
 
       // Хешируем новый пароль
       const hashedPassword = await bcrypt.hash(
@@ -98,7 +89,10 @@ export const securityRouter = createTRPCRouter({
   deleteAccount: protectedProcedure
     .input(
       z.object({
-        password: passwordSchema,
+        password: z
+          .string()
+          .min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH)
+          .max(VALIDATION_LIMITS.PASSWORD_MAX_LENGTH), // Используем константы проекта
         confirmation: z.literal('DELETE_MY_ACCOUNT'),
       })
     )

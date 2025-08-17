@@ -10,7 +10,7 @@ import {
   filterOrders,
   paginateOrders,
   createOrderError,
-  orderStatusSchema,
+  securityEnhancedOrderStatusSchema,
 } from '@repo/utils';
 
 import { z } from 'zod';
@@ -29,7 +29,7 @@ export const ordersRouter = createTRPCRouter({
           .max(USER_CONFIG.MAX_ORDERS_LIMIT)
           .default(USER_CONFIG.DEFAULT_ORDERS_LIMIT),
         offset: z.number().min(0).default(0),
-        status: orderStatusSchema.optional(),
+        status: securityEnhancedOrderStatusSchema.optional(),
       })
     )
     .query(async ({ input, ctx }) => {

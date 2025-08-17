@@ -10,10 +10,14 @@ import {
   paginateOrders,
   sortOrders,
   getOrdersStatistics,
-  searchOrdersSchema,
-  searchUsersSchema,
-  quickActionsSchema,
+  securityEnhancedQuickActionsSchema,
 } from '@repo/utils';
+
+// Security-enhanced schemas
+import {
+  securityEnhancedSearchOrdersSchema,
+  securityEnhancedSearchUsersSchema,
+} from '../../../../../../packages/utils/src/validation/security-enhanced-schemas';
 
 import { createTRPCRouter } from '../init';
 import { operatorAndSupport } from '../middleware/auth';
@@ -25,70 +29,82 @@ import { operatorAndSupport } from '../middleware/auth';
  */
 export const sharedRouter = createTRPCRouter({
   // Поиск заявок (общий для operator и support)
-  searchOrders: operatorAndSupport.input(searchOrdersSchema).query(async ({ input }) => {
-    const { query, dateFrom, dateTo, status, limit } = input;
+  searchOrders: operatorAndSupport
+    .input(securityEnhancedSearchOrdersSchema)
+    .query(async ({ input }) => {
+      // SECURITY-ENHANCED VALIDATION
+      const { query, dateFrom, dateTo, status, limit, offset: _offset } = input;
 
-    const matchesQuery = (order: Order) =>
-      order.id.toLowerCase().includes(query.toLowerCase()) ||
-      order.email.toLowerCase().includes(query.toLowerCase()) ||
-      order.cryptoAmount.toString().includes(query) ||
-      order.uahAmount.toString().includes(query);
+      const matchesQuery = (order: Order) => {
+        if (!query) return true; // No query means match all
+        const searchTerm = query.toLowerCase();
+        return (
+          order.id.toLowerCase().includes(searchTerm) ||
+          order.email.toLowerCase().includes(searchTerm) ||
+          order.cryptoAmount.toString().includes(query) ||
+          order.uahAmount.toString().includes(query)
+        );
+      };
 
-    const matchesDate = (order: Order) => {
-      if (!dateFrom && !dateTo) return true;
-      const orderDate = order.createdAt
-        .toISOString()
-        .split(DATE_FORMAT_CONSTANTS.ISO_DATE_TIME_SEPARATOR)[
-        DATE_FORMAT_CONSTANTS.DATE_PART_INDEX
-      ];
-      if (!orderDate) return false;
-      if (dateFrom && orderDate < dateFrom) return false;
-      if (dateTo && orderDate > dateTo) return false;
-      return true;
-    };
+      const matchesDate = (order: Order) => {
+        if (!dateFrom && !dateTo) return true;
+        const orderDate = order.createdAt
+          .toISOString()
+          .split(DATE_FORMAT_CONSTANTS.ISO_DATE_TIME_SEPARATOR)[
+          DATE_FORMAT_CONSTANTS.DATE_PART_INDEX
+        ];
+        if (!orderDate) return false;
+        if (dateFrom && orderDate < dateFrom) return false;
+        if (dateTo && orderDate > dateTo) return false;
+        return true;
+      };
 
-    const matchesStatus = (order: Order) => !status || order.status === status;
+      const matchesStatus = (order: Order) => !status || order.status === status;
 
-    const orders = orderManager
-      .getAll()
-      .filter(order => matchesQuery(order) && matchesDate(order) && matchesStatus(order));
+      const orders = orderManager
+        .getAll()
+        .filter(order => matchesQuery(order) && matchesDate(order) && matchesStatus(order));
 
-    // Используем централизованную утилиту для сортировки и ограничения
-    const result = paginateOrders(sortOrders(orders), {
-      limit,
-      offset: UI_NUMERIC_CONSTANTS.INITIAL_OFFSET,
-    });
+      // Используем централизованную утилиту для сортировки и ограничения
+      const result = paginateOrders(sortOrders(orders), {
+        limit,
+        offset: UI_NUMERIC_CONSTANTS.INITIAL_OFFSET,
+      });
 
-    return result.items;
-  }),
+      return result.items;
+    }),
 
   // Поиск пользователей (общий для operator и support)
-  searchUsers: operatorAndSupport.input(searchUsersSchema).query(async ({ input }) => {
-    const { query, verified, limit } = input;
+  searchUsers: operatorAndSupport
+    .input(securityEnhancedSearchUsersSchema)
+    .query(async ({ input }) => {
+      // SECURITY-ENHANCED VALIDATION
+      const { query, verified, limit, offset: _offset } = input;
 
-    let users = userManager.getAll().filter(user => {
-      const matchesQuery =
-        user.email.toLowerCase().includes(query.toLowerCase()) ||
-        user.id.toLowerCase().includes(query.toLowerCase());
+      let users = userManager.getAll().filter(user => {
+        const matchesQuery =
+          !query ||
+          user.email.toLowerCase().includes(query.toLowerCase()) ||
+          user.id.toLowerCase().includes(query.toLowerCase());
 
-      const matchesVerified = verified === undefined || user.isVerified === verified;
+        const matchesVerified = verified === undefined || user.isVerified === verified;
 
-      return matchesQuery && matchesVerified;
-    });
+        return matchesQuery && matchesVerified;
+      });
 
-    // Сортировка по дате создания и ограничение
-    users = users.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit);
+      // Сортировка по дате создания и ограничение
+      users = users.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit);
 
-    // Возвращаем безопасную информацию о пользователях
-    return users.map(user => ({
-      id: user.id,
-      email: user.email,
-      isVerified: user.isVerified,
-      createdAt: user.createdAt,
-      lastLoginAt: user.lastLoginAt,
-      ordersCount: orderManager.getAll().filter(o => o.email === user.email).length,
-    }));
-  }),
+      // Возвращаем безопасную информацию о пользователях
+      return users.map(user => ({
+        id: user.id,
+        email: user.email,
+        isVerified: user.isVerified,
+        createdAt: user.createdAt,
+        lastLoginAt: user.lastLoginAt,
+        ordersCount: orderManager.getAll().filter(o => o.email === user.email).length,
+      }));
+    }),
 
   // Общая статистика (доступна operator и support)
   getGeneralStats: operatorAndSupport.query(async () => {
@@ -124,40 +140,43 @@ export const sharedRouter = createTRPCRouter({
   }),
 
   // Быстрые действия
-  quickActions: operatorAndSupport.input(quickActionsSchema).mutation(async ({ input, ctx }) => {
-    const { action, params } = input;
+  quickActions: operatorAndSupport
+    .input(securityEnhancedQuickActionsSchema)
+    .mutation(async ({ input, ctx }) => {
+      // SECURITY-ENHANCED VALIDATION
+      const { action, params } = input;
 
-    switch (action) {
-      case 'REFRESH_RATES':
-        // Имитация обновления курсов
-        await new Promise(resolve => setTimeout(resolve, AUTH_CONSTANTS.LOGIN_REQUEST_DELAY_MS));
-        return { success: true, message: 'Курсы обновлены', timestamp: new Date() };
+      switch (action) {
+        case 'REFRESH_RATES':
+          // Имитация обновления курсов
+          await new Promise(resolve => setTimeout(resolve, AUTH_CONSTANTS.LOGIN_REQUEST_DELAY_MS));
+          return { success: true, message: 'Курсы обновлены', timestamp: new Date() };
 
-      case 'CLEAR_CACHE':
-        // Имитация очистки кэша
-        return {
-          success: true,
-          message: 'Кэш очищен',
-          clearedItems: VALIDATION_LIMITS.ORDER_ITEMS_MAX,
-        };
+        case 'CLEAR_CACHE':
+          // Имитация очистки кэша
+          return {
+            success: true,
+            message: 'Кэш очищен',
+            clearedItems: VALIDATION_LIMITS.ORDER_ITEMS_MAX,
+          };
 
-      case 'SEND_NOTIFICATION':
-        // Имитация отправки уведомления
-        if (!params?.message) {
-          throw new Error(
-            await ctx.getErrorMessage('server.errors.business.parameterRequired', { parameter: 'message' })
-          );
-        }
-        return {
-          success: true,
-          message: 'Уведомление отправлено',
-          recipients: params.recipients || 'all',
-        };
+        case 'SEND_NOTIFICATION':
+          // Имитация отправки уведомления
+          if (!params?.message) {
+            throw new Error(
+              await ctx.getErrorMessage('server.errors.business.parameterRequired', {
+                parameter: 'message',
+              })
+            );
+          }
+          return {
+            success: true,
+            message: 'Уведомление отправлено',
+            recipients: params.recipients || 'all',
+          };
 
-      default:
-        throw new Error(
-          await ctx.getErrorMessage('server.errors.business.unknownAction')
-        );
-    }
-  }),
+        default:
+          throw new Error(await ctx.getErrorMessage('server.errors.business.unknownAction'));
+      }
+    }),
 });

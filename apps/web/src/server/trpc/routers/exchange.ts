@@ -24,11 +24,11 @@ import {
   sortOrders,
   createBadRequestError,
   createOrderError,
-  getCurrencyRateSchema,
-  calculateAmountSchema,
-  createExchangeOrderSchema,
-  orderByIdSchema,
-  getOrderHistoryByEmailSchema,
+  securityEnhancedGetCurrencyRateSchema,
+  securityEnhancedCalculateAmountSchema,
+  securityEnhancedCreateExchangeOrderSchema,
+  securityEnhancedOrderByIdSchema,
+  securityEnhancedGetOrderHistoryByEmailSchema,
 } from '@repo/utils';
 import { z } from 'zod';
 
@@ -126,64 +126,68 @@ export const exchangeRouter = createTRPCRouter({
   }),
 
   // Получить лимиты для криптовалюты
-  getLimits: publicProcedure.input(getCurrencyRateSchema).query(async ({ input, ctx }) => {
-    await assertValidCurrency(input.currency, ctx);
-    const currency = input.currency as CryptoCurrency;
-    const limits = getCurrencyLimits(currency);
-    const rate = getExchangeRate(currency);
+  getLimits: publicProcedure
+    .input(securityEnhancedGetCurrencyRateSchema)
+    .query(async ({ input, ctx }) => {
+      await assertValidCurrency(input.currency, ctx);
+      const currency = input.currency as CryptoCurrency;
+      const limits = getCurrencyLimits(currency);
+      const rate = getExchangeRate(currency);
 
-    return {
-      currency: input.currency,
-      limits,
-      rate: {
-        uahRate: rate.uahRate,
-        commission: rate.commission,
-      },
-    };
-  }),
+      return {
+        currency: input.currency,
+        limits,
+        rate: {
+          uahRate: rate.uahRate,
+          commission: rate.commission,
+        },
+      };
+    }),
 
   // Рассчитать сумму обмена
-  calculateExchange: publicProcedure.input(calculateAmountSchema).query(async ({ input, ctx }) => {
-    const { amount, currency, direction } = input;
-    await assertValidCurrency(currency, ctx);
-    const validCurrency = currency as CryptoCurrency;
+  calculateExchange: publicProcedure
+    .input(securityEnhancedCalculateAmountSchema)
+    .query(async ({ input, ctx }) => {
+      const { amount, currency, direction } = input;
+      await assertValidCurrency(currency, ctx);
+      const validCurrency = currency as CryptoCurrency;
 
-    try {
-      if (direction === 'crypto-to-uah') {
-        const uahAmount = calculateUahAmount(amount, validCurrency);
-        const rate = getExchangeRate(validCurrency);
+      try {
+        if (direction === 'crypto-to-uah') {
+          const uahAmount = calculateUahAmount(amount, validCurrency);
+          const rate = getExchangeRate(validCurrency);
 
-        return {
-          cryptoAmount: amount,
-          uahAmount,
-          rate: rate.uahRate,
-          commission: rate.commission,
-          commissionAmount:
-            amount * rate.uahRate * (rate.commission / PERCENTAGE_CALCULATIONS.PERCENT_BASE),
-        };
-      } else {
-        const cryptoAmount = calculateCryptoAmount(amount, validCurrency);
-        const rate = getExchangeRate(validCurrency);
+          return {
+            cryptoAmount: amount,
+            uahAmount,
+            rate: rate.uahRate,
+            commission: rate.commission,
+            commissionAmount:
+              amount * rate.uahRate * (rate.commission / PERCENTAGE_CALCULATIONS.PERCENT_BASE),
+          };
+        } else {
+          const cryptoAmount = calculateCryptoAmount(amount, validCurrency);
+          const rate = getExchangeRate(validCurrency);
 
-        return {
-          cryptoAmount,
-          uahAmount: amount,
-          rate: rate.uahRate,
-          commission: rate.commission,
-          commissionAmount: amount * (rate.commission / PERCENTAGE_CALCULATIONS.PERCENT_BASE),
-        };
+          return {
+            cryptoAmount,
+            uahAmount: amount,
+            rate: rate.uahRate,
+            commission: rate.commission,
+            commissionAmount: amount * (rate.commission / PERCENTAGE_CALCULATIONS.PERCENT_BASE),
+          };
+        }
+      } catch {
+        throw createBadRequestError(
+          await ctx.getErrorMessage('server.errors.business.exchangeCalculationError')
+        );
       }
-    } catch {
-      throw createBadRequestError(
-        await ctx.getErrorMessage('server.errors.business.exchangeCalculationError')
-      );
-    }
-  }),
+    }),
 
   // Создать заявку на обмен
   createOrder: rateLimitMiddleware.createOrder
     .input(
-      createExchangeOrderSchema.extend({
+      securityEnhancedCreateExchangeOrderSchema.extend({
         recipientData: z
           .object({
             cardNumber: z.string().optional(),
@@ -232,51 +236,55 @@ export const exchangeRouter = createTRPCRouter({
     }),
 
   // Получить статус заявки
-  getOrderStatus: publicProcedure.input(orderByIdSchema).query(async ({ input }) => {
-    const order = orderManager.findById(input.orderId);
+  getOrderStatus: publicProcedure
+    .input(securityEnhancedOrderByIdSchema)
+    .query(async ({ input }) => {
+      const order = orderManager.findById(input.orderId);
 
-    if (!order) {
-      throw createOrderError('not_found', input.orderId);
-    }
+      if (!order) {
+        throw createOrderError('not_found', input.orderId);
+      }
 
-    return {
-      id: order.id,
-      status: order.status,
-      cryptoAmount: order.cryptoAmount,
-      uahAmount: order.uahAmount,
-      currency: order.currency,
-      depositAddress: order.depositAddress,
-      createdAt: order.createdAt,
-      updatedAt: order.updatedAt,
-      processedAt: order.processedAt,
-      txHash: order.txHash,
-    };
-  }),
-
-  // Получить историю заявок для email
-  getOrderHistory: publicProcedure.input(getOrderHistoryByEmailSchema).query(async ({ input }) => {
-    const sanitizedEmail = sanitizeEmail(input.email);
-    const orders = orderManager.findByEmail(sanitizedEmail);
-
-    // Используем централизованные утилиты для сортировки и ограничения
-    const result = paginateOrders(sortOrders(orders), {
-      limit: input.limit,
-      offset: UI_NUMERIC_CONSTANTS.INITIAL_OFFSET,
-    });
-
-    return {
-      orders: result.items.map(order => ({
+      return {
         id: order.id,
         status: order.status,
         cryptoAmount: order.cryptoAmount,
         uahAmount: order.uahAmount,
         currency: order.currency,
+        depositAddress: order.depositAddress,
         createdAt: order.createdAt,
         updatedAt: order.updatedAt,
-      })),
-      total: result.total,
-    };
-  }),
+        processedAt: order.processedAt,
+        txHash: order.txHash,
+      };
+    }),
+
+  // Получить историю заявок для email
+  getOrderHistory: publicProcedure
+    .input(securityEnhancedGetOrderHistoryByEmailSchema)
+    .query(async ({ input }) => {
+      const sanitizedEmail = sanitizeEmail(input.email);
+      const orders = orderManager.findByEmail(sanitizedEmail);
+
+      // Используем централизованные утилиты для сортировки и ограничения
+      const result = paginateOrders(sortOrders(orders), {
+        limit: input.limit,
+        offset: UI_NUMERIC_CONSTANTS.INITIAL_OFFSET,
+      });
+
+      return {
+        orders: result.items.map(order => ({
+          id: order.id,
+          status: order.status,
+          cryptoAmount: order.cryptoAmount,
+          uahAmount: order.uahAmount,
+          currency: order.currency,
+          createdAt: order.createdAt,
+          updatedAt: order.updatedAt,
+        })),
+        total: result.total,
+      };
+    }),
 
   // Получить поддерживаемые криптовалюты
   getSupportedCurrencies: publicProcedure.query(async () => {

@@ -689,6 +689,588 @@ export const UserProfileCompound = Object.assign(UserProfile, {
 
 ---
 
+## 📋 ДЕТАЛИЗИРОВАННЫЙ ПЛАН РЕАЛИЗАЦИИ НА ОСНОВЕ АРХИТЕКТУРЫ ПРОЕКТА
+
+### 🎯 **АРХИТЕКТУРНОЕ ПОНИМАНИЕ ПРОЕКТА (НА ОСНОВЕ ИЗУЧЕННОЙ ДОКУМЕНТАЦИИ)**
+
+После тщательного изучения документации и кодовой базы, установлены следующие **РЕАЛЬНЫЕ** архитектурные принципы:
+
+#### **✅ ЧТО УЖЕ РЕАЛИЗОВАНО И РАБОТАЕТ:**
+
+1. **Compound Components Pattern v2.0** - реализован в:
+   - `header-compound.tsx` - с `React.useMemo` для context
+   - `footer-compound.tsx` - с enhancement helpers
+   - `data-table-compound.tsx` - с sorting context
+   - `exchange-form.tsx` - с context API
+   - `admin-panel-compound.tsx` - полный compound pattern
+
+2. **Validation Architecture** - централизованная система:
+   - `packages/utils/src/validation/` - модульная структура Zod schemas
+   - `packages/utils/src/validation-schemas.ts` - основные схемы
+   - Интеграция с `@repo/constants` для VALIDATION_LIMITS
+
+3. **Design System v3.0** - централизованная CSS архитектура:
+   - `packages/tailwind-preset/globals.css` - единый источник CSS переменных
+   - `packages/design-tokens/` - semantic tokens (colors, spacing, typography)
+   - Semantic classes: `bg-card`, `text-foreground`, `border-border`
+
+4. **Performance Infrastructure** - уже существует:
+   - Lazy loading в ESLint конфигурации (`packages/eslint-config/lazy-loading.js`)
+   - Performance monitoring в `performance-benchmark.js`
+   - `React.useMemo` паттерн в header-compound.tsx
+
+#### **🎯 ПРИОРИТИЗАЦИЯ** (Rule 19 - иерархия: Безопасность > Архитектура > Производительность > Удобство)
+
+**✅ ЗАВЕРШЕНО - Безопасность:**
+
+1. ✅ **Security-Enhanced Validation** - полная система с XSS protection реализована в `packages/utils/src/validation/`
+2. ✅ **Comprehensive Documentation** - создано руководство `docs/SECURITY_ENHANCED_VALIDATION_GUIDE.md`
+
+**⚡ ТЕКУЩИЙ ПРИОРИТЕТ - Performance:**  
+3. **Context Memoization Fix** - исправление нестабильных context values 4. **Lazy Loading Infrastructure** - расширение существующих паттернов
+
+**🎨 СРЕДНИЙ ПРИОРИТЕТ - UI/UX:** 5. **Design Tokens Consistency** - audit нарушений централизованной системы 6. **Mobile Enhancement** - улучшение существующих responsive patterns
+
+---
+
+## ✅ **ФАЗА 1: SECURITY-ENHANCED VALIDATION SCHEMAS - ЗАВЕРШЕНО**
+
+### 🔍 **СТАТУС**: Security-Enhanced Validation полностью реализовано
+
+**ЧТО БЫЛО ВЫПОЛНЕНО:**
+
+- ✅ Создана полная система Security-Enhanced Validation в `packages/utils/src/validation/`
+- ✅ Реализованы security-enhanced schemas с XSS protection
+- ✅ Все формы переведены на security-enhanced архитектуру
+- ✅ Создано комплексное руководство `docs/SECURITY_ENHANCED_VALIDATION_GUIDE.md`
+- ✅ Обновлена документация во всех пакетах
+
+**РЕАЛИЗОВАННАЯ архитектура:**
+
+```typescript
+// ТЕКУЩЕЕ СОСТОЯНИЕ: полная система security-enhanced validation
+packages/utils/src/validation/
+├── security-enhanced-schemas.ts     // Основные защищенные схемы
+├── schemas-basic.ts                 // Building blocks
+├── schemas-crypto.ts                // Криптовалютные схемы
+├── schemas-auth.ts                  // Авторизация
+├── utils.ts                         // Вспомогательные функции
+└── index.ts                         // Экспорты
+
+// Плюс созданная документация:
+// docs/SECURITY_ENHANCED_VALIDATION_GUIDE.md - руководство для разработчиков
+```
+
+### 🛠 **ВЫПОЛНЕННОЕ РЕШЕНИЕ**
+
+#### ✅ **~~Шаг 1.1: Security-Enhanced Schemas~~** - ЗАВЕРШЕНО
+
+#### **Шаг 1.1: Security-Enhanced Schemas**
+
+```typescript
+// packages/utils/src/validation/security-enhanced-schemas.ts
+// НА ОСНОВЕ существующих patterns в validation-schemas.ts
+
+import { z } from 'zod';
+import { VALIDATION_LIMITS } from '@repo/constants'; // УЖЕ используется в проекте
+
+// Расширение существующих схем XSS protection
+const enhancedStringSchema = z.string().transform(val => {
+  // Basic XSS protection
+  return val
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+=/gi, '');
+});
+
+// Усиление существующей exchangeFormSchema (уже есть в validation-schemas.ts)
+export const securityEnhancedExchangeSchema = z.object({
+  fromCurrency: z.string().min(1, 'CURRENCY_REQUIRED'),
+  toCurrency: z.string().min(1, 'CURRENCY_REQUIRED'),
+  amount: z
+    .number()
+    .min(VALIDATION_LIMITS.AMOUNT.MIN) // ИЗ СУЩЕСТВУЮЩИХ констант
+    .max(VALIDATION_LIMITS.AMOUNT.MAX)
+    .finite('AMOUNT_INVALID'),
+  email: z.string().email('EMAIL_INVALID').max(254), // RFC compliant
+  comment: enhancedStringSchema.max(500).optional(),
+});
+
+// User profile schema with security checks
+export const securityUserProfileSchema = z.object({
+  name: enhancedStringSchema.min(2, 'NAME_MIN_LENGTH').max(50, 'NAME_MAX_LENGTH'),
+  bio: enhancedStringSchema.max(1000).optional(),
+  website: z
+    .string()
+    .url('WEBSITE_INVALID')
+    .refine(url => url.startsWith('http://') || url.startsWith('https://'))
+    .optional(),
+});
+```
+
+**ИНТЕГРАЦИЯ:** Добавить в существующий `packages/utils/src/validation/index.ts`:
+
+```typescript
+// Дополнить существующий экспорт
+export {
+  securityEnhancedExchangeSchema,
+  securityUserProfileSchema,
+} from './security-enhanced-schemas';
+```
+
+#### **Шаг 1.2: Enhanced Validation Hook**
+
+```typescript
+// packages/hooks/src/validation/use-enhanced-form-validation.ts
+// НА ОСНОВЕ существующих patterns в packages/hooks/
+
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useCallback } from 'react';
+
+export function useEnhancedFormValidation<T extends z.ZodSchema>({
+  schema,
+  mode = 'onChange',
+  defaultValues,
+}: {
+  schema: T;
+  mode?: 'onChange' | 'onBlur' | 'onSubmit';
+  defaultValues?: Partial<z.infer<T>>;
+}) {
+  const form = useForm<z.infer<T>>({
+    resolver: zodResolver(schema),
+    mode,
+    defaultValues,
+  });
+
+  // Enhanced validation with custom error handling
+  const validateField = useCallback(
+    async (fieldName: keyof z.infer<T>, value: any) => {
+      try {
+        await schema.parseAsync({ [fieldName]: value });
+        form.clearErrors(fieldName as any);
+        return { isValid: true, error: null };
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          const fieldError = error.errors.find(err => err.path[0] === fieldName);
+          if (fieldError) {
+            form.setError(fieldName as any, {
+              type: 'validation',
+              message: fieldError.message,
+            });
+            return { isValid: false, error: fieldError.message };
+          }
+        }
+        return { isValid: false, error: 'Validation error' };
+      }
+    },
+    [schema, form]
+  );
+
+  return {
+    ...form,
+    validateField,
+    isValidating: form.formState.isValidating,
+    hasErrors: Object.keys(form.formState.errors).length > 0,
+  };
+}
+```
+
+**РЕАЛИЗОВАННАЯ Security-Enhanced система:**
+
+```typescript
+// ЗАВЕРШЕННОЕ РЕШЕНИЕ в packages/utils/src/validation/
+export {
+  // Security-Enhanced Schemas (основные)
+  securityEnhancedLoginSchema,
+  securityEnhancedRegisterSchema,
+  securityEnhancedCreateOrderSchema,
+  securityEnhancedProfileUpdateSchema,
+
+  // Building Blocks (базовые схемы для композиции)
+  emailSchema,
+  passwordSchema,
+  usernameSchema,
+  phoneSchema,
+  currencyAmountSchema,
+
+  // XSS Protection utilities
+  createXSSProtectedString,
+  sanitizeInput,
+} from './security-enhanced-schemas';
+```
+
+**СОЗДАННАЯ документация:**
+
+- ✅ `docs/SECURITY_ENHANCED_VALIDATION_GUIDE.md` - полное руководство
+- ✅ Обновлены README во всех пакетах
+- ✅ Обновлены архитектурные гайды
+
+---
+
+### 🛠 **ФАЗА 2: PERFORMANCE OPTIMIZATION (ПРИОРИТЕТ 2 - 1-2 дня)**
+
+**ОСНОВА:** Существующий `React.useMemo` паттерн в header-compound.tsx
+
+#### **Шаг 2.1: Performance Utils Library**
+
+```typescript
+// packages/ui/src/lib/performance-utils.ts
+// НА ОСНОВЕ существующих patterns в header-helpers.tsx
+
+import * as React from 'react';
+
+// Расширение существующего паттерна memoization
+export function useStableContextValue<T extends Record<string, unknown>>(
+  value: T,
+  dependencies?: React.DependencyList
+): T {
+  return React.useMemo(() => value, dependencies || Object.values(value));
+}
+
+// Интеграция с существующим enhanceChildWithContext pattern
+export function useStableEnhancement<T>(
+  enhancementFn: (child: React.ReactNode, context: T) => React.ReactNode,
+  context: T
+) {
+  return React.useMemo(() => enhancementFn, [context]);
+}
+
+// Optimization для callbacks в context
+export function useStableCallbacks<T extends Record<string, (...args: any[]) => any>>(
+  callbacks: T
+): T {
+  return React.useMemo(() => callbacks, Object.values(callbacks));
+}
+```
+
+#### **Шаг 2.2: Header Context Optimization**
+
+Проверить существующий `header-compound.tsx` - dependencies уже правильные:
+
+```typescript
+// В header-compound.tsx УЖЕ ЕСТЬ правильная мемоизация:
+const contextValue: HeaderContextValue = React.useMemo(
+  () => ({
+    isMenuOpen,
+    currentLocale,
+    isAuthenticated,
+    userName,
+    onToggleMenu,
+    onLocaleChange,
+    onSignIn,
+    onSignOut,
+  }),
+  [
+    isMenuOpen,
+    currentLocale,
+    isAuthenticated,
+    userName,
+    onToggleMenu,
+    onLocaleChange,
+    onSignIn,
+    onSignOut,
+  ]
+  // ✅ ВСЕ dependencies ПРАВИЛЬНЫЕ
+);
+```
+
+**ДЕЙСТВИЕ:** Создать utility и применить к другим compound components.
+
+#### **Шаг 2.3: Lazy Loading Enhancement**
+
+```typescript
+// packages/ui/src/lib/lazy-component.tsx
+// НА ОСНОВЕ существующего паттерна в performance-benchmark.js
+
+import * as React from 'react';
+
+interface LazyComponentProps {
+  children: React.ReactNode;
+  fallback?: React.ReactNode;
+  threshold?: number;
+  rootMargin?: string;
+}
+
+export function LazyComponent({
+  children,
+  fallback = <div className="animate-pulse bg-muted h-32 rounded" />,
+  threshold = 0.1,
+  rootMargin = '100px'
+}: LazyComponentProps) {
+  const [isVisible, setIsVisible] = React.useState(false);
+  const [hasLoaded, setHasLoaded] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasLoaded) {
+          setIsVisible(true);
+          setHasLoaded(true);
+          observer.disconnect();
+        }
+      },
+      { threshold, rootMargin }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, [threshold, rootMargin, hasLoaded]);
+
+  return (
+    <div ref={ref}>
+      {isVisible ? children : fallback}
+    </div>
+  );
+}
+
+// HOC для lazy loading существующих компонентов
+export function withLazyLoading<P extends object>(
+  Component: React.ComponentType<P>,
+  lazyOptions?: Partial<LazyComponentProps>
+) {
+  const LazyWrappedComponent = React.forwardRef<any, P>((props, ref) => (
+    <LazyComponent {...lazyOptions}>
+      <Component {...props} ref={ref} />
+    </LazyComponent>
+  ));
+
+  LazyWrappedComponent.displayName = `withLazyLoading(${Component.displayName || Component.name})`;
+  return LazyWrappedComponent;
+}
+```
+
+---
+
+### 🛠 **ФАЗА 3: DESIGN TOKENS AUDIT (ПРИОРИТЕТ 3 - 1 день)**
+
+**ОСНОВА:** Существующая централизованная архитектура в `packages/design-tokens/` и `packages/tailwind-preset/`
+
+#### **Шаг 3.1: Design Tokens Violation Audit**
+
+```typescript
+// scripts/design-tokens-audit.ts
+// НА ОСНОВЕ существующего паттерна в performance-benchmark.js
+
+import * as fs from 'fs';
+import * as path from 'path';
+
+interface DesignTokenViolation {
+  file: string;
+  line: number;
+  violation: string;
+  suggestion: string;
+}
+
+export async function auditDesignTokens(): Promise<DesignTokenViolation[]> {
+  const violations: DesignTokenViolation[] = [];
+
+  // Поиск hardcoded значений вместо semantic tokens
+  const patterns = {
+    hardcodedColors: /#[0-9a-fA-F]{3,6}|rgb\(|rgba\(/g,
+    hardcodedSpacing: /\b(m|p)(t|b|l|r|x|y)?-\[\d+px\]/g,
+    hardcodedSizing: /\b(w|h)-\[\d+px\]/g,
+    hardcodedTypography: /text-\[\d+px\]|leading-\[\d+\]/g,
+  };
+
+  // Сканирование packages/ui для нарушений
+  const scanDirectory = 'packages/ui/src/components';
+
+  function scanFile(filePath: string) {
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const lines = content.split('\n');
+
+    lines.forEach((line, index) => {
+      // Проверка hardcoded colors
+      if (patterns.hardcodedColors.test(line) && !line.includes('// design-token-exception')) {
+        violations.push({
+          file: filePath,
+          line: index + 1,
+          violation: 'hardcoded-color',
+          suggestion: 'Use semantic colors: bg-card, text-foreground, border-border',
+        });
+      }
+
+      // Проверка hardcoded spacing
+      if (patterns.hardcodedSpacing.test(line) && !line.includes('// design-token-exception')) {
+        violations.push({
+          file: filePath,
+          line: index + 1,
+          violation: 'hardcoded-spacing',
+          suggestion: 'Use Tailwind spacing scale: p-4, m-6, etc.',
+        });
+      }
+    });
+  }
+
+  // Рекурсивно сканировать files
+  function walkDirectory(dir: string) {
+    const files = fs.readdirSync(dir);
+    files.forEach(file => {
+      const fullPath = path.join(dir, file);
+      if (fs.statSync(fullPath).isDirectory()) {
+        walkDirectory(fullPath);
+      } else if (file.endsWith('.tsx') || file.endsWith('.ts')) {
+        scanFile(fullPath);
+      }
+    });
+  }
+
+  walkDirectory(scanDirectory);
+  return violations;
+}
+
+// Run audit
+auditDesignTokens().then(violations => {
+  console.log(`Found ${violations.length} design token violations`);
+  violations.forEach(violation => {
+    console.log(
+      `${violation.file}:${violation.line} - ${violation.violation}: ${violation.suggestion}`
+    );
+  });
+});
+```
+
+#### **Шаг 3.2: Enhanced Semantic Tokens**
+
+```typescript
+// packages/design-tokens/semantic-extensions.js
+// РАСШИРЕНИЕ существующих design tokens
+
+export const semanticTokenExtensions = {
+  // Extend существующие colors
+  colors: {
+    // Exchange-specific semantic colors
+    exchange: {
+      success: 'hsl(var(--success))',
+      warning: 'hsl(var(--warning))',
+      info: 'hsl(var(--info))',
+      neutral: 'hsl(var(--muted))',
+    },
+    // Status colors для exchange операций
+    status: {
+      pending: 'hsl(var(--warning))',
+      completed: 'hsl(var(--success))',
+      failed: 'hsl(var(--destructive))',
+      processing: 'hsl(var(--info))',
+    },
+  },
+
+  // Exchange-specific spacing patterns
+  spacing: {
+    form: {
+      fieldGap: 'var(--space-4)', // 1rem
+      sectionGap: 'var(--space-6)', // 1.5rem
+      containerPadding: 'var(--space-4)',
+    },
+    card: {
+      padding: 'var(--space-6)',
+      margin: 'var(--space-4)',
+    },
+  },
+
+  // Enhanced typography для exchange UI
+  typography: {
+    heading: {
+      section: 'text-lg font-semibold',
+      subsection: 'text-base font-medium',
+      label: 'text-sm font-medium',
+    },
+    body: {
+      default: 'text-sm',
+      small: 'text-xs',
+      muted: 'text-sm text-muted-foreground',
+    },
+  },
+};
+```
+
+---
+
+### 🛠 **ФАЗА 4: COMPOUND COMPONENTS COMPLETION (ПРИОРИТЕТ 4 - по необходимости)**
+
+**НЕ СОЗДАВАТЬ НОВЫЕ** - улучшить существующие на основе COMPOUND_COMPONENTS_MIGRATION_GUIDE.md
+
+#### **Шаг 4.1: Audit Existing Components**
+
+```typescript
+// scripts/compound-component-audit.ts
+// НА ОСНОВЕ критериев из COMPOUND_COMPONENTS_MIGRATION_GUIDE.md
+
+interface ComponentAnalysis {
+  fileName: string;
+  isCompound: boolean;
+  hasContext: boolean;
+  hasEnhancement: boolean;
+  migrationPriority: 'high' | 'medium' | 'low' | 'not-needed';
+  reasons: string[];
+}
+
+function analyzeComponent(filePath: string): ComponentAnalysis {
+  const content = fs.readFileSync(filePath, 'utf-8');
+
+  const isCompound = /Object\.assign\(.*,\s*{/.test(content);
+  const hasContext = /createContext|useContext/.test(content);
+  const hasEnhancement = /enhanceChildWithContext|React\.cloneElement/.test(content);
+
+  // Применение критериев из COMPOUND_COMPONENTS_MIGRATION_GUIDE.md
+  const reasons: string[] = [];
+  let migrationPriority: ComponentAnalysis['migrationPriority'] = 'not-needed';
+
+  // ОБЯЗАТЕЛЬНАЯ МИГРАЦИЯ (Score: 10/10)
+  if (content.includes('React.Children.map') && !isCompound) {
+    reasons.push('Использует React.Children.map без compound pattern');
+    migrationPriority = 'high';
+  }
+
+  // РЕКОМЕНДУЕМАЯ МИГРАЦИЯ (Score: 7/10)
+  const exportCount = (content.match(/^export \{[^}]+\}/gm) || []).length;
+  if (exportCount > 5 && !isCompound) {
+    reasons.push('Более 5 связанных экспортов');
+    migrationPriority = migrationPriority === 'high' ? 'high' : 'medium';
+  }
+
+  return {
+    fileName: path.basename(filePath),
+    isCompound,
+    hasContext,
+    hasEnhancement,
+    migrationPriority,
+    reasons,
+  };
+}
+
+// Применить ТОЛЬКО к компонентам с high priority
+```
+
+---
+
+### 🎯 **СЛЕДУЮЩИЕ ШАГИ - КОНКРЕТНЫЕ ДЕЙСТВИЯ**
+
+#### **Немедленно (сегодня):**
+
+1. **Начать с ФАЗЫ 1** - Validation Enhancement (самый высокий приоритет - безопасность)
+2. **Создать security-enhanced-schemas.ts** на основе существующих patterns
+3. **Протестировать** с существующими формами
+
+#### **На этой неделе:**
+
+4. **ФАЗА 2** - Performance optimization (исправить context memoization)
+5. **ФАЗА 3** - Design tokens audit (найти нарушения централизованной системы)
+
+#### **По необходимости:**
+
+6. **ФАЗА 4** - Доработка compound components (только критически важные)
+
+**Хочешь, чтобы я начал с validation enhancement прямо сейчас?**
+
+---
+
 ## ⚡ 3. ПРОБЛЕМЫ ПРОИЗВОДИТЕЛЬНОСТИ
 
 ### 🔍 **ПРОБЛЕМА**: Отсутствие мемоизации и lazy loading

@@ -42,15 +42,48 @@ const form = useFormWithNextIntl<FormData>({
 ### ✅ Правильная схема Zod с локализацией
 
 ```tsx
-// ВАЖНО: Импортируй из централизованного места!
-import { amountSchema, emailSchema, passwordSchema } from '@repo/utils/validation-schemas';
+// 🚨 ВАЖНО: Используй только security-enhanced schemas для новых форм!
+import {
+  securityEnhancedLoginSchema,
+  securityEnhancedCreateExchangeOrderSchema,
+  securityEnhancedCreateTicketSchema,
+} from '@repo/utils';
 
-const mySchema = z.object({
-  amount: amountSchema, // НЕ создавай новую схему!
-  email: emailSchema, // Используй централизованную!
-  password: passwordSchema, // Единственный источник правды!
+// ✅ Security-enhanced schema с XSS protection
+const mySchema = securityEnhancedCreateExchangeOrderSchema;
+
+// ✅ Для композитных форм используй security-enhanced building blocks
+const customSchema = z.object({
+  // Используй базовые схемы для building blocks
+  email: emailSchema, // Базовая схема ОК
+  password: passwordSchema, // Базовая схема ОК
+  // Но для XSS-sensitive полей используй security-enhanced
+  comment: createXSSProtectedString(0, 500),
 });
 ```
+
+### ❌ Устаревшие patterns (НЕ используй!)
+
+```tsx
+// ❌ НЕПРАВИЛЬНО: Legacy schemas без security enhancement
+import {
+  loginSchema, // DEPRECATED - уязвимо к XSS!
+  createOrderSchema, // DEPRECATED - нет XSS protection!
+  userProfileSchema, // DEPRECATED - устаревшие лимиты!
+} from '@repo/utils/validation-schemas';
+
+// ❌ НЕ используй legacy schemas!
+const mySchema = z.object({
+  amount: amountSchema, // ОК - базовая схема
+  email: emailSchema, // ОК - базовая схема
+  comment: z.string(), // ❌ НЕТ XSS protection!
+});
+```
+
+### 📚 Дополнительная документация
+
+> **🛡️ Для подробного руководства по security-enhanced schemas смотри:**  
+> **[Security-Enhanced Validation Guide](SECURITY_ENHANCED_VALIDATION_GUIDE.md)**
 
 ---
 

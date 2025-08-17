@@ -1,5 +1,6 @@
-import { recipientDataSchema } from '@repo/utils';
+import { securityEnhancedRecipientDataSchema } from '@repo/utils';
 import { createValidationResult, type ValidationResult } from '@repo/utils';
+import { z } from 'zod';
 
 import type { RecipientData } from '../types';
 
@@ -17,12 +18,12 @@ export function validateRecipientData(recipientData?: RecipientData): Validation
     return createValidationResult([]);
   }
 
-  const result = recipientDataSchema.safeParse(recipientData);
+  const result = securityEnhancedRecipientDataSchema.safeParse(recipientData);
 
   if (result.success) {
     return createValidationResult([]);
   }
 
-  const errors = result.error.errors.map(err => err.message);
+  const errors = result.error.errors.map((err: z.ZodIssue) => err.message);
   return createValidationResult(errors);
 }

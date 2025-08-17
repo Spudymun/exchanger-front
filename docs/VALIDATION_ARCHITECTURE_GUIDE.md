@@ -51,66 +51,113 @@ import { passwordSchema } from '@repo/utils/validation-schemas';
 
 **Принцип**: Каждый слой валидации имеет четко определенную ответственность.
 
-#### Layer 1: Structural Validation (UI + tRPC)
+#### Layer 1: Security-Enhanced Structural Validation (UI + tRPC)
 
-- **Ответственность**: Проверка типов, форматов, базовых ограничений
-- **Инструменты**: Zod schemas
-- **Расположение**: `packages/utils/src/validation-schemas.ts`
+- **Ответственность**: XSS protection, проверка типов, форматов, базовых ограничений
+- **Инструменты**: Security-Enhanced Zod schemas с XSS protection
+- **Расположение**: `packages/utils/src/validation/security-enhanced-schemas.ts`
 
-#### Layer 2: Business Validation
+#### Layer 2: Building Blocks (Базовые схемы)
+
+- **Ответственность**: Атомарные валидаторы без XSS рисков
+- **Инструменты**: Базовые Zod schemas
+- **Расположение**: `packages/utils/src/validation/schemas-basic.ts`, `schemas-crypto.ts`
+
+#### Layer 3: Business Validation
 
 - **Ответственность**: Бизнес-логика, внешние зависимости
 - **Инструменты**: Dedicated business validators
 - **Расположение**: `packages/exchange-core/src/business/`
 
-### 3. Consistency Across Layers (Согласованность между слоями)
+### 3. Security-First Consistency (Согласованность с приоритетом безопасности)
 
-**Принцип**: UI и tRPC используют идентичные схемы валидации.
+**Принцип**: UI и tRPC используют security-enhanced схемы для всех user input форм.
 
 ```typescript
-// ✅ ПРАВИЛЬНО: Одинаковые схемы
-const loginSchema = z.object({
-  email: emailSchema, // Из validation-schemas.ts
-  password: passwordSchema, // Из validation-schemas.ts
-});
+// ✅ ПРАВИЛЬНО: Security-enhanced схемы с XSS protection
+import { securityEnhancedLoginSchema } from '@repo/utils';
 
 // UI форма
 const form = useFormWithNextIntl({
-  validationSchema: loginSchema,
+  validationSchema: securityEnhancedLoginSchema, // 🛡️ XSS protected
   // ...
 });
 
 // tRPC процедура
 export const authRouter = router({
   login: publicProcedure
-    .input(loginSchema) // ТА ЖЕ схема!
+    .input(securityEnhancedLoginSchema) // 🛡️ ТА ЖЕ защищённая схема!
     .mutation(({ input }) => {
-      // ...
+      // input уже защищён от XSS
     }),
 });
 ```
 
-### 4. Fail-Fast Validation (Ранняя валидация)
+### 4. Fail-Fast Security Validation (Ранняя валидация с защитой)
 
-**Принцип**: Валидация должна происходить как можно раньше в цепочке обработки.
+**Принцип**: XSS protection должна происходить как можно раньше в цепочке обработки.
 
 ```
-Пользователь → UI Validation → tRPC Validation → Business Validation
-               ↑____________ Структурная валидация ____________↑
+Пользователь → XSS Protection → UI Validation → tRPC Validation → Business Validation
+               ↑________________ Security-Enhanced Validation ________________↑
 ```
 
 ---
 
-## 📂 Архитектурная структура
+## �️ Security-Enhanced Architecture
 
-### Обязательные места размещения:
+### Новая иерархия валидации:
 
 ```
-packages/utils/src/validation-schemas.ts    # Централизованные Zod схемы
-packages/utils/src/validation/handlers.ts   # Обработчики ошибок
-packages/exchange-core/src/business/        # Бизнес-валидаторы
-apps/web/src/server/trpc/routers/          # tRPC input валидация
-apps/web/src/components/forms/             # UI формы с валидацией
+🛡️ Security-Enhanced Layer (XSS Protection)
+├── security-enhanced-schemas.ts    # Основные protected schemas
+├── security-enhanced-operator.ts   # Операторские schemas
+├── security-enhanced-utils.ts      # Утилитарные schemas
+│
+📦 Building Blocks Layer (Базовые компоненты)
+├── schemas-basic.ts               # email, password, username
+├── schemas-crypto.ts              # currency, crypto addresses
+│
+🏗️ Infrastructure Layer
+├── core.ts, handlers.ts           # Система валидации
+├── security-utils.ts              # XSS protection utilities
+```
+
+### Принципы Security-Enhanced архитектуры:
+
+#### 1. **Security First**
+
+- Все новые формы используют security-enhanced schemas
+- XSS protection встроена на уровне схем
+- Автоматическая санитизация user input
+
+#### 2. **Композитная архитектура**
+
+- Security-enhanced schemas композируют базовые building blocks
+- Базовые схемы остаются без security-enhanced префикса
+- Повторное использование без дублирования
+
+#### 3. **Legacy Deprecation**
+
+- Старые schemas помечены как DEPRECATED
+- Постепенная миграция на security-enhanced
+- Backward compatibility через переходный период
+
+---
+
+## �📂 Архитектурная структура
+
+### Обязательные места размещения (UPDATED):
+
+```
+packages/utils/src/validation/security-enhanced-*.ts  # 🛡️ Protected schemas
+packages/utils/src/validation/schemas-basic.ts        # 📦 Building blocks
+packages/utils/src/validation/schemas-crypto.ts       # 📦 Crypto building blocks
+packages/utils/src/validation/security-utils.ts       # 🛡️ XSS protection utilities
+packages/utils/src/validation-schemas.ts              # ❌ DEPRECATED legacy file
+packages/exchange-core/src/business/                  # Бизнес-валидаторы
+apps/web/src/server/trpc/routers/                    # tRPC input валидация
+apps/web/src/components/forms/                       # UI формы с валидацией
 ```
 
 ### Запрещенные места размещения:
@@ -121,31 +168,37 @@ apps/web/src/components/forms/             # UI формы с валидацие
 - tRPC роутерах
 - Utility функциях
 - Случайных местах проекта
+- **❌ НЕ используй legacy validation-schemas.ts для новых схем!**
 
 ---
 
-## 🔧 Правила создания и изменения схем
+## 🔧 Правила создания и изменения схем (UPDATED)
 
-### Создание новой схемы:
+### Создание новой security-enhanced схемы:
 
-1. **Проверка**: Убедиться, что похожей схемы нет в `validation-schemas.ts`
-2. **Согласование**: Обсудить с архитектором необходимость новой схемы
-3. **Создание**: Добавить в `validation-schemas.ts` с правильным именованием
-4. **Документирование**: Добавить JSDoc комментарий с описанием использования
-5. **Тестирование**: Покрыть схему unit-тестами
+1. **Security Assessment**: Определить нужна ли XSS protection
+2. **Композиция**: Использовать базовые building blocks где возможно
+3. **Размещение**: Добавить в соответствующий security-enhanced-\*.ts файл
+4. **XSS Protection**: Применить `createXSSProtectedString` для text input
+5. **Типизация**: Экспортировать `SecurityEnhanced*` тип
+6. **Документирование**: JSDoc с примерами использования
+7. **Тестирование**: Покрыть XSS protection тестами
 
-### Изменение существующей схемы:
+### Миграция legacy схемы:
 
-1. **Анализ влияния**: Найти все места использования (grep/semantic search)
-2. **Backward compatibility**: Убедиться в обратной совместимости
-3. **Тестирование**: Запустить все тесты, затрагивающие схему
-4. **Документирование**: Обновить changelog и migration guide
+1. **Анализ использования**: Найти все места использования legacy схемы
+2. **Security Enhancement**: Создать security-enhanced версию
+3. **Deprecation**: Пометить legacy схему как DEPRECATED
+4. **Migration Path**: Обновить импорты и тесты
+5. **Cleanup**: Удалить legacy после переходного периода
 
-### Удаление схемы:
+### Изменение security-enhanced схемы:
 
-1. **Deprecation period**: Пометить как deprecated минимум на 1 спринт
-2. **Migration guide**: Создать руководство по миграции
-3. **Complete removal**: Удалить после полной миграции
+1. **Security Impact**: Проанализировать влияние на XSS protection
+2. **Backward Compatibility**: Сохранить обратную совместимость
+3. **Full Testing**: Тестировать UI формы и tRPC endpoints
+4. **Documentation**: Обновить Security-Enhanced Validation Guide
+5. **Complete removal**: Удалить после полной миграции
 
 ---
 
@@ -244,32 +297,42 @@ apps/web/src/components/forms/             # UI формы с валидацие
 
 ## 📖 Связанные документы
 
-- [VALIDATION_LOCALIZATION_GUIDE.md](VALIDATION_LOCALIZATION_GUIDE.md) - Практическое руководство
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Общая архитектура проекта
-- [PROFESSIONAL_VALIDATION_SOLUTION_PLAN.md](../PROFESSIONAL_VALIDATION_SOLUTION_PLAN.md) - План рефакторинга валидации
+### 🛡️ Security & Validation
+
+- **[🛡️ Security-Enhanced Validation Guide](SECURITY_ENHANCED_VALIDATION_GUIDE.md)** - **ОБЯЗАТЕЛЬНО** Руководство по security-enhanced schemas
+- **[Validation & Localization Guide](VALIDATION_LOCALIZATION_GUIDE.md)** - Практическое руководство по валидации с next-intl
+
+### 🏗️ Architecture
+
+- **[Architecture Guide](ARCHITECTURE.md)** - Общая архитектура проекта
+- **[Phase 1 Completion Plan](PHASE_1_COMPLETION_PLAN.md)** - План внедрения security-enhanced validation
 
 ---
 
 ## ⚡ Quick Reference
 
-### Команды для проверки архитектуры:
+### Команды для проверки security-enhanced архитектуры:
 
 ```bash
-# Найти потенциальные дублированные схемы
-grep -r "z\." packages/ apps/ --include="*.ts" | grep -v validation-schemas
+# Найти legacy schemas в коде (должны быть заменены)
+grep -r "loginSchema\|createOrderSchema\|registerSchema" apps/ --include="*.ts" --exclude="*.test.ts"
 
-# Проверить использование централизованных схем
-grep -r "from '@repo/utils/validation-schemas'" apps/ packages/
+# Проверить использование security-enhanced schemas
+grep -r "securityEnhanced" apps/ packages/ --include="*.ts" | head -20
 
-# Найти inline схемы в компонентах
+# Найти inline schemas в компонентах (плохая практика)
 grep -r "z\.object\|z\.string" apps/web/src/components --include="*.tsx"
+
+# Проверить XSS protection
+grep -r "createXSSProtectedString" packages/utils/src/validation/
 ```
 
 ### Быстрая диагностика проблем:
 
-1. **Дублированная валидация**: Поиск одинаковых регулярных выражений или ограничений
-2. **Расхождение UI/tRPC**: Сравнение схем в формах и роутерах
-3. **Бизнес-логика в схемах**: Поиск вызовов внешних API в Zod схемах
+1. **Legacy Validation**: Поиск использования deprecated schemas
+2. **Missing XSS Protection**: Проверка text input полей без защиты
+3. **Расхождение UI/tRPC**: Сравнение схем в формах и роутерах
+4. **Бизнес-логика в схемах**: Поиск вызовов внешних API в Zod схемах
 
 ---
 

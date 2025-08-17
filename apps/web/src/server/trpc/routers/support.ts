@@ -7,14 +7,18 @@ import {
 } from '@repo/constants';
 import { userManager, orderManager } from '@repo/exchange-core';
 import {
-  searchKnowledgeSchema,
-  createTicketAdminSchema,
-  getTicketsSchema,
-  updateTicketStatusSchema,
-  getByIdSchema,
   createSupportError,
   createNotFoundError,
+  securityEnhancedGetByIdSchema,
 } from '@repo/utils';
+
+// Security-enhanced schemas
+import {
+  securityEnhancedCreateTicketAdminSchema,
+  securityEnhancedSearchKnowledgeSchema,
+  securityEnhancedGetTicketsSchema,
+  securityEnhancedUpdateTicketStatusSchema,
+} from '../../../../../../packages/utils/src/validation/security-enhanced-schemas';
 
 import { createTRPCRouter } from '../init';
 import { supportOnly } from '../middleware/auth';
@@ -78,60 +82,67 @@ let ticketCounter = 1;
  */
 export const supportRouter = createTRPCRouter({
   // Поиск в базе знаний
-  searchKnowledge: supportOnly.input(searchKnowledgeSchema).query(async ({ input }) => {
-    const { query, category, limit } = input;
+  searchKnowledge: supportOnly
+    .input(securityEnhancedSearchKnowledgeSchema)
+    .query(async ({ input }) => {
+      // SECURITY-ENHANCED VALIDATION
+      const { query, category, limit } = input;
 
-    const results = KNOWLEDGE_BASE.filter(item => {
-      const matchesQuery =
-        item.title.toLowerCase().includes(query.toLowerCase()) ||
-        item.content.toLowerCase().includes(query.toLowerCase()) ||
-        item.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()));
+      const results = KNOWLEDGE_BASE.filter(item => {
+        const matchesQuery =
+          item.title.toLowerCase().includes(query.toLowerCase()) ||
+          item.content.toLowerCase().includes(query.toLowerCase()) ||
+          item.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()));
 
-      const matchesCategory = !category || item.category === category;
+        const matchesCategory = !category || item.category === category;
 
-      return matchesQuery && matchesCategory;
-    });
+        return matchesQuery && matchesCategory;
+      });
 
-    return results.slice(0, limit);
-  }),
+      return results.slice(0, limit);
+    }),
 
   // Создать тикет для пользователя
-  createTicket: supportOnly.input(createTicketAdminSchema).mutation(async ({ input, ctx }) => {
-    const user = userManager.findById(input.userId);
+  createTicket: supportOnly
+    .input(securityEnhancedCreateTicketAdminSchema)
+    .mutation(async ({ input, ctx }) => {
+      // SECURITY-ENHANCED VALIDATION
+      const user = userManager.findById(input.userId);
 
-    if (!user) {
-      throw createNotFoundError('Пользователь');
-    }
+      if (!user) {
+        throw createNotFoundError('Пользователь');
+      }
 
-    const ticket = {
-      id: `ticket_${ticketCounter++}`,
-      userId: input.userId,
-      userEmail: user.email,
-      subject: input.subject,
-      description: input.description,
-      priority: input.priority,
-      category: input.category,
-      status: TICKET_STATUSES.OPEN,
-      createdBy: ctx.user.email,
-      createdAt: new Date(),
-      messages: [],
-    };
+      const ticket = {
+        id: `ticket_${ticketCounter++}`,
+        userId: input.userId,
+        userEmail: user.email,
+        subject: input.subject,
+        description: input.description,
+        priority: input.priority,
+        category: input.category,
+        status: TICKET_STATUSES.OPEN,
+        createdBy: ctx.user.email,
+        createdAt: new Date(),
+        messages: [],
+      };
 
-    supportTickets.push(ticket);
+      supportTickets.push(ticket);
 
-    console.log(
-      `🎫 Тикет ${ticket.id} создан для пользователя ${user.email} саппортом ${ctx.user.email}`
-    );
+      console.log(
+        `🎫 Тикет ${ticket.id} создан для пользователя ${user.email} саппортом ${ctx.user.email}`
+      );
 
-    return {
-      success: true,
-      ticket,
-      message: 'Тикет создан',
-    };
-  }),
+      return {
+        success: true,
+        ticket,
+        message: 'Тикет создан',
+      };
+    }),
 
   // Получить тикеты саппорта
-  getTickets: supportOnly.input(getTicketsSchema).query(async ({ input }) => {
+  getTickets: supportOnly.input(securityEnhancedGetTicketsSchema).query(async ({ input }) => {
+    // SECURITY-ENHANCED VALIDATION
     let tickets = supportTickets.filter(ticket => {
       const matchesStatus = !input.status || ticket.status === input.status;
       const matchesPriority = !input.priority || ticket.priority === input.priority;
@@ -147,7 +158,7 @@ export const supportRouter = createTRPCRouter({
 
   // Обновить статус тикета
   updateTicketStatus: supportOnly
-    .input(updateTicketStatusSchema)
+    .input(securityEnhancedUpdateTicketStatusSchema) // SECURITY-ENHANCED VALIDATION
     .mutation(async ({ input, ctx }) => {
       const ticketIndex = supportTickets.findIndex(t => t.id === input.ticketId);
 
@@ -187,7 +198,7 @@ export const supportRouter = createTRPCRouter({
 
   // Получить информацию о пользователе для консультации
   getUserInfo: supportOnly
-    .input(getByIdSchema.extend({ userId: getByIdSchema.shape.id }))
+    .input(securityEnhancedGetByIdSchema.extend({ userId: securityEnhancedGetByIdSchema.shape.id }))
     .query(async ({ input }) => {
       const user = userManager.findById(input.userId);
 

@@ -11,7 +11,7 @@
 
 - ✅ **Pure Functions** - утилиты без побочных эффектов
 - ✅ **Type Safety** - строгая TypeScript типизация
-- ✅ **Zod Integration** - централизованная система валидации
+- ✅ **🛡️ Security-Enhanced Validation** - валидация с встроенной XSS protection
 - ✅ **Next-intl Support** - полная интернационализация
 - ✅ **Store Factory** - Zustand helpers с стандартизированной конфигурацией
 - ✅ **Business Logic** - расчеты комиссий, форматирование валют
@@ -33,28 +33,44 @@ packages/utils/src/
 ├── store-factory.ts            # Фабрика Zustand stores
 ├── trpc-errors.ts              # Генерация tRPC ошибок
 ├── validation-helpers.ts       # Базовые валидационные утилиты
-├── validation-schemas.ts       # Zod схемы для всего проекта
-└── validation/                 # Модульная система валидации
+├── validation-schemas.ts       # 🚨 LEGACY schemas (DEPRECATED)
+└── validation/                 # 🛡️ Security-Enhanced Validation System
     ├── index.ts               # Экспорты validation подсистемы
-    ├── zod-helpers.ts         # Централизованные Zod utilities (NEW)
     ├── constants.ts           # Константы валидации
     ├── core.ts                # Ядро валидационной системы
     ├── field-validation.ts    # Валидация отдельных полей
     ├── handlers.ts            # Обработчики validation events
     ├── hooks.ts               # React hooks для validation
     ├── schema-helpers.ts      # Помощники для Zod схем
-    ├── schemas-basic.ts       # Базовые схемы (email, password)
-    ├── schemas-composed.ts    # Композитные схемы
-    ├── schemas-crypto.ts      # Криптовалютные схемы
-    ├── schemas-utils.ts       # Утилитарные схемы
+    ├── zod-helpers.ts         # Централизованные Zod utilities
+    ├── security-utils.ts      # 🛡️ XSS protection utilities
     ├── single-field.ts        # Single-field validation
-    └── validation-utils.ts    # Общие validation utilities
+    ├── validation-utils.ts    # Общие validation utilities
+    │
+    ├── 📁 Building Blocks (базовые схемы)
+    ├── schemas-basic.ts       # Базовые схемы (email, password, username)
+    ├── schemas-crypto.ts      # Криптовалютные схемы (currency, addresses)
+    │
+    └── 📁 Security-Enhanced Schemas (🛡️ XSS Protected)
+        ├── security-enhanced-schemas.ts    # Основные security-enhanced schemas
+        ├── security-enhanced-operator.ts   # Операторские schemas
+        └── security-enhanced-utils.ts      # Утилитарные security schemas
 ```
+
+### 🛡️ Security-Enhanced Architecture
+
+**Новая архитектура** основана на принципах безопасности:
+
+- **Building Blocks** - базовые схемы без XSS рисков (`emailSchema`, `currencySchema`)
+- **Security-Enhanced Schemas** - композитные схемы с XSS protection для форм
+- **XSS Protection** - автоматическая защита всех text input полей
+- **Legacy Deprecation** - старые schemas помечены как DEPRECATED
 
 ### Принципы архитектуры
 
-Согласно **CODE_STYLE_GUIDE.md**:
+Согласно **CODE_STYLE_GUIDE.md** и **Security-Enhanced principles**:
 
+- **Security First** - все новые формы используют security-enhanced schemas
 - **Utils** - чистые функции без побочных эффектов
 - **Централизованные решения** предпочтительнее дублирования
 - **Type Safety** - строгая типизация всех функций
@@ -86,23 +102,51 @@ const crypto = formatCryptoAmountForUI(1.23456789, 'BTC'); // "1.234568 BTC"
 const uah = formatUahAmountForUI(1234.56); // "1,234.56 ₴"
 ```
 
-### ✅ Validation System
+### ✅ Security-Enhanced Validation System
 
-Централизованная система валидации с Zod:
+Современная система валидации с встроенной XSS protection:
 
 ```typescript
+// 🛡️ Security-Enhanced Schemas - используй для всех новых форм
+import {
+  securityEnhancedLoginSchema,
+  securityEnhancedCreateExchangeOrderSchema,
+  securityEnhancedCreateTicketSchema,
+} from '@repo/utils';
+
+// ✅ Базовые building blocks (для композиции)
+import { emailSchema, passwordSchema, currencySchema } from '@repo/utils';
+
+// ✅ Утилиты валидации
 import {
   validateWithZodSchema,
   validateWithZodSchemaUI,
-  emailSchema,
-  cryptoAmountStringSchema,
+  createXSSProtectedString,
 } from '@repo/utils';
+
+// Для форм с XSS protection
+const loginForm = useFormWithNextIntl({
+  validationSchema: securityEnhancedLoginSchema, // ✅ Защищён от XSS
+  t: useTranslations('LoginForm'),
+});
 
 // Для бизнес-логики (ValidationResult)
 const emailValidation = validateWithZodSchema(emailSchema, 'user@example.com');
 
 // Для UI компонентов (boolean + error)
-const amountValidation = validateWithZodSchemaUI(cryptoAmountStringSchema, '1.234');
+const validation = validateWithZodSchemaUI(securityEnhancedLoginSchema, formData);
+```
+
+### ⚠️ Legacy Validation (DEPRECATED)
+
+```typescript
+// ❌ НЕ используй legacy schemas без security enhancement
+import {
+  loginSchema, // DEPRECATED - уязвимо к XSS!
+  createOrderSchema, // DEPRECATED - нет XSS protection!
+} from '@repo/utils/validation-schemas';
+
+// 📚 Используй Security-Enhanced Validation Guide для миграции
 ```
 
 ### 🏪 Store Factory
@@ -154,18 +198,43 @@ const statusColor = getOrderStatusColor(orderStatus);
 const inProgress = isOrderInProgress(orderStatus);
 ```
 
-## 🌐 Internationalization
+## 🌐 Internationalization & Security-Enhanced Validation
 
-Полная поддержка next-intl с validation адаптером:
+Полная поддержка next-intl с security-enhanced validation:
 
 ```typescript
+import { useFormWithNextIntl } from '@repo/hooks';
+import { securityEnhancedCreateTicketSchema } from '@repo/utils';
+
+// 🛡️ Security-Enhanced форма с i18n
+const form = useFormWithNextIntl({
+  validationSchema: securityEnhancedCreateTicketSchema, // XSS protected
+  t: useTranslations('CreateTicketForm'),
+  initialValues: {
+    subject: '',
+    description: '',
+    priority: 'MEDIUM',
+  },
+  onSubmit: async values => {
+    // values автоматически защищены от XSS
+    await createTicket(values);
+  },
+});
+```
+
+### Legacy Validation (DEPRECATED)
+
+```typescript
+// ❌ DEPRECATED: Legacy validation без XSS protection
 import { useNextIntlValidation } from '@repo/utils';
 
 const { validation, errors } = useNextIntlValidation({
-  schema: createOrderSchema,
+  schema: createOrderSchema, // DEPRECATED - уязвимо к XSS!
   data: formData,
   locale: 'ru',
 });
+
+// 📚 Миграция: используй securityEnhancedCreateExchangeOrderSchema
 ```
 
 ## 🔧 Installation
@@ -179,22 +248,61 @@ npm install
 
 ## 📖 Usage Examples
 
-### Basic Validation
+### 🛡️ Security-Enhanced Validation
 
 ```typescript
-import { validateCryptoAmountWithZod, validateUahAmountWithZod, emailSchema } from '@repo/utils';
+import {
+  securityEnhancedLoginSchema,
+  securityEnhancedCreateExchangeOrderSchema,
+  validateWithZodSchema,
+  validateWithZodSchemaUI,
+} from '@repo/utils';
 
-// Валидация криптосуммы
-const cryptoResult = validateCryptoAmountWithZod('1.234');
-if (!cryptoResult.isValid) {
-  console.error(cryptoResult.error);
+// ✅ Security-Enhanced валидация для форм
+const loginData = { email: 'test@example.com', password: 'SecurePass123!' };
+const loginResult = validateWithZodSchema(securityEnhancedLoginSchema, loginData);
+
+if (!loginResult.isValid) {
+  console.error('Validation errors:', loginResult.errors);
 }
 
-// Валидация UAH суммы
-const uahResult = validateUahAmountWithZod('1000.50');
+// ✅ UI validation для компонентов
+const exchangeResult = validateWithZodSchemaUI(securityEnhancedCreateExchangeOrderSchema, formData);
 
-// Валидация email с Zod
-const emailResult = validateWithZodSchema(emailSchema, email);
+if (!exchangeResult.isValid) {
+  setError(exchangeResult.error);
+}
+```
+
+### Basic Building Blocks Validation
+
+```typescript
+import { emailSchema, currencySchema, validateWithZodSchema } from '@repo/utils';
+
+// ✅ Базовые схемы для building blocks (безопасны)
+const emailResult = validateWithZodSchema(emailSchema, 'user@example.com');
+const currencyResult = validateWithZodSchema(currencySchema, 'BTC');
+
+// ✅ Для композиции в security-enhanced schemas
+const customSchema = z.object({
+  email: emailSchema, // Базовая схема ОК
+  currency: currencySchema, // Базовая схема ОК
+  comment: createXSSProtectedString(0, 500), // XSS protected поле
+});
+```
+
+### ❌ Legacy Validation (DEPRECATED)
+
+```typescript
+// ❌ НЕ используй legacy schemas без security enhancement
+import { validateCryptoAmountWithZod, validateUahAmountWithZod } from '@repo/utils';
+
+// ❌ DEPRECATED methods - ищи security-enhanced альтернативы
+const cryptoResult = validateCryptoAmountWithZod('1.234'); // DEPRECATED
+const uahResult = validateUahAmountWithZod('1000.50'); // DEPRECATED
+
+// 📚 Миграция: используй securityEnhancedCreateExchangeOrderSchema
+// для полных form schemas с XSS protection
 ```
 
 ### Advanced Store Usage
@@ -336,18 +444,27 @@ import { formatCryptoAmountForUI } from '@repo/utils';
 ### Validation Exports
 
 ```typescript
-// Главные validation функции
+// 🛡️ Security-Enhanced Schemas (основные)
+export {
+  securityEnhancedLoginSchema,
+  securityEnhancedCreateExchangeOrderSchema,
+  securityEnhancedCreateTicketSchema,
+  // ... другие security-enhanced schemas
+} from './validation/security-enhanced-schemas';
+
+// 🛡️ XSS Protection утилиты
+export { createXSSProtectedString, containsPotentialXSS } from './validation/security-utils';
+
+// ✅ Building Blocks (базовые схемы)
+export { emailSchema, passwordSchema, usernameSchema } from './validation/schemas-basic';
+export { currencySchema, btcAddressSchema, ethAddressSchema } from './validation/schemas-crypto';
+
+// ✅ Validation утилиты
 export { validateWithZodSchema, validateWithZodSchemaUI } from './validation/zod-helpers';
 
-// Validation schemas
-export { emailSchema, passwordSchema } from './validation/schemas-basic';
-export { cryptoAmountStringSchema, uahAmountStringSchema } from './validation/schemas-crypto';
-
-// Validation helpers
+// ❌ Legacy (DEPRECATED)
 export { createValidationResult, mergeValidationResults } from './validation-helpers';
-
-// Next-intl integration
-export { useNextIntlValidation } from './next-intl-validation';
+export { useNextIntlValidation } from './next-intl-validation'; // DEPRECATED
 ```
 
 ### Formatting Exports
@@ -383,8 +500,26 @@ export { validateNumericInput } from './input-validation';
 Этот пакет следует высоким стандартам качества:
 
 - ✅ **100% TypeScript** coverage
+- ✅ **🛡️ Security-Enhanced Validation** с XSS protection
 - ✅ **Centralized patterns** для избежания дублирования
 - ✅ **Professional documentation** с практичными примерами
 - ✅ **Architectural compliance** с принципами монорепозитория
 
-**Готов для production использования! 🚀**
+## 📚 Документация
+
+### 🛡️ Security & Validation
+
+- **[Security-Enhanced Validation Guide](../../docs/SECURITY_ENHANCED_VALIDATION_GUIDE.md)** - **ОБЯЗАТЕЛЬНО** Руководство по security-enhanced schemas
+- **[Validation & Localization Guide](../../docs/VALIDATION_LOCALIZATION_GUIDE.md)** - интеграция с next-intl
+- **[Validation Architecture Guide](../../docs/VALIDATION_ARCHITECTURE_GUIDE.md)** - архитектурные принципы
+
+### 🏗️ Architecture
+
+- **[Architecture Guide](../../docs/ARCHITECTURE.md)** - общая архитектура проекта
+- **[Developer Guide](../../docs/DEVELOPER_GUIDE.md)** - руководство разработчика
+
+**💡 Начни с Security-Enhanced Validation Guide - это обязательно для всех разработчиков!**
+
+---
+
+**Готов для production использования с enterprise-grade безопасностью! 🚀**

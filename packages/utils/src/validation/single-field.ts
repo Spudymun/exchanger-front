@@ -5,13 +5,9 @@
 import { VALIDATION_LIMITS } from '@repo/constants';
 import { z } from 'zod';
 
-import {
-  emailSchema,
-  passwordSchema, // Используем полную валидацию вместо legacyPasswordSchema
-  captchaSchema,
-} from '../validation-schemas';
-
 import { NextIntlValidationConfig, VALIDATION_KEYS } from './constants';
+import { emailSchema, passwordSchema } from './schemas-basic';
+import { securityEnhancedCaptchaSchema } from './security-enhanced-schemas';
 import { isEmptyString } from './validation-utils';
 
 /**
@@ -107,7 +103,7 @@ export function validateSingleCaptcha(
   value: string,
   config: NextIntlValidationConfig
 ): { isValid: boolean; error: string | null } {
-  const result = captchaSchema.safeParse(value);
+  const result = securityEnhancedCaptchaSchema.safeParse(value);
 
   if (result.success) {
     return { isValid: true, error: null };

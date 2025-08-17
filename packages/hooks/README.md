@@ -88,41 +88,51 @@ export function ExchangeForm() {
 }
 ```
 
-### Современные формы с i18n
+### 🛡️ Современные формы с Security-Enhanced Validation
 
 ```typescript
 'use client';
 import { useFormWithNextIntl } from '@repo/hooks/src/client-hooks';
+import { securityEnhancedLoginSchema } from '@repo/utils'; // ✅ Security-Enhanced!
 import { useTranslations } from 'next-intl';
-import { z } from 'zod';
-
-const LoginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8),
-});
 
 export function LoginForm() {
   const t = useTranslations('auth');
 
+  // ✅ Security-enhanced форма с XSS protection
   const form = useFormWithNextIntl({
-    initialValues: { email: '', password: '' },
-    validationSchema: LoginSchema,
+    initialValues: { email: '', password: '', captcha: '' },
+    validationSchema: securityEnhancedLoginSchema, // 🛡️ XSS protected
     t,
     onSubmit: async (values) => {
+      // values автоматически защищены от XSS
       await api.login(values);
     },
   });
 
   return (
     <form onSubmit={form.handleSubmit}>
-      <input {...form.getFieldProps('email')} />
-      <input {...form.getFieldProps('password')} type="password" />
+      <input {...form.getFieldProps('email')} placeholder={t('email')} />
+      <input {...form.getFieldProps('password')} type="password" placeholder={t('password')} />
+      <input {...form.getFieldProps('captcha')} placeholder={t('captcha')} />
       <button type="submit" disabled={!form.isValid}>
         {t('login')}
       </button>
     </form>
   );
 }
+```
+
+### ❌ Legacy формы (DEPRECATED)
+
+```typescript
+// ❌ НЕ используй legacy validation patterns
+const LoginSchema = z.object({
+  email: z.string().email(), // ❌ Нет XSS protection!
+  password: z.string().min(8), // ❌ Legacy validation!
+});
+
+// 📚 Миграция: используй securityEnhancedLoginSchema из @repo/utils
 ```
 
 ## 📊 Основные модули
@@ -336,6 +346,7 @@ const handleLogin = async () => {
 - Не дублируйте логику состояния в компонентах
 - Не создавайте локальные копии hooks (используйте централизованные)
 - Не забывайте передавать параметр `t` в `useFormWithNextIntl`
+- **❌ НЕ используйте legacy validation schemas** - только security-enhanced!
 
 ## 🔧 Development
 
@@ -346,6 +357,20 @@ const handleLogin = async () => {
 3. Добавьте типы в `src/index.ts`
 4. Экспортируйте в `src/client-hooks.ts`
 5. Обновите exports в `package.json`
+
+## 📚 Документация
+
+### 🛡️ Security & Validation
+
+- **[🛡️ Security-Enhanced Validation Guide](../../docs/SECURITY_ENHANCED_VALIDATION_GUIDE.md)** - **ОБЯЗАТЕЛЬНО** для работы с формами
+- **[Validation & Localization Guide](../../docs/VALIDATION_LOCALIZATION_GUIDE.md)** - интеграция с next-intl
+
+### 📦 Related Packages
+
+- **[Utils Package](../utils/README.md)** - Security-enhanced validation schemas
+- **[UI Package](../ui/README.md)** - UI компоненты для форм
+
+**💡 Всегда используй security-enhanced schemas из `@repo/utils` для новых форм!**
 
 ### Добавление нового business hook
 

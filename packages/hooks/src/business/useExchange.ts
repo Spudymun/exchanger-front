@@ -1,6 +1,6 @@
 import { UI_DEBOUNCE_CONSTANTS } from '@repo/constants';
 import type { CryptoCurrency } from '@repo/exchange-core';
-import { emailSchema } from '@repo/utils';
+import { securityEnhancedEmailSchema } from '@repo/utils';
 
 import React from 'react';
 
@@ -53,7 +53,7 @@ function useFormValidator(exchangeStore: ExchangeStore) {
     if (!formData.userEmail) {
       errors.push('Enter email for notifications');
     } else {
-      const result = emailSchema.safeParse(formData.userEmail);
+      const result = securityEnhancedEmailSchema.safeParse(formData.userEmail);
       if (!result.success) {
         errors.push('Enter correct email address');
       }

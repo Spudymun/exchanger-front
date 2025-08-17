@@ -15,21 +15,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@repo/ui';
+import { securityEnhancedSimpleExchangeSchema } from '@repo/utils';
 import { useTranslations } from 'next-intl';
 import React from 'react';
-import { z } from 'zod';
 
 import { useExchangeMutation } from '../../hooks/useExchangeMutation';
-
-// Схема валидации для формы (без uahAmount, так как вычисляется автоматически)
-const exchangeFormSchema = z.object({
-  currency: z.enum(['BTC', 'ETH', 'USDT', 'LTC'] as const),
-  cryptoAmount: z
-    .string()
-    .min(1, 'Введите сумму')
-    .refine(val => Number(val) > 0, 'Сумма должна быть больше 0'),
-  email: z.string().email('Введите корректный email'),
-});
 
 interface ExchangeFormData extends Record<string, unknown> {
   currency: string;
@@ -58,7 +48,7 @@ export const ExchangeForm: React.FC = () => {
       cryptoAmount: '',
       email: '',
     },
-    validationSchema: exchangeFormSchema,
+    validationSchema: securityEnhancedSimpleExchangeSchema,
     t,
     onSubmit: async values => {
       // Для создания заказа нужен uahAmount, который нужно вычислить

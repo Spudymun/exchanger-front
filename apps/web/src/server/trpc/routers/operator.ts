@@ -9,8 +9,8 @@ import {
   createBadRequestError,
   filterOrdersForOperator,
   canTransitionStatus,
-  operatorOrdersSchema,
-  updateOrderStatusSchema,
+  securityEnhancedOperatorOrdersSchema,
+  securityEnhancedUpdateOrderStatusSchema,
 } from '@repo/utils';
 import { z } from 'zod';
 
@@ -33,7 +33,7 @@ export const operatorRouter = createTRPCRouter({
           .max(VALIDATION_LIMITS.ORDER_ITEMS_MAX)
           .default(VALIDATION_LIMITS.DEFAULT_PAGE_SIZE),
         cursor: z.string().optional(),
-        status: operatorOrdersSchema.shape.status,
+        status: securityEnhancedOperatorOrdersSchema.shape.status,
       })
     )
     .query(async ({ input }) => {
@@ -96,7 +96,7 @@ export const operatorRouter = createTRPCRouter({
 
   // Обновить статус заявки
   updateOrderStatus: operatorOnly
-    .input(updateOrderStatusSchema)
+    .input(securityEnhancedUpdateOrderStatusSchema)
     .mutation(async ({ input, ctx }) => {
       const order = orderManager.findById(input.orderId);
 
