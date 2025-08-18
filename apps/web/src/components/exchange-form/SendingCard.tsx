@@ -166,7 +166,7 @@ function SendingInfo({
 
 export function SendingCard({ form, t, exchangeRate, minAmount }: SendingCardProps) {
   return (
-    <Card className="bg-card text-card-foreground border-l-4 border-l-blue-500 dark:border-l-blue-400 shadow-md shadow-blue-500/15 dark:shadow-blue-400/20 hover:shadow-lg transition-all duration-200">
+    <Card className="bg-card text-card-foreground border-l-4 border-l-primary shadow-lg hover:shadow-xl transition-all duration-200">
       <CardHeader>
         <CardTitle className="text-foreground">{t('sending.title')}</CardTitle>
       </CardHeader>

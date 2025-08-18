@@ -33,8 +33,8 @@
 - [✅] `apps/web/src/components/ErrorBoundaryTest.tsx` **СООТВЕТСТВУЕТ**: @repo/ui Button, семантические токены border-border/text-muted-foreground, правильная архитектура тестового компонента
 - [✅] `apps/web/src/components/exchange-form/ExchangeArrow.tsx` **СООТВЕТСТВУЕТ**: семантические токены bg-primary/10, border-primary/20, hover:bg-primary/20, text-primary с opacity модификаторами
 - [✅] `apps/web/src/components/exchange-form/ExchangeBenefits.tsx` **СООТВЕТСТВУЕТ**: семантические токены text-muted-foreground/text-primary, правильная i18n архитектура
-- [❌] `apps/web/src/components/exchange-form/ReceivingCard.tsx` **КРИТИЧЕСКИЕ НАРУШЕНИЯ**: 2 хардкод зеленого цвета (border-l-green-500→border-l-success, shadow-green-500/15→shadow-success/15) (остальное соответствует с @repo/constants)
-- [❌] `apps/web/src/components/exchange-form/SendingCard.tsx` **КРИТИЧЕСКИЕ НАРУШЕНИЯ**: 2 хардкод синего цвета (border-l-blue-500→border-l-primary, shadow-blue-500/15→shadow-primary/15) (остальное отлично с @repo/constants/utils)
+- [✅] `apps/web/src/components/exchange-form/ReceivingCard.tsx` ✅ (2 хардкод зеленого → border-l-success, shadow-lg semantic tokens)
+- [✅] `apps/web/src/components/exchange-form/SendingCard.tsx` ✅ (2 хардкод синего → border-l-primary, shadow-lg semantic tokens)
 - [✅] `apps/web/src/components/exchange-form/useHeroExchangeForm.ts` **СООТВЕТСТВУЕТ**: TypeScript hook, @repo/constants (CRYPTOCURRENCIES/FIAT_CURRENCIES/VALIDATION_BOUNDS), @repo/hooks, отличная архитектура
 - [❌] `apps/web/src/components/ExchangeRates.tsx` **КРИТИЧЕСКИЕ НАРУШЕНИЯ**: 4 хардкод цвета (bg-blue-50→bg-info/10, bg-red-50→bg-destructive/10, bg-gray-50→bg-muted/50, text-gray-600→text-muted-foreground) (отлично с @repo/ui стилями)
 - [✅] `apps/web/src/components/FeaturesSection.tsx` **СООТВЕТСТВУЕТ**: @repo/ui Card compound component, семантические токены bg-card/border-border/hover:bg-accent/bg-primary/10/text-primary/text-foreground/text-muted-foreground/bg-muted/30, превосходная архитектура

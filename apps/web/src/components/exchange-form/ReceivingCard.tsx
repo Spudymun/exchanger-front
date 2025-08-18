@@ -117,7 +117,7 @@ function ReceivingInfo({
 
 export function ReceivingCard({ form, banks, calculatedAmount, t }: ReceivingCardProps) {
   return (
-    <Card className="bg-card text-card-foreground border-l-4 border-l-green-500 dark:border-l-green-400 shadow-md shadow-green-500/15 dark:shadow-green-400/20 hover:shadow-lg transition-all duration-200">
+    <Card className="bg-card text-card-foreground border-l-4 border-l-success shadow-lg hover:shadow-xl transition-all duration-200">
       <CardHeader>
         <CardTitle className="text-foreground">{t('receiving.title')}</CardTitle>
       </CardHeader>
