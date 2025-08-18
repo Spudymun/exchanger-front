@@ -1,6 +1,9 @@
 'use client';
 
+import { I18N_CONFIG } from '@repo/constants';
 import { Button } from '@repo/ui';
+
+import { useRouter } from '../src/i18n/navigation';
 
 interface ErrorProps {
   error: Error & { digest?: string };
@@ -29,8 +32,10 @@ function ErrorIcon() {
 }
 
 export default function GlobalError({ error, reset }: ErrorProps) {
+  const router = useRouter();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+    <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="max-w-2xl mx-auto p-8 text-center">
         <div className="mb-8">
           <ErrorIcon />
@@ -50,7 +55,11 @@ export default function GlobalError({ error, reset }: ErrorProps) {
           <Button onClick={reset} variant="default" size="lg">
             Try Again
           </Button>
-          <Button onClick={() => (window.location.href = '/en')} variant="outline" size="lg">
+          <Button
+            onClick={() => router.push(`/${I18N_CONFIG.DEFAULT_LOCALE}`)}
+            variant="outline"
+            size="lg"
+          >
             Go Home
           </Button>
         </div>

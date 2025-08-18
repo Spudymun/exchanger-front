@@ -21,7 +21,7 @@
 - [✅] `apps/web/app/[locale]/loading.tsx` ✅ (hardcoded gradient → bg-background)
 - [✅] `apps/web/app/[locale]/not-found-page/page.tsx` ✅ (3 хардкод цвета → semantic tokens + @repo/ui Button integration)
 - [✅] `apps/web/app/[locale]/page.tsx` **СООТВЕТСТВУЕТ**: bg-background семантический токен, правильная архитектура server component, композиция компонентов
-- [❌] `apps/web/app/error.tsx` **КРИТИЧЕСКОЕ НАРУШЕНИЕ**: хардкод градиента from-blue-50 to-white dark:from-gray-900 dark:to-gray-800→bg-background, inline window.location.href, хардкод /en locale (остальное соответствует)
+- [✅] `apps/web/app/error.tsx` ✅ (hardcoded gradient → bg-background + window.location.href → useRouter + I18N_CONFIG)
 - [✅] `apps/web/app/globals.css` **СООТВЕТСТВУЕТ**: импорт @repo/tailwind-preset, семантические токены border-border/bg-background/text-foreground
 - [✅] `apps/web/app/layout.tsx` **СООТВЕТСТВУЕТ**: импорт @repo/constants, все константы централизованы (LAYOUT_SHARED_CONFIG/I18N_CONFIG/META_DEFAULTS), превосходная архитектура
 - [❌] `apps/web/app/loading.tsx` **КРИТИЧЕСКИЕ НАРУШЕНИЯ**: 2 хардкод цвета (border-blue-600→border-primary, text-gray-600→text-muted-foreground), отсутствие @repo/ui Spinner компонента
