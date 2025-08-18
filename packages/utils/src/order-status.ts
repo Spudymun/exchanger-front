@@ -215,20 +215,20 @@ export function getStatusDisplayName(status: OrderStatus): string {
 export function getStatusColorClass(status: OrderStatus): string {
   const config = ORDER_STATUS_CONFIG[status as keyof typeof ORDER_STATUS_CONFIG];
   if (!config) {
-    return 'text-gray-600 bg-gray-50';
+    return 'text-muted-foreground bg-muted/50';
   }
 
   switch (config.color) {
     case 'success':
-      return 'text-green-600 bg-green-50';
+      return 'text-success bg-success/10';
     case 'warning':
-      return 'text-yellow-600 bg-yellow-50';
+      return 'text-warning bg-warning/10';
     case 'info':
-      return 'text-blue-600 bg-blue-50';
+      return 'text-info bg-info/10';
     case 'destructive':
-      return 'text-red-600 bg-red-50';
+      return 'text-destructive bg-destructive/10';
     default:
-      return 'text-gray-600 bg-gray-50';
+      return 'text-muted-foreground bg-muted/50';
   }
 }
 

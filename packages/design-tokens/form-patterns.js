@@ -134,7 +134,7 @@ export const enhancedCards = {
       error:
         'bg-destructive/15 text-card-foreground border border-destructive/70 dark:border-destructive/60 shadow-standard',
       success:
-        'bg-green-500/10 text-card-foreground border border-green-500/50 dark:border-green-500/40 shadow-standard',
+        'bg-success/10 text-card-foreground border border-success/50 dark:border-success/40 shadow-standard',
       disabled:
         'bg-muted/30 text-muted-foreground border border-border/40 dark:border-border/30 opacity-60',
       // Новое состояние для выделения
@@ -326,7 +326,7 @@ export const interactionStates = {
     default: TRANSITION_BASE,
     focus: 'focus:border-ring focus:ring-2 focus:ring-ring/20',
     error: 'border-destructive focus:border-destructive focus:ring-destructive/20',
-    valid: 'border-green-500 dark:border-green-400',
+    valid: 'border-success dark:border-success',
   },
 };
 

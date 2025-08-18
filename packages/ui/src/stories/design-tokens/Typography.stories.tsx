@@ -95,7 +95,7 @@ const UsageExamplesSection = () => (
       <div className="border border-border rounded-lg p-6">
         <h3 className="text-lg font-medium mb-4 text-foreground">Crypto & Financial Data</h3>
         <div className="space-y-4">
-          <div className="font-mono text-2xl font-bold text-green-600">$43,250.50 USD</div>
+          <div className="font-mono text-2xl font-bold text-success">$43,250.50 USD</div>
           <div className="font-mono text-lg text-foreground">1BTC = 43,250.50 USD</div>
           <div className="font-mono text-sm text-muted-foreground">
             bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq

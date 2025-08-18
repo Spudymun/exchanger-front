@@ -157,7 +157,7 @@ export const InButton: Story = {
     },
   },
   render: () => (
-    <button className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md">
+    <button className="inline-flex items-center px-4 py-2 bg-primary text-primary-foreground rounded-md">
       <Spinner size="sm" className="mr-2" />
       Загрузка...
     </button>

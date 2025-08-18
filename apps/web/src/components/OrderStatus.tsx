@@ -36,7 +36,7 @@ const getIconColorClass = (color: string): string => {
     destructive: textStyles.accent.error.split(' ')[0],
   } as const;
 
-  return colorMap[color as keyof typeof colorMap] || 'text-gray-600';
+  return colorMap[color as keyof typeof colorMap] || 'text-muted-foreground';
 };
 
 function OrderStatusHeader({

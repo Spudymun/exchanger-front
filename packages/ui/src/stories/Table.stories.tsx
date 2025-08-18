@@ -15,8 +15,8 @@ import {
 // Constants
 const STATUS_ACTIVE = 'Активен';
 const STATUS_INACTIVE = 'Неактивен';
-const ACTIVE_STATUS_CLASS = 'text-green-600';
-const INACTIVE_STATUS_CLASS = 'text-red-600';
+const ACTIVE_STATUS_CLASS = 'text-success';
+const INACTIVE_STATUS_CLASS = 'text-destructive';
 const CURRENT_YEAR = 2024;
 const JUNE_MONTH = 6;
 const REGISTRATION_DAY = 15;
