@@ -44,7 +44,7 @@ function RateCard({ rate }: { rate: ExchangeRate }) {
 // Компонент для отображения информации о последнем обновлении
 function LastUpdateInfo({ timestamp }: { timestamp?: Date }) {
   return (
-    <div className="rounded-lg bg-blue-50 p-3">
+    <div className="rounded-lg bg-info/10 p-3">
       <p className={combineStyles(textStyles.body.sm, textStyles.accent.primary)}>
         Курсы обновляются каждые 5 минут. Последнее обновление:{' '}
         {timestamp ? new Date(timestamp).toLocaleString('ru-RU') : 'Неизвестно'}
@@ -70,7 +70,7 @@ export function ExchangeRates() {
 
   if (error) {
     return (
-      <div className="rounded-lg bg-red-50 p-4">
+      <div className="rounded-lg bg-destructive/10 p-4">
         <p className={combineStyles(textStyles.body.md, textStyles.accent.error)}>
           Ошибка загрузки курсов: {error.message}
         </p>
@@ -80,8 +80,10 @@ export function ExchangeRates() {
 
   if (!typedRatesData?.rates) {
     return (
-      <div className="rounded-lg bg-gray-50 p-4">
-        <p className={combineStyles(textStyles.body.md, 'text-gray-600')}>Курсы не доступны</p>
+      <div className="rounded-lg bg-muted/50 p-4">
+        <p className={combineStyles(textStyles.body.md, 'text-muted-foreground')}>
+          Курсы не доступны
+        </p>
       </div>
     );
   }
