@@ -648,6 +648,29 @@ npm run lint:styles
 
 ## 📈 Performance
 
+### ✅ **Performance Optimization Update (Август 2025)**
+
+**ВСЕ COMPOUND COMPONENTS ОПТИМИЗИРОВАНЫ:**
+
+- ✅ **Context Value Memoization** - Все compound components используют `React.useMemo` для context values
+- ✅ **Function Stability** - Callback функции больше не пересоздаются каждый рендер
+- ✅ **Style Recalculation Optimized** - Сложные стили кэшируются
+- ✅ **Date Computation Optimized** - Вычисления выполняются только при необходимости
+
+**Оптимизированные компоненты:**
+
+```tsx
+// Все compound components теперь используют эталонный паттерн:
+const contextValue: ComponentContextValue = React.useMemo(
+  () => ({
+    // все свойства
+  }),
+  [
+    /* все dependencies */
+  ]
+);
+```
+
 ### Bundle Optimization
 
 - **Tree-shakeable exports** - Import only what you use

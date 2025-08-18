@@ -35,12 +35,15 @@ export interface FooterProps extends React.HTMLAttributes<HTMLElement> {
 
 const Footer = React.forwardRef<HTMLElement, FooterProps>(
   ({ className, children, theme, companyName = 'ExchangeGO', isCompact, ...props }, ref) => {
-    const contextValue: FooterContextValue = {
-      theme,
-      currentYear: new Date().getFullYear(),
-      companyName,
-      isCompact,
-    };
+    const contextValue: FooterContextValue = React.useMemo(
+      () => ({
+        theme,
+        currentYear: new Date().getFullYear(),
+        companyName,
+        isCompact,
+      }),
+      [theme, companyName, isCompact] // currentYear НЕ в deps - обновляется раз в год
+    );
 
     return (
       <BaseErrorBoundary componentName="Footer">

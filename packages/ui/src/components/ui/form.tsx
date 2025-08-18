@@ -31,13 +31,16 @@ export interface FormFieldProps extends React.HTMLAttributes<HTMLDivElement> {
 const FormField = React.forwardRef<HTMLDivElement, FormFieldProps>(
   ({ className, name, error, required, disabled, children, ...props }, ref) => {
     const id = React.useId();
-    const contextValue: FormContextValue = {
-      id,
-      name,
-      error,
-      required,
-      disabled,
-    };
+    const contextValue: FormContextValue = React.useMemo(
+      () => ({
+        id,
+        name,
+        error,
+        required,
+        disabled,
+      }),
+      [id, name, error, required, disabled]
+    );
 
     return (
       <FormContext.Provider value={contextValue}>
@@ -75,7 +78,7 @@ const formLabelVariants = cva(
 
 export interface FormLabelProps
   extends React.LabelHTMLAttributes<HTMLLabelElement>,
-  VariantProps<typeof formLabelVariants> {
+    VariantProps<typeof formLabelVariants> {
   required?: boolean;
 }
 
@@ -164,8 +167,8 @@ const FormControl = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDi
     const context = useFormContext();
 
     // ОПТИМИЗАЦИЯ: Мемоизируем обработку children для предотвращения лишних вычислений
-    const enhancedChildren = React.useMemo(() =>
-      React.Children.map(children, child => enhanceChildElement(child, context)),
+    const enhancedChildren = React.useMemo(
+      () => React.Children.map(children, child => enhanceChildElement(child, context)),
       [children, context]
     );
 
@@ -195,7 +198,7 @@ const formMessageVariants = cva('text-sm font-medium', {
 
 export interface FormMessageProps
   extends React.HTMLAttributes<HTMLParagraphElement>,
-  VariantProps<typeof formMessageVariants> { }
+    VariantProps<typeof formMessageVariants> {}
 
 function getMessageVariant(
   variant: 'default' | 'error' | 'success' | null | undefined,

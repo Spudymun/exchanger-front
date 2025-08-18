@@ -63,12 +63,15 @@ export interface ExchangeFormProps extends React.FormHTMLAttributes<HTMLFormElem
 
 const ExchangeForm = React.forwardRef<HTMLFormElement, ExchangeFormProps>(
   ({ className, children, exchangeData, isSubmitting, isValid, onValueChange, ...props }, ref) => {
-    const contextValue: ExchangeFormContextValue = {
-      isSubmitting,
-      isValid,
-      exchangeData,
-      onValueChange,
-    };
+    const contextValue: ExchangeFormContextValue = React.useMemo(
+      () => ({
+        isSubmitting,
+        isValid,
+        exchangeData,
+        onValueChange,
+      }),
+      [isSubmitting, isValid, exchangeData, onValueChange]
+    );
 
     return (
       <ExchangeErrorBoundary>

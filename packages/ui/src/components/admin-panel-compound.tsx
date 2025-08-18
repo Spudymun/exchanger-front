@@ -55,15 +55,26 @@ const AdminPanel = React.forwardRef<HTMLDivElement, AdminPanelProps>(
     },
     ref
   ) => {
-    const contextValue: AdminPanelContextValue = {
-      currentUser,
-      theme,
-      sidebarCollapsed,
-      notifications,
-      onThemeChange,
-      onSidebarToggle,
-      onUserAction,
-    };
+    const contextValue: AdminPanelContextValue = React.useMemo(
+      () => ({
+        currentUser,
+        theme,
+        sidebarCollapsed,
+        notifications,
+        onThemeChange,
+        onSidebarToggle,
+        onUserAction,
+      }),
+      [
+        currentUser,
+        theme,
+        sidebarCollapsed,
+        notifications,
+        onThemeChange,
+        onSidebarToggle,
+        onUserAction,
+      ]
+    );
 
     return (
       <BaseErrorBoundary componentName="AdminPanel">

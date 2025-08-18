@@ -392,7 +392,10 @@
 
 ## packages/eslint-config
 
-- набор конфигов: base.js, next.js, react.js, testing.js, ui-library.js, performance-benchmark.js и т.д.; ignores.js — исключения (подтверждает apps/docs и apps/admin-panel статусы).
+- набор конфигов: base.js, next.js, react.js, testing.js, ui-library.js, performance-benchmark.js и т.д.; ignores.js — исключения
+- **✅ performance-utils.ts** — **НОВЫЙ** (август 2025): React performance utilities на базе lazy-loading.js мемоизации
+- lazy-loading.js — система кэширования и мемоизации для ESLint
+- performance-benchmark.js — система бенчмарков производительности
 
 ## packages/typescript-config
 

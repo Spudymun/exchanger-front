@@ -62,17 +62,30 @@ const DataTable = React.forwardRef<HTMLDivElement, DataTableProps>(
     },
     ref
   ) => {
-    const contextValue: DataTableContextValue = {
-      data,
-      searchTerm,
-      sortConfig,
-      currentPage,
-      itemsPerPage,
-      isLoading,
-      onSearch,
-      onSort,
-      onPageChange,
-    };
+    const contextValue: DataTableContextValue = React.useMemo(
+      () => ({
+        data,
+        searchTerm,
+        sortConfig,
+        currentPage,
+        itemsPerPage,
+        isLoading,
+        onSearch,
+        onSort,
+        onPageChange,
+      }),
+      [
+        data,
+        searchTerm,
+        sortConfig,
+        currentPage,
+        itemsPerPage,
+        isLoading,
+        onSearch,
+        onSort,
+        onPageChange,
+      ]
+    );
 
     return (
       <BaseErrorBoundary componentName="DataTable">

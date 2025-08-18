@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, forwardRef, type HTMLAttributes } from 'react';
+import { createContext, useContext, forwardRef, useMemo, type HTMLAttributes } from 'react';
 
 import { cn } from '../lib/utils';
 
@@ -199,14 +199,17 @@ export const AdaptiveContainer = forwardRef<HTMLDivElement, AdaptiveContainerPro
     },
     ref
   ) => {
-    const adaptiveProps: AdaptiveWidthProps = {
-      minWidth,
-      maxWidth,
-      preferredWidth,
-      growthFactor,
-      adaptationMode,
-      containerBreakpoints,
-    };
+    const adaptiveProps: AdaptiveWidthProps = useMemo(
+      () => ({
+        minWidth,
+        maxWidth,
+        preferredWidth,
+        growthFactor,
+        adaptationMode,
+        containerBreakpoints,
+      }),
+      [minWidth, maxWidth, preferredWidth, growthFactor, adaptationMode, containerBreakpoints]
+    );
 
     const { style } = createAdaptiveStyles(adaptiveProps);
     const adaptiveClassName = createAdaptiveClassName(adaptiveProps);

@@ -30,9 +30,19 @@
 
 ### Утилиты
 
-| Модуль                     | Назначение                  | Использование        |
-| -------------------------- | --------------------------- | -------------------- |
-| `performance-benchmark.js` | Бенчмарк производительности | ✅ Отдельная утилита |
+| Модуль                     | Назначение                        | Использование                 |
+| -------------------------- | --------------------------------- | ----------------------------- |
+| `performance-benchmark.js` | Бенчмарк производительности       | ✅ Отдельная утилита          |
+| `performance-utils.ts`     | **НОВЫЙ** React performance utils | ✅ **Август 2025** - добавлен |
+
+**✅ performance-utils.ts** - расширение performance infrastructure:
+
+```typescript
+// React performance utilities на базе lazy-loading.js
+export const createOptimizedContext = <T>(contextValue: T, dependencies?: readonly unknown[]): T
+export const optimizeCallbacks = <T extends Record<string, Function>>(callbacks: T): T
+export const createCompoundContext = <T>(value: T, deps: readonly unknown[]): T
+```
 
 ### Неиспользуемые модули (legacy)
 
