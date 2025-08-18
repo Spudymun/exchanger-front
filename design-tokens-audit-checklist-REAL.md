@@ -18,7 +18,7 @@
 - [✅] `apps/web/app/[locale]/error.tsx` ✅ (hardcoded gradient → bg-background + window.location.href → useRouter)
 - [✅] `apps/web/app/[locale]/exchange/page.tsx` ✅ (hardcoded gradient → bg-background)
 - [✅] `apps/web/app/[locale]/layout.tsx` **СООТВЕТСТВУЕТ**: чистая i18n логика без стилей, правильная архитектура Next.js 15, использует routing константы
-- [❌] `apps/web/app/[locale]/loading.tsx` **КРИТИЧЕСКОЕ НАРУШЕНИЕ**: хардкод градиента from-blue-50 to-white dark:from-gray-900 dark:to-gray-800→bg-background (остальное соответствует с @repo/ui Spinner)
+- [✅] `apps/web/app/[locale]/loading.tsx` ✅ (hardcoded gradient → bg-background)
 - [✅] `apps/web/app/[locale]/not-found-page/page.tsx` ✅ (3 хардкод цвета → semantic tokens + @repo/ui Button integration)
 - [✅] `apps/web/app/[locale]/page.tsx` **СООТВЕТСТВУЕТ**: bg-background семантический токен, правильная архитектура server component, композиция компонентов
 - [❌] `apps/web/app/error.tsx` **КРИТИЧЕСКОЕ НАРУШЕНИЕ**: хардкод градиента from-blue-50 to-white dark:from-gray-900 dark:to-gray-800→bg-background, inline window.location.href, хардкод /en locale (остальное соответствует)
