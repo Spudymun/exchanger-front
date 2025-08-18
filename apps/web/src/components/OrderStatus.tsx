@@ -148,7 +148,7 @@ export function OrderStatus({ orderId, showDetails = true }: OrderStatusProps) {
   if (isLoading) {
     return (
       <div className={combineStyles(cardStyles.base, 'flex items-center justify-center')}>
-        <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+        <Loader2 className="h-6 w-6 animate-spin text-primary" />
         <span className={combineStyles(textStyles.body.md, 'ml-2')}>Загрузка статуса...</span>
       </div>
     );

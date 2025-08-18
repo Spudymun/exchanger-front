@@ -48,7 +48,7 @@
 - [✅] `apps/web/src\components\HeroSection.tsx` **СООТВЕТСТВУЕТ**: чистая семантика без хардкода - text-foreground/text-muted-foreground, композиция с HeroExchangeForm, отличная архитектура с TypeScript типизацией
 - [✅] `apps/web/src/components/HowItWorksSection.tsx` **СООТВЕТСТВУЕТ**: @repo/ui Card compound components, чистые семантические токены bg-card/text-card-foreground/border-border/bg-primary/text-primary-foreground/bg-muted/text-muted-foreground/text-foreground, отличная архитектура с TypeScript интерфейсами
 - [✅] `apps/web/src/components/index.ts` **СООТВЕТСТВУЕТ**: TypeScript export файл, правильная архитектура централизованных экспортов
-- [❌] `apps/web/src/components/OrderStatus.tsx` **КРИТИЧЕСКОЕ НАРУШЕНИЕ**: 1 хардкод синего цвета (text-blue-500→text-primary в loading состоянии) | **ОТЛИЧНО**: @repo/constants (ORDER_STATUS_CONFIG/ORDER_STATUSES/UI_REFRESH_INTERVALS), @repo/ui систематизированные стили (statusStyles/textStyles/cardStyles/combineStyles), custom hook useOrderStatus, BaseErrorBoundary, отличная архитектура
+- [❌] - [x] `apps/web/src/components/OrderStatus.tsx`: 1 hardcoded `text-blue-500`→`text-primary` ✅
 - [✅] `apps/web/src/components/theme-toggle-i18n.tsx` **СООТВЕТСТВУЕТ**: @repo/ui ThemeToggle компонент, чистая интернационализация без стилей, отличная архитектура wrapper компонента
 - [✅] `apps/web/src/hooks/index.ts` **СООТВЕТСТВУЕТ**: TypeScript экспорты wrapper hooks с локализацией, правильная архитектура централизованных экспортов без стилей
 - [✅] `apps/web/src/hooks/useAuthFormConfig.ts` **СООТВЕТСТВУЕТ**: чистые utility функции без стилей, централизованная обработка auth форм, отличная архитектура с function factories
