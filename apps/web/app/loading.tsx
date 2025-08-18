@@ -1,9 +1,12 @@
+import { Spinner } from '@repo/ui';
+
 export default function GlobalLoading() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="flex flex-col items-center space-y-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        <p className="text-lg text-gray-600 dark:text-gray-400">Loading...</p>
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center">
+        <Spinner size="xl" className="mx-auto mb-4" />
+        <h2 className="text-xl font-semibold text-foreground mb-2">Loading...</h2>
+        <p className="text-muted-foreground">Please wait while we load the application</p>
       </div>
     </div>
   );

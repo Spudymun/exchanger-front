@@ -24,7 +24,7 @@
 - [✅] `apps/web/app/error.tsx` ✅ (hardcoded gradient → bg-background + window.location.href → useRouter + I18N_CONFIG)
 - [✅] `apps/web/app/globals.css` **СООТВЕТСТВУЕТ**: импорт @repo/tailwind-preset, семантические токены border-border/bg-background/text-foreground
 - [✅] `apps/web/app/layout.tsx` **СООТВЕТСТВУЕТ**: импорт @repo/constants, все константы централизованы (LAYOUT_SHARED_CONFIG/I18N_CONFIG/META_DEFAULTS), превосходная архитектура
-- [❌] `apps/web/app/loading.tsx` **КРИТИЧЕСКИЕ НАРУШЕНИЯ**: 2 хардкод цвета (border-blue-600→border-primary, text-gray-600→text-muted-foreground), отсутствие @repo/ui Spinner компонента
+- [✅] `apps/web/app/loading.tsx` ✅ (2 хардкод цвета → semantic tokens + @repo/ui Spinner integration)
 - [✅] `apps/web/app/not-found.tsx` **СООТВЕТСТВУЕТ**: чистая логика redirect, использует I18N_CONFIG константы, превосходная архитектура i18n
 - [✅] `apps/web/src/components/app-footer.tsx` **СООТВЕТСТВУЕТ**: импорт @repo/constants (SOCIAL_LINKS/COMPANY_INFO), @repo/ui Footer compound component, семантические токены text-muted-foreground, превосходная архитектура
 - [✅] `apps/web/src/components/app-header.tsx` **СООТВЕТСТВУЕТ**: @repo/ui Header compound component, семантические токены text-primary/text-muted-foreground/text-primary-foreground, отличная архитектура с hooks
