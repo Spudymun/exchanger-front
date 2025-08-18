@@ -16,7 +16,7 @@ import { ExchangeErrorBoundary } from './error-boundaries';
 
 // ===== КОНСТАНТЫ ДЛЯ УСТРАНЕНИЯ ДУБЛИРОВАНИЯ =====
 const CONTAINER_STYLES = {
-  hero: 'bg-card backdrop-blur-sm text-card-foreground border border-border/80 rounded-xl shadow-md shadow-black/8 dark:shadow-black/30 p-4 sm:p-6 md:p-8 max-w-2xl lg:max-w-4xl mx-auto w-full',
+  hero: 'bg-card backdrop-blur-sm text-card-foreground border border-border/80 rounded-xl shadow-md p-4 sm:p-6 md:p-8 max-w-2xl lg:max-w-4xl mx-auto w-full',
   full: 'bg-card text-card-foreground border border-border rounded-2xl shadow-standard p-6 sm:p-8 space-y-6 sm:space-y-8',
   mobile:
     'bg-card text-card-foreground border border-border rounded-xl shadow-standard p-4 space-y-4',

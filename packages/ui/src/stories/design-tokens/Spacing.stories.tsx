@@ -6,23 +6,23 @@ import { storyBookStyles } from '../../lib/shared-styles';
 // Spacing scale section
 const SpacingScaleSection = ({ spacingValues }: { spacingValues: Record<string, string> }) => (
   <section className="mb-12">
-    <h2 className="text-2xl font-semibold mb-6 text-gray-900 dark:text-gray-100">Spacing Scale</h2>
+    <h2 className="text-2xl font-semibold mb-6 text-foreground">Spacing Scale</h2>
 
     <div className="space-y-6">
       {Object.entries(spacingValues).map(([key, value]) => (
-        <div key={key} className="border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+        <div key={key} className="border border-border rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-4">
-              <span className="text-sm font-mono text-gray-500 dark:text-gray-400 w-8">{key}</span>
-              <span className="text-sm font-mono text-gray-600 dark:text-gray-300">{value}</span>
+              <span className="text-sm font-mono text-muted-foreground w-8">{key}</span>
+              <span className="text-sm font-mono text-foreground">{value}</span>
             </div>
-            <span className="text-sm text-gray-500 dark:text-gray-400">space-{key}</span>
+            <span className="text-sm text-muted-foreground">space-{key}</span>
           </div>
 
           <div className="flex items-center space-x-4">
             <div className="flex-shrink-0">
               <div
-                className="bg-blue-500 rounded"
+                className="bg-primary rounded"
                 style={{
                   width: value,
                   height: '24px',
@@ -30,7 +30,7 @@ const SpacingScaleSection = ({ spacingValues }: { spacingValues: Record<string, 
                 }}
               />
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="text-sm text-muted-foreground">
               Visual representation of {key} spacing
             </div>
           </div>
@@ -43,14 +43,12 @@ const SpacingScaleSection = ({ spacingValues }: { spacingValues: Record<string, 
 // Usage examples section
 const UsageExamplesSection = () => (
   <section>
-    <h2 className="text-2xl font-semibold mb-6 text-gray-900 dark:text-gray-100">Usage Examples</h2>
+    <h2 className="text-2xl font-semibold mb-6 text-foreground">Usage Examples</h2>
 
     <div className="space-y-8">
       {/* Padding Examples */}
-      <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-        <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-gray-100">
-          Padding Examples
-        </h3>
+      <div className="border border-border rounded-lg p-6">
+        <h3 className="text-lg font-medium mb-4 text-foreground">Padding Examples</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <div className={storyBookStyles.spacingContainer + ' p-2'}>
@@ -75,16 +73,14 @@ const UsageExamplesSection = () => (
       </div>
 
       {/* Component Spacing */}
-      <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-        <h3 className="text-lg font-medium mb-4 text-gray-900 dark:text-gray-100">
-          Component Spacing
-        </h3>
+      <div className="border border-border rounded-lg p-6">
+        <h3 className="text-lg font-medium mb-4 text-foreground">Component Spacing</h3>
         <div className="space-y-6">
-          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-            <h4 className="text-base font-medium mb-2 text-gray-900 dark:text-gray-100">
+          <div className="bg-muted rounded-lg p-4">
+            <h4 className="text-base font-medium mb-2 text-foreground">
               Card with standard spacing
             </h4>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-sm text-muted-foreground mb-4">
               This card uses our design system spacing values for consistent layout.
             </p>
             <button className={storyBookStyles.demoButton}>Action Button</button>
@@ -101,9 +97,9 @@ const SpacingShowcase = () => {
   const spacingValues = (spacingAny.spacing as Record<string, string>) || {};
 
   return (
-    <div className="p-6 bg-white dark:bg-gray-900 min-h-screen">
+    <div className="p-6 bg-background min-h-screen">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-gray-900 dark:text-gray-100">
+        <h1 className="text-3xl font-bold mb-8 text-foreground">
           ExchangeGO Design System - Spacing
         </h1>
 
@@ -140,7 +136,7 @@ export const SpacingScale: Story = {
     const spacingValues = (spacingAny.spacing as Record<string, string>) || {};
 
     return (
-      <div className="p-6 bg-white dark:bg-gray-900">
+      <div className="p-6 bg-background">
         <div className="max-w-4xl mx-auto">
           <SpacingScaleSection spacingValues={spacingValues} />
         </div>

@@ -173,7 +173,7 @@ export const Centered: Story = {
     },
   },
   render: () => (
-    <div className="flex items-center justify-center h-32 w-64 border border-dashed border-gray-300 rounded-lg">
+    <div className="flex items-center justify-center h-32 w-64 border border-dashed border-border rounded-lg">
       <Spinner size="lg" />
     </div>
   ),

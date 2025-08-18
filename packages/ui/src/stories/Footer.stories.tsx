@@ -112,7 +112,7 @@ export const DarkTheme: Story = {
     theme: 'dark',
   },
   render: (args: Story['args']) => (
-    <div className="bg-gray-900 p-8">
+    <div className="bg-background p-8">
       <Footer {...args}>
         <Footer.Container variant="grid" columns="three">
           <Footer.Section title="Company">

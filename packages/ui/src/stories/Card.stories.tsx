@@ -97,7 +97,7 @@ export const Dashboard: Story = {
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold mb-2">$12,345.67</div>
-        <p className="text-sm text-green-600">+5.2% от прошлого месяца</p>
+        <p className="text-sm text-success">+5.2% от прошлого месяца</p>
       </CardContent>
     </Card>
   ),

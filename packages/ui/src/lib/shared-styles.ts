@@ -8,9 +8,9 @@
  * Общие стили для карточек - централизовано для business-компонентов
  */
 export const cardStyles = {
-  base: 'rounded-lg border border-gray-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow',
+  base: 'rounded-lg border border-border bg-card p-4 shadow-sm hover:shadow-md transition-shadow',
   hover: 'hover:shadow-md transition-shadow',
-  focus: 'focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+  focus: 'focus:ring-2 focus:ring-ring focus:ring-offset-2',
 } as const;
 
 /**
@@ -18,21 +18,21 @@ export const cardStyles = {
  */
 export const textStyles = {
   heading: {
-    sm: 'text-sm font-medium text-gray-900',
-    md: 'text-lg font-semibold text-gray-900',
-    lg: 'text-xl font-semibold text-gray-900',
+    sm: 'text-sm font-medium text-foreground',
+    md: 'text-lg font-semibold text-foreground',
+    lg: 'text-xl font-semibold text-foreground',
   },
   body: {
-    sm: 'text-xs text-gray-500',
-    md: 'text-sm text-gray-600',
-    lg: 'text-base text-gray-700',
+    sm: 'text-xs text-muted-foreground',
+    md: 'text-sm text-muted-foreground',
+    lg: 'text-base text-muted-foreground',
   },
   accent: {
-    primary: 'text-blue-600',
-    secondary: 'text-orange-600',
-    success: 'text-green-600',
-    warning: 'text-yellow-600',
-    error: 'text-red-600',
+    primary: 'text-primary',
+    secondary: 'text-secondary-foreground',
+    success: 'text-success',
+    warning: 'text-warning',
+    error: 'text-destructive',
   },
 } as const;
 
@@ -40,11 +40,11 @@ export const textStyles = {
  * Общие стили для статусов - централизовано для status компонентов
  */
 export const statusStyles = {
-  success: 'text-green-600 bg-green-50',
-  warning: 'text-yellow-600 bg-yellow-50',
-  info: 'text-blue-600 bg-blue-50',
-  error: 'text-red-600 bg-red-50',
-  neutral: 'text-gray-600 bg-gray-50',
+  success: 'text-success bg-success/10',
+  warning: 'text-warning bg-warning/10',
+  info: 'text-info bg-info/10',
+  error: 'text-destructive bg-destructive/10',
+  neutral: 'text-muted-foreground bg-muted/10',
 } as const;
 
 /**
@@ -53,7 +53,7 @@ export const statusStyles = {
 export const loadingStyles = {
   container: 'flex items-center justify-center p-8',
   spinner: 'h-8 w-8 animate-spin',
-  text: 'ml-2 text-sm text-gray-600',
+  text: 'ml-2 text-sm text-muted-foreground',
 } as const;
 
 /**
@@ -88,7 +88,7 @@ export const pageStyles = {
     section: 'text-2xl font-bold',
   },
   description: {
-    hero: 'text-lg text-center text-gray-600',
+    hero: 'text-lg text-center text-muted-foreground',
     page: 'text-muted-foreground',
   },
   spacing: {
@@ -102,9 +102,9 @@ export const pageStyles = {
  */
 export const buttonStyles = {
   primary:
-    'px-6 py-3 text-base bg-blue-600 text-white border-0 rounded-md cursor-pointer mr-5 hover:bg-blue-700',
+    'px-6 py-3 text-base bg-primary text-primary-foreground border-0 rounded-md cursor-pointer mr-5 hover:bg-primary/90',
   secondary:
-    'px-6 py-3 text-base bg-transparent text-blue-600 border-2 border-blue-600 rounded-md cursor-pointer hover:bg-blue-50',
+    'px-6 py-3 text-base bg-transparent text-primary border-2 border-primary rounded-md cursor-pointer hover:bg-primary/10',
   center: 'text-center mt-10',
 } as const;
 
@@ -135,9 +135,9 @@ export function combineStyles(...styles: Array<string | undefined | false>): str
  * Общие стили для Storybook демонстраций - устранение CSS дублирования
  */
 export const storyBookStyles = {
-  demoBox: 'bg-blue-500 text-white text-sm rounded px-3 py-1',
-  demoButton: 'bg-blue-500 text-white px-4 py-2 rounded text-sm',
-  spacingContainer: 'bg-gray-100 dark:bg-gray-800 rounded',
+  demoBox: 'bg-primary text-primary-foreground text-sm rounded px-3 py-1',
+  demoButton: 'bg-primary text-primary-foreground px-4 py-2 rounded text-sm',
+  spacingContainer: 'bg-muted rounded',
 } as const;
 
 /**

@@ -10,13 +10,10 @@ const notificationVariants = cva(
     variants: {
       variant: {
         default: 'border-border bg-background text-foreground',
-        success:
-          'border-green-200 bg-green-50 text-green-900 dark:border-green-800 dark:bg-green-950 dark:text-green-100',
-        error:
-          'border-red-200 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-100',
-        warning:
-          'border-yellow-200 bg-yellow-50 text-yellow-900 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-100',
-        info: 'border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-100',
+        success: 'border-success bg-success/10 text-success',
+        error: 'border-destructive bg-destructive/10 text-destructive',
+        warning: 'border-warning bg-warning/10 text-warning',
+        info: 'border-info bg-info/10 text-info',
       },
       size: {
         default: 'p-4',
@@ -35,10 +32,10 @@ const iconVariants = cva('flex-shrink-0', {
   variants: {
     variant: {
       default: 'text-foreground',
-      success: 'text-green-600 dark:text-green-400',
-      error: 'text-red-600 dark:text-red-400',
-      warning: 'text-yellow-600 dark:text-yellow-400',
-      info: 'text-blue-600 dark:text-blue-400',
+      success: 'text-success',
+      error: 'text-destructive',
+      warning: 'text-warning',
+      info: 'text-info',
     },
     size: {
       default: 'h-5 w-5',
@@ -69,7 +66,7 @@ const getVariantIcon = (variant: 'default' | 'success' | 'error' | 'warning' | '
 
 export interface NotificationProps
   extends React.HTMLAttributes<HTMLDivElement>,
-  VariantProps<typeof notificationVariants> {
+    VariantProps<typeof notificationVariants> {
   title?: string;
   description?: string;
   onClose?: () => void;

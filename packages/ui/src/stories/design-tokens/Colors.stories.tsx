@@ -9,29 +9,25 @@ interface ColorPaletteProps {
 
 const ColorPalette = ({ colors: colorSet, title }: ColorPaletteProps) => (
   <div className="mb-8">
-    <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">{title}</h3>
+    <h3 className="text-lg font-semibold mb-4 text-foreground">{title}</h3>
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {Object.entries(colorSet).map(([key, value]) => {
         if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
           return (
             <div key={key} className="space-y-2">
-              <h4 className="font-medium text-sm text-gray-700 dark:text-gray-300 capitalize">
-                {key}
-              </h4>
+              <h4 className="font-medium text-sm text-foreground capitalize">{key}</h4>
               <div className="space-y-1">
                 {Object.entries(value as Record<string, string>).map(([shade, color]) => (
                   <div key={shade} className="flex items-center space-x-3">
                     <div
-                      className="w-10 h-10 rounded-md border border-gray-200 dark:border-gray-700 shadow-sm"
+                      className="w-10 h-10 rounded-md border border-border shadow-sm"
                       style={{ backgroundColor: color }}
                     />
                     <div className="flex-1">
-                      <div className="text-xs font-mono text-gray-600 dark:text-gray-400">
+                      <div className="text-xs font-mono text-muted-foreground">
                         {key}-{shade}
                       </div>
-                      <div className="text-xs font-mono text-gray-500 dark:text-gray-500">
-                        {color}
-                      </div>
+                      <div className="text-xs font-mono text-muted-foreground">{color}</div>
                     </div>
                   </div>
                 ))}
@@ -42,14 +38,12 @@ const ColorPalette = ({ colors: colorSet, title }: ColorPaletteProps) => (
         return (
           <div key={key} className="flex items-center space-x-3">
             <div
-              className="w-10 h-10 rounded-md border border-gray-200 dark:border-gray-700 shadow-sm"
+              className="w-10 h-10 rounded-md border border-border shadow-sm"
               style={{ backgroundColor: value as string }}
             />
             <div className="flex-1">
-              <div className="text-xs font-mono text-gray-600 dark:text-gray-400">{key}</div>
-              <div className="text-xs font-mono text-gray-500 dark:text-gray-500">
-                {value as string}
-              </div>
+              <div className="text-xs font-mono text-muted-foreground">{key}</div>
+              <div className="text-xs font-mono text-muted-foreground">{value as string}</div>
             </div>
           </div>
         );
@@ -75,9 +69,9 @@ const ColorsShowcase = () => {
   };
 
   return (
-    <div className="p-6 bg-white dark:bg-gray-900 min-h-screen">
+    <div className="p-6 bg-background min-h-screen">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-gray-900 dark:text-gray-100">
+        <h1 className="text-3xl font-bold mb-8 text-foreground">
           ExchangeGO Design System - Colors
         </h1>
 
@@ -112,7 +106,7 @@ export const BrandColors: Story = {
   render: () => {
     const colorsAny = colors as unknown as Record<string, unknown>;
     return (
-      <div className="p-6 bg-white dark:bg-gray-900">
+      <div className="p-6 bg-background">
         <ColorPalette
           colors={{ primary: colorsAny.primary, secondary: colorsAny.secondary }}
           title="Brand Colors"
@@ -126,7 +120,7 @@ export const SemanticColors: Story = {
   render: () => {
     const colorsAny = colors as unknown as Record<string, unknown>;
     return (
-      <div className="p-6 bg-white dark:bg-gray-900">
+      <div className="p-6 bg-background">
         <ColorPalette
           colors={{
             success: colorsAny.success,

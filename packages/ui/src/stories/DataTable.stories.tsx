@@ -23,9 +23,7 @@ const sampleData: UITestUser[] = createUITestUsers();
 const renderStatusBadge = (row: UITestUser) => (
   <span
     className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-      row.status === 'active'
-        ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-        : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
+      row.status === 'active' ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'
     }`}
   >
     {row.status}

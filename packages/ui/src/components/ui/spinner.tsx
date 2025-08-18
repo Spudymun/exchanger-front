@@ -19,9 +19,9 @@ const spinnerVariants = cva(
         muted: 'text-muted-foreground',
         accent: 'text-accent-foreground',
         destructive: 'text-destructive',
-        success: 'text-green-600 dark:text-green-400',
-        warning: 'text-yellow-600 dark:text-yellow-400',
-        info: 'text-blue-600 dark:text-blue-400',
+        success: 'text-success',
+        warning: 'text-warning',
+        info: 'text-info',
       },
     },
     defaultVariants: {
@@ -148,11 +148,11 @@ function getInlineVariantClass(variant: SpinnerProps['variant']) {
     case 'destructive':
       return 'text-destructive';
     case 'success':
-      return 'text-green-600 dark:text-green-400';
+      return 'text-success';
     case 'warning':
-      return 'text-yellow-600 dark:text-yellow-400';
+      return 'text-warning';
     case 'info':
-      return 'text-blue-600 dark:text-blue-400';
+      return 'text-info';
     default:
       return 'text-current';
   }

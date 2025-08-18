@@ -306,9 +306,9 @@ const StatsCard = React.forwardRef<HTMLDivElement, StatsCardProps>(
     const getTrendClass = (t: 'up' | 'down' | 'neutral') => {
       switch (t) {
         case 'up':
-          return 'text-green-600';
+          return 'text-success';
         case 'down':
-          return 'text-red-600';
+          return 'text-destructive';
         case 'neutral':
           return 'text-muted-foreground';
         default:

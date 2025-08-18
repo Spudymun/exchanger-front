@@ -188,7 +188,7 @@ const formMessageVariants = cva('text-sm font-medium', {
     variant: {
       default: 'text-muted-foreground',
       error: 'text-destructive',
-      success: 'text-green-600 dark:text-green-400',
+      success: 'text-success',
     },
   },
   defaultVariants: {
