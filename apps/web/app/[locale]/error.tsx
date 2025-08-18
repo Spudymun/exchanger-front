@@ -3,6 +3,8 @@
 import { Button } from '@repo/ui';
 import { useTranslations } from 'next-intl';
 
+import { useRouter } from '../../src/i18n/navigation';
+
 interface ErrorProps {
   error: Error & { digest?: string };
   reset: () => void;
@@ -45,12 +47,14 @@ function ErrorContent({ error, t }: { error: Error; t: (key: string) => string }
 }
 
 function ErrorActions({ reset, t }: { reset: () => void; t: (key: string) => string }) {
+  const router = useRouter();
+
   return (
     <div className="flex gap-4 justify-center">
       <Button onClick={reset} variant="default" size="lg">
         {t('tryAgain')}
       </Button>
-      <Button onClick={() => (window.location.href = '/')} variant="outline" size="lg">
+      <Button onClick={() => router.push('/')} variant="outline" size="lg">
         {t('goHome')}
       </Button>
     </div>
@@ -61,7 +65,7 @@ export default function Error({ error, reset }: ErrorProps) {
   const t = useTranslations('Error');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+    <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="max-w-2xl mx-auto p-8 text-center">
         <ErrorContent error={error} t={t} />
         <ErrorActions reset={reset} t={t} />

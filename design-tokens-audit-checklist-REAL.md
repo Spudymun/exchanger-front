@@ -15,7 +15,7 @@
 - [✅] `apps/docs/app/layout.tsx` **СООТВЕТСТВУЕТ**: импорт @repo/constants, использует LAYOUT_SHARED_CONFIG/META_DEFAULTS/GLOBAL_CSS_CLASSES, правильная архитектура
 - [⚠️] `apps/docs/app/page.module.css` **АРХИТЕКТУРНЫЕ ОТЛИЧИЯ**: CSS Modules вместо Tailwind (допустимо для docs), кастомные переменные --gray-rgb/--button-\*-hover не из design-tokens, частично использует --foreground/--background
 - [✅] `apps/docs/app/page.tsx` **СООТВЕТСТВУЕТ**: импорт @repo/ui Button, CSS Modules подход (нормально для docs), правильная архитектура
-- [❌] `apps/web/app/[locale]/error.tsx` **КРИТИЧЕСКОЕ НАРУШЕНИЕ**: хардкод градиента from-blue-50 to-white dark:from-gray-900 dark:to-gray-800→bg-background, inline window.location.href вместо router (остальное соответствует с семантическими токенами)
+- [✅] `apps/web/app/[locale]/error.tsx` ✅ (hardcoded gradient → bg-background + window.location.href → useRouter)
 - [❌] `apps/web/app/[locale]/exchange/page.tsx` **КРИТИЧЕСКОЕ НАРУШЕНИЕ**: хардкод градиента from-blue-50 to-white dark:from-gray-900 dark:to-gray-800→bg-background (остальное соответствует архитектуре с семантическими токенами)
 - [✅] `apps/web/app/[locale]/layout.tsx` **СООТВЕТСТВУЕТ**: чистая i18n логика без стилей, правильная архитектура Next.js 15, использует routing константы
 - [❌] `apps/web/app/[locale]/loading.tsx` **КРИТИЧЕСКОЕ НАРУШЕНИЕ**: хардкод градиента from-blue-50 to-white dark:from-gray-900 dark:to-gray-800→bg-background (остальное соответствует с @repo/ui Spinner)
