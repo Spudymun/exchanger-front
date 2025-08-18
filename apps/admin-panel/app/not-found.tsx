@@ -1,36 +1,38 @@
-"use client";
+'use client';
+
+import React from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Button } from '@repo/ui';
 
 export default function NotFound() {
-    return (
-        <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
-            <div className="max-w-2xl mx-auto p-8 text-center">
-                <div className="mb-8">
-                    <div className="text-8xl font-bold text-primary-600 mb-4">
-                        404
-                    </div>
-                    <h1 className="text-3xl font-bold text-neutral-900 mb-2">
-                        Страница не найдена
-                    </h1>
-                    <p className="text-lg text-neutral-600 mb-8">
-                        Запрашиваемая страница в административной панели не существует.
-                    </p>
-                </div>
+  const router = useRouter();
 
-                <div className="flex gap-4 justify-center">
-                    <a
-                        href="/admin"
-                        className="bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-6 rounded-xl transition-colors duration-200"
-                    >
-                        На главную панель
-                    </a>
-                    <button
-                        onClick={() => window.history.back()}
-                        className="bg-neutral-200 hover:bg-neutral-300 text-neutral-700 font-semibold py-3 px-6 rounded-xl transition-colors duration-200"
-                    >
-                        Назад
-                    </button>
-                </div>
-            </div>
+  const handleBackClick = () => {
+    router.back();
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div className="text-center">
+          <h1 className="text-9xl font-bold text-primary">404</h1>
+          <h2 className="mt-6 text-3xl font-bold text-foreground">Страница не найдена</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Запрашиваемая страница не существует или была перемещена.
+          </p>
         </div>
-    );
+
+        <div className="mt-8 space-y-4">
+          <Button onClick={handleBackClick} variant="outline" className="w-full">
+            ← Назад
+          </Button>
+
+          <Button asChild className="w-full">
+            <Link href="/admin">На главную админ-панели</Link>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 }

@@ -90,7 +90,9 @@ const ADMIN_COLUMNS: Array<Column<UITestUser>> = [
       return (
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            status === 'active'
+              ? 'bg-success/10 text-success'
+              : 'bg-destructive/10 text-destructive'
           }`}
         >
           {status}

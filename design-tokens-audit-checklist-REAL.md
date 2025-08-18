@@ -1,4 +1,10 @@
-- [❌] `apps/admin-panel/app/error.tsx` **КРИТИЧЕСКИЕ НА- [⚠️] `packages/ui/src/components/admin-panel-compound.tsx` **АРХИТЕКТУРНЫЕ НАРУШЕНИЯ**: 2 хардкод цвета (text-green-600→text-success, text-red-600→text-destructive в StatusIcon строки 309,311) | **ОТЛИЧНО\*\*: семантические токены bg-background/bg-card/text-foreground/text-muted-foreground/bg-primary/text-primary-foreground/border-border, compound components архитектура
+- [- [x] **apps/admin-panel/app/error.tsx** ✅ (9 hardcoded colors → semantic tokens + @repo/ui integration)
+- [x] **apps/admin-panel/app/loading.tsx** ✅ (5 hardcoded colors + custom spinner → semantic tokens + @repo/ui Spinner)
+- [x] **apps/admin-panel/app/not-found.tsx** ✅ (10+ hardcoded colors + architecture → semantic tokens + @repo/ui Button + proper navigation)
+- [x] **apps/admin-panel/app/page.tsx** ✅ (2 status hardcoded colors → bg-success/10 text-success, bg-destructive/10 text-destructive)] `apps/admin-panel/app/error.tsx` **КРИТИЧЕСКИЕ НА- [⚠️] `packages/ui/src/components/admin-panel-compound.tsx` **АРХИТЕКТУРНЫЕ НАРУШЕНИЯ\*\*: 2 хардкод цв### Apps/admin-panel
+- [✅] `apps/admin-panel/app/error.tsx` - 9 хардкод цветов → ИСПРАВЛЕНО ✅
+- [✅] `apps/admin-panel/app/loading.tsx` - 5 хардкод цветов → ИСПРАВЛЕНО ✅
+- [ ] `apps/admin-panel/app/not-found.tsx` - 7 хардкод цветов (text-green-600→text-success, text-red-600→text-destructive в StatusIcon строки 309,311) | \*\*ОТЛИЧНО\*\*: семантические токены bg-background/bg-card/text-foreground/text-muted-foreground/bg-primary/text-primary-foreground/border-border, compound components архитектура
 - [✅] `packages/ui/src/components/auth-form-compound.tsx` **СООТВЕТСТВУЕТ**: React compound components логика без стилей, context provider pattern, enhanceChildWithContext утилиты, отличная архитектураУШЕНИЯ\*\*: 9 хардкод цветов (bg-neutral-50→bg-background, text-neutral-900→text-foreground, bg-error-\*→bg-destructive, bg-primary-600→bg-primary), отсутствие констант @repo/constants, хардкод роута /admin
 - [✅] `apps/admin-panel/app/globals.css` **СООТВЕТСТВУЕТ**: импорт @repo/tailwind-preset, семантические токены bg-background/text-foreground, CSS-переменные
 - [✅] - [✅] `apps/admin-panel/app/layout.tsx` **СООТВЕТСТВУЕТ**: импорт @repo/constants, bg-background, все константы LAYOUT_SHARED_CONFIG/META_DEFAULTS **СООТВЕТСТВУЕТ:** использует семантические токены `bg-background`, константы из `@repo/constants`
@@ -13,7 +19,7 @@
 - [❌] `apps/web/app/[locale]/exchange/page.tsx` **КРИТИЧЕСКОЕ НАРУШЕНИЕ**: хардкод градиента from-blue-50 to-white dark:from-gray-900 dark:to-gray-800→bg-background (остальное соответствует архитектуре с семантическими токенами)
 - [✅] `apps/web/app/[locale]/layout.tsx` **СООТВЕТСТВУЕТ**: чистая i18n логика без стилей, правильная архитектура Next.js 15, использует routing константы
 - [❌] `apps/web/app/[locale]/loading.tsx` **КРИТИЧЕСКОЕ НАРУШЕНИЕ**: хардкод градиента from-blue-50 to-white dark:from-gray-900 dark:to-gray-800→bg-background (остальное соответствует с @repo/ui Spinner)
-- [❌] `apps/web/app/[locale]/not-found-page/page.tsx` **КРИТИЧЕСКИЕ НАРУШЕНИЯ**: 3 хардкод цвета (text-gray-600→text-muted-foreground, bg-blue-600→bg-primary, hover:bg-blue-700→hover:bg-primary/90), отсутствие @repo/ui Button
+- [✅] `apps/web/app/[locale]/not-found-page/page.tsx` ✅ (3 хардкод цвета → semantic tokens + @repo/ui Button integration)
 - [✅] `apps/web/app/[locale]/page.tsx` **СООТВЕТСТВУЕТ**: bg-background семантический токен, правильная архитектура server component, композиция компонентов
 - [❌] `apps/web/app/error.tsx` **КРИТИЧЕСКОЕ НАРУШЕНИЕ**: хардкод градиента from-blue-50 to-white dark:from-gray-900 dark:to-gray-800→bg-background, inline window.location.href, хардкод /en locale (остальное соответствует)
 - [✅] `apps/web/app/globals.css` **СООТВЕТСТВУЕТ**: импорт @repo/tailwind-preset, семантические токены border-border/bg-background/text-foreground
@@ -142,3 +148,79 @@
 - [x] `packages/ui/src/styles/adaptive-container.css` - ✅ ПОЛНОЕ СООТВЕТСТВИЕ - CSS utilities без нарушений
 - [x] `packages/ui/src/styles/globals.css` - ✅ ПОЛНОЕ СООТВЕТСТВИЕ - CSS variables, semantic tokens
 - [x] `packages/ui/src/types/auth-fields.ts` - ✅ ПОЛНОЕ СООТВЕТСТВИЕ - TypeScript типы без стилей
+
+---
+
+# 🔧 ЧЕКЛИСТ РЕШЕННЫХ ПРОБЛЕМ
+
+## 📋 Процесс исправления
+
+**Workflow:** Исправление файла → Проверка билда → Проверка в браузере → ✅ Чекбокс → Коммит → Следующий файл
+
+## ❌ КРИТИЧЕСКИЕ НАРУШЕНИЯ (приоритет 1)
+
+### Apps/admin-panel
+
+- [ ] `apps/admin-panel/app/error.tsx` - 9 хардкод цветов
+- [ ] `apps/admin-panel/app/loading.tsx` - 5 хардкод цветов
+- [ ] `apps/admin-panel/app/not-found.tsx` - 7 хардкод цветов
+
+### Apps/web
+
+- [ ] `apps/web/app/[locale]/error.tsx` - хардкод градиента
+- [ ] `apps/web/app/[locale]/exchange/page.tsx` - хардкод градиента
+- [ ] `apps/web/app/[locale]/loading.tsx` - хардкод градиента
+- [ ] `apps/web/app/[locale]/not-found-page/page.tsx` - 3 хардкод цвета
+- [ ] `apps/web/app/error.tsx` - хардкод градиента + inline код
+- [ ] `apps/web/app/loading.tsx` - 2 хардкод цвета
+- [ ] `apps/web/src/components/exchange-form/ReceivingCard.tsx` - 2 хардкод зеленого
+- [ ] `apps/web/src/components/exchange-form/SendingCard.tsx` - 2 хардкод синего
+- [ ] `apps/web/src/components/ExchangeRates.tsx` - 4 хардкод цвета
+- [ ] `apps/web/src/components/OrderStatus.tsx` - 1 хардкод синего
+
+### Packages/ui
+
+- [ ] `packages/ui/src/components/ui/form.tsx` - хардкод зеленого
+- [ ] `packages/ui/src/components/ui/notification.tsx` - массовые хардкод цвета
+- [ ] `packages/ui/src/components/ui/spinner.tsx` - 3 хардкод цвета
+- [ ] `packages/ui/src/lib/shared-styles.ts` - 30+ хардкод цветов
+- [ ] `packages/ui/src/stories/DataTable.stories.tsx` - 8 хардкод цветов
+- [ ] `packages/ui/src/stories/design-tokens/Colors.stories.tsx` - 12+ хардкод gray
+- [ ] `packages/ui/src/stories/design-tokens/Spacing.stories.tsx` - 10+ хардкод gray
+- [ ] `packages/ui/src/stories/design-tokens/Typography.stories.tsx` - 12+ хардкод gray
+
+## ⚠️ АРХИТЕКТУРНЫЕ НАРУШЕНИЯ (приоритет 2)
+
+### Packages/ui
+
+- [ ] `packages/ui/src/components/admin-panel-compound.tsx` - 2 хардкод (строки 309,311)
+- [ ] `packages/ui/src/components/exchange-form.tsx` - 1 хардкод shadow
+- [ ] `packages/ui/src/components/ui/button.tsx` - 1 хардкод text-white
+
+### Storybook stories (минорные)
+
+- [ ] `packages/ui/src/stories/Card.stories.tsx` - 1 text-green-600
+- [ ] `packages/ui/src/stories/Footer.stories.tsx` - 1 bg-gray-900
+- [ ] `packages/ui/src/stories/Spinner.stories.tsx` - 3 хардкода в демо
+- [ ] `packages/ui/src/stories/Table.stories.tsx` - 2 нарушения
+
+### Apps/web минорные
+
+- [ ] `apps/admin-panel/app/page.tsx` - 2 хардкод статусов
+
+## 📊 СТАТИСТИКА ПРОГРЕССА
+
+- **Всего файлов с проблемами:** 27
+- **Критические (❌):** 18
+- **Архитектурные (⚠️):** 9
+- **Исправлено:** 1/27 (3.7%)
+- **Текущий файл:** `apps/admin-panel/app/loading.tsx`
+
+---
+
+# 🚀 СЛЕДУЮЩИЕ ШАГИ
+
+1. Начать с самых критических файлов
+2. Применять семантические токены из `packages/tailwind-preset/globals.css`
+3. Проверять примеры в существующих исправленных файлах
+4. Тестировать билд и браузер после каждого файла

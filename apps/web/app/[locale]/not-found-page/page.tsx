@@ -1,3 +1,4 @@
+import { Button } from '@repo/ui';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { Link } from '../../../src/i18n/navigation';
@@ -18,16 +19,13 @@ export default async function NotFoundPage({ params }: NotFoundPageProps) {
         <div className="space-y-2">
           <h1 className="text-6xl font-bold tracking-tight">404</h1>
           <h2 className="text-2xl font-semibold">{t('title')}</h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400">{t('description')}</p>
+          <p className="text-lg text-muted-foreground">{t('description')}</p>
         </div>
 
         <div className="space-y-3">
-          <Link
-            href="/"
-            className="inline-block bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 transition-colors"
-          >
-            {t('goHome')}
-          </Link>
+          <Button asChild>
+            <Link href="/">{t('goHome')}</Link>
+          </Button>
         </div>
       </div>
     </div>
