@@ -1,0 +1,660 @@
+# TECH DEBT RULES v2.0 - PROJECT-SPECIFIC
+# Специализированные правила для Exchanger Monorepo
+# Основано на реальной архитектуре проекта
+
+tech_debt_rules:
+  ############################################
+  # SECURITY-ENHANCED VALIDATION SYSTEM (КРИТИЧНО)
+  ############################################
+
+  - id: enforce_security_enhanced_schemas
+    description: 'ОБЯЗАТЕЛЬНО использовать securityEnhanced* schemas для новых форм с user input'
+    patterns:
+      - regex: 'import.*Schema.*from.*validation.*(?!.*securityEnhanced)'
+    severity: error
+    rationale: 'Проект имеет Security-Enhanced Validation System с XSS protection'
+    fix_suggestion: 'Использовать securityEnhancedLoginSchema вместо loginSchema'
+
+  - id: no_legacy_validation_schemas
+    description: 'Запрещено использовать legacy schemas без XSS protection'
+    patterns:
+      - regex: "import.*\\b(loginSchema|registerSchema|createTicketSchema|createOrderSchema|userProfileSchema)\\b.*from"
+    severity: error
+    fix_suggestion: 'Использовать securityEnhancedLoginSchema, securityEnhancedRegisterSchema и др.'
+
+  - id: form_xss_protection_required
+    description: 'Формы с пользовательским вводом ДОЛЖНЫ использовать security-enhanced schemas'
+    patterns:
+      - regex: 'useForm.*validationSchema.*(?!securityEnhanced)'
+    severity: error
+    rationale: 'OWASP XSS Prevention compliance'
+
+  - id: xss_protection_in_schemas
+    description: 'Пользовательский ввод должен проходить через createXSSProtectedString'
+    patterns:
+      - regex: "z\\.string\\(\\).*(?!createXSSProtectedString)"
+    severity: warning
+    excludes: ['**/*.test.ts', '**/validation/schemas-basic.ts']
+
+  - id: no_dangerous_html_injection
+    description: 'Запрещено использование dangerouslySetInnerHTML без санитизации'
+    patterns:
+      - regex: 'dangerouslySetInnerHTML'
+    severity: error
+
+  ############################################
+  # МОНОРЕПОЗИТОРИЙ АРХИТЕКТУРА (TURBOREPO)
+  ############################################
+
+  - id: use_internal_package_imports
+    description: 'Использовать @repo/* imports для внутренних пакетов, не относительные пути'
+    patterns:
+      - regex: "import.*from.*\\.\\./\\.\\./packages/"
+    severity: error
+    fix_suggestion: 'Заменить на import from "@repo/package-name"'
+
+  - id: centralized_constants_usage
+    description: 'Константы должны импортироваться из @repo/constants, не создаваться локально'
+    patterns:
+      - regex: "const\\s+[A-Z_]{3,}\\s*=\\s*['\"][^'\"]*['\"]"
+      - regex: "const\\s+[A-Z_]{3,}\\s*=\\s*[0-9]+"
+    severity: warning
+    excludes: ['packages/constants/**/*', '**/*.test.ts', '**/stories/**/*']
+    rationale: 'Проект использует централизованную систему констант'
+
+  - id: workspace_dependencies_format
+    description: 'package.json должен использовать "*" для internal dependencies (не workspace:*)'
+    patterns:
+      - regex: '"@repo/[^"]+": "workspace:'
+    severity: error
+    file_types: ['package.json']
+    fix_suggestion: 'Заменить "workspace:*" на "*"'
+
+  - id: no_local_eslint_configs
+    description: 'Запрещены локальные ESLint конфиги - использовать централизованную систему'
+    patterns:
+      - regex: "^.*\\.eslintrc\\.(js|json|cjs|mjs)$"
+    severity: error
+    excludes: ['packages/tailwind-preset/.eslintrc.cjs']
+    rationale: 'Проект использует packages/eslint-config с lazy loading'
+
+  ############################################
+  # SEMANTIC DESIGN SYSTEM (CSS Architecture v3.0)
+  ############################################
+
+  - id: semantic_css_classes_preferred
+    description: 'Предпочитать semantic CSS классы (bg-card, text-foreground) raw Tailwind'
+    patterns:
+      - regex: "bg-(red|blue|green|yellow|purple|pink|indigo)-(50|100|200|300|400|500|600|700|800|900)"
+      - regex: "text-(red|blue|green|yellow|purple|pink|indigo)-(50|100|200|300|400|500|600|700|800|900)"
+    severity: warning
+    rationale: 'Проект использует Semantic Design System с centralized tokens'
+    fix_suggestion: 'Использовать bg-primary, bg-secondary, bg-accent, text-foreground'
+
+  - id: no_css_variables_duplication
+    description: 'CSS переменные определяются ТОЛЬКО в packages/tailwind-preset/globals.css'
+    patterns:
+      - regex: "--[a-z-]+\\s*:"
+    severity: error
+    excludes: ['packages/tailwind-preset/globals.css', 'packages/design-tokens/**/*']
+    rationale: 'Single Source of Truth для CSS переменных'
+
+  - id: globals_css_import_required
+    description: 'Каждое приложение должно импортировать @repo/tailwind-preset/globals.css'
+    patterns:
+      - regex: "@import.*globals\\.css"
+    detection: 'css-import-check'
+    severity: error
+    required_in: ['apps/*/app/globals.css', 'apps/*/src/styles/globals.css']
+
+  ############################################
+  # tRPC v11 АРХИТЕКТУРА
+  ############################################
+
+  - id: trpc_security_enhanced_input
+    description: 'tRPC роутеры ДОЛЖНЫ использовать security-enhanced schemas для .input()'
+    patterns:
+      - regex: "\\.input\\((?!securityEnhanced)"
+    severity: error
+    excludes: ['**/*admin*.ts', '**/internal/**/*']
+    rationale: 'tRPC v11 с security-first подходом'
+
+  - id: trpc_namespace_organization
+    description: 'tRPC роутеры должны быть организованы в namespace структуре'
+    path_rule: 'apps/*/src/server/trpc/routers/*/**.ts'
+    severity: warning
+    rationale: 'Namespace composition: auth/, user/, operator/, support/'
+
+  - id: trpc_role_based_middleware
+    description: 'tRPC роутеры должны использовать role-based middleware'
+    patterns:
+      - regex: "publicProcedure(?!.*middleware)"
+    severity: warning
+    excludes: ['**/auth.ts', '**/public/*.ts']
+
+  # ИСПРАВЛЕННОЕ ПРАВИЛО вместо слишком строгого trpc_only_for_api
+  - id: trpc_preferred_for_internal_api
+    description: 'Предпочитать tRPC для внутренних API, fetch/axios для внешних'
+    patterns:
+      - regex: "fetch\\(.*api/.*\\)"
+      - regex: "axios\\.(get|post|put|delete)\\(.*api/.*\\)"
+    severity: warning
+    rationale: 'tRPC предпочтителен для типобезопасности, но external APIs допустимы'
+
+  ############################################
+  # COMPOUND COMPONENTS PATTERN
+  ############################################
+
+  - id: compound_component_complexity_threshold
+    description: 'Сложные UI компоненты должны использовать Compound Components pattern'
+    detection: 'component-complexity-check'
+    threshold: 'jsx_max_depth > 6 OR prop_count > 10'
+    severity: warning
+    rationale: 'Проект использует shadcn/ui с compound patterns'
+
+  - id: dom_props_filtering_required
+    description: 'Compound компоненты должны фильтровать React-specific пропсы перед DOM'
+    patterns:
+      - regex: "\\.\\.\\.(props|restProps).*ref.*(?!.*domProps)"
+    severity: warning
+    file_types: ['**/*-compound.tsx']
+    rationale: 'Предотвращение React DOM warnings'
+
+  - id: compound_component_context_usage
+    description: 'Compound компоненты должны использовать Context для prop sharing'
+    patterns:
+      - regex: "Object\\.assign\\(.*\\{[^}]*\\}\\)"
+    detection: 'compound-pattern-check'
+    severity: info
+    file_types: ['**/*-compound.tsx']
+
+  ############################################
+  # СОСТОЯНИЕ И БИЗНЕС-ЛОГИКА
+  ############################################
+
+  - id: state_management_separation
+    description: 'UI состояние в Zustand, server state в React Query'
+    patterns:
+      - regex: "useState.*fetch|axios"
+      - regex: "useState.*api\\."
+    severity: warning
+    rationale: 'Архитектурное разделение: UI state vs Server state'
+
+  - id: zustand_stores_location
+    description: 'Zustand stores должны быть в packages/hooks/src/state/'
+    path_rule: '**/state/**/*.ts'
+    severity: error
+    excludes: ['packages/hooks/src/state/**/*']
+
+  - id: business_logic_in_exchange_core
+    description: 'Бизнес-логика должна быть в packages/exchange-core, не в UI'
+    patterns:
+      - regex: "calculateExchange|validateOrder|processPayment|calculateFee"
+    severity: warning
+    excludes: ['packages/exchange-core/**/*']
+    rationale: 'Централизованная бизнес-логика'
+
+  - id: no_business_constants_in_ui
+    description: 'Бизнес-константы должны импортироваться из @repo/constants'
+    patterns:
+      - regex: "const.*(MINIMUM_AMOUNT|MAXIMUM_AMOUNT|SUPPORTED_CURRENCIES|COMMISSION_RATE)"
+    severity: error
+    excludes: ['packages/constants/**/*']
+
+  ############################################
+  # ИСПРАВЛЕННЫЕ БАЗОВЫЕ ПРАВИЛА
+  ############################################
+
+  - id: consistent_naming_files
+    description: 'Файлы должны быть названы в kebab-case (my-component.tsx)'
+    detection: 'filename-check'
+    severity: warning
+
+  - id: consistent_naming_components
+    description: 'React-компоненты и классы должны быть названы в PascalCase'
+    detection: 'ast-analysis'
+    severity: error
+
+  - id: consistent_naming_hooks
+    description: 'React-хуки должны начинаться с use (useSomething)'
+    detection: 'ast-analysis'
+    severity: error
+
+  - id: no_large_files
+    description: 'Файл не должен превышать 300 строк. Логику нужно декомпозировать'
+    detection: 'file-size'
+    severity: warning
+    excludes: ['**/*.config.ts', '**/*.config.js', '**/index.ts']
+
+  - id: no_large_functions
+    description: 'Функция не должна превышать 50 строк'
+    detection: 'ast-analysis'
+    severity: warning
+    excludes: ['**/*.test.ts', '**/*.stories.tsx']
+
+  - id: no_circular_dependencies
+    description: 'Не допускаются циклические зависимости между модулями'
+    detection: 'dependency-graph'
+    severity: error
+
+  - id: no_duplicate_dependencies
+    description: 'Разные версии одной библиотеки не допускаются'
+    detection: 'package-json-compare'
+    severity: error
+
+  # УЛУЧШЕННОЕ ПРАВИЛО - более специфично для монорепо
+  - id: enforce_barrel_imports_monorepo
+    description: 'Импорты из packages должны идти через index.ts или @repo/* aliases'
+    patterns:
+      - regex: "import .* from '\\.\\./\\.\\./packages/[^/]+/src/(?!index)"
+    severity: warning
+    rationale: 'Монорепо использует barrel exports и aliases'
+
+  - id: project_structure_monorepo
+    description: 'Файлы должны быть в правильных монорепо директориях'
+    detection: 'path-rule'
+    severity: error
+    rules:
+      - 'UI компоненты: packages/ui/src/components/'
+      - 'Хуки: packages/hooks/src/'
+      - 'Утилиты: packages/utils/src/'
+      - 'Бизнес-логика: packages/exchange-core/src/'
+
+  # УДАЛЕНО nextjs_pages_only_in_app - проект использует App Router
+  
+  - id: hooks_location_monorepo
+    description: 'Кастомные хуки должны храниться в packages/hooks/src/'
+    path_rule: 'packages/hooks/src/**/*'
+    severity: error
+
+  - id: no_server_logic_in_client
+    description: 'Серверная логика не должна находиться в client-компонентах'
+    detection: 'ast-analysis'
+    severity: error
+
+  # УЛУЧШЕННОЕ ПРАВИЛО - исключения для константы
+  - id: no_hardcoded_values_improved
+    description: 'Не использовать хардкоды для цветов, размеров, ID, URL'
+    patterns:
+      - regex: '#[0-9A-Fa-f]{6}(?!.*\/\*.*\*\/)'  # Исключаем комментарии
+      - regex: '[0-9]+px(?!.*\/\*.*\*\/)'
+      - regex: 'http(s)?://(?!localhost|127\.0\.0\.1)'
+    severity: error
+    excludes: ['packages/constants/**/*', '**/*.test.ts', '**/tailwind.config.*']
+    rationale: 'Хардкоды должны быть в централизованных константах'
+
+  - id: no_duplicate_code
+    description: 'Не дублировать бизнес-логику или компоненты'
+    detection: 'hash-compare'
+    severity: error
+
+  - id: no_unused_code
+    description: 'Удалять неиспользуемые функции, переменные, импорты'
+    detection: 'static-analysis'
+    severity: warning
+
+  - id: no_any_type
+    description: 'Запрещён тип any — использовать точные типы'
+    patterns:
+      - regex: ': any(?![\\w])'  # Не матчить anything, anyone etc
+    severity: error
+    excludes: ['**/*.test.ts', '**/jest.setup.ts']
+
+  # УЛУЧШЕННОЕ ПРАВИЛО - исключения для развития
+  - id: no_console_logs_production
+    description: 'Не оставлять console.log/debugger в production коде'
+    patterns:
+      - regex: "console\\.(log|warn|error)"
+      - regex: 'debugger'
+    severity: error
+    excludes: ['**/*.test.ts', 'scripts/**/*', 'packages/style-scanner/**/*']
+
+  ############################################
+  # ТЕСТИРОВАНИЕ
+  ############################################
+
+  - id: test_required_for_utils
+    description: 'Каждый модуль в packages/utils/ должен иметь тест'
+    detection: 'file-exists'
+    severity: error
+    path_rule: 'packages/utils/src/**/*'
+
+  - id: test_required_for_exchange_core
+    description: 'Бизнес-логика в exchange-core должна быть покрыта тестами'
+    detection: 'file-exists'
+    severity: warning
+    path_rule: 'packages/exchange-core/src/**/*'
+
+  - id: no_skip_in_tests
+    description: 'Не допускается .skip в тестах'
+    patterns:
+      - regex: "\\.skip\\("
+      - regex: "describe\\.skip"
+      - regex: "it\\.skip"
+    severity: warning
+
+  ############################################
+  # БЕЗОПАСНОСТЬ
+  ############################################
+
+  - id: no_eval
+    description: 'Запрещено использовать eval и Function(...)'
+    patterns:
+      - regex: "eval\\("
+      - regex: "new Function\\("
+    severity: error
+
+  - id: no_secrets_in_code
+    description: 'Запрещено хранить ключи/пароли в коде'
+    patterns:
+      - regex: '(api_key|secret|password|token) ?= ?[\'"][A-Za-z0-9/+=]{10,}[\'"]'
+    severity: error
+    excludes: ['**/*.test.ts', '**/mocks/**/*']
+
+  - id: enforce_env_usage
+    description: 'Конфиги должны храниться только в process.env или .env'
+    detection: 'ast-analysis'
+    severity: error
+
+  ############################################
+  # ДОКУМЕНТАЦИЯ
+  ############################################
+
+  - id: todos_must_reference_issue
+    description: 'TODO должен ссылаться на задачу (#123, JIRA-45)'
+    patterns:
+      - regex: "TODO(?!.*(#\\d+|[A-Z]+-\\d+))"
+    severity: warning
+
+  - id: public_api_docs_required
+    description: 'Все публичные функции должны иметь JSDoc'
+    detection: 'ast-analysis'
+    severity: warning
+    path_rule: 'packages/*/src/index.ts'
+
+  ############################################
+  # ПРОИЗВОДИТЕЛЬНОСТЬ
+  ############################################
+
+  - id: nextjs_image_optimization
+    description: 'Использовать next/image вместо <img> для оптимизации'
+    patterns:
+      - regex: '<img '
+    severity: warning
+    file_types: ['**/*.tsx']
+
+  # ИСПРАВЛЕННОЕ ПРАВИЛО - учитывает semantic design system
+  - id: prefer_css_classes_over_inline
+    description: 'Предпочитать CSS классы inline стилям, использовать semantic design tokens'
+    patterns:
+      - regex: "style=\\{\\{[^}]+\\}\\}"
+    severity: info
+    rationale: 'Проект использует Semantic Design System'
+
+  - id: no_expensive_operations_in_render
+    description: 'Нельзя делать тяжёлые операции внутри render (map/filter без useMemo)'
+    detection: 'ast-analysis'
+    severity: warning
+
+  ############################################
+  # МОДЕРНИЗАЦИЯ И LEGACY PREVENTION
+  ############################################
+
+  - id: app_router_usage_nextjs15
+    description: 'Использовать App Router, не Pages Router для новых страниц'
+    patterns:
+      - regex: 'pages/api/'
+    severity: warning
+    rationale: 'Next.js 15 с App Router'
+
+  - id: server_components_default
+    description: 'Компоненты должны быть Server Components по умолчанию'
+    patterns:
+      - regex: '"use client"'
+    severity: info
+    rationale: 'RSC performance optimization'
+
+  - id: no_legacy_validation_imports
+    description: 'Запрещен импорт устаревших validation schemas'
+    patterns:
+      - regex: "import.*from.*validation-schemas\\.ts"
+    severity: error
+    fix_suggestion: 'Использовать security-enhanced-schemas.ts'
+
+  - id: no_manual_css_variables
+    description: 'Не создавать CSS переменные вручную - использовать design tokens'
+    patterns:
+      - regex: ":root\\s*\\{"
+    severity: warning
+    excludes: ['packages/design-tokens/**/*', 'packages/tailwind-preset/**/*']
+
+  ############################################
+  # BUILD STRATEGIES COMPLIANCE
+  ############################################
+
+  - id: ts_direct_package_structure
+    description: 'TS-Direct пакеты должны экспортировать .ts файлы в main'
+    detection: 'package-json-main-check'
+    patterns:
+      - regex: '"main".*\\.js"'
+    severity: warning
+    excludes: ['packages/constants/package.json']
+    rationale: '5 разных стратегий сборки требуют правильной конфигурации'
+
+  - id: no_build_artifacts_in_git
+    description: 'Артефакты сборки не должны попадать в git'
+    patterns:
+      - regex: "^(dist|build|\\.next|\\.turbo)/"
+    severity: error
+    file_types: ['.gitignore']
+    rationale: 'Turborepo и различные стратегии сборки'
+
+  ############################################
+  # ИНТЕГРАЦИЯ И ПОЛНОТА РЕАЛИЗАЦИИ (Rule 23)
+  ############################################
+
+  - id: integration_completeness_check
+    description: 'Новые компоненты должны быть полностью интегрированы, не просто созданы'
+    detection: 'integration-analysis'
+    severity: warning
+    rationale: 'Rule 23: ОБЯЗАТЕЛЬНАЯ ПОЛНАЯ ИНТЕГРАЦИЯ'
+
+  - id: no_unused_exports
+    description: 'Экспорты должны использоваться, не висеть мертвым грузом'
+    detection: 'export-usage-analysis'
+    severity: warning
+
+# КОНФИГУРАЦИЯ ОБНАРУЖЕНИЯ И ИСКЛЮЧЕНИЙ
+detection_config:
+  excluded_paths:
+    - 'node_modules/**'
+    - '.next/**'
+    - 'dist/**'
+    - '.turbo/**'
+    - 'coverage/**'
+    - 'storybook-static/**'
+    - 'playwright-report/**'
+  
+  included_extensions:
+    - '.ts'
+    - '.tsx'
+    - '.js'
+    - '.jsx'
+    - '.json'
+    - '.yaml'
+    - '.yml'
+
+  monorepo_aliases:
+    - '@repo/constants'
+    - '@repo/utils'
+    - '@repo/ui'
+    - '@repo/hooks'
+    - '@repo/exchange-core'
+    - '@repo/design-tokens'
+    - '@repo/tailwind-preset'
+    - '@repo/eslint-config'
+    - '@repo/typescript-config'
+    - '@repo/providers'
+
+# МЕТРИКИ И ОТЧЕТНОСТЬ
+reporting:
+  severity_weights:
+    error: 10
+    warning: 5
+    info: 1
+
+  quality_thresholds:
+    excellent: 95
+    good: 85
+    acceptable: 70
+    poor: 50
+
+  categories:
+    security: ['enforce_security_enhanced_schemas', 'no_legacy_validation_schemas', 'form_xss_protection_required']
+    architecture: ['use_internal_package_imports', 'centralized_constants_usage', 'trpc_security_enhanced_input']
+    maintainability: ['no_duplicate_code', 'compound_component_complexity_threshold', 'business_logic_in_exchange_core']
+    performance: ['nextjs_image_optimization', 'no_expensive_operations_in_render', 'server_components_default']
+    description: 'Импорты должны идти через index.ts (barrel) или публичный API.'
+    patterns:
+      - regex: "import .* from '\\.\\./\\..*'"
+    severity: warning
+
+  - id: project_structure
+    description: 'Файлы должны быть в правильных директориях (components, lib, hooks, api).'
+    detection: 'path-rule'
+    severity: error
+
+  ############################################
+  # 3. ПАТТЕРНЫ РАЗРАБОТКИ (NEXT.JS/REACT)
+  ############################################
+
+  - id: nextjs_pages_only_in_app
+    description: 'Страницы Next.js должны находиться только в app/ или pages/.'
+    path_rule: 'apps/web/app/*'
+    severity: error
+
+  - id: hooks_location
+    description: 'Кастомные хуки должны храниться в lib/hooks или hooks/.'
+    path_rule: '**/hooks/*'
+    severity: error
+
+  - id: no_server_logic_in_client
+    description: 'Серверная логика не должна находиться в client-компонентах.'
+    detection: 'ast-analysis'
+    severity: error
+
+  - id: trpc_only_for_api
+    description: 'API вызовы должны использовать trpc-provider.tsx, а не fetch/axios.'
+    patterns:
+      - regex: "fetch\\("
+      - regex: 'import axios'
+    severity: error
+
+  ############################################
+  # 4. КАЧЕСТВО КОДА
+  ############################################
+
+  - id: no_hardcoded_values
+    description: 'Не использовать хардкоды для цветов, размеров, ID, URL.'
+    patterns:
+      - regex: '#[0-9A-Fa-f]{6}'
+      - regex: '[0-9]+px'
+      - regex: 'http(s)?://'
+      - regex: 'id=[''"]?[0-9]{3,}[''"]?'
+    severity: error
+
+  - id: no_duplicate_code
+    description: 'Не дублировать бизнес-логику или компоненты.'
+    detection: 'hash-compare'
+    severity: error
+
+  - id: no_unused_code
+    description: 'Удалять неиспользуемые функции, переменные, импорты.'
+    detection: 'static-analysis'
+    severity: warning
+
+  - id: no_any_type
+    description: 'Запрещён тип any — использовать точные типы.'
+    patterns:
+      - regex: ': any'
+    severity: error
+
+  - id: no_console_logs
+    description: 'Не оставлять console.log/debugger в коде.'
+    patterns:
+      - regex: "console\\.log"
+      - regex: 'debugger'
+    severity: error
+
+  ############################################
+  # 5. ТЕСТЫ
+  ############################################
+
+  - id: test_required_for_libs
+    description: 'Каждый модуль в lib/ должен иметь тест.'
+    detection: 'file-exists'
+    severity: error
+
+  - id: no_skip_in_tests
+    description: 'Не допускается .skip в тестах.'
+    patterns:
+      - regex: "\\.skip\\("
+    severity: warning
+
+  ############################################
+  # 6. БЕЗОПАСНОСТЬ
+  ############################################
+
+  - id: no_eval
+    description: 'Запрещено использовать eval и Function(...).'
+    patterns:
+      - regex: "eval\\("
+      - regex: "new Function\\("
+    severity: error
+
+  - id: no_secrets_in_code
+    description: 'Запрещено хранить ключи/пароли в коде.'
+    patterns:
+      - regex: '(api_key|secret|password) ?= ?[''"][A-Za-z0-9/+=]{10,}[''"]'
+    severity: error
+
+  - id: enforce_env_usage
+    description: 'Конфиги должны храниться только в process.env или .env.'
+    detection: 'ast-analysis'
+    severity: error
+
+  ############################################
+  # 7. ДОКУМЕНТАЦИЯ И TODO
+  ############################################
+
+  - id: todos_must_reference_issue
+    description: 'TODO должен ссылаться на задачу (#123, JIRA-45).'
+    patterns:
+      - regex: "TODO(?!.*(#\\d+|[A-Z]+-\\d+))"
+    severity: warning
+
+  - id: public_api_docs
+    description: 'Все публичные функции и компоненты должны иметь JSDoc.'
+    detection: 'ast-analysis'
+    severity: warning
+
+  ############################################
+  # 8. ПРОИЗВОДИТЕЛЬНОСТЬ
+  ############################################
+
+  - id: no_unoptimized_images
+    description: 'Не использовать <img>, только <Image> из next/image.'
+    patterns:
+      - regex: '<img '
+    severity: warning
+
+  - id: no_inline_styles
+    description: 'Не использовать inline-стили, только tailwind или css-модули.'
+    patterns:
+      - regex: "style=\\{"
+    severity: warning
+
+  - id: no_expensive_operations_in_render
+    description: 'Нельзя делать тяжёлые операции внутри render (map/filter без useMemo).'
+    detection: 'ast-analysis'
+    severity: warning
