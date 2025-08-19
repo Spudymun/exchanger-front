@@ -27,6 +27,108 @@ packages/
 
 ---
 
+## 🎯 Архитектурные паттерны
+
+### Compound Components Pattern
+
+**Применение**: Для сложных UI компонентов с множественными частями.
+
+**Структура** (используется в проекте):
+
+```typescript
+// Реальный пример из packages/ui/src/components/data-table-compound.tsx
+export const DataTableCompound = Object.assign(DataTable, {
+  Container,
+  Header,
+  Filters,
+  Content,
+  TableWrapper,
+  Pagination,
+  CellWrapper,
+});
+
+// Использование:
+<DataTable data={users}>
+  <DataTable.Container>
+    <DataTable.Header title="Users" />
+    <DataTable.Filters />
+    <DataTable.Content />
+    <DataTable.Pagination />
+  </DataTable.Container>
+</DataTable>
+```
+
+**Преимущества**:
+
+- Композиция вместо больших пропсов
+- Гибкость компоновки
+- Переиспользование частей
+
+### DOM Props Filtering
+
+**Проблема**: React DOM warnings при передаче не-HTML атрибутов в DOM элементы.
+
+**Решение** (используется в compound компонентах):
+
+```typescript
+// Реальный пример из packages/ui/src/components/auth-form-compound.tsx
+const FormWrapper = React.forwardRef<HTMLFormElement, FormWrapperProps>(
+  ({ className, children, onSubmit, ...props }, ref) => {
+    // Фильтруем React-специфичные пропсы
+    const {
+      form: _form,
+      isLoading: _isLoading,
+      t: _t,
+      fieldId: _fieldId,
+      formType: _formType,
+      onSubmit: _onSubmitFromProps,
+      validationErrors: _validationErrors,
+      ...domProps // Только DOM-безопасные пропсы
+    } = props as Record<string, unknown>;
+
+    return <form ref={ref} {...domProps}>{children}</form>;
+  }
+);
+```
+
+**Правило**: Всегда фильтруйте пропсы перед передачей в DOM элементы.
+
+### Context Enhancement Pattern
+
+**Применение**: Автоматическое внедрение пропсов из контекста в дочерние компоненты.
+
+**Реализация** (уникальный паттерн проекта):
+
+```typescript
+// packages/ui/src/lib/auth-helpers.tsx
+export function enhanceChildWithContext(
+  child: React.ReactNode,
+  context: AuthFormContextValue | undefined
+) {
+  if (!React.isValidElement(child) || typeof child.type === 'string') {
+    return child;
+  }
+
+  const childProps = child.props as Record<string, unknown>;
+  const enhancedProps: Record<string, unknown> = {};
+
+  // Добавляем пропсы контекста только если они отсутствуют
+  if (context?.form && !childProps.form) {
+    enhancedProps.form = context.form;
+  }
+
+  return React.cloneElement(child, enhancedProps);
+}
+```
+
+**Преимущества**:
+
+- Автоматическое распространение контекста
+- Сохранение явных пропсов
+- Предотвращение prop drilling
+
+---
+
 ## 📐 Размер компонентов и функций
 
 ### ESLint конфигурация (централизованная архитектура)
@@ -557,6 +659,72 @@ if (order.status === ORDER_STATUSES.PENDING) {
 
 ---
 
+## 🧪 Тестирование паттерны
+
+### User-Centric Testing
+
+**Принцип**: Тестировать поведение, а не implementation details.
+
+**Используемые инструменты**:
+
+- `@testing-library/react` - DOM запросы через пользовательские сценарии
+- `@testing-library/jest-dom` - расширенные матчеры
+- `@testing-library/user-event` - симуляция пользовательских действий
+
+**Примеры из кодовой базы**:
+
+```typescript
+// packages/ui/src/__tests__/Button.test.tsx
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+
+describe('Button', () => {
+  it('renders correctly', () => {
+    render(<Button>Test Button</Button>);
+    // Используем role вместо className или testId
+    expect(screen.getByRole('button', { name: 'Test Button' })).toBeInTheDocument();
+  });
+
+  it('handles click events', async () => {
+    const handleClick = jest.fn();
+    const user = userEvent.setup();
+
+    render(<Button onClick={handleClick}>Click me</Button>);
+
+    // Симулируем реальное взаимодействие пользователя
+    await user.click(screen.getByRole('button'));
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+});
+```
+
+**Приоритеты запросов** (по убыванию):
+
+1. `getByRole()` - семантические роли
+2. `getByLabelText()` - форма labels
+3. `getByText()` - видимый текст
+4. `getByTestId()` - только в крайнем случае
+
+### Testing Setup
+
+**Конфигурация** (`jest.setup.cjs`):
+
+```javascript
+require('@testing-library/jest-dom');
+
+// Mocks для Next.js
+jest.mock('next/router', () => ({ useRouter: () => ({ ... }) }));
+jest.mock('next/navigation', () => ({ useRouter: () => ({ ... }) }));
+```
+
+**Правила**:
+
+- Тестируйте контракты, не внутреннюю логику
+- Используйте accessibility-focused запросы
+- Мокайте внешние зависимости (Next.js router, API)
+
+---
+
 ## ✅ Code Review Checklist
 
 ### Размер и сложность
@@ -585,11 +753,23 @@ if (order.status === ORDER_STATUSES.PENDING) {
 - [ ] Hooks/stores изолированы от UI деталей
 - [ ] Зависимости направлены правильно (UI → hooks → exchange-core)
 
+### Архитектурные паттерны
+
+- [ ] **Compound Components**: Сложные UI компоненты используют Object.assign паттерн
+- [ ] **DOM Props Filtering**: Отфильтрованы React-специфичные пропсы перед передачей в DOM
+- [ ] **Context Enhancement**: Используется автоматическое внедрение пропсов где применимо
+
 ### TypeScript
 
 - [ ] Типы экспортированы из правильных пакетов
 - [ ] Используется `as const` для конфигурационных объектов
 - [ ] Нет `any` типов без веской причины
+
+### Тестирование
+
+- [ ] Тесты используют `getByRole()` и accessibility-focused запросы
+- [ ] Тестируется поведение пользователя, а не implementation details
+- [ ] Мокаются внешние зависимости (Next.js router, API calls)
 
 ---
 

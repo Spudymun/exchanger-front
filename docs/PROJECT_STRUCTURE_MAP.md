@@ -175,7 +175,6 @@ Root path: `e:\project\kiro\exchanger-front`
 │   │   └── 📝 SECURITY_WARNINGS_GUIDE.md - Руководство по предупреждениям безопасности | Security guidelines | Работа с уязвимостями
 │   ├── 📝 API_DOCS.md - Документация API | API reference | Описание всех API endpoints и методов
 │   ├── 📝 ARCHITECTURE.md - Архитектурное руководство | System design | Общая архитектура проекта и принципы
-│   ├── 📝 AUTH_MIGRATION_COMPLETION_REPORT.md - Отчет о миграции авторизации | Migration report | Завершение перехода системы авторизации
 │   ├── 📝 BUNDLE_SIZE_INVESTIGATION_REPORT.md - Отчет анализа размера бандла | Performance report | Исследование размера сборки приложения
 │   ├── 📝 CENTRALIZED_ESLINT_ARCHITECTURE.md - Архитектура централизованного ESLint | Code quality | Единая система линтинга в монорепо
 │   ├── 📝 CLAUDE.md - Документация работы с Claude | AI assistant guide | Руководство по работе с AI ассистентом Claude
