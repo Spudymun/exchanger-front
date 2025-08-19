@@ -422,6 +422,39 @@ export const Default: Story = {
 };
 ```
 
+### Compound Components Pattern
+
+Проект использует **Compound Components Pattern** для сложных UI компонентов с общим состоянием.
+
+#### DOM Props Filtering - Критическое техническое решение
+
+**Проблема**: React выдает ошибки "React does not recognize the `[propName]` prop on a DOM element" когда пропсы из Context API попадают в DOM элементы.
+
+**Техническое решение**: Фильтрация пропсов в wrapper компонентах перед передачей в DOM:
+
+```tsx
+// Паттерн фильтрации в compound wrapper компонентах
+const FormWrapper = ({ children, ...props }: WrapperProps) => {
+  // Фильтруем специфичные пропсы перед передачей в DOM
+  const {
+    form: _form,
+    isLoading: _isLoading,
+    t: _t,
+    fieldId: _fieldId,
+    formType: _formType,
+    onSubmit: _onSubmit,
+    validationErrors: _validationErrors,
+    ...domProps // Только DOM-безопасные пропсы
+  } = props as Record<string, unknown>;
+
+  return <form {...domProps}>{enhancedChildren}</form>;
+};
+```
+
+**Результат**: ✅ Устранение всех React DOM warnings в production.
+
+**📖 Полная документация**: См. [`packages/ui/README.md`](../packages/ui/README.md#authform-compound-component) для примеров использования compound components.
+
 ---
 
 ## 🏪 State Management
