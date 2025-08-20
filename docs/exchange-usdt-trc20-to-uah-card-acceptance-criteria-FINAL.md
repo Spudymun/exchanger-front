@@ -427,7 +427,7 @@
 
   ```ts
   // Enhanced form data type
-  interface NewExchangeFormData {
+  interface ExchangeFormData {
     fromCurrency: CryptoCurrency;
     fromTokenStandard: TokenStandard;
     toCurrency: 'UAH';
@@ -442,7 +442,7 @@
   }
 
   // Enhanced validation schema
-  const newExchangeFormSchema = z.object({
+  const exchangeFormSchema = z.object({
     fromCurrency: cryptoCurrencySchema,
     fromTokenStandard: tokenStandardSchema,
     toCurrency: z.literal('UAH'),
@@ -549,8 +549,8 @@ export const validateCardLength = (cardNumber: string, brand: CardBrand): boolea
 ```ts
 interface ExchangeStore {
   // Form state
-  formData: NewExchangeFormData;
-  setFormData: (data: Partial<NewExchangeFormData>) => void;
+  formData: ExchangeFormData;
+  setFormData: (data: Partial<ExchangeFormData>) => void;
 
   // UI state
   isLoading: boolean;
