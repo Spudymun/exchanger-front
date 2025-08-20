@@ -100,7 +100,7 @@ Root path: `e:\project\kiro\exchanger-front`
 │       │   │   │   └── 📄 useHeroExchangeForm.ts - Хук формы обмена | Business logic hook | Логика управления состоянием формы
 │       │   │   ├── 📁 forms/ - Компоненты форм | Form components | Переиспользуемые формы приложения
 │       │   │   │   ├── 📄 AuthForms.tsx - Формы авторизации | Auth UI | Контейнер для форм входа и регистрации
-│       │   │   │   ├── 📄 ExchangeForm.tsx - Главная форма обмена | Business component | Основная форма создания обмена
+│       │   │   │   ├── 📄 ExchangeForm.legacy.tsx - Старая главная форма обмена | Business component | Основная форма создания обмена
 │       │   │   │   ├── 📄 LoginForm.tsx - Форма входа | Auth component | Форма авторизации пользователя
 │       │   │   │   ├── 📄 RegisterForm.tsx - Форма регистрации | Auth component | Форма создания нового аккаунта
 │       │   │   │   └── 📄 index.ts - Экспорты форм | Module exports | Централизованный экспорт всех форм
@@ -421,6 +421,7 @@ Root path: `e:\project\kiro\exchanger-front`
 │   │   │   │   ├── 📁 ui/ - Базовые UI компоненты | shadcn/ui primitives | Основные переиспользуемые UI элементы
 │   │   │   │   │   ├── 📄 button.tsx - Компонент кнопки | Button component | Базовый компонент кнопки с вариантами стилей
 │   │   │   │   │   ├── 📄 card.tsx - Компонент карточки | Card component | Контейнер для группировки контента
+│   │   │   │   │   ├── 📄 checkbox.tsx - Компонент чекбокса | Checkbox component | Элемент выбора с галочкой
 │   │   │   │   │   ├── 📄 dialog.tsx - Компонент диалога | Dialog component | Модальные окна и диалоги
 │   │   │   │   │   ├── 📄 dropdown-menu.tsx - Выпадающее меню | Dropdown menu | Компонент выпадающего меню
 │   │   │   │   │   ├── 📄 form.tsx - Компонент формы | Form component | Базовые элементы форм с валидацией
@@ -494,6 +495,7 @@ Root path: `e:\project\kiro\exchanger-front`
 │       ├── 📁 .turbo/ 🚫 (auto-hidden) - Кэш Turborepo | Оптимизация сборки | Ускорение повторных сборок пакета
 │       ├── 📁 src/ - Исходный код утилит | Utils source code | Все утилитарные функции системы
 │       │   ├── 📁 validation/ - Функции валидации | Validation utilities | Полная система валидации данных
+│       │   │   ├── 📄 card-validation.ts - Валидация карточных данных | Card validation | Проверка данных банковских карт
 │       │   │   ├── 📄 constants.ts - Константы валидации | Validation constants | Константы для правил валидации
 │       │   │   ├── 📄 core.ts - Ядро валидации | Validation core | Основные функции валидации
 │       │   │   ├── 📄 field-validation.ts - Валидация полей | Field validation | Валидация отдельных полей форм

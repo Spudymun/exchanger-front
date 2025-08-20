@@ -11,6 +11,7 @@ export * from './single-field';
 export * from './validation-utils';
 export * from './schemas-basic';
 export * from './schemas-crypto';
+export * from './card-validation';
 // УДАЛЕНЫ после SECURITY-ENHANCED MIGRATION:
 // export * from './schemas-composed'; // Очищен - schemas не используются
 // export * from './schemas-utils';    // Очищен - все schemas заменены на security-enhanced

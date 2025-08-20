@@ -1,6 +1,7 @@
 // UI Components
 export { Button, buttonVariants } from './ui/button';
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
+export { Checkbox } from './ui/checkbox';
 export {
   Dialog,
   DialogContent,

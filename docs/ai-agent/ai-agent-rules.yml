@@ -8,8 +8,9 @@
 
 # ⚡ ПРИОРИТЕТ ПРАВИЛ - БЫСТРЫЙ ДОСТУП ⚡
 main_rule: 'Не писать хардкод' # Никогда не писать хардкод
+project_structure_rule: 'ВСЕГДА знать структуру проекта - читать PROJECT_STRUCTURE_MAP.md ПЕРЕД любыми решениями' # Архитектурное понимание превыше всего
 priority_hierarchy:
-  critical_rules: [0, 1, 8, 11, 20, 21, 22, 23] # Память, Критическое мышление, Запрет предположений, Недопустимость техдолга, Запрет избыточности, Осознанное удаление, CSS диагностика, ОБЯЗАТЕЛЬНАЯ ПОЛНАЯ ИНТЕГРАЦИЯ
+  critical_rules: [0, 1, 8, 11, 20, 21, 22, 23, 24] # Память, Критическое мышление, Запрет предположений, Недопустимость техдолга, Запрет избыточности, Осознанное удаление, CSS диагностика, ОБЯЗАТЕЛЬНАЯ ПОЛНАЯ ИНТЕГРАЦИЯ, ЖЕЛЕЗОБЕТОННОЕ ЗНАНИЕ СТРУКТУРЫ
   architectural_rules: [2, 5, 17] # Структурированный подход, Контекстное понимание, Централизованные системы
   quality_rules: [3, 7, 9, 12, 15, 16, 18] # Качество процесса, Готовность кода, Объяснения, Тестируемость, Производительность, Совместимость, Документирование
   process_rules: [4, 6, 10, 13, 14, 19] # Опора на документацию, Конкретность, Совместимость, Актуальность, Правильность концепций, Управление конфликтами
@@ -22,6 +23,7 @@ conflict_resolution:
   redundancy_prohibition: 'Rule 20 (Запрет избыточности) - КРИТИЧЕСКОЕ правило, блокирует создание дублирующего кода'
   conscious_deletion: 'Rule 21 (Осознанное удаление) - КРИТИЧЕСКОЕ правило, блокирует любое удаление без полного анализа'
   integration_mandatory: 'Rule 23 (ОБЯЗАТЕЛЬНАЯ ПОЛНАЯ ИНТЕГРАЦИЯ) - КРИТИЧЕСКОЕ правило, блокирует считать задачу выполненной без полной интеграции'
+  structure_knowledge_mandatory: 'Rule 24 (ЖЕЛЕЗОБЕТОННОЕ ЗНАНИЕ СТРУКТУРЫ) - КРИТИЧЕСКОЕ правило, блокирует ЛЮБЫЕ действия без чтения PROJECT_STRUCTURE_MAP.md'
 
 rules:
   rule_0:
@@ -771,6 +773,171 @@ rules:
       rule_11_connection: 'Удаление без анализа = создание техдолга'
       rule_3_connection: 'Качество процесса включает осознанное удаление'
 
+  rule_24:
+    title: 'ЖЕЛЕЗОБЕТОННОЕ ЗНАНИЕ СТРУКТУРЫ ПРОЕКТА - Обязательное чтение PROJECT_STRUCTURE_MAP.md'
+    description: 'КРИТИЧЕСКОЕ правило максимального приоритета: ПЕРЕД любыми архитектурными решениями, созданием кода или предложениями ОБЯЗАТЕЛЬНО читать PROJECT_STRUCTURE_MAP.md и релевантные части структуры'
+    priority: 'КРИТИЧЕСКОЕ - железобетонное правило архитектурного понимания'
+    
+    core_principle: 'НЕ ПРИНИМАТЬ РЕШЕНИЙ БЕЗ ЗНАНИЯ СТРУКТУРЫ ПРОЕКТА'
+    
+    mandatory_reading_triggers:
+      title: 'ОБЯЗАТЕЛЬНЫЕ триггеры чтения структуры'
+      purpose: 'Автоматическое принуждение к чтению структуры при любых архитектурных действиях'
+      
+      immediate_triggers:
+        task_start: 'ЛЮБАЯ новая задача → НЕМЕДЛЕННО читать PROJECT_STRUCTURE_MAP.md'
+        code_creation: 'Создание ЛЮБОГО кода → СНАЧАЛА анализ структуры соответствующих пакетов'
+        architecture_decision: 'ЛЮБОЕ архитектурное решение → ПОЛНЫЙ анализ затрагиваемых уровней'
+        file_modification: 'Изменение ЛЮБОГО файла → ПОНИМАНИЕ его места в архитектуре'
+        component_creation: 'Создание компонента → АНАЛИЗ packages/ui/ и существующих паттернов'
+        hook_creation: 'Создание хука → АНАЛИЗ packages/hooks/ и состояния'
+        utility_creation: 'Создание утилиты → АНАЛИЗ packages/utils/ и избежание дублирования'
+        type_creation: 'Создание типов → АНАЛИЗ packages/exchange-core/types/'
+        validation_creation: 'Создание валидации → АНАЛИЗ packages/utils/validation/'
+        constant_creation: 'Создание констант → АНАЛИЗ packages/constants/'
+        business_logic: 'Бизнес-логика → АНАЛИЗ packages/exchange-core/'
+        api_work: 'Работа с API → АНАЛИЗ apps/web/src/server/trpc/routers/'
+        ui_changes: 'Изменения UI → АНАЛИЗ packages/ui/ и design-tokens'
+        form_creation: 'Создание форм → АНАЛИЗ существующих форм и валидации'
+        error_handling: 'Обработка ошибок → АНАЛИЗ error-boundaries и паттернов'
+        testing: 'Создание тестов → АНАЛИЗ существующих test patterns'
+        documentation: 'Документирование → АНАЛИЗ docs/ структуры'
+        configuration: 'Изменение конфигураций → АНАЛИЗ влияния на всю архитектуру'
+    
+    enforcement_mechanism:
+      title: 'МЕХАНИЗМ ПРИНУЖДЕНИЯ к чтению структуры'
+      
+      blocking_checkpoints:
+        before_any_code: 'БЛОКИРОВКА: Нельзя создавать код без анализа структуры'
+        before_suggestions: 'БЛОКИРОВКА: Нельзя предлагать решения без знания архитектуры'
+        before_file_changes: 'БЛОКИРОВКА: Нельзя изменять файлы без понимания их роли'
+        before_component_work: 'БЛОКИРОВКА: Нельзя работать с компонентами без анализа packages/ui/'
+        before_business_logic: 'БЛОКИРОВКА: Нельзя трогать бизнес-логику без анализа exchange-core'
+        before_architecture_decisions: 'БЛОКИРОВКА: Нельзя принимать архитектурные решения без полного анализа'
+      
+      mandatory_questions:
+        structure_knowledge: 'Прочитал ли я PROJECT_STRUCTURE_MAP.md для этой задачи?'
+        relevant_packages: 'Проанализировал ли я все релевантные пакеты?'
+        existing_patterns: 'Изучил ли я существующие паттерны в затрагиваемых областях?'
+        architecture_impact: 'Понимаю ли я влияние решения на общую архитектуру?'
+        centralized_systems: 'Проверил ли я централизованные системы (constants, ui, utils, hooks)?'
+        documentation_analysis: 'Изучил ли я соответствующую документацию?'
+      
+      failure_consequences:
+        immediate: 'СТОП! Нельзя продолжать без чтения структуры'
+        blocking: 'Задача блокируется до анализа архитектуры'
+        restart_required: 'Требуется перезапуск задачи с правильным подходом'
+    
+    reading_algorithm:
+      title: 'АЛГОРИТМ обязательного чтения структуры'
+      
+      step_1_universal:
+        action: 'ВСЕГДА читать PROJECT_STRUCTURE_MAP.md ПОЛНОСТЬЮ'
+        purpose: 'Получить полное понимание архитектуры проекта'
+        mandatory: 'БЕЗ ИСКЛЮЧЕНИЙ для любой задачи'
+      
+      step_2_targeted:
+        action: 'Анализировать КОНКРЕТНЫЕ релевантные пакеты'
+        examples:
+          ui_task: 'packages/ui/ → все компоненты и паттерны'
+          business_task: 'packages/exchange-core/ → типы, утилиты, сервисы'
+          state_task: 'packages/hooks/ → существующие хуки и состояние'
+          validation_task: 'packages/utils/validation/ → схемы и паттерны'
+          constant_task: 'packages/constants/ → все категории констант'
+          form_task: 'apps/web/src/components/forms/ → существующие формы'
+          api_task: 'apps/web/src/server/trpc/routers/ → API структура'
+      
+      step_3_documentation:
+        action: 'Читать соответствующую документацию'
+        sources:
+          - 'docs/DEVELOPER_GUIDE.md'
+          - 'docs/ARCHITECTURE.md'
+          - 'docs/CODE_STYLE_GUIDE.md'
+          - 'Специфичные guides для задачи'
+      
+      step_4_verification:
+        action: 'ПОДТВЕРЖДЕНИЕ понимания архитектуры'
+        requirements:
+          - 'Понимаю роль каждого затрагиваемого пакета'
+          - 'Знаю существующие паттерны в области'
+          - 'Понимаю принципы архитектуры'
+          - 'Вижу возможности переиспользования'
+    
+    integration_with_existing_rules:
+      title: 'УСИЛЕНИЕ существующих правил'
+      
+      rule_5_enhancement:
+        title: 'Rule 5 (Контекстное понимание) → ЖЕЛЕЗОБЕТОННОЕ усиление'
+        change: 'НЕ просто "анализируй контекст", а ОБЯЗАТЕЛЬНО читай PROJECT_STRUCTURE_MAP.md'
+      
+      rule_17_enhancement:
+        title: 'Rule 17 (Централизованные системы) → АВТОМАТИЧЕСКОЕ чтение'
+        change: 'НЕ просто "проверяй", а ОБЯЗАТЕЛЬНО читай все релевантные пакеты'
+      
+      rule_20_enhancement:
+        title: 'Rule 20 (Запрет избыточности) → СТРУКТУРНАЯ проверка'
+        change: 'Поиск дублирования НАЧИНАЕТСЯ с анализа структуры'
+      
+      rule_2_enhancement:
+        title: 'Rule 2 (Архитектурный анализ) → СТРУКТУРНАЯ база'
+        change: 'Архитектурный анализ НАЧИНАЕТСЯ с чтения PROJECT_STRUCTURE_MAP.md'
+    
+    automatic_actions:
+      title: 'АВТОМАТИЧЕСКИЕ действия при активации правила'
+      
+      immediate_reading:
+        - 'read_file: PROJECT_STRUCTURE_MAP.md (полностью)'
+        - 'Анализ релевантных секций структуры'
+        - 'Идентификация затрагиваемых пакетов'
+      
+      targeted_analysis:
+        - 'list_dir соответствующих пакетов'
+        - 'semantic_search по релевантным областям'
+        - 'grep_search для поиска существующих паттернов'
+      
+      documentation_check:
+        - 'Чтение соответствующей документации'
+        - 'Анализ существующих соглашений'
+        - 'Проверка best practices'
+    
+    success_criteria:
+      title: 'КРИТЕРИИ успешного применения правила'
+      
+      knowledge_verification:
+        - 'Могу объяснить роль каждого затрагиваемого пакета'
+        - 'Знаю существующие паттерны в области задачи'
+        - 'Понимаю архитектурные принципы'
+        - 'Вижу возможности переиспользования'
+        - 'Знаю ограничения и соглашения'
+      
+      decision_quality:
+        - 'Решения основаны на знании структуры'
+        - 'Нет нарушений архитектурных принципов'
+        - 'Максимальное переиспользование существующего'
+        - 'Соответствие проектным паттернам'
+        - 'Интеграция с существующими системами'
+    
+    emergency_procedures:
+      title: 'ЭКСТРЕННЫЕ процедуры при нарушении правила'
+      
+      detection_signals:
+        - 'Предлагаю решение без чтения структуры'
+        - 'Создаю код без анализа существующих паттернов'
+        - 'Принимаю архитектурные решения "на лету"'
+        - 'Не могу объяснить роль пакетов в решении'
+      
+      immediate_actions:
+        - 'СТОП! Немедленно прекратить работу'
+        - 'Прочитать PROJECT_STRUCTURE_MAP.md'
+        - 'Проанализировать релевантные пакеты'
+        - 'Перезапустить задачу с правильным подходом'
+      
+      prevention_measures:
+        - 'Установить обязательные checkpoints'
+        - 'Создать checklist проверки структуры'
+        - 'Автоматизировать триггеры чтения'
+        - 'Документировать процесс анализа'
+
 # === СИСТЕМА ТРИГГЕРОВ v1.5 ===
 # Автоматическая активация правил по действиям AI агента
 
@@ -782,26 +949,30 @@ trigger_system:
   trigger_types:
     task_start:
       description: 'Начало любой новой задачи'
-      mandatory_rules: [0, 1, 2, 20]
+      mandatory_rules: [0, 1, 2, 20, 24]
       checklist:
         - 'Подтвердить знание всех правил (Rule 0)'
         - 'Включить критическое мышление (Rule 1)'
         - 'Провести структурированный анализ (Rule 2)'
         - 'Проверить отсутствие избыточности (Rule 20)'
+        - 'ОБЯЗАТЕЛЬНО прочитать PROJECT_STRUCTURE_MAP.md (Rule 24)'
       automatic_actions:
         - 'Запросить понимание задачи'
+        - 'НЕМЕДЛЕННО читать PROJECT_STRUCTURE_MAP.md'
         - 'Провести архитектурный анализ'
         - 'Поиск существующих решений'
 
     code_creation:
       description: 'Создание любого нового кода'
-      mandatory_rules: [7, 8, 11, 17, 20]
+      mandatory_rules: [7, 8, 11, 17, 20, 24]
       checklist:
+        - 'ОБЯЗАТЕЛЬНО прочитать PROJECT_STRUCTURE_MAP.md (Rule 24)'
         - 'Поиск существующих решений (Rule 20, 17)'
         - 'Готовность к использованию (Rule 7)'
         - 'Отсутствие технического долга (Rule 11)'
         - 'Обязательный алгоритм поиска (Rule 20)'
       automatic_actions:
+        - 'НЕМЕДЛЕННО читать PROJECT_STRUCTURE_MAP.md'
         - 'semantic_search по ключевым словам'
         - 'Проверка centralised systems'
         - 'Анализ возможности переиспользования'
@@ -821,14 +992,16 @@ trigger_system:
 
     architecture_decision:
       description: 'Принятие архитектурных решений'
-      mandatory_rules: [2, 9, 11, 14, 19]
+      mandatory_rules: [2, 9, 11, 14, 19, 24]
       checklist:
+        - 'ОБЯЗАТЕЛЬНО прочитать PROJECT_STRUCTURE_MAP.md (Rule 24)'
         - 'Архитектурный анализ (Rule 2)'
         - 'Объяснение решений (Rule 9)'
         - 'Долгосрочность (Rule 11)'
         - 'Проверенные концепции (Rule 14)'
         - 'Разрешение конфликтов (Rule 19)'
       automatic_actions:
+        - 'НЕМЕДЛЕННО читать PROJECT_STRUCTURE_MAP.md'
         - 'Анализ существующей архитектуры'
         - 'Оценка альтернатив'
         - 'Документирование решения'
@@ -1045,28 +1218,74 @@ trigger_system:
         - 'Создание отчета о завершении без результатов аудита'
         - 'Нарушение последовательности фаз workflow'
 
+    project_structure_enforcement:
+      description: 'ЖЕЛЕЗОБЕТОННЫЙ ТРИГГЕР: Принуждение к чтению структуры проекта'
+      mandatory_rules: [24, 0, 8, 5, 17]
+      purpose: 'Автоматическое БЛОКИРОВАНИЕ любых действий без знания PROJECT_STRUCTURE_MAP.md'
+      
+      universal_triggers:
+        any_task: 'ЛЮБАЯ задача → ОБЯЗАТЕЛЬНО PROJECT_STRUCTURE_MAP.md'
+        any_code: 'ЛЮБОЙ код → ОБЯЗАТЕЛЬНО анализ релевантных пакетов'
+        any_decision: 'ЛЮБОЕ решение → ОБЯЗАТЕЛЬНО архитектурное понимание'
+        any_suggestion: 'ЛЮБОЕ предложение → ОБЯЗАТЕЛЬНО знание структуры'
+      
+      blocking_mechanism:
+        title: 'МЕХАНИЗМ БЛОКИРОВКИ без знания структуры'
+        
+        pre_action_checks:
+          structure_read: 'Прочитан ли PROJECT_STRUCTURE_MAP.md для этой задачи?'
+          packages_analyzed: 'Проанализированы ли релевантные пакеты?'
+          patterns_understood: 'Понимаю ли я существующие паттерны?'
+          architecture_clear: 'Ясна ли мне роль каждого компонента в архитектуре?'
+        
+        blocking_actions:
+          - 'СТОП! БЛОКИРОВКА всех действий'
+          - 'ПРИНУДИТЕЛЬНОЕ чтение PROJECT_STRUCTURE_MAP.md'
+          - 'ОБЯЗАТЕЛЬНЫЙ анализ релевантных пакетов'
+          - 'Возврат к началу задачи с правильным подходом'
+      
+      enforcement_phrases:
+        mandatory_announcements:
+          - 'ТРИГГЕР Rule 24: Читаю PROJECT_STRUCTURE_MAP.md'
+          - 'БЛОКИРОВКА: Анализирую структуру перед продолжением'
+          - 'ПРИНУЖДЕНИЕ: Изучаю релевантные пакеты'
+          - 'CHECKPOINT: Подтверждаю знание архитектуры'
+      
+      success_validation:
+        - 'Могу объяснить роль каждого пакета в моем решении'
+        - 'Знаю существующие паттерны в области задачи'
+        - 'Понимаю архитектурные ограничения'
+        - 'Вижу возможности переиспользования'
+        - 'Следую проектным соглашениям'
+
   trigger_activation:
     automatic_detection:
       title: 'Автоматическое определение триггеров'
       description: 'Система должна автоматически определять тип действия и активировать соответствующие правила'
 
       detection_patterns:
-        - 'Упоминание создания нового кода → code_creation'
-        - 'Изменение существующих файлов → file_modification'
-        - 'Архитектурные вопросы → architecture_decision'
-        - 'Работа с package.json → dependency_management'
-        - 'Вопросы производительности → performance_optimization'
-        - 'Создание тестов → testing_implementation'
-        - 'Рефакторинг кода → refactoring'
-        - 'Обработка ошибок → error_handling'
-        - 'Security вопросы → security_implementation'
-        - 'API дизайн → api_design'
-        - 'Изменение конфигураций → configuration_changes'
-        - 'Диагностика проблем → problem_diagnosis'
-        - 'Удаление файлов → file_deletion'
-        - 'Удаление зависимостей → dependency_removal'
-        - 'Удаление конфигураций → configuration_removal'
-        - 'Удаление кода → code_deletion'
+        - 'ЛЮБАЯ новая задача → project_structure_enforcement + task_start'
+        - 'Упоминание создания нового кода → project_structure_enforcement + code_creation'
+        - 'Изменение существующих файлов → project_structure_enforcement + file_modification'
+        - 'Архитектурные вопросы → project_structure_enforcement + architecture_decision'
+        - 'Работа с package.json → project_structure_enforcement + dependency_management'
+        - 'Вопросы производительности → project_structure_enforcement + performance_optimization'
+        - 'Создание тестов → project_structure_enforcement + testing_implementation'
+        - 'Рефакторинг кода → project_structure_enforcement + refactoring'
+        - 'Обработка ошибок → project_structure_enforcement + error_handling'
+        - 'Security вопросы → project_structure_enforcement + security_implementation'
+        - 'API дизайн → project_structure_enforcement + api_design'
+        - 'Изменение конфигураций → project_structure_enforcement + configuration_changes'
+        - 'Диагностика проблем → project_structure_enforcement + problem_diagnosis'
+        - 'Удаление файлов → project_structure_enforcement + file_deletion'
+        - 'Удаление зависимостей → project_structure_enforcement + dependency_removal'
+        - 'Удаление конфигураций → project_structure_enforcement + configuration_removal'
+        - 'Удаление кода → project_structure_enforcement + code_deletion'
+        - 'Работа с UI → project_structure_enforcement + packages/ui анализ'
+        - 'Работа с hooks → project_structure_enforcement + packages/hooks анализ'
+        - 'Работа с utils → project_structure_enforcement + packages/utils анализ'
+        - 'Работа с constants → project_structure_enforcement + packages/constants анализ'
+        - 'Бизнес-логика → project_structure_enforcement + packages/exchange-core анализ'
 
     manual_activation:
       title: 'Ручная активация триггеров'
