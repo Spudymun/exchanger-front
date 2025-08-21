@@ -19,26 +19,6 @@ import {
 } from './security-utils';
 
 /**
- * SIMPLE EXCHANGE FORM SCHEMA
- */
-export const securityEnhancedSimpleExchangeSchema = z.object({
-  currency: z.enum(['BTC', 'ETH', 'USDT', 'LTC'] as const),
-  cryptoAmount: z
-    .string()
-    .min(1, 'AMOUNT_REQUIRED')
-    .max(SECURITY_VALIDATION_LIMITS.AMOUNT_MAX_LENGTH, 'AMOUNT_TOO_LONG')
-    .refine(val => Number(val) > 0, 'AMOUNT_POSITIVE_REQUIRED')
-    .refine(val => !isNaN(Number(val)), 'AMOUNT_MUST_BE_NUMBER')
-    .transform(val => {
-      if (containsPotentialXSS(val)) {
-        throw new Error('INVALID_CHARACTERS_DETECTED');
-      }
-      return val.trim();
-    }),
-  email: emailSchema,
-});
-
-/**
  * CREATE EXCHANGE ORDER SCHEMA
  */
 export const securityEnhancedCreateExchangeOrderSchema = z.object({
@@ -77,21 +57,8 @@ export const securityEnhancedCreateExchangeOrderSchema = z.object({
 });
 
 /**
- * ENHANCED EXCHANGE FORM SCHEMA
+ * TYPE EXPORTS
  */
-export const securityEnhancedExchangeSchema = z.object({
-  fromCurrency: currencySchema,
-  toCurrency: currencySchema,
-  amount: z
-    .number()
-    .positive('AMOUNT_POSITIVE_REQUIRED')
-    .min(VALIDATION_LIMITS.MIN_ORDER_AMOUNT, 'AMOUNT_MIN_REQUIRED')
-    .max(VALIDATION_LIMITS.MAX_ORDER_AMOUNT, 'AMOUNT_MAX_EXCEEDED')
-    .finite('AMOUNT_MUST_BE_FINITE'),
-  email: emailSchema,
-  comment: createXSSProtectedString(0, SECURITY_VALIDATION_LIMITS.COMMENT_MAX_LENGTH).optional(),
-  agreeToTerms: z.boolean().refine(val => val === true, 'TERMS_AGREEMENT_REQUIRED'),
-});
 
 /**
  * ADVANCED EXCHANGE FORM SCHEMA
@@ -132,13 +99,6 @@ export const securityEnhancedAdvancedExchangeFormSchema = z.object({
 /**
  * TYPE EXPORTS
  */
-export type SecurityEnhancedSimpleExchangeForm = z.infer<
-  typeof securityEnhancedSimpleExchangeSchema
->;
 export type SecurityEnhancedCreateExchangeOrder = z.infer<
   typeof securityEnhancedCreateExchangeOrderSchema
->;
-export type SecurityEnhancedExchangeForm = z.infer<typeof securityEnhancedExchangeSchema>;
-export type SecurityEnhancedAdvancedExchangeForm = z.infer<
-  typeof securityEnhancedAdvancedExchangeFormSchema
 >;
