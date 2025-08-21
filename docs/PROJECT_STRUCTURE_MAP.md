@@ -203,6 +203,7 @@ Root path: `e:\project\kiro\exchanger-front`
 │   │   ├── 📁 node_modules/ 🚫 (auto-hidden) - Локальные зависимости | NPM packages | Зависимости пакета констант
 │   │   ├── 📁 src/ - Исходный код констант | TypeScript files | Все константы системы по категориям
 │   │   │   ├── 📄 api.ts - API константы | Endpoints, status codes | URL endpoints и HTTP статусы
+│   │   │   ├── 📄 app-routes.ts - Маршруты приложений | Routing constants | Централизованные URL маршруты для web/admin
 │   │   │   ├── 📄 auth.ts - Константы авторизации | Auth settings | Настройки системы авторизации
 │   │   │   ├── 📄 banks.ts - Банковские данные | Bank configurations | Справочник банков и их настройки
 │   │   │   ├── 📄 business-limits.ts - Бизнес-лимиты | Business rules | Ограничения для бизнес-логики
@@ -211,7 +212,7 @@ Root path: `e:\project\kiro\exchanger-front`
 │   │   │   ├── 📄 currency-formats.ts - Форматы валют | Formatting rules | Правила отображения валют
 │   │   │   ├── 📄 decimal-precision.ts - Точность десятичных чисел | Number precision | Настройки точности вычислений
 │   │   │   ├── 📄 exchange-currencies.ts - Валюты обмена | Currency list | Поддерживаемые валюты для обмена
-│   │   │   ├── 📄 exchange.ts - Константы обмена | Exchange logic | Основные константы процесса обмена
+│   │   │   ├── 📄 exchange.ts - Константы обмена | Exchange logic + defaults | Основные константы процесса обмена и дефолты формы
 │   │   │   ├── 📄 fiat-currencies.ts - Фиатные валюты | Fiat currencies | Традиционные валюты и их настройки
 │   │   │   ├── 📄 index.ts - Главный экспорт | Module exports | Централизованный экспорт всех констант
 │   │   │   ├── 📄 linter-limits.ts - Лимиты линтера | Code quality | Ограничения для инструментов качества кода
@@ -505,8 +506,11 @@ Root path: `e:\project\kiro\exchanger-front`
 │       │   │   ├── 📄 schema-helpers.ts - Помощники схем | Schema helpers | Вспомогательные функции для схем
 │       │   │   ├── 📄 schemas-basic.ts - Базовые схемы | Basic schemas | Основные схемы валидации
 │       │   │   ├── 📄 schemas-crypto.ts - Криптографические схемы | Crypto schemas | Схемы для валидации криптовалют
+│       │   │   ├── 📄 security-enhanced-auth-schemas.ts - Схемы авторизации | Auth security schemas | Безопасная валидация логина, регистрации, паролей
+│       │   │   ├── 📄 security-enhanced-exchange-schemas.ts - Схемы обмена | Exchange security schemas | Безопасная валидация операций обмена и форм
 │       │   │   ├── 📄 security-enhanced-operator.ts - Операторы безопасности | Security operators | Операторы для усиленной валидации
-│       │   │   ├── 📄 security-enhanced-schemas.ts - Схемы безопасности | Security schemas | Схемы с усиленной безопасностью
+│       │   │   ├── 📄 security-enhanced-schemas.ts - Основные схемы безопасности | Security schemas | Главный файл со схемами усиленной безопасности
+│       │   │   ├── 📄 security-enhanced-support-schemas.ts - Схемы поддержки | Support security schemas | Безопасная валидация поддержки, поиска, админ функций
 │       │   │   ├── 📄 security-enhanced-utils.ts - Утилиты безопасности | Security utils | Функции для безопасной валидации
 │       │   │   ├── 📄 security-utils.ts - Общие утилиты безопасности | General security | Общие функции безопасности
 │       │   │   ├── 📄 single-field.ts - Валидация одного поля | Single field validation | Валидация отдельных полей
