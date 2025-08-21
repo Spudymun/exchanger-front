@@ -1,12 +1,6 @@
 import type { OrderStatus } from '@repo/constants';
 import { UI_DEBOUNCE_CONSTANTS } from '@repo/constants';
-import type {
-  CryptoCurrency,
-  ExchangeRate,
-  ExchangeRecipientData,
-  FiatCurrency,
-  Bank,
-} from '@repo/exchange-core';
+import type { CryptoCurrency, ExchangeRate, FiatCurrency, Bank } from '@repo/exchange-core';
 import {
   createStore,
   createDebounceAction,
@@ -25,14 +19,17 @@ import {
 
 // Интерфейсы для данных формы обмена
 export interface ExchangeFormData {
-  fromCurrency: CryptoCurrency | null;
-  toCurrency: FiatCurrency | null; // Теперь поддерживаем множественные фиатные валюты
-  selectedBank: Bank | null; // Добавляем выбранный банк
-  fromAmount: string;
-  toAmount: string;
-  recipientData: ExchangeRecipientData;
-  userEmail: string;
-  agreementAccepted: boolean;
+  fromCurrency: CryptoCurrency;
+  tokenStandard: string; // string as used in real forms
+  toCurrency: 'UAH';
+  cryptoAmount: number; // number for calculations
+  uahAmount: number; // number for calculations
+  selectedBankId: string; // string as used in real forms
+  cardNumber: string;
+  email: string;
+  captchaAnswer: string;
+  agreeToTerms: boolean;
+  rememberData?: boolean;
 }
 
 export interface ExchangeCalculation {
@@ -88,7 +85,6 @@ export interface ExchangeStore extends TimerState {
 
   // Actions
   updateFormData: (data: Partial<ExchangeFormData>) => void;
-  updateRecipientData: (data: Partial<ExchangeFormData['recipientData']>) => void;
   calculateExchange: () => void;
   resetCalculation: () => void;
 
@@ -128,7 +124,7 @@ const createFormActions = (
     }));
 
     // Автоматический пересчет при изменении валюты или суммы с debounce
-    if (data.fromCurrency || data.fromAmount) {
+    if (data.fromCurrency || data.cryptoAmount) {
       const debouncedCalculate = createDebounceAction({
         set,
         get,
@@ -139,15 +135,6 @@ const createFormActions = (
       debouncedCalculate();
     }
   },
-
-  updateRecipientData: (data: Partial<ExchangeFormData['recipientData']>) => {
-    set(state => ({
-      formData: {
-        ...state.formData,
-        recipientData: { ...state.formData.recipientData, ...data },
-      },
-    }));
-  },
 });
 
 const createCalculationActions = (
@@ -157,7 +144,7 @@ const createCalculationActions = (
   calculateExchange: () => {
     const { formData, availableRates } = get();
 
-    if (!formData.fromCurrency || !formData.fromAmount) {
+    if (!formData.fromCurrency || formData.cryptoAmount <= 0) {
       set(() => ({ calculation: null }));
       return;
     }

@@ -13,6 +13,10 @@ export * from './banks';
 export * from './rate-limits';
 export * from './order-statuses';
 
+// Type exports for new types
+export type { TokenStandard } from './exchange-currencies';
+export type { BankId } from './banks';
+
 // Linter configuration constants
 export * from './linter-limits';
 

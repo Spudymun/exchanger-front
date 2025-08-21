@@ -176,6 +176,12 @@ export const MOCK_CRYPTO_ADDRESSES = {
 export type CryptoCurrency = (typeof CRYPTOCURRENCIES)[number];
 
 /**
+ * Token standard type for multi-network cryptocurrencies
+ * Used for selecting blockchain network (e.g., USDT on ERC-20, TRC-20, BEP-20)
+ */
+export type TokenStandard = 'ERC-20' | 'TRC-20' | 'BEP-20';
+
+/**
  * Get decimal places for a cryptocurrency
  * Moved from exchange-core to break circular dependency
  */

@@ -4,7 +4,9 @@
  * Centralized exports for all form components
  */
 
-export { ExchangeForm } from './ExchangeForm.legacy';
+// ExchangeForm удален - используйте modern compound component из @repo/ui
+// import { ExchangeForm } from '@repo/ui';
+
 export { LoginForm } from './LoginForm';
 export { RegisterForm } from './RegisterForm';
 export { AuthForms } from './AuthForms';

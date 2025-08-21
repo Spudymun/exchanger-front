@@ -20,16 +20,16 @@ export function useExchange() {
 
   // Auto-calculate when form changes
   React.useEffect(() => {
-    const { fromAmount } = exchangeStore.formData;
+    const { cryptoAmount } = exchangeStore.formData;
 
-    if (fromAmount && !isNaN(Number(fromAmount)) && Number(fromAmount) > 0) {
+    if (cryptoAmount && !isNaN(Number(cryptoAmount)) && Number(cryptoAmount) > 0) {
       const debounceTimeout = setTimeout(() => {
         exchangeStore.calculateExchange();
       }, UI_DEBOUNCE_CONSTANTS.EXCHANGE_CALCULATION_DELAY);
 
       return () => clearTimeout(debounceTimeout);
     }
-  }, [exchangeStore.formData.fromAmount, exchangeStore.formData.fromCurrency, exchangeStore]);
+  }, [exchangeStore.formData.cryptoAmount, exchangeStore.formData.fromCurrency, exchangeStore]);
 
   // Display helpers
   const getDisplayRate = useDisplayRateHelper(exchangeStore);
@@ -50,20 +50,20 @@ function useFormValidator(exchangeStore: ExchangeStore) {
     const errors: string[] = [];
 
     // Use Zod schema for email validation
-    if (!formData.userEmail) {
+    if (!formData.email) {
       errors.push('Enter email for notifications');
     } else {
-      const result = securityEnhancedEmailSchema.safeParse(formData.userEmail);
+      const result = securityEnhancedEmailSchema.safeParse(formData.email);
       if (!result.success) {
         errors.push('Enter correct email address');
       }
     }
 
     // Amount validation
-    if (!formData.fromAmount || isNaN(Number(formData.fromAmount))) {
+    if (!formData.cryptoAmount || isNaN(Number(formData.cryptoAmount))) {
       errors.push('Enter correct amount');
     } else {
-      const amount = Number(formData.fromAmount);
+      const amount = Number(formData.cryptoAmount);
       if (amount <= 0) {
         errors.push('Amount must be greater than 0');
       }
@@ -116,19 +116,19 @@ export function useExchangeForm() {
   const exchangeStore = useExchangeStore();
 
   const setFromAmount = (amount: string) => {
-    exchangeStore.updateFormData({ fromAmount: amount });
+    exchangeStore.updateFormData({ cryptoAmount: Number(amount) });
   };
 
-  const setFromCurrency = (currency: CryptoCurrency | null) => {
+  const setFromCurrency = (currency: CryptoCurrency) => {
     exchangeStore.updateFormData({ fromCurrency: currency });
   };
 
   const setUserEmail = (email: string) => {
-    exchangeStore.updateFormData({ userEmail: email });
+    exchangeStore.updateFormData({ email: email });
   };
 
-  const setRecipientData = (data: Partial<typeof exchangeStore.formData.recipientData>) => {
-    exchangeStore.updateRecipientData(data);
+  const setRecipientData = (cardNumber: string) => {
+    exchangeStore.updateFormData({ cardNumber: cardNumber });
   };
 
   return {

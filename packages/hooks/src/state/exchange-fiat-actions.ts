@@ -21,13 +21,13 @@ export const createFiatActions = (
     return availableBanks;
   },
 
-  selectFiatCurrency: (currency: FiatCurrency) => {
+  selectFiatCurrency: (_currency: FiatCurrency) => {
     set(state => ({
       formData: {
         ...state.formData,
-        toCurrency: currency,
-        selectedBank: null, // Сбрасываем банк при смене валюты
-        toAmount: '', // Сбрасываем сумму получения
+        toCurrency: 'UAH', // Always UAH in current implementation
+        selectedBankId: '', // Сбрасываем банк при смене валюты
+        uahAmount: 0, // Сбрасываем сумму получения
       },
       calculation: null, // Сбрасываем расчет
     }));
@@ -46,8 +46,8 @@ export const createFiatActions = (
     set(state => ({
       formData: {
         ...state.formData,
-        selectedBank: bank,
-        toAmount: '', // Сбрасываем сумму получения при смене банка
+        selectedBankId: bank.id,
+        uahAmount: 0, // Сбрасываем сумму получения при смене банка
       },
       calculation: null, // Сбрасываем расчет
     }));

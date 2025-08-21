@@ -14,15 +14,15 @@ const validateBasicFields = (formData: ExchangeStore['formData']) => {
     errors.fromCurrency = ['Select currency to exchange'];
   }
 
-  if (!formData.fromAmount || parseFloat(formData.fromAmount) <= 0) {
-    errors.fromAmount = ['Enter correct amount'];
+  if (!formData.cryptoAmount || formData.cryptoAmount <= 0) {
+    errors.cryptoAmount = ['Enter correct amount'];
   }
 
-  if (!formData.recipientData.cardNumber) {
+  if (!formData.cardNumber) {
     errors.cardNumber = ['Enter card number'];
   }
 
-  if (!formData.agreementAccepted) {
+  if (!formData.agreeToTerms) {
     errors.agreement = ['Agreement must be accepted'];
   }
 
@@ -49,9 +49,9 @@ const createValidationFunction = (
     const errors = validateBasicFields(formData);
 
     // Use centralized email validation
-    const emailErrors = validateEmailField(formData.userEmail);
+    const emailErrors = validateEmailField(formData.email);
     if (emailErrors.length > 0) {
-      errors.userEmail = emailErrors;
+      errors.email = emailErrors;
     }
 
     if (!calculation?.isValid) {
@@ -76,13 +76,13 @@ const createHelperMethods = (store: ExchangeStore) => ({
       case 0:
         return !!(
           formData.fromCurrency &&
-          formData.fromAmount &&
-          formData.recipientData.cardNumber &&
-          formData.userEmail &&
+          formData.cryptoAmount &&
+          formData.cardNumber &&
+          formData.email &&
           calculation?.isValid
         );
       case 1:
-        return formData.agreementAccepted;
+        return formData.agreeToTerms;
       case 2:
         return !!store.currentOrder;
       default:
@@ -96,11 +96,11 @@ const createHelperMethods = (store: ExchangeStore) => ({
     const totalSteps = 6;
 
     if (formData.fromCurrency) progress++;
-    if (formData.fromAmount && parseFloat(formData.fromAmount) > 0) progress++;
-    if (formData.recipientData.cardNumber) progress++;
-    if (formData.userEmail) progress++;
+    if (formData.cryptoAmount && formData.cryptoAmount > 0) progress++;
+    if (formData.cardNumber) progress++;
+    if (formData.email) progress++;
     if (calculation?.isValid) progress++;
-    if (formData.agreementAccepted) progress++;
+    if (formData.agreeToTerms) progress++;
 
     return Math.round((progress / totalSteps) * 100);
   },

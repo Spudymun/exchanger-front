@@ -98,10 +98,10 @@ const validateFormImpl = (
 
   const validationData = {
     fromCurrency: formData.fromCurrency,
-    fromAmount: formData.fromAmount,
-    userEmail: formData.userEmail,
-    cardNumber: formData.recipientData.cardNumber,
-    agreementAccepted: formData.agreementAccepted,
+    fromAmount: formData.cryptoAmount,
+    userEmail: formData.email,
+    cardNumber: formData.cardNumber,
+    agreementAccepted: formData.agreeToTerms,
   };
 
   const errorMap = createNextIntlZodErrorMap({ t: validationT, locale: 'current' });

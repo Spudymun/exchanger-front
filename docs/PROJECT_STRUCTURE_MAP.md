@@ -99,8 +99,7 @@ Root path: `e:\project\kiro\exchanger-front`
 │       │   │   │   ├── 📄 SendingCard.tsx - Карточка отправки валюты | Exchange UI | Выбор валюты и суммы отправки
 │       │   │   │   └── 📄 useHeroExchangeForm.ts - Хук формы обмена | Business logic hook | Логика управления состоянием формы
 │       │   │   ├── 📁 forms/ - Компоненты форм | Form components | Переиспользуемые формы приложения
-│       │   │   │   ├── 📄 AuthForms.tsx - Формы авторизации | Auth UI | Контейнер для форм входа и регистрации
-│       │   │   │   ├── 📄 ExchangeForm.legacy.tsx - Старая главная форма обмена | Business component | Основная форма создания обмена
+│       │   │   │   ├── 📄 AuthForms.tsx - Формы авторизации | Auth UI | Контайнер для форм входа и регистрации
 │       │   │   │   ├── 📄 LoginForm.tsx - Форма входа | Auth component | Форма авторизации пользователя
 │       │   │   │   ├── 📄 RegisterForm.tsx - Форма регистрации | Auth component | Форма создания нового аккаунта
 │       │   │   │   └── 📄 index.ts - Экспорты форм | Module exports | Централизованный экспорт всех форм

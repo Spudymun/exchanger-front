@@ -8,11 +8,11 @@ export const calculateExchangeRate = (
   formData: ExchangeFormData,
   availableRates: ExchangeRate[]
 ): ExchangeCalculation | null => {
-  if (!formData.fromCurrency || !formData.fromAmount) {
+  if (!formData.fromCurrency || !formData.cryptoAmount) {
     return null;
   }
 
-  const fromAmount = parseFloat(formData.fromAmount);
+  const fromAmount = formData.cryptoAmount;
   if (isNaN(fromAmount) || fromAmount <= 0) {
     return {
       fromAmount: 0,

@@ -1,19 +1,20 @@
+import { EXCHANGE_DEFAULTS, getDefaultTokenStandard } from '@repo/constants';
+
 import type { ExchangeFormData, ExchangeStep } from './exchange-store';
 
 // Дефолтные значения для Exchange Store
 export const DEFAULT_FORM_DATA: ExchangeFormData = {
-  fromCurrency: null,
-  toCurrency: null,
-  selectedBank: null,
-  fromAmount: '',
-  toAmount: '',
-  recipientData: {
-    cardNumber: '',
-    recipientName: '',
-    phone: '',
-  },
-  userEmail: '',
-  agreementAccepted: false,
+  fromCurrency: EXCHANGE_DEFAULTS.FROM_CURRENCY,
+  tokenStandard: getDefaultTokenStandard(EXCHANGE_DEFAULTS.FROM_CURRENCY) || 'TRC-20',
+  toCurrency: EXCHANGE_DEFAULTS.TO_CURRENCY,
+  cryptoAmount: 0,
+  uahAmount: 0,
+  selectedBankId: '',
+  cardNumber: '',
+  email: '',
+  captchaAnswer: '',
+  agreeToTerms: false,
+  rememberData: false,
 };
 
 export const DEFAULT_STEPS: ExchangeStep[] = [

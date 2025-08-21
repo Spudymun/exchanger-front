@@ -110,6 +110,12 @@ export const ALL_BANK_IDS = Object.values(BANKS_BY_CURRENCY)
   .flat()
   .map(bank => bank.id);
 
+/**
+ * Bank ID type for form validation and selection
+ * Represents valid bank identifier strings
+ */
+export type BankId = (typeof ALL_BANK_IDS)[number];
+
 // Mock reserves for each bank (per currency)
 export const MOCK_BANK_RESERVES = {
   // UAH banks
