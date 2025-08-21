@@ -4,6 +4,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@repo/ui';
+import { ADMIN_ROUTES } from '@repo/constants';
 
 export default function NotFound() {
   const router = useRouter();
@@ -29,7 +30,7 @@ export default function NotFound() {
           </Button>
 
           <Button asChild className="w-full">
-            <Link href="/admin">На главную админ-панели</Link>
+            <Link href={ADMIN_ROUTES.ADMIN_HOME}>На главную админ-панели</Link>
           </Button>
         </div>
       </div>

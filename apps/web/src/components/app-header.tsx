@@ -1,5 +1,6 @@
 'use client';
 
+import { APP_ROUTES, ANCHOR_ROUTES } from '@repo/constants';
 import { Header } from '@repo/ui';
 
 import { usePathname, useRouter } from 'next/navigation';
@@ -177,7 +178,7 @@ export function AppHeader({ className }: AppHeaderProps) {
 function AppHeaderLogoMobile() {
   return (
     <Header.Logo>
-      <Link href="/" className="flex items-center">
+      <Link href={APP_ROUTES.HOME} className="flex items-center">
         <div className="logo-mobile">
           <span className="text-primary-foreground font-bold text-sm">EG</span>
         </div>
@@ -189,7 +190,7 @@ function AppHeaderLogoMobile() {
 function AppHeaderLogoDesktop() {
   return (
     <Header.Logo>
-      <Link href="/" className="flex items-center space-x-2 sm:space-x-3">
+      <Link href={APP_ROUTES.HOME} className="flex items-center space-x-2 sm:space-x-3">
         <div className="logo-desktop">
           <span className="text-primary-foreground font-bold text-sm">EG</span>
         </div>
@@ -219,16 +220,18 @@ function AppHeaderNavigationLinks({
   return (
     <nav className="hidden md:flex space-x-6">
       <Link
-        href={pathname === '/' ? '#exchange-section' : '/#exchange-section'}
+        href={
+          pathname === '/' ? ANCHOR_ROUTES.EXCHANGE_SECTION : `/${ANCHOR_ROUTES.EXCHANGE_SECTION}`
+        }
         className={getNavLinkClass(pathname, '/exchange')}
         onClick={handleExchangeClick}
       >
         {t('navigation.exchange')}
       </Link>
-      <Link href="/orders" className={getNavLinkClass(pathname, '/orders')}>
+      <Link href={APP_ROUTES.ORDERS} className={getNavLinkClass(pathname, APP_ROUTES.ORDERS)}>
         {t('navigation.orders')}
       </Link>
-      <Link href="/contacts" className={getNavLinkClass(pathname, '/contacts')}>
+      <Link href={APP_ROUTES.CONTACTS} className={getNavLinkClass(pathname, APP_ROUTES.CONTACTS)}>
         {t('navigation.contact')}
       </Link>
     </nav>

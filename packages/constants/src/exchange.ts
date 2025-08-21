@@ -54,3 +54,17 @@ export const ORDER_CREATION_DELAY_MS = 200;
 // Order pagination limits
 export const DEFAULT_ORDER_LIMIT = 20;
 export const MAX_ORDER_LIMIT = 50;
+
+/**
+ * Дефолтные значения для форм обмена
+ * Заменяет хардкод в useHeroExchangeForm.ts
+ */
+export const EXCHANGE_DEFAULTS = {
+  /** Валюта по умолчанию для отправки - заменяет хардкод 'USDT' */
+  FROM_CURRENCY: 'USDT' as const,
+  /** Валюта по умолчанию для получения - заменяет хардкод 'UAH' */
+  TO_CURRENCY: 'UAH' as const,
+} as const;
+
+export type DefaultFromCurrency = typeof EXCHANGE_DEFAULTS.FROM_CURRENCY;
+export type DefaultToCurrency = typeof EXCHANGE_DEFAULTS.TO_CURRENCY;

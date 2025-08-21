@@ -1,5 +1,7 @@
 'use client';
 
+import { ADMIN_ROUTES } from '@repo/constants';
+
 interface ErrorProps {
   error: Error & { digest?: string };
   reset: () => void;
@@ -44,7 +46,7 @@ export default function Error({ error, reset }: ErrorProps) {
             Попробовать снова
           </button>
           <a
-            href="/admin"
+            href={ADMIN_ROUTES.ADMIN_HOME}
             className="bg-secondary hover:bg-secondary/80 text-secondary-foreground font-semibold py-3 px-6 rounded-xl transition-colors duration-200"
           >
             На главную панель

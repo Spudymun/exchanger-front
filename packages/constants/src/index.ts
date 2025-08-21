@@ -29,3 +29,6 @@ export * from './contacts';
 
 // SEO and metadata configuration
 export * from './seo';
+
+// Application routes
+export * from './app-routes';

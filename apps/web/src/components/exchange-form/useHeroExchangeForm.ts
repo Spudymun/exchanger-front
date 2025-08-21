@@ -7,6 +7,7 @@ import {
   type FiatCurrency,
   getDefaultTokenStandard,
   VALIDATION_BOUNDS,
+  EXCHANGE_DEFAULTS,
 } from '@repo/constants';
 import { useFormWithNextIntl } from '@repo/hooks';
 import { useMemo } from 'react';
@@ -65,9 +66,9 @@ export function useHeroExchangeForm(
   const form = useFormWithNextIntl<HeroExchangeFormData>({
     initialValues: {
       fromAmount: '',
-      fromCurrency: 'USDT',
-      tokenStandard: getDefaultTokenStandard('USDT') || '',
-      toCurrency: 'UAH',
+      fromCurrency: EXCHANGE_DEFAULTS.FROM_CURRENCY,
+      tokenStandard: getDefaultTokenStandard(EXCHANGE_DEFAULTS.FROM_CURRENCY) || '',
+      toCurrency: EXCHANGE_DEFAULTS.TO_CURRENCY,
       selectedBankId: '',
     },
     validationSchema: heroExchangeSchema,

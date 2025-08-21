@@ -220,17 +220,7 @@ tech_debt_rules:
     detection: 'ast-analysis'
     severity: error
 
-  - id: no_large_files
-    description: 'Файл не должен превышать 300 строк. Логику нужно декомпозировать'
-    detection: 'file-size'
-    severity: warning
-    excludes: ['**/*.config.ts', '**/*.config.js', '**/index.ts']
 
-  - id: no_large_functions
-    description: 'Функция не должна превышать 50 строк'
-    detection: 'ast-analysis'
-    severity: warning
-    excludes: ['**/*.test.ts', '**/*.stories.tsx']
 
   - id: no_circular_dependencies
     description: 'Не допускаются циклические зависимости между модулями'

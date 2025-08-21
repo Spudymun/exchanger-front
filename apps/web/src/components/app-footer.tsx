@@ -1,6 +1,6 @@
 'use client';
 
-import { SOCIAL_LINKS, COMPANY_INFO } from '@repo/constants';
+import { SOCIAL_LINKS, COMPANY_INFO, APP_ROUTES, INFO_ROUTES, LEGAL_ROUTES } from '@repo/constants';
 import { Footer } from '@repo/ui';
 import { useTranslations } from 'next-intl';
 
@@ -32,19 +32,19 @@ const getSocialLinks = () => [
 const getLegalLinks = (t: ReturnType<typeof useTranslations>) => [
   {
     name: t('footer.legal.rules'),
-    href: '/rules',
+    href: LEGAL_ROUTES.RULES,
   },
   {
     name: t('footer.legal.aml'),
-    href: '/aml-policy',
+    href: LEGAL_ROUTES.AML_POLICY,
   },
   {
     name: t('footer.legal.returns'),
-    href: '/returns',
+    href: LEGAL_ROUTES.RETURNS,
   },
   {
     name: t('footer.legal.privacy'),
-    href: '/privacy',
+    href: LEGAL_ROUTES.PRIVACY,
   },
 ];
 
@@ -68,19 +68,21 @@ export function AppFooter({ className }: AppFooterProps) {
         </Footer.Section>
 
         <Footer.Section title={t('footer.exchange.title')}>
-          <Footer.Link href="/">{t('footer.exchange.calculator')}</Footer.Link>
-          <Footer.Link href="/rates">{t('footer.exchange.rates')}</Footer.Link>
-          <Footer.Link href="/reserves">{t('footer.exchange.reserves')}</Footer.Link>
-          <Footer.Link href="/limits">{t('footer.exchange.limits')}</Footer.Link>
+          <Footer.Link href={APP_ROUTES.HOME}>{t('footer.exchange.calculator')}</Footer.Link>
+          <Footer.Link href={INFO_ROUTES.RATES}>{t('footer.exchange.rates')}</Footer.Link>
+          <Footer.Link href={INFO_ROUTES.RESERVES}>{t('footer.exchange.reserves')}</Footer.Link>
+          <Footer.Link href={INFO_ROUTES.LIMITS}>{t('footer.exchange.limits')}</Footer.Link>
         </Footer.Section>
 
         <Footer.Section title={t('footer.support.title')}>
           <Footer.Link href={SOCIAL_LINKS.SUPPORT_TELEGRAM.href} external>
             {t('footer.support.telegram')}
           </Footer.Link>
-          <Footer.Link href="/faq">{t('footer.support.faq')}</Footer.Link>
-          <Footer.Link href="/how-it-works">{t('footer.support.howItWorks')}</Footer.Link>
-          <Footer.Link href="/contacts">{t('footer.support.contacts')}</Footer.Link>
+          <Footer.Link href={INFO_ROUTES.FAQ}>{t('footer.support.faq')}</Footer.Link>
+          <Footer.Link href={INFO_ROUTES.HOW_IT_WORKS}>
+            {t('footer.support.howItWorks')}
+          </Footer.Link>
+          <Footer.Link href={APP_ROUTES.CONTACTS}>{t('footer.support.contacts')}</Footer.Link>
         </Footer.Section>
 
         <Footer.Section title={t('footer.contacts.title')}>

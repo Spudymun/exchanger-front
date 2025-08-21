@@ -1,3 +1,4 @@
+import { APP_ROUTES } from '@repo/constants';
 import { Button } from '@repo/ui';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
@@ -24,7 +25,7 @@ export default async function NotFoundPage({ params }: NotFoundPageProps) {
 
         <div className="space-y-3">
           <Button asChild>
-            <Link href="/">{t('goHome')}</Link>
+            <Link href={APP_ROUTES.HOME}>{t('goHome')}</Link>
           </Button>
         </div>
       </div>
