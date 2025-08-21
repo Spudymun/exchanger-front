@@ -1,6 +1,6 @@
 import { DECIMAL_PRECISION } from './decimal-precision';
 import { REQUEST_TIMEOUT_CONSTANTS } from './time-constants';
-import { VALIDATION_BOUNDS } from './validation-bounds';
+import { VALIDATION_LIMITS } from './validation';
 
 /**
  * ExchangeGO specific constants
@@ -43,8 +43,8 @@ export const EXCHANGE_RETRY_ATTEMPTS = 3;
 export const EXCHANGE_RETRY_DELAY_MS = 1000;
 
 // Exchange validation
-export const MIN_EXCHANGE_AMOUNT = VALIDATION_BOUNDS.MIN_ORDER_AMOUNT;
-export const MAX_EXCHANGE_AMOUNT = VALIDATION_BOUNDS.MAX_ORDER_AMOUNT;
+export const MIN_EXCHANGE_AMOUNT = VALIDATION_LIMITS.MIN_ORDER_AMOUNT;
+export const MAX_EXCHANGE_AMOUNT = VALIDATION_LIMITS.MAX_ORDER_AMOUNT;
 export const EXCHANGE_AMOUNT_PRECISION = DECIMAL_PRECISION.CRYPTO_DECIMAL_PLACES;
 
 // API delays for exchange operations

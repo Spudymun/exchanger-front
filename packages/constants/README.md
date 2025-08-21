@@ -104,14 +104,14 @@ const uahSymbol = FIAT_CURRENCY_SYMBOLS.UAH; // '₴'
 ### Validation Limits
 
 ```typescript
-import { VALIDATION_LIMITS, VALIDATION_BOUNDS } from '@repo/constants';
+import { VALIDATION_LIMITS } from '@repo/constants';
 
 // Email validation
 const emailSchema = z.string().max(VALIDATION_LIMITS.EMAIL_MAX_LENGTH); // 255
 
 // Order amount limits
-const minAmount = VALIDATION_BOUNDS.MIN_ORDER_AMOUNT; // 0.01
-const maxAmount = VALIDATION_BOUNDS.MAX_ORDER_AMOUNT; // 1000000
+const minAmount = VALIDATION_LIMITS.MIN_ORDER_AMOUNT; // 0.01
+const maxAmount = VALIDATION_LIMITS.MAX_ORDER_AMOUNT; // 1000000
 ```
 
 ### Time & Precision Constants
@@ -184,7 +184,11 @@ const orderRefresh = UI_REFRESH_INTERVALS.ORDER_STATUS_REFRESH; // 30000ms
 - `UI_DEBOUNCE_CONSTANTS` - Задержки для debounce в UI
 - `UI_REFRESH_INTERVALS` - Интервалы обновления UI
 - `DECIMAL_PRECISION` - Точность десятичных дробей для валют
-- `VALIDATION_BOUNDS` - Граничные значения для валидации
+
+### Validation Constants (важно: два типа!)
+
+- `VALIDATION_LIMITS` - **Для валидации форм и бизнес-логики** (пароли, суммы, email)
+- `VALIDATION_BOUNDS` - **Для технических/алгоритмических операций** (поиск в массиве, инициализация)
 
 ### Business Limits (`business-limits.ts`, `percentage-calculations.ts`)
 

@@ -104,6 +104,77 @@ export const authRouter = router({
 
 ---
 
+## 🏛️ Константы валидации: VALIDATION_LIMITS vs VALIDATION_BOUNDS
+
+> **🎯 Архитектурное решение**: В проекте используются две группы констант с четким разделением ответственности.
+
+### VALIDATION_LIMITS - Бизнес-логика и валидация форм
+
+**Назначение**: Константы для валидации пользовательского ввода и бизнес-ограничений
+
+**Расположение**: `packages/constants/src/validation.ts`
+
+**Использование**:
+
+```typescript
+import { VALIDATION_LIMITS } from '@repo/constants';
+
+// ✅ ПРАВИЛЬНО: Валидация форм
+const heroExchangeSchema = z.object({
+  fromAmount: z.string().refine(val => Number(val) <= VALIDATION_LIMITS.MAX_ORDER_AMOUNT),
+});
+
+// ✅ ПРАВИЛЬНО: Бизнес-ограничения
+const userSchema = z.object({
+  email: z.string().max(VALIDATION_LIMITS.EMAIL_MAX_LENGTH),
+  password: z.string().min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH),
+});
+```
+
+### VALIDATION_BOUNDS - Технические/алгоритмические константы
+
+**Назначение**: Константы для алгоритмов, технических проверок, служебных операций
+
+**Расположение**: `packages/constants/src/validation-bounds.ts`
+
+**Использование**:
+
+```typescript
+import { VALIDATION_BOUNDS } from '@repo/constants';
+
+// ✅ ПРАВИЛЬНО: Технические проверки
+if (index === VALIDATION_BOUNDS.NOT_FOUND) return undefined;
+if (errors.length === VALIDATION_BOUNDS.MIN_VALUE) return success;
+const stats = orders.reduce(
+  (acc, order) => acc + (order.amount || VALIDATION_BOUNDS.MIN_VALUE),
+  VALIDATION_BOUNDS.MIN_VALUE
+);
+
+// ✅ ПРАВИЛЬНО: Алгоритмические константы
+const parts = string.split(delimiter, VALIDATION_BOUNDS.MAX_SPLIT_PARTS);
+```
+
+### Правило выбора констант
+
+| Контекст                    | Используй           | Пример                                    |
+| --------------------------- | ------------------- | ----------------------------------------- |
+| 🏗️ **Валидация форм**       | `VALIDATION_LIMITS` | Максимальная сумма заказа, длина пароля   |
+| 🔧 **Технические операции** | `VALIDATION_BOUNDS` | Поиск в массиве, инициализация переменных |
+| 💰 **Бизнес-ограничения**   | `VALIDATION_LIMITS` | Лимиты транзакций, размеры файлов         |
+| ⚙️ **Алгоритмы**            | `VALIDATION_BOUNDS` | Разделение строк, базовые значения        |
+
+### ❌ Антипаттерны
+
+```typescript
+// ❌ НЕПРАВИЛЬНО: Валидация формы через VALIDATION_BOUNDS
+const schema = z.string().max(VALIDATION_BOUNDS.MAX_ORDER_AMOUNT);
+
+// ❌ НЕПРАВИЛЬНО: Технические операции через VALIDATION_LIMITS
+if (index === VALIDATION_LIMITS.NOT_FOUND) return undefined;
+```
+
+---
+
 ## �️ Security-Enhanced Architecture
 
 ### Новая иерархия валидации:

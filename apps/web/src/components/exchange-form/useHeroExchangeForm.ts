@@ -6,7 +6,7 @@ import {
   getBanksForCurrency,
   type FiatCurrency,
   getDefaultTokenStandard,
-  VALIDATION_BOUNDS,
+  VALIDATION_LIMITS,
   EXCHANGE_DEFAULTS,
 } from '@repo/constants';
 import { useFormWithNextIntl } from '@repo/hooks';
@@ -49,8 +49,8 @@ const heroExchangeCryptoAmountSchema = z
   .refine(val => val === '' || Number(val) >= MIN_AMOUNTS.from, {
     message: `AMOUNT_MIN_VALUE:${MIN_AMOUNTS.from}`,
   })
-  .refine(val => val === '' || Number(val) <= VALIDATION_BOUNDS.MAX_ORDER_AMOUNT, {
-    message: `AMOUNT_MAX_VALUE:${VALIDATION_BOUNDS.MAX_ORDER_AMOUNT}`,
+  .refine(val => val === '' || Number(val) <= VALIDATION_LIMITS.MAX_ORDER_AMOUNT, {
+    message: `AMOUNT_MAX_VALUE:${VALIDATION_LIMITS.MAX_ORDER_AMOUNT}`,
   });
 
 // Чистая Zod схема с XSS защитой
