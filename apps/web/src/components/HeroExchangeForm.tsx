@@ -4,10 +4,10 @@ import { Button, ExchangeForm, type AdaptiveWidthProps, cn } from '@repo/ui';
 import { useTranslations } from 'next-intl';
 import React from 'react';
 
-import { ExchangeBenefits } from './exchange-form/ExchangeBenefits';
-import { ReceivingCard } from './exchange-form/ReceivingCard';
-import { SendingCard } from './exchange-form/SendingCard';
-import { useHeroExchangeForm } from './exchange-form/useHeroExchangeForm';
+import { ExchangeBenefits } from './hero-exchange/ExchangeBenefits';
+import { ReceivingCard } from './hero-exchange/ReceivingCard';
+import { SendingCard } from './hero-exchange/SendingCard';
+import { useHeroExchangeForm } from './hero-exchange/useHeroExchangeForm';
 
 export interface HeroExchangeFormData extends Record<string, unknown> {
   fromAmount: string;
@@ -121,7 +121,10 @@ export function HeroExchangeForm(props: HeroExchangeFormProps) {
   const actionProps = { isValid, t };
 
   return (
-    <div className={cn('w-full max-w-full overflow-hidden', className)} data-testid="hero-exchange-form">
+    <div
+      className={cn('w-full max-w-full overflow-hidden', className)}
+      data-testid="hero-exchange-form"
+    >
       <div className="space-y-6 sm:space-y-8">
         <ExchangeBenefits t={t} />
         <ExchangeForm

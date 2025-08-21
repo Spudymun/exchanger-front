@@ -1,120 +1,258 @@
-# 📋 TASK 2.4: Form Submission & State Management
+# 📋 TASK 2.4: 🎯 ЗАПОЛНЕНИЕ ПОЛЕЙ - Form Submission & State Management
 
-> **Цель**: Реализовать form submission logic, state management, error handling и integration с tRPC API для создания exchange orders с полной UX optimization.
+> **Фактический статус**: 🎯 **ГОТОВ К РЕАЛИЗАЦИИ** - submit секция создана, нужно заменить placeholder на кнопку.  
+> **Цель**: Заменить placeholder в submit секции на реальную кнопку отправки с loading состояниями и error handling.
 
-## 🎯 **Scope Definition - на 100% основано на архитектурном анализе**
+## 🎯 **Фактическое состояние - основано на скриншоте**
 
-### Создаваемые файлы:
+### ✅ Что УЖЕ ЕСТЬ (основа Task 2.1):
 
-- `apps/web/app/[locale]/exchange/components/SubmitSection.tsx` - submit button и actions
-- `apps/web/app/[locale]/exchange/hooks/useExchangeForm.ts` - form business logic
-- `apps/web/app/[locale]/exchange/hooks/useExchangeSubmission.ts` - submission handling
-- `apps/web/app/[locale]/exchange/components/LoadingStates.tsx` - loading overlays
+- ✅ **Submit секция** - создана с placeholder "Submit Button & Actions (Task 2.4)"
+- ✅ **ExchangeContainer onSubmit** - useFormWithNextIntl уже настроен с обработчиком
+- ✅ **useExchangeMutation** - createOrder, getOrderStatus API хуки готовы
+- ✅ **tRPC integration** - полная интеграция через apps/web/src/hooks/useExchangeMutation.ts
+- ✅ **Form validation** - securityEnhancedAdvancedExchangeFormSchema проверяет все поля
 
-### Интеграция с существующими системами:
+### 🎯 Что нужно ЗАМЕНИТЬ в Task 2.4:
 
-- **API Integration**: `useExchangeMutation` hook (СУЩЕСТВУЕТ)
-- **Error Handling**: `useNotifications` toast system (СУЩЕСТВУЕТ)
-- **Navigation**: Next.js router для redirect to order page (СУЩЕСТВУЕТ)
-- **State Management**: Zustand exchange store (СУЩЕСТВУЕТ в packages/hooks)
-- **Validation**: Complete form validation через schemas (ГОТОВО в tasks 1.1-1.3)
-
-### Architectural Requirements from Acceptance Criteria:
-
-- Form submission через `trpc.exchange.createOrder`
-- Loading states management во время submission
-- Error handling с локализованными сообщениями
-- Success redirect к `/[locale]/order/{orderId}`
-- Optimistic UI updates и state persistence
-- Rate limiting handling и retry mechanisms
-
-## 📐 **Technical Implementation Plan**
-
-### 1. **Submit Section Component** (`SubmitSection.tsx`)
+**В submit секции заменить:**
 
 ```tsx
-// apps/web/app/[locale]/exchange/components/SubmitSection.tsx
-'use client';
+// ЗАМЕНИТЬ ЭТО:
+<div className="placeholder-content h-16 bg-primary/10 border border-dashed border-primary/30 rounded-md flex items-center justify-center">
+  <span className="text-sm text-primary">Submit Button & Actions (Task 2.4)</span>
+</div>
 
-import { UseFormReturn } from '@repo/hooks';
-import { ExchangeFormData } from '@repo/exchange-core/src/types';
-import { Button } from '@repo/ui';
-import { Loader2, Shield, ArrowRight } from 'lucide-react';
+// НА РЕАЛЬНУЮ КНОПКУ:
+<div className="submit-actions space-y-4">
+  <Button
+    type="submit"
+    size="lg"
+    className="w-full"
+    disabled={!isValid || isSubmitting}
+  >
+    {isSubmitting ? 'Создание обмена...' : 'Создать обмен'}
+  </Button>
+</div>
+```
 
-interface SubmitSectionProps {
-  form: UseFormReturn<ExchangeFormData>;
-  t: (key: string) => string;
-  isSubmitting: boolean;
-  onSubmit: () => void;
-}
+## 🎯 **Scope Definition - ОБНОВЛЕНО НА ОСНОВЕ ТЕКУЩЕГО СОСТОЯНИЯ**
 
-export function SubmitSection({ form, t, isSubmitting, onSubmit }: SubmitSectionProps) {
-  const { isValid, errors } = form;
+### ✅ Что уже реализовано и НЕ нужно создавать:
 
-  // Count validation errors
-  const errorCount = Object.keys(errors).length;
+- **ExchangeContainer.tsx** ✅ УЖЕ ИМЕЕТ onSubmit логику с useFormWithNextIntl
+- **useExchangeMutation** ✅ УЖЕ СОДЕРЖИТ createOrder и getOrderStatus
+- **ExchangeFormData** ✅ УЖЕ ГОТОВ для submission с правильными полями
+- **Validation** ✅ securityEnhancedAdvancedExchangeFormSchema УЖЕ РАБОТАЕТ
+- **tRPC integration** ✅ УЖЕ НАСТРОЕН через apps/web/src/hooks/useExchangeMutation.ts
+- **useExchange hook** ✅ УЖЕ СОДЕРЖИТ validateForm и бизнес-логику
 
-  // Determine if form is ready for submission
-  const isReadyForSubmit =
-    isValid &&
-    form.values.agreeToTerms &&
-    form.values.captchaAnswer &&
-    form.values.cryptoAmount > 0;
+### 🎯 Что нужно доработать в Task 2.4:
+
+- **Submit Button** - добавить в ExchangeForm.ActionArea
+- **Loading States** - интегрировать с useExchangeMutation loading
+- **Error Handling** - улучшить обработку ошибок submission
+- **Success Navigation** - добавить redirect после успешного создания order
+- **Optimistic Updates** - интегрировать с ExchangeStore
+
+### Интеграция с существующими системами - ОБНОВЛЕНО:
+
+- **API** ✅ `useExchangeMutation` из `/hooks/useExchangeMutation.ts` с createOrder
+- **State** ✅ `useExchange` из `@repo/hooks/src/business/useExchange.ts` с validateForm
+- **Form** ✅ `useFormWithNextIntl` УЖЕ НАСТРОЕН в ExchangeContainer.tsx
+- **Types** ✅ Реальный `CreateOrderRequest` из `@repo/exchange-core`
+- **Navigation** 🎯 ТРЕБУЕТСЯ добавить redirect логику после успеха
+
+## 📐 **Technical Implementation Plan - ОБНОВЛЕН**
+
+### 🔧 **Обновить ExchangeContainer.tsx с полной submission логикой**:
+
+````tsx
+// Заменить onSubmit в ExchangeContainer.tsx:
+import { useExchangeMutation } from '@/hooks/useExchangeMutation';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@repo/ui';
+
+export function ExchangeContainer({ locale, initialParams }: ExchangeContainerProps) {
+  const router = useRouter();
+  const { toast } = useToast();
+
+  // Existing integrations
+  const { validateForm, formData } = useExchange();
+  const { createOrder, isCreatingOrder } = useExchangeMutation({
+    onSuccess: (order) => {
+      toast({
+        title: t('submission.success.title'),
+        description: t('submission.success.description'),
+      });
+      router.push(`/${locale}/order/${order.orderId}`);
+    },
+    onError: (error) => {
+      toast({
+        title: t('submission.error.title'),
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const form = useFormWithNextIntl<ExchangeFormData>({
+    defaultValues: parseInitialFormData(initialParams),
+    validationSchema: securityEnhancedAdvancedExchangeFormSchema,
+    t,
+    onSubmit: async (values) => {
+      // Валидация через useExchange
+      const validation = validateForm();
+      if (!validation.isValid) {
+        toast({
+          title: t('validation.error.title'),
+          description: t('validation.error.description'),
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Создание заказа
+      try {
+        await createOrder.mutateAsync({
+          fromCurrency: values.fromCurrency,
+          tokenStandard: values.tokenStandard,
+          toCurrency: values.toCurrency,
+          cryptoAmount: values.cryptoAmount,
+          uahAmount: values.uahAmount,
+          selectedBankId: values.selectedBankId,
+          cardNumber: values.cardNumber,
+          email: values.email,
+        });
+      } catch (error) {
+        // Error handled by onError callback
+      }
+    },
+  });
 
   return (
-    <section className="submit-section">
-      <div className="submit-container bg-background border border-border rounded-lg p-6">
-        {/* Pre-submission Summary */}
-        <div className="submission-summary mb-6">
-          <h3 className="text-lg font-semibold text-foreground mb-4">
-            {t('submit.summary.title')}
-          </h3>
+    <ExchangeForm.Container variant="full">
+      <ExchangeLayout
+        form={form}
+        t={t}
+        isSubmitting={isCreatingOrder}
+      />
+    </ExchangeForm.Container>
+  );
+### 🔧 **Добавить Submit Button в ExchangeLayout.tsx**:
 
-          <div className="summary-grid grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            {/* Exchange Summary */}
-            <div className="summary-item bg-muted/30 border border-border rounded-md p-4">
-              <div className="text-sm text-muted-foreground mb-1">
-                {t('submit.summary.exchange')}
-              </div>
-              <div className="font-semibold">
-                {form.values.cryptoAmount} {form.values.fromCurrency} →{' '}
-                {form.values.uahAmount?.toFixed(2)} UAH
-              </div>
-            </div>
+```tsx
+// В ExchangeForm.ActionArea добавить после checkboxes:
+<ExchangeForm.FieldWrapper>
+  <Button
+    type="submit"
+    size="lg"
+    className="w-full"
+    disabled={!form.formState.isValid || isSubmitting}
+  >
+    {isSubmitting ? (
+      <>
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        {t('submit.processing')}
+      </>
+    ) : (
+      <>
+        <ArrowRight className="mr-2 h-4 w-4" />
+        {t('submit.create')}
+      </>
+    )}
+  </Button>
+</ExchangeForm.FieldWrapper>
+````
 
-            {/* Bank Info */}
-            <div className="summary-item bg-muted/30 border border-border rounded-md p-4">
-              <div className="text-sm text-muted-foreground mb-1">{t('submit.summary.bank')}</div>
-              <div className="font-semibold">
-                {form.values.selectedBank} • {form.values.cardNumber.replace(/(\d{4})/g, '$1 ')}
-              </div>
-            </div>
+### 🎯 **Добавить локализацию для submission**:
 
-            {/* Contact */}
-            <div className="summary-item bg-muted/30 border border-border rounded-md p-4">
-              <div className="text-sm text-muted-foreground mb-1">{t('submit.summary.email')}</div>
-              <div className="font-semibold">{form.values.email}</div>
-            </div>
-          </div>
-        </div>
+```json
+// apps/web/messages/ru.json - добавить в AdvancedExchangeForm:
+"submit": {
+  "create": "Создать обмен",
+  "processing": "Создание обмена...",
+  "success": {
+    "title": "Обмен создан успешно!",
+    "description": "Вы будете перенаправлены на страницу заказа"
+  },
+  "error": {
+    "title": "Ошибка создания обмена",
+    "description": "Проверьте данные и попробуйте снова"
+  }
+},
+"validation": {
+  "error": {
+    "title": "Ошибка валидации",
+    "description": "Заполните все обязательные поля"
+  }
+}
+```
 
-        {/* Validation Status */}
-        {!isReadyForSubmit && (
-          <div className="validation-status mb-6">
-            <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
-              <div className="flex items-center space-x-2 text-amber-800 mb-2">
-                <Shield className="w-4 h-4" />
-                <span className="font-medium">{t('submit.validation.title')}</span>
-              </div>
+### 🔧 **Создать страницу order для redirect**:
 
-              {errorCount > 0 && (
-                <div className="text-sm text-amber-700">
-                  {t('submit.validation.errorsFound', { count: errorCount })}
-                </div>
-              )}
+```tsx
+// apps/web/app/[locale]/order/[orderId]/page.tsx - создать новый файл
+import { notFound } from 'next/navigation';
+import { NextPageProps } from '@/types/next';
 
-              {!form.values.agreeToTerms && (
-                <div className="text-sm text-amber-700">
+interface OrderPageProps extends NextPageProps {
+  params: {
+    locale: string;
+    orderId: string;
+  };
+}
+
+export default function OrderPage({ params }: OrderPageProps) {
+  const { orderId } = params;
+
+  if (!orderId) {
+    notFound();
+  }
+
+  return (
+    <main className="container mx-auto px-4 py-8">
+      <h1>Order {orderId}</h1>
+      {/* Order details будут в следующих задачах */}
+    </main>
+  );
+}
+## ✅ **Success Metrics - ОБНОВЛЕНО**
+
+### ✅ Что уже работает:
+- ExchangeContainer.tsx onSubmit интегрирован с useFormWithNextIntl
+- useExchangeMutation содержит createOrder с onSuccess/onError callbacks
+- ExchangeFormData готов для передачи в API (правильные поля)
+- securityEnhancedAdvancedExchangeFormSchema валидирует форму
+- tRPC integration настроен для создания orders
+
+### 🎯 Что нужно добавить:
+- [ ] Submit Button в ExchangeForm.ActionArea
+- [ ] Loading состояния через isCreatingOrder
+- [ ] Toast notifications для success/error
+- [ ] Navigation redirect к `/order/[orderId]`
+- [ ] Локализация для submission messages
+- [ ] Создать базовую страницу order/[orderId]/page.tsx
+
+### 📋 **Конкретные файлы для обновления**:
+
+1. **ExchangeContainer.tsx** - добавить useExchangeMutation integration
+2. **ExchangeLayout.tsx** - добавить Submit Button в ActionArea
+3. **apps/web/messages/ru.json** - добавить submit локализацию
+4. **apps/web/app/[locale]/order/[orderId]/page.tsx** - создать для redirect
+
+### 🎯 **Критерии успеха**:
+- [ ] Form submission работает через tRPC createOrder
+- [ ] Loading states отображаются корректно
+- [ ] Success/error notifications работают
+- [ ] Redirect на order page после успеха
+- [ ] Валидация блокирует некорректные submission
+
+---
+
+**Статус**: ✅ АРХИТЕКТУРА ГОТОВА, требует интеграции
+**Зависимости**: Tasks 2.1-2.3 (практически готовы) ✅
+**Следующий шаг**: Интегрировать submission в существующие компоненты
                   • {t('submit.validation.termsRequired')}
                 </div>
               )}

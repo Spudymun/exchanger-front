@@ -2,9 +2,10 @@
 
 import { EXCHANGE_DEFAULTS, getDefaultTokenStandard } from '@repo/constants';
 import { useFormWithNextIntl } from '@repo/hooks/src/client-hooks';
-import { ExchangeFormData } from '@repo/hooks/src/state/exchange-store';
+import { ExchangeForm } from '@repo/ui';
 import { securityEnhancedAdvancedExchangeFormSchema } from '@repo/utils';
 import { useTranslations } from 'next-intl';
+import { useMemo } from 'react';
 
 import { ExchangeLayout } from './ExchangeLayout';
 
@@ -35,7 +36,7 @@ function parseInitialFormData(
       captchaAnswer: '',
       agreeToTerms: false,
       rememberData: false,
-    } as Record<string, unknown>;
+    };
   }
 
   const fromCurrency = initialParams.from?.split('-')[0] || EXCHANGE_DEFAULTS.FROM_CURRENCY;
@@ -46,7 +47,7 @@ function parseInitialFormData(
   const selectedBankId = initialParams.bank || 'privatbank';
 
   return {
-    fromCurrency: fromCurrency as ExchangeFormData['fromCurrency'],
+    fromCurrency,
     tokenStandard,
     toCurrency: EXCHANGE_DEFAULTS.TO_CURRENCY,
     selectedBankId,
@@ -57,28 +58,27 @@ function parseInitialFormData(
     captchaAnswer: '',
     agreeToTerms: false,
     rememberData: false,
-  } as Record<string, unknown>;
+  };
 }
 
 export function ExchangeContainer({ initialParams }: ExchangeContainerProps) {
   const t = useTranslations('AdvancedExchangeForm');
 
-  // Parse initial values from query params
-  const initialFormData = parseInitialFormData(initialParams);
+  // Parse initial values from query params with memoization
+  const initialFormData = useMemo(() => parseInitialFormData(initialParams), [initialParams]);
 
   const form = useFormWithNextIntl({
     initialValues: initialFormData,
     validationSchema: securityEnhancedAdvancedExchangeFormSchema,
     t,
-    onSubmit: async (values: Record<string, unknown>) => {
+    onSubmit: async (_values: Record<string, unknown>) => {
       // Form submission logic будет в task 2.4
-      // eslint-disable-next-line no-console
-      console.log('Form submitted:', values);
+      throw new Error('Form submission not yet implemented');
     },
   });
 
   return (
-    <div className="exchange-container">
+    <ExchangeForm.Container variant="full" className="exchange-container">
       {/* Page Header */}
       <header className="exchange-header mb-8 text-center">
         <h1 className="text-3xl font-bold text-foreground lg:text-4xl">{t('title')}</h1>
@@ -87,6 +87,6 @@ export function ExchangeContainer({ initialParams }: ExchangeContainerProps) {
 
       {/* Main Exchange Layout */}
       <ExchangeLayout form={form} t={t} />
-    </div>
+    </ExchangeForm.Container>
   );
 }

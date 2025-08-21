@@ -1,120 +1,241 @@
-# 📋 TASK 2.3: Personal Data & Security Section Implementation
+# 📋 TASK 2.3: 🎯 ЗАПОЛНЕНИЕ ПОЛЕЙ - Personal Data & Security Section
 
-> **Цель**: Реализовать personal data input (email, card details) и security verification section (math captcha, terms agreement) с полной integration в form validation.
+> **Фактический статус**: 🎯 **ГОТОВ К РЕАЛИЗАЦИИ** - секции созданы, нужно заполнить placeholder-ы реальными полями.  
+> **Цель**: Заменить placeholder контент в секциях "Персональные данные" и "Безопасность" на реальные поля email, captcha и согласий.
 
-## 🎯 **Scope Definition - на 100% основано на архитектурном анализе**
+## 🎯 **Фактическое состояние - основано на скриншоте**
 
-### Создаваемые файлы:
+### ✅ Что УЖЕ ЕСТЬ (основа Task 2.1):
 
-- `apps/web/app/[locale]/exchange/components/PersonalDataSection.tsx` - email и personal info
-- `apps/web/app/[locale]/exchange/components/SecuritySection.tsx` - captcha и agreements
-- `apps/web/app/[locale]/exchange/components/CardValidationField.tsx` - enhanced card validation
+- ✅ **Секция "Персональные данные"** - создана с placeholder "Personal Data Form (Task 2.3)"
+- ✅ **Секция "Безопасность"** - создана с placeholder "Security & Verification (Task 2.3)"
+- ✅ **ExchangeFormData типы** - уже содержат поля email, captchaAnswer, agreeToTerms, rememberData
+- ✅ **Validation schema** - securityEnhancedAdvancedExchangeFormSchema включает все необходимые проверки
+- ✅ **UI Components** - Input, Checkbox, MathCaptcha из @repo/ui готовы к использованию
 
-### Интеграция с существующими системами:
+### 🎯 Что нужно ЗАМЕНИТЬ в Task 2.3:
 
-- **MathCaptcha Component**: `@repo/ui/components/ui/math-captcha` (СУЩЕСТВУЕТ)
-- **Checkbox Component**: `@repo/ui/components/ui/checkbox` (СУЩЕСТВУЕТ)
-- **Form Components**: `FormField`, `FormLabel`, `FormControl`, `FormMessage` from `@repo/ui` (СУЩЕСТВУЮТ)
-- **Validation Schemas**: `securityEnhancedAdvancedExchangeFormSchema` (ГОТОВО в task 1.1)
-- **Card Validation Utils**: Luhn algorithm, BIN detection (ТРЕБУЕТСЯ СОЗДАТЬ)
-
-### Architectural Requirements from Acceptance Criteria:
-
-- Email validation через existing patterns из AuthEmailField
-- Card number validation с Luhn algorithm и BIN detection
-- Math CAPTCHA integration для security verification
-- Terms agreement checkbox с required validation
-- Privacy settings checkbox (optional)
-
-## 📐 **Technical Implementation Plan**
-
-### 1. **Personal Data Section** (`PersonalDataSection.tsx`)
+**В секции "Персональные данные" заменить:**
 
 ```tsx
-// apps/web/app/[locale]/exchange/components/PersonalDataSection.tsx
-'use client';
+// ЗАМЕНИТЬ ЭТО:
+<div className="placeholder-content h-24 bg-background border border-dashed border-muted-foreground/30 rounded-md flex items-center justify-center">
+  <span className="text-sm text-muted-foreground">Personal Data Form (Task 2.3)</span>
+</div>
 
-import { UseFormReturn } from '@repo/hooks';
-import { ExchangeFormData } from '@repo/exchange-core/src/types';
-import { FormField, FormLabel, FormControl, FormMessage, Input } from '@repo/ui';
-import { CardValidationField } from './CardValidationField';
+// НА РЕАЛЬНЫЕ ПОЛЯ:
+<div className="personal-data-form space-y-4">
+  <Input name="email" type="email" placeholder="example@email.com" required />
+</div>
+```
 
-interface PersonalDataSectionProps {
-  form: UseFormReturn<ExchangeFormData>;
-  t: (key: string) => string;
+**В секции "Безопасность" заменить:**
+
+```tsx
+// ЗАМЕНИТЬ ЭТО:
+<div className="placeholder-content h-32 bg-background border border-dashed border-muted-foreground/30 rounded-md flex items-center justify-center">
+  <span className="text-sm text-muted-foreground">Security & Verification (Task 2.3)</span>
+</div>
+
+// НА РЕАЛЬНЫЕ ПОЛЯ:
+<div className="security-form space-y-4">
+  <MathCaptcha name="captchaAnswer" />
+  <Checkbox name="agreeToTerms" required />
+  <Checkbox name="rememberData" />
+</div>
+```
+
+## 🎯 **Scope Definition - ОБНОВЛЕНО НА ОСНОВЕ ТЕКУЩЕГО СОСТОЯНИЯ**
+
+### ✅ Что уже реализовано и НЕ нужно создавать:
+
+- **ExchangeLayout.tsx** ✅ УЖЕ ИМЕЕТ структуру для personal data секций
+- **Form Validation** ✅ `securityEnhancedAdvancedExchangeFormSchema` УЖЕ ВКЛЮЧАЕТ email, captcha, agreements
+- **ExchangeFormData** ✅ УЖЕ СОДЕРЖИТ поля: email, captchaAnswer, agreeToTerms, rememberData
+- **useFormWithNextIntl** ✅ УЖЕ ИНТЕГРИРОВАН с валидацией
+- **UI Components** ✅ Input, Checkbox, MathCaptcha из `@repo/ui` ГОТОВЫ
+
+### 🎯 Что нужно доработать в Task 2.3:
+
+- **Email Field Integration** - добавить поле email в ExchangeLayout
+- **Card Validation Enhancement** - улучшить валидацию cardNumber поля
+- **Captcha Integration** - добавить MathCaptcha компонент
+- **Agreement Checkboxes** - добавить согласия и privacy настройки
+- **Security Validation** - интегрировать проверки в useExchange
+
+### Интеграция с существующими системами - ОБНОВЛЕНО:
+
+- **Validation** ✅ `securityEnhancedEmailSchema` из `@repo/utils` УЖЕ ПРИМЕНЯЕТСЯ
+- **MathCaptcha** ✅ Компонент из `@repo/ui` ГОТОВ к использованию
+- **Form State** ✅ ExchangeFormData поддерживает все необходимые поля
+- **Business Logic** ✅ useExchange хук содержит validateForm функцию
+- **Card Validation** 🎯 ТРЕБУЕТСЯ добавить Luhn algorithm проверку
+
+## 📐 **Technical Implementation Plan - ОБНОВЛЕН**
+
+### 🔧 **Добавить Email поле в ExchangeLayout.tsx**:
+
+```tsx
+// В ReceivingSection после cardNumber:
+<ExchangeForm.FieldWrapper>
+  <label>{t('receiving.email')}</label>
+  <Input
+    name="email"
+    type="email"
+    placeholder={t('receiving.email.placeholder')}
+    autoComplete="email"
+  />
+</ExchangeForm.FieldWrapper>
+```
+
+### 🔧 **Добавить Security секцию в ExchangeLayout.tsx**:
+
+```tsx
+// После ExchangeForm.CardPair добавить:
+<ExchangeForm.ActionArea>
+  {/* Math Captcha */}
+  <ExchangeForm.FieldWrapper>
+    <label>{t('security.captcha')}</label>
+    <MathCaptcha name="captchaAnswer" placeholder={t('security.captcha.placeholder')} />
+  </ExchangeForm.FieldWrapper>
+
+  {/* Agreement Checkboxes */}
+  <ExchangeForm.FieldWrapper>
+    <Checkbox name="agreeToTerms" required label={t('security.terms.agreement')} />
+  </ExchangeForm.FieldWrapper>
+
+  <ExchangeForm.FieldWrapper>
+    <Checkbox name="rememberData" label={t('security.privacy.remember')} />
+  </ExchangeForm.FieldWrapper>
+</ExchangeForm.ActionArea>
+```
+
+### 🔧 **Улучшить валидацию cardNumber поля**:
+
+````tsx
+// В ReceivingSection улучшить cardNumber:
+<ExchangeForm.FieldWrapper>
+  <label>{t('receiving.cardNumber')}</label>
+  <Input
+    name="cardNumber"
+    placeholder="**** **** **** ****"
+    mask="9999 9999 9999 9999"
+    validate={validateLuhnCardNumber}
+    autoComplete="cc-number"
+  />
+</ExchangeForm.FieldWrapper>
+
+// Добавить функцию валидации:
+const validateLuhnCardNumber = (value: string) => {
+  const cleaned = value.replace(/\s/g, '');
+  return luhnCheck(cleaned) ? null : t('validation.cardNumber.invalid');
+};
+### 🔧 **Создать utility для валидации карт**:
+
+```tsx
+// utils/cardValidation.ts - создать новый файл
+export function luhnCheck(cardNumber: string): boolean {
+  const arr = cardNumber
+    .split('')
+    .reverse()
+    .map(x => parseInt(x));
+
+  const lastDigit = arr.splice(0, 1)[0];
+  let sum = arr.reduce((acc, val, i) => {
+    return i % 2 !== 0 ? acc + val : acc + ((val *= 2) > 9 ? val - 9 : val);
+  }, 0);
+
+  sum += lastDigit;
+  return sum % 10 === 0;
 }
 
-export function PersonalDataSection({ form, t }: PersonalDataSectionProps) {
-  const { getFieldProps, errors } = form;
+export function detectCardType(cardNumber: string): string {
+  const cleaned = cardNumber.replace(/\s/g, '');
 
-  return (
-    <section
-      className="personal-data-section bg-muted/50 border border-border rounded-lg p-6"
-      aria-labelledby="personal-data-heading"
-    >
-      <header className="section-header mb-6">
-        <h2 id="personal-data-heading" className="text-xl font-semibold text-foreground">
-          {t('personalData.title')}
-        </h2>
-        <p className="text-sm text-muted-foreground mt-1">{t('personalData.subtitle')}</p>
-      </header>
+  if (/^4/.test(cleaned)) return 'Visa';
+  if (/^5[1-5]/.test(cleaned)) return 'Mastercard';
+  if (/^3[47]/.test(cleaned)) return 'American Express';
 
-      <div className="personal-data-content space-y-4">
-        {/* Email Field */}
-        <FormField name="email" error={errors.email}>
-          <FormLabel htmlFor="exchange-email" className="text-sm font-medium required">
-            {t('personalData.email.label')}
-          </FormLabel>
-          <FormControl>
-            <Input
-              {...getFieldProps('email')}
-              id="exchange-email"
-              type="email"
-              placeholder={t('personalData.email.placeholder')}
-              className="w-full"
-              inputMode="email"
-              autoComplete="email"
-              aria-required="true"
-              aria-describedby={errors.email ? 'email-error' : undefined}
-            />
-          </FormControl>
-          <FormMessage id="email-error" />
-        </FormField>
+  return 'Unknown';
+}
+````
 
-        {/* Enhanced Card Number Field */}
-        <CardValidationField form={form} t={t} />
+### 🎯 **Конкретные шаги для реализации Task 2.3**:
 
-        {/* Additional Personal Info (Future Extension) */}
-        <div className="additional-info-placeholder">
-          <div className="text-xs text-muted-foreground p-3 bg-background border border-dashed border-muted-foreground/30 rounded-md">
-            {t('personalData.additionalInfo.placeholder')}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
+#### 1. **Добавить localization в ru.json**:
+
+```json
+// apps/web/messages/ru.json - добавить в AdvancedExchangeForm:
+"receiving": {
+  "email": "Email для уведомлений",
+  "email.placeholder": "example@email.com"
+},
+"security": {
+  "captcha": "Решите пример",
+  "captcha.placeholder": "Введите ответ",
+  "terms": {
+    "agreement": "Согласен с условиями обмена"
+  },
+  "privacy": {
+    "remember": "Запомнить данные для следующего обмена"
+  }
+},
+"validation": {
+  "cardNumber": {
+    "invalid": "Неверный номер карты"
+  }
 }
 ```
 
-### 2. **Enhanced Card Validation Field** (`CardValidationField.tsx`)
+#### 2. **Интегрировать с ExchangeContainer.tsx**:
 
 ```tsx
-// apps/web/app/[locale]/exchange/components/CardValidationField.tsx
-'use client';
+// В ExchangeContainer.tsx добавить:
+import { validateForm } from '@repo/hooks/src/business/useExchange';
 
-import { UseFormReturn } from '@repo/hooks';
-import { ExchangeFormData } from '@repo/exchange-core/src/types';
-import { FormField, FormLabel, FormControl, FormMessage, Input } from '@repo/ui';
-import { useState, useEffect } from 'react';
-import { CheckCircle, AlertCircle, CreditCard } from 'lucide-react';
+// Передать валидацию в form:
+const form = useFormWithNextIntl<ExchangeFormData>({
+  defaultValues: parseInitialFormData(initialParams),
+  validationSchema: securityEnhancedAdvancedExchangeFormSchema,
+  t,
+  customValidation: {
+    cardNumber: validateLuhnCardNumber,
+  },
+  onSubmit: async (values) => {
+    const validation = validateForm();
+    if (validation.isValid) {
+      // Proceed to submission - Task 2.4
+    }
+  },
+});
+## ✅ **Success Metrics - ОБНОВЛЕНО**
 
-// Card validation utilities
-const sanitizeCardNumber = (input: string): string => input.replace(/\D/g, '');
+### ✅ Что уже работает:
+- ExchangeFormData поддерживает поля: email, captchaAnswer, agreeToTerms, rememberData
+- securityEnhancedAdvancedExchangeFormSchema включает все необходимые валидации
+- MathCaptcha, Input, Checkbox компоненты готовы в @repo/ui
+- useFormWithNextIntl интегрирован с валидацией
 
-const luhnCheck = (cardNumber: string): boolean => {
-  const digits = cardNumber.split('').map(Number);
-  let sum = 0;
-  let alternate = false;
+### 🎯 Что нужно добавить:
+- [ ] Email поле в ReceivingSection ExchangeLayout.tsx
+- [ ] MathCaptcha в ExchangeForm.ActionArea
+- [ ] Checkbox поля для согласий в ActionArea
+- [ ] Luhn algorithm валидация для cardNumber
+- [ ] Локализация security секции в ru.json
+- [ ] Интеграция с validateForm из useExchange
+
+### 📋 **Конкретные файлы для обновления**:
+
+1. **ExchangeLayout.tsx** - добавить email поле и security секцию
+2. **utils/cardValidation.ts** - создать с luhnCheck функцией
+3. **apps/web/messages/ru.json** - добавить security переводы
+4. **ExchangeContainer.tsx** - интегрировать кастомную валидацию
+
+---
+
+**Статус**: ✅ СХЕМА ГОТОВА, требует реализации полей
+**Зависимости**: Task 2.2 (в процессе) ✅
+**Следующий шаг**: Добавить поля в существующий ExchangeLayout
 
   for (let i = digits.length - 1; i >= 0; i--) {
     let digit = digits[i];

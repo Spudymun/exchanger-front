@@ -92,18 +92,21 @@ Root path: `e:\project\kiro\exchanger-front`
 │       │   └── 🖼️ window.svg - Иконка окна | SVG | UI элементы интерфейса
 │       ├── 📁 src/ - Исходный код приложения | React компоненты, hooks, server | Основная логика веб-приложения
 │       │   ├── 📁 components/ - React компоненты | UI components, business logic | Переиспользуемые компоненты интерфейса
-│       │   │   ├── 📁 exchange-form/ - Компоненты формы обмена | Exchange UI logic | Элементы главной формы обменника
-│       │   │   │   ├── 📄 ExchangeArrow.tsx - Стрелка между валютами | UI компонент | Визуальный элемент направления обмена
-│       │   │   │   ├── 📄 ExchangeBenefits.tsx - Преимущества обменника | Marketing компонент | Блок с выгодами использования сервиса
-│       │   │   │   ├── 📄 ReceivingCard.tsx - Карточка получения валюты | Exchange UI | Выбор валюты и суммы получения
-│       │   │   │   ├── 📄 SendingCard.tsx - Карточка отправки валюты | Exchange UI | Выбор валюты и суммы отправки
-│       │   │   │   └── 📄 useHeroExchangeForm.ts - Хук формы обмена | Business logic hook | Логика управления состоянием формы
+│       │   │   ├── 📁 exchange/ - Компоненты страницы обмена | Exchange page logic | Компоненты для /exchange страницы
+│       │   │   │   ├── 📄 ExchangeContainer.tsx - Главный контейнер обмена | Exchange container | Контейнер управления состоянием страницы обмена
+│       │   │   │   └── 📄 ExchangeLayout.tsx - Layout страницы обмена | Exchange layout | Компоновка элементов страницы обмена
 │       │   │   ├── 📁 forms/ - Компоненты форм | Form components | Переиспользуемые формы приложения
 │       │   │   │   ├── 📄 AuthForms.tsx - Формы авторизации | Auth UI | Контайнер для форм входа и регистрации
 │       │   │   │   ├── 📄 LoginForm.tsx - Форма входа | Auth component | Форма авторизации пользователя
 │       │   │   │   ├── 📄 RegisterForm.tsx - Форма регистрации | Auth component | Форма создания нового аккаунта
 │       │   │   │   └── 📄 index.ts - Экспорты форм | Module exports | Централизованный экспорт всех форм
-│       │   │   ├── 📄 ErrorBoundaryTest.tsx - Тестовый компонент ошибок | Development tool | Тестирование Error Boundary в dev режиме
+│       │   │   ├── � hero-exchange/ - Компоненты hero формы обмена | Hero exchange UI | Элементы главной формы на лендинге
+│       │   │   │   ├── 📄 ExchangeArrow.tsx - Стрелка между валютами | UI компонент | Визуальный элемент направления обмена
+│       │   │   │   ├── 📄 ExchangeBenefits.tsx - Преимущества обменника | Marketing компонент | Блок с выгодами использования сервиса
+│       │   │   │   ├── 📄 ReceivingCard.tsx - Карточка получения валюты | Hero exchange UI | Выбор валюты и суммы получения на главной
+│       │   │   │   ├── 📄 SendingCard.tsx - Карточка отправки валюты | Hero exchange UI | Выбор валюты и суммы отправки на главной
+│       │   │   │   └── 📄 useHeroExchangeForm.ts - Хук hero формы обмена | Hero exchange hook | Логика управления состоянием hero формы
+│       │   │   ├── �📄 ErrorBoundaryTest.tsx - Тестовый компонент ошибок | Development tool | Тестирование Error Boundary в dev режиме
 │       │   │   ├── 📄 ExchangeRates.tsx - Отображение курсов валют | Business component | Показ актуальных курсов обмена
 │       │   │   ├── 📄 FeaturesSection.tsx - Секция возможностей | Marketing component | Блок с основными функциями сервиса
 │       │   │   ├── 📄 FloatingExchangeButton.tsx - Плавающая кнопка обмена | UI component | Кнопка быстрого доступа к обмену

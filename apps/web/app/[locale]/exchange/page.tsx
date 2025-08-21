@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server';
 
-import { ExchangeContainer } from './components/ExchangeContainer';
+import { ExchangeContainer } from '../../../src/components/exchange/ExchangeContainer';
 
 interface ExchangePageProps {
   params: {

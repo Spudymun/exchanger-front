@@ -1,19 +1,20 @@
 'use client';
 
 import { UseFormReturn } from '@repo/hooks';
+import { ExchangeForm } from '@repo/ui';
 
 interface ExchangeLayoutProps {
   form: UseFormReturn<Record<string, unknown>>;
   t: (key: string) => string;
 }
 
-// Sending column component
-function SendingColumn({ t }: { t: (key: string) => string }) {
+// Sending section using Compound Components
+function SendingSection({ t }: { t: (key: string) => string }) {
   return (
-    <section className="exchange-send-column bg-muted/50 border border-border rounded-lg p-6">
+    <ExchangeForm.ExchangeCard type="sending">
       <header className="section-header mb-6">
         <h2 className="text-xl font-semibold text-foreground">{t('sending.title')}</h2>
-        <p className="text-sm text-muted-foreground mt-1">Выберите криптовалюту и введите сумму</p>
+        <p className="text-sm text-muted-foreground mt-1">{t('sending.subtitle')}</p>
       </header>
 
       <div className="send-content space-y-4">
@@ -31,17 +32,17 @@ function SendingColumn({ t }: { t: (key: string) => string }) {
           </div>
         </div>
       </div>
-    </section>
+    </ExchangeForm.ExchangeCard>
   );
 }
 
-// Receiving column component
-function ReceivingColumn({ t }: { t: (key: string) => string }) {
+// Receiving section using Compound Components
+function ReceivingSection({ t }: { t: (key: string) => string }) {
   return (
-    <section className="exchange-receive-column bg-muted/50 border border-border rounded-lg p-6">
+    <ExchangeForm.ExchangeCard type="receiving">
       <header className="section-header mb-6">
         <h2 className="text-xl font-semibold text-foreground">{t('receiving.title')}</h2>
-        <p className="text-sm text-muted-foreground mt-1">Выберите банк для получения средств</p>
+        <p className="text-sm text-muted-foreground mt-1">{t('receiving.subtitle')}</p>
       </header>
 
       <div className="receive-content space-y-4">
@@ -59,7 +60,7 @@ function ReceivingColumn({ t }: { t: (key: string) => string }) {
           </div>
         </div>
       </div>
-    </section>
+    </ExchangeForm.ExchangeCard>
   );
 }
 
@@ -100,11 +101,11 @@ function AdditionalSections() {
 export function ExchangeLayout({ form, t }: ExchangeLayoutProps) {
   return (
     <form onSubmit={form.handleSubmit} className="exchange-form">
-      {/* Two-Column Layout Container */}
-      <div className="exchange-grid grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
-        <SendingColumn t={t} />
-        <ReceivingColumn t={t} />
-      </div>
+      {/* Two-Column Layout using Compound Components */}
+      <ExchangeForm.CardPair layout="horizontal">
+        <SendingSection t={t} />
+        <ReceivingSection t={t} />
+      </ExchangeForm.CardPair>
 
       <AdditionalSections />
     </form>

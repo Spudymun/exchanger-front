@@ -1,157 +1,433 @@
-# 📋 TASK 2.2: Currency Selection & Amount Calculation Components
+# 📋 TASK 2.2: 🎯 ЗАПОЛНЕНИЕ ПОЛЕЙ - Currency Selection & Amount Calculation
 
-> **Цель**: Реализовать currency selection, amount input/display и real-time exchange rate calculation для двухколоночного layout формы exchange.
+> **Фактический статус**: 🎯 **ГОТОВ К РЕАЛИЗАЦИИ** - карточки созданы, нужно заполнить placeholder-ы реальными полями.  
+> **Цель**: Заменить placeholder контент в SendingSection/ReceivingSection на реальные поля ввода валют и сумм.
 
-## 🎯 **Scope Definition - на 100% основано на архитектурном анализе**
+## 🎯 **Фактическое состояние - основано на скриншоте**
 
-### Создаваемые файлы:
+### ✅ Что УЖЕ ЕСТЬ (основа Task 2.1):
 
-- `apps/web/app/[locale]/exchange/components/CurrencyPairSection.tsx` - главный компонент для валютного обмена
-- `apps/web/app/[locale]/exchange/components/SendingSection.tsx` - левая колонка "Отдаете"
-- `apps/web/app/[locale]/exchange/components/ReceivingSection.tsx` - правая колонка "Получаете"
-- `apps/web/app/[locale]/exchange/components/ExchangeRateDisplay.tsx` - отображение курса
+- ✅ **Карточки "Вы отправляете"/"Вы получаете"** - созданы через ExchangeForm.ExchangeCard
+- ✅ **Layout структура** - ExchangeForm.CardPair layout="horizontal" работает
+- ✅ **Placeholder контент** - в SendingSection показывает "Currency Selection (Task 2.2)", "Amount Input (Task 2.2)"
+- ✅ **API хуки** - useExchangeRates, useExchangeMutation уже существуют
+- ✅ **Constants** - CRYPTOCURRENCIES, TOKEN_STANDARDS, BANKS_BY_CURRENCY готовы
+- ✅ **Types** - ExchangeFormData с нужными полями (fromCurrency, tokenStandard, etc.)
 
-### Интеграция с существующими системами:
+### 🎯 Что нужно ЗАМЕНИТЬ в Task 2.2:
 
-- **API Integration**: `useExchangeRates`, `useExchangeMutation` hooks (СУЩЕСТВУЮТ)
-- **Constants**: `CRYPTOCURRENCIES`, `TOKEN_STANDARDS`, `UAH_BANKS` (ГОТОВО в task 1.2)
-- **Types**: `CryptoCurrency`, `TokenStandard`, `BankId` (ГОТОВО в task 1.3)
-- **UI Components**: `Select`, `Input`, `Button` from `@repo/ui` (СУЩЕСТВУЮТ)
-- **Validation**: `securityEnhancedAdvancedExchangeFormSchema` (ГОТОВО в task 1.1)
-
-### Architectural Requirements from Acceptance Criteria:
-
-- Real-time exchange rate calculation через `trpc.exchange.calculateExchange`
-- Currency limits integration через `trpc.exchange.getLimits`
-- Bank selection с dynamic limits loading
-- Amount calculation с proper formatting и validation
-
-## 📐 **Technical Implementation Plan**
-
-### 1. **Main Currency Pair Section** (`CurrencyPairSection.tsx`)
+**В SendingSection заменить placeholder блоки:**
 
 ```tsx
-// apps/web/app/[locale]/exchange/components/CurrencyPairSection.tsx
-'use client';
+// ЗАМЕНИТЬ ЭТО:
+<div className="currency-selection">
+  <div className="placeholder-content h-20 bg-background border border-dashed border-muted-foreground/30 rounded-md flex items-center justify-center">
+    <span className="text-sm text-muted-foreground">Currency Selection (Task 2.2)</span>
+  </div>
+</div>
 
-import { UseFormReturn } from '@repo/hooks';
-import { ExchangeFormData } from '@repo/exchange-core/src/types';
-import { SendingSection } from './SendingSection';
-import { ReceivingSection } from './ReceivingSection';
-import { ExchangeRateDisplay } from './ExchangeRateDisplay';
-import { trpc } from '@/lib/trpc-provider';
-import { useEffect } from 'react';
+// НА РЕАЛЬНЫЕ ПОЛЯ:
+<div className="currency-selection space-y-3">
+  <Select name="fromCurrency" options={CRYPTOCURRENCIES} placeholder="Выберите криптовалюту" />
+  <Select name="tokenStandard" options={TOKEN_STANDARDS} placeholder="Стандарт токена" />
+</div>
+```
 
-interface CurrencyPairSectionProps {
-  form: UseFormReturn<ExchangeFormData>;
-  t: (key: string) => string;
-}
+**В ReceivingSection заменить placeholder блоки:**
 
-export function CurrencyPairSection({ form, t }: CurrencyPairSectionProps) {
-  const { values, setFieldValue } = form;
+```tsx
+// ЗАМЕНИТЬ ЭТО:
+<div className="bank-selection">
+  <div className="placeholder-content h-20 bg-background border border-dashed border-muted-foreground/30 rounded-md">
+    <span className="text-sm text-muted-foreground">Bank Selection (Task 2.2)</span>
+  </div>
+</div>
 
-  // Real-time exchange rate calculation
-  const { data: exchangeRates } = trpc.exchange.getRates.useQuery(undefined, {
-    refetchInterval: 30000, // Update every 30 seconds
-    staleTime: 30000,
-  });
+// НА РЕАЛЬНЫЕ ПОЛЯ:
+<div className="bank-selection space-y-3">
+  <Select name="selectedBankId" options={BANKS_BY_CURRENCY.UAH} placeholder="Выберите банк" />
+  <Input name="cardNumber" mask="**** **** **** ****" placeholder="Номер карты" />
+</div>
+```
 
-  const { data: calculation } = trpc.exchange.calculateExchange.useQuery(
-    {
-      amount: values.cryptoAmount,
-      currency: values.fromCurrency,
-      direction: 'crypto-to-uah',
-    },
-    {
-      enabled: values.cryptoAmount > 0 && !!values.fromCurrency,
-      refetchOnWindowFocus: false,
-    }
-  );
+## 📐 **Конкретные шаги реализации Task 2.2**
 
-  // Update UAH amount when calculation changes
-  useEffect(() => {
-    if (calculation?.uahAmount) {
-      setFieldValue('uahAmount', calculation.uahAmount);
-    }
-  }, [calculation?.uahAmount, setFieldValue]);
+### 🔧 **Шаг 1: Обновить SendingSection в ExchangeLayout.tsx**
 
+```tsx
+// В SendingSection заменить placeholder-ы на:
+import { Input, Select } from '@repo/ui';
+import { CRYPTOCURRENCIES, TOKEN_STANDARDS } from '@repo/constants';
+
+function SendingSection({ t, form }: { t: (key: string) => string; form: any }) {
   return (
-    <div className="currency-pair-section">
-      {/* Exchange Rate Display */}
-      <ExchangeRateDisplay
-        currentRate={calculation?.rate}
-        commission={calculation?.commission}
-        fromCurrency={values.fromCurrency}
-        t={t}
-      />
+    <ExchangeForm.ExchangeCard type="sending">
+      <header className="section-header mb-6">
+        <h2 className="text-xl font-semibold text-foreground">{t('sending.title')}</h2>
+        <p className="text-sm text-muted-foreground mt-1">{t('sending.subtitle')}</p>
+      </header>
 
-      {/* Two-Column Currency Layout */}
-      <div className="currency-grid grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-8">
-        <SendingSection form={form} t={t} />
-        <ReceivingSection form={form} t={t} calculation={calculation} />
+      <div className="send-content space-y-4">
+        {/* Выбор криптовалюты */}
+        <ExchangeForm.FieldWrapper>
+          <label className="text-sm font-medium">{t('sending.currency')}</label>
+          <Select
+            name="fromCurrency"
+            options={CRYPTOCURRENCIES.map(crypto => ({ value: crypto, label: crypto }))}
+            placeholder={t('sending.currency.placeholder')}
+          />
+        </ExchangeForm.FieldWrapper>
+
+        {/* Стандарт токена */}
+        <ExchangeForm.FieldWrapper>
+          <label className="text-sm font-medium">{t('sending.tokenStandard')}</label>
+          <Select
+            name="tokenStandard"
+            options={TOKEN_STANDARDS.map(standard => ({ value: standard, label: standard }))}
+            placeholder={t('sending.tokenStandard.placeholder')}
+          />
+        </ExchangeForm.FieldWrapper>
+
+        {/* Сумма отправки */}
+        <ExchangeForm.FieldWrapper>
+          <label className="text-sm font-medium">{t('sending.amount')}</label>
+          <Input
+            name="cryptoAmount"
+            type="number"
+            step="0.00000001"
+            placeholder="0.00000000"
+            onChange={e => {
+              // Автоматический пересчет будет через useExchange
+            }}
+          />
+        </ExchangeForm.FieldWrapper>
       </div>
-    </div>
+    </ExchangeForm.ExchangeCard>
   );
 }
 ```
 
-### 2. **Sending Section** (`SendingSection.tsx`)
+### 🔧 **Шаг 2: Обновить ReceivingSection в ExchangeLayout.tsx**
 
 ```tsx
-// apps/web/app/[locale]/exchange/components/SendingSection.tsx
-'use client';
+// В ReceivingSection заменить placeholder-ы на:
+import { BANKS_BY_CURRENCY } from '@repo/constants';
 
-import { UseFormReturn } from '@repo/hooks';
-import { ExchangeFormData, CryptoCurrency } from '@repo/exchange-core/src/types';
-import { CRYPTOCURRENCIES, TOKEN_STANDARDS } from '@repo/constants/src/exchange';
-import {
-  FormField,
-  FormLabel,
-  FormControl,
-  FormMessage,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-  Input,
-} from '@repo/ui';
-import { trpc } from '@/lib/trpc-provider';
+function ReceivingSection({ t, form }: { t: (key: string) => string; form: any }) {
+  return (
+    <ExchangeForm.ExchangeCard type="receiving">
+      <header className="section-header mb-6">
+        <h2 className="text-xl font-semibold text-foreground">{t('receiving.title')}</h2>
+        <p className="text-sm text-muted-foreground mt-1">{t('receiving.subtitle')}</p>
+      </header>
 
-interface SendingSectionProps {
-  form: UseFormReturn<ExchangeFormData>;
-  t: (key: string) => string;
-}
+      <div className="receive-content space-y-4">
+        {/* Выбор банка */}
+        <ExchangeForm.FieldWrapper>
+          <label className="text-sm font-medium">{t('receiving.bank')}</label>
+          <Select
+            name="selectedBankId"
+            options={BANKS_BY_CURRENCY.UAH.map(bank => ({
+              value: bank.id,
+              label: bank.name,
+              icon: bank.logoUrl,
+            }))}
+            placeholder={t('receiving.bank.placeholder')}
+          />
+        </ExchangeForm.FieldWrapper>
 
-export function SendingSection({ form, t }: SendingSectionProps) {
-  const { values, getFieldProps, setFieldValue } = form;
+        {/* Номер карты */}
+        <ExchangeForm.FieldWrapper>
+          <label className="text-sm font-medium">{t('receiving.cardNumber')}</label>
+          <Input
+            name="cardNumber"
+            placeholder="**** **** **** ****"
+            mask="9999 9999 9999 9999"
+            inputMode="numeric"
+          />
+        </ExchangeForm.FieldWrapper>
 
-  // Get currency limits
-  const { data: limits } = trpc.exchange.getLimits.useQuery(
-    { currency: values.fromCurrency },
-    { enabled: !!values.fromCurrency }
+        {/* Сумма получения (автоматическая) */}
+        <ExchangeForm.FieldWrapper>
+          <label className="text-sm font-medium">{t('receiving.amount')}</label>
+          <Input
+            name="uahAmount"
+            type="number"
+            disabled
+            placeholder="0.00 UAH"
+            className="bg-muted"
+          />
+        </ExchangeForm.FieldWrapper>
+      </div>
+    </ExchangeForm.ExchangeCard>
   );
+}
+```
 
-  // Handle currency change
-  const handleCurrencyChange = (newCurrency: CryptoCurrency) => {
-    setFieldValue('fromCurrency', newCurrency);
+<ExchangeForm.FieldWrapper>
+<Select
+name="tokenStandard"
+options={TOKEN_STANDARDS}
+placeholder={t('sending.tokenStandard.placeholder')}
+/>
+</ExchangeForm.FieldWrapper>
+
+<ExchangeForm.FieldWrapper>
+<Input
+name="cryptoAmount"
+type="number"
+placeholder={t('sending.amount.placeholder')}
+/>
+</ExchangeForm.FieldWrapper>
+
+````
+
+### 🔧 **Доработка ReceivingSection в ExchangeLayout.tsx**:
+
+```tsx
+// Добавить в существующий ReceivingSection:
+import { BANKS_BY_CURRENCY } from '@repo/constants';
+
+// В ExchangeForm.ExchangeCard для получения:
+<ExchangeForm.FieldWrapper>
+  <Select
+    name="selectedBankId"
+    options={BANKS_BY_CURRENCY.UAH}
+    placeholder={t('receiving.bank.placeholder')}
+  />
+</ExchangeForm.FieldWrapper>
+
+<ExchangeForm.FieldWrapper>
+  <Input
+    name="cardNumber"
+    placeholder={t('receiving.card.placeholder')}
+    mask="**** **** **** ****"
+  />
+</ExchangeForm.FieldWrapper>
+
+<ExchangeForm.FieldWrapper>
+  <Input
+    name="uahAmount"
+    type="number"
+    disabled
+    value={calculatedAmount}
+    placeholder={t('receiving.amount.placeholder')}
+  />
+</ExchangeForm.FieldWrapper>
+### 🔧 **Интеграция с useExchange для автоматических расчетов**:
+
+```tsx
+// В ExchangeContainer.tsx добавить:
+import { useExchange } from '@repo/hooks/src/business/useExchange';
+import { useExchangeRates } from '@/hooks/useExchangeMutation';
+
+export function ExchangeContainer({ locale, initialParams }: ExchangeContainerProps) {
+  const t = useTranslations('AdvancedExchangeForm');
+
+  // Интеграция с бизнес-логикой (уже существует)
+  const {
+    formData,
+    setFormData,
+    validateForm,
+    isLoading,
+    getDisplayRate  // добавить вызов
+  } = useExchange();
+
+  // Курсы валют (уже существует)
+  const { data: rates, isLoading: ratesLoading } = useExchangeRates();
+
+  // Передать в ExchangeLayout:
+  return (
+    <ExchangeForm.Container variant="full">
+      <ExchangeLayout
+        form={form}
+        t={t}
+        rates={rates}
+        displayRate={getDisplayRate}
+        isLoading={isLoading || ratesLoading}
+      />
+    </ExchangeForm.Container>
+  );
+}
+````
+
+### 🔧 **Добавить ExchangeRateDisplay между секциями**:
+
+````tsx
+// В ExchangeLayout.tsx между SendingSection и ReceivingSection:
+<ExchangeForm.Arrow>
+  <div className="exchange-rate-display">
+    <span className="rate-label">{t('rate.label')}</span>
+    <span className="rate-value">
+      {displayRate ? `1 ${formData.fromCurrency} = ${displayRate} UAH` : '---'}
+    </span>
+  </div>
+</ExchangeForm.Arrow>
+### 🎯 **Конкретные шаги для реализации Task 2.2**:
+
+#### 1. **Обновить ExchangeLayout.tsx** - добавить поля в существующие секции:
+
+```tsx
+// В SendingSection добавить:
+<ExchangeForm.FieldWrapper>
+  <label>{t('sending.currency')}</label>
+  <Select name="fromCurrency">
+    {CRYPTOCURRENCIES.map(crypto => (
+      <option key={crypto} value={crypto}>{crypto}</option>
+    ))}
+  </Select>
+</ExchangeForm.FieldWrapper>
+
+<ExchangeForm.FieldWrapper>
+  <label>{t('sending.tokenStandard')}</label>
+  <Select name="tokenStandard">
+    {TOKEN_STANDARDS.map(standard => (
+      <option key={standard} value={standard}>{standard}</option>
+    ))}
+  </Select>
+</ExchangeForm.FieldWrapper>
+
+<ExchangeForm.FieldWrapper>
+  <label>{t('sending.amount')}</label>
+  <Input
+    name="cryptoAmount"
+    type="number"
+    placeholder="0.00"
+    onChange={(e) => {
+      // Автоматический пересчет через useExchange
+      setFormData({ cryptoAmount: e.target.value });
+    }}
+  />
+</ExchangeForm.FieldWrapper>
+````
+
+#### 2. **Обновить ReceivingSection** - добавить поля банков и карт:
+
+````tsx
+// В ReceivingSection добавить:
+<ExchangeForm.FieldWrapper>
+  <label>{t('receiving.bank')}</label>
+  <Select name="selectedBankId">
+    {BANKS_BY_CURRENCY.UAH.map(bank => (
+      <option key={bank.id} value={bank.id}>{bank.name}</option>
+    ))}
+  </Select>
+</ExchangeForm.FieldWrapper>
+
+<ExchangeForm.FieldWrapper>
+  <label>{t('receiving.cardNumber')}</label>
+  <Input
+    name="cardNumber"
+    placeholder="**** **** **** ****"
+    mask="9999 9999 9999 9999"
+  />
+</ExchangeForm.FieldWrapper>
+
+<ExchangeForm.FieldWrapper>
+  <label>{t('receiving.amount')}</label>
+  <Input
+    name="uahAmount"
+    type="number"
+    disabled
+    value={formData.uahAmount || ''}
+    placeholder="0.00 UAH"
+  />
+</ExchangeForm.FieldWrapper>
+#### 3. **Добавить отображение курса через ExchangeForm.Arrow**:
+
+```tsx
+// Между SendingSection и ReceivingSection в ExchangeLayout.tsx:
+<ExchangeForm.Arrow>
+  <div className="exchange-rate-display text-center">
+    <div className="rate-info">
+      {rates && formData.fromCurrency ? (
+        <>
+          <span className="rate-label text-sm text-muted-foreground">
+            {t('rate.current')}
+          </span>
+          <span className="rate-value text-lg font-semibold">
+            1 {formData.fromCurrency} = {getDisplayRate()} UAH
+          </span>
+        </>
+      ) : (
+        <span className="rate-loading">{t('rate.loading')}</span>
+      )}
+    </div>
+  </div>
+</ExchangeForm.Arrow>
+````
+
+#### 4. **Интегрировать локализацию в ru.json**:
+
+```json
+// apps/web/messages/ru.json - добавить в AdvancedExchangeForm:
+"sending": {
+  "currency": "Отдаете валюту",
+  "tokenStandard": "Стандарт токена",
+  "amount": "Сумма отправки"
+},
+"receiving": {
+  "bank": "Банк получения",
+  "cardNumber": "Номер карты",
+  "amount": "Сумма получения"
+},
+"rate": {
+  "current": "Текущий курс:",
+  "loading": "Загрузка курса..."
+}
+```
+
+## ✅ **Success Metrics - ОБНОВЛЕНО**
+
+### ✅ Что уже работает:
+
+- ExchangeLayout.tsx с правильной структурой Compound Components
+- useExchange хук с автоматическими расчетами
+- useExchangeRates с обновлением каждые 30 секунд
+- ExchangeFormData типы с правильными полями
+
+### 🎯 Что нужно добавить:
+
+- [ ] Поля выбора валют в SendingSection
+- [ ] Поля банков и карт в ReceivingSection
+- [ ] Отображение курса через ExchangeForm.Arrow
+- [ ] Автоматический пересчет при изменении суммы
+- [ ] Обработка loading состояний для курсов
+
+---
+
+**Статус**: ✅ АРХИТЕКТУРА ГОТОВА, требует реализации полей  
+**Зависимости**: Task 2.1 (COMPLETED) ✅  
+**Следующий шаг**: Добавить конкретные поля в существующие компоненты
+
+// Get currency limits
+const { data: limits } = trpc.exchange.getLimits.useQuery(
+{ currency: values.fromCurrency },
+{ enabled: !!values.fromCurrency }
+);
+
+// Handle currency change
+const handleCurrencyChange = (newCurrency: CryptoCurrency) => {
+setFieldValue('fromCurrency', newCurrency);
 
     // Reset token standard if currency doesn't support current one
     const supportedStandards = TOKEN_STANDARDS[newCurrency] || [];
     if (!supportedStandards.includes(values.fromTokenStandard)) {
       setFieldValue('fromTokenStandard', supportedStandards[0] || 'ERC-20');
     }
-  };
 
-  // Get available token standards for selected currency
-  const availableStandards = TOKEN_STANDARDS[values.fromCurrency] || [];
+};
 
-  return (
-    <section className="sending-section bg-muted/50 border border-border rounded-lg p-6">
-      <header className="section-header mb-6">
-        <h2 className="text-xl font-semibold text-foreground">{t('sending.title')}</h2>
-        <p className="text-sm text-muted-foreground mt-1">{t('sending.subtitle')}</p>
-      </header>
+// Get available token standards for selected currency
+const availableStandards = TOKEN_STANDARDS[values.fromCurrency] || [];
+
+return (
+
+<section className="sending-section bg-muted/50 border border-border rounded-lg p-6">
+<header className="section-header mb-6">
+<h2 className="text-xl font-semibold text-foreground">{t('sending.title')}</h2>
+<p className="text-sm text-muted-foreground mt-1">{t('sending.subtitle')}</p>
+</header>
 
       <div className="sending-content space-y-4">
         {/* Cryptocurrency Selection */}
@@ -263,9 +539,11 @@ export function SendingSection({ form, t }: SendingSectionProps) {
         </div>
       </div>
     </section>
-  );
+
+);
 }
-```
+
+````
 
 ### 3. **Receiving Section** (`ReceivingSection.tsx`)
 
@@ -447,7 +725,7 @@ export function ReceivingSection({ form, t, calculation }: ReceivingSectionProps
     </section>
   );
 }
-```
+````
 
 ### 4. **Exchange Rate Display** (`ExchangeRateDisplay.tsx`)
 
