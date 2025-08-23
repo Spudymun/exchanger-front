@@ -1,4 +1,5 @@
 // Security utilities for XSS protection and validation
+import { VALIDATION_LIMITS } from '@repo/constants';
 import { z } from 'zod';
 
 /**
@@ -59,12 +60,13 @@ export const xssProtectedStringSchema = createXSSProtectedString();
 
 /**
  * Security validation limits for consistent validation across the app
+ * NOTE: Common limits imported from @repo/constants to avoid duplication
  */
 export const SECURITY_VALIDATION_LIMITS = {
-  // Authentication limits
-  PASSWORD_MIN_LENGTH: 8,
-  PASSWORD_MAX_LENGTH: 128,
-  EMAIL_MAX_LENGTH: 254,
+  // Authentication limits - imported from centralized constants
+  PASSWORD_MIN_LENGTH: VALIDATION_LIMITS.PASSWORD_MIN_LENGTH, // was: 8
+  PASSWORD_MAX_LENGTH: VALIDATION_LIMITS.PASSWORD_MAX_LENGTH, // was: 128
+  EMAIL_MAX_LENGTH: VALIDATION_LIMITS.EMAIL_MAX_LENGTH, // was: 254, now 255 (unified)
   NAME_MAX_LENGTH: 100,
   NAME_MIN_LENGTH: 2,
 
@@ -79,7 +81,7 @@ export const SECURITY_VALIDATION_LIMITS = {
   // System limits
   TAG_MAX_LENGTH: 50,
   AUTH_CODE_MAX_LENGTH: 10,
-  SEARCH_QUERY_MAX_LENGTH: 100,
+  SEARCH_QUERY_MAX_LENGTH: VALIDATION_LIMITS.SEARCH_QUERY_MAX_LENGTH, // was: 100
 
   // Additional validation limits
   AMOUNT_MAX_LENGTH: 50,
