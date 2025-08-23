@@ -85,7 +85,7 @@ export const SECURITY_VALIDATION_LIMITS = {
 
   // Additional validation limits
   AMOUNT_MAX_LENGTH: 50,
-  CARD_NUMBER_MIN_LENGTH: 16,
+  CARD_NUMBER_MIN_LENGTH: 13, // Corrected: supports Visa 13-digit cards (was: 16)
   CARD_NUMBER_MAX_LENGTH: 19,
   PHONE_MAX_LENGTH: 20,
   TITLE_MIN_LENGTH: 5,
