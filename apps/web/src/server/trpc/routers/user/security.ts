@@ -11,7 +11,12 @@ import {
   validateUserAccess,
   generateVerificationCode,
 } from '@repo/exchange-core';
-import { createUserError, createSecurityError, createBadRequestError } from '@repo/utils';
+import {
+  createUserError,
+  createSecurityError,
+  createBadRequestError,
+  passwordSchema,
+} from '@repo/utils';
 
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
@@ -89,10 +94,7 @@ export const securityRouter = createTRPCRouter({
   deleteAccount: protectedProcedure
     .input(
       z.object({
-        password: z
-          .string()
-          .min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH)
-          .max(VALIDATION_LIMITS.PASSWORD_MAX_LENGTH), // Используем константы проекта
+        password: passwordSchema, // ✅ Используем базовую схему из архитектурных принципов
         confirmation: z.literal('DELETE_MY_ACCOUNT'),
       })
     )
