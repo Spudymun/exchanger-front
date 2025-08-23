@@ -1,6 +1,6 @@
 # File Tree: exchanger-front
 
-Generated on: 8/19/2025, 12:08:36 AM
+Generated on: 8/23/2025, 2:25:00 PM
 Root path: `e:\project\kiro\exchanger-front`
 
 ## 📝 Описание структуры проекта
@@ -501,9 +501,7 @@ Root path: `e:\project\kiro\exchanger-front`
 │       │   │   ├── 📄 card-validation.ts - Валидация карточных данных | Card validation | Проверка данных банковских карт
 │       │   │   ├── 📄 constants.ts - Константы валидации | Validation constants | Константы для правил валидации
 │       │   │   ├── 📄 core.ts - Ядро валидации | Validation core | Основные функции валидации
-│       │   │   ├── 📄 field-validation.ts - Валидация полей | Field validation | Валидация отдельных полей форм
 │       │   │   ├── 📄 handlers.ts - Обработчики валидации | Validation handlers | Обработчики результатов валидации
-│       │   │   ├── 📄 hooks.ts - Хуки валидации | Validation hooks | React хуки для валидации
 │       │   │   ├── 📄 index.ts - Экспорты валидации | Validation exports | Централизованный экспорт валидации
 │       │   │   ├── 📄 schema-helpers.ts - Помощники схем | Schema helpers | Вспомогательные функции для схем
 │       │   │   ├── 📄 schemas-basic.ts - Базовые схемы | Basic schemas | Основные схемы валидации
@@ -515,7 +513,6 @@ Root path: `e:\project\kiro\exchanger-front`
 │       │   │   ├── 📄 security-enhanced-support-schemas.ts - Схемы поддержки | Support security schemas | Безопасная валидация поддержки, поиска, админ функций
 │       │   │   ├── 📄 security-enhanced-utils.ts - Утилиты безопасности | Security utils | Функции для безопасной валидации
 │       │   │   ├── 📄 security-utils.ts - Общие утилиты безопасности | General security | Общие функции безопасности
-│       │   │   ├── 📄 single-field.ts - Валидация одного поля | Single field validation | Валидация отдельных полей
 │       │   │   ├── 📄 validation-utils.ts - Утилиты валидации | Validation utilities | Общие утилиты для валидации
 │       │   │   └── 📄 zod-helpers.ts - Помощники Zod | Zod helpers | Вспомогательные функции для Zod валидации
 │       │   ├── 📄 calculations.ts - Математические вычисления | Math calculations | Функции для финансовых расчетов
