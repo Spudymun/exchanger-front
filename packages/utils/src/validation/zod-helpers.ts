@@ -18,24 +18,3 @@ export function validateWithZodSchema<T>(schema: z.ZodSchema<T>, value: unknown)
 
   return createValidationResult(result.error.issues.map(issue => issue.message));
 }
-
-/**
- * Упрощенная версия для UI валидации
- * Совместима с существующими паттернами в input-validation.ts
- */
-export function validateWithZodSchemaUI<T>(
-  schema: z.ZodSchema<T>,
-  value: unknown
-): { isValid: boolean; error: string | null } {
-  const result = schema.safeParse(value);
-
-  if (result.success) {
-    return { isValid: true, error: null };
-  }
-
-  const firstError = result.error.errors[0];
-  return {
-    isValid: false,
-    error: firstError?.message || 'Validation failed',
-  };
-}

@@ -61,6 +61,21 @@ export const securityEnhancedCreateExchangeOrderSchema = z.object({
  * TYPE EXPORTS
  */
 
+// Глобальное хранилище для передачи validation результатов в handlers
+const currentValidationContext: {
+  isValid: boolean;
+  reason?: string;
+  localizationKey?: string;
+  params?: Record<string, string | number>;
+} | null = null;
+
+/**
+ * Получить текущий контекст валидации для handlers
+ */
+export function getCurrentValidationContext() {
+  return currentValidationContext;
+}
+
 /**
  * Check if amount is valid format
  */
@@ -68,25 +83,8 @@ function validateAmountFormat(fromAmount: string): number | null {
   if (!fromAmount || fromAmount === '' || Number.isNaN(Number(fromAmount))) {
     return null; // Skip if invalid format - handled by field validation
   }
-  
-  return Number(fromAmount);
-}
 
-/**
- * Format validation message for handlers
- */
-function formatValidationMessage(validation: { localizationKey?: string; params?: Record<string, string | number> }): string {
-  const { localizationKey, params } = validation;
-  
-  if (localizationKey === 'server.errors.business.amountTooLow' && params?.min) {
-    return `AMOUNT_MIN_VALUE:${params.min}`;
-  }
-  
-  if (localizationKey === 'server.errors.business.amountTooHigh' && params?.max) {
-    return `AMOUNT_MAX_VALUE:${params.max}`;
-  }
-  
-  return 'validation.amount.outOfLimits';
+  return Number(fromAmount);
 }
 
 /**
@@ -95,11 +93,16 @@ function formatValidationMessage(validation: { localizationKey?: string; params?
 function validateBusinessLimits(amount: number, fromCurrency: string, ctx: z.RefinementCtx): void {
   try {
     const validation = isAmountWithinLimits(amount, fromCurrency as CryptoCurrency);
+
     if (!validation.isValid) {
+      // Сохраняем контекст в глобальную переменную
+      (globalThis as Record<string, unknown>).__currentValidationContext = validation;
+
+      // НЕ устанавливаем message - позволяем errorMap обработать!
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: formatValidationMessage(validation),
         path: ['fromAmount'],
+        // БЕЗ message - позволяем errorMap работать!
       });
     }
   } catch {
@@ -119,36 +122,38 @@ function validateCryptoAmountLimits(
   if (amount === null || !fromCurrency) {
     return;
   }
-  
+
   validateBusinessLimits(amount, fromCurrency, ctx);
 }
 
 /**
- * SIMPLE EXCHANGE FORM SCHEMA 
+ * SIMPLE EXCHANGE FORM SCHEMA
  * Для hero форм и базовых exchange операций - с интеграцией business validation
  */
-export const securityEnhancedSimpleExchangeFormSchema = z.object({
-  fromAmount: z
-    .string()
-    .min(1, 'validation.amount.required')
-    .refine(val => {
-      // Allow empty string
-      if (val === '') return true;
-      // Simple numeric validation without unsafe regex
-      const num = Number(val);
-      if (Number.isNaN(num)) return false;
-      // Check decimal places
-      const decimalParts = val.split('.');
-      if (decimalParts.length > 2) return false;
-      return true;
-    }, { message: 'validation.crypto.format' }),
-  fromCurrency: currencySchema,
-  tokenStandard: z.string().optional(),
-  toCurrency: z.string(),
-  selectedBankId: z.string().optional(),
-}).superRefine((data, ctx) => {
-  validateCryptoAmountLimits(data.fromAmount, data.fromCurrency, ctx);
-});
+export const securityEnhancedSimpleExchangeFormSchema = z
+  .object({
+    fromAmount: z
+      .string()
+      .min(1) // БЕЗ кастомного сообщения - позволяем errorMap работать
+      .refine(val => {
+        // Allow empty string
+        if (val === '') return true;
+        // Simple numeric validation without unsafe regex
+        const num = Number(val);
+        if (Number.isNaN(num)) return false;
+        // Check decimal places
+        const decimalParts = val.split('.');
+        if (decimalParts.length > 2) return false;
+        return true;
+      }), // БЕЗ кастомного сообщения - позволяем errorMap работать
+    fromCurrency: currencySchema,
+    tokenStandard: z.string().optional(),
+    toCurrency: z.string(),
+    selectedBankId: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    validateCryptoAmountLimits(data.fromAmount, data.fromCurrency, ctx);
+  });
 
 /**
  * ADVANCED EXCHANGE FORM SCHEMA
@@ -158,11 +163,11 @@ export const securityEnhancedAdvancedExchangeFormSchema = z.object({
   tokenStandard: z.string().optional(),
   cryptoAmount: z
     .string()
-    .min(1, 'validation.amount.required')
-    .refine(val => !isNaN(Number(val)), 'validation.crypto.format')
+    .min(1) // БЕЗ кастомного сообщения - позволяем errorMap работать
+    .refine(val => !isNaN(Number(val))) // БЕЗ кастомного сообщения
     .transform(val => Number(val)),
   toCurrency: z.literal('UAH'),
-  selectedBank: z.string().min(1, 'BANK_REQUIRED'),
+  selectedBank: z.string().min(1), // БЕЗ кастомного сообщения
   cardNumber: z
     .string()
     .min(1, 'CARD_NUMBER_REQUIRED')

@@ -4,7 +4,13 @@
  * АРХИТЕКТУРА NEXT-INTL ВАЛИДАЦИИ:
  *
  * 1. Формы используют: useTranslations('AdvancedExchangeForm') → создает функцию t
- * 2. Handlers используют: t('validation.captcha.required')
+ * 2  // НОВОЕ: получаем контекст из schema  
+  const validationContext = (globalThis as Record<string, unknown>).__currentValidationContext as {
+    isValid: boolean;
+    reason?: string;
+    localizationKey?: string;
+    params?: Record<string, string | number>;
+  } | undefined;Handlers используют: t('validation.captcha.required')
  * 3. Next-intl автоматически ищет: AdvancedExchangeForm.validation.captcha.required
  * 4. Ключ найден в JSON: возвращается переведенное сообщение
  *
@@ -157,6 +163,7 @@ export function handleAmountValidation(
   t: NextIntlValidationConfig['t']
 ): { message: string } | null {
   const fieldName = issue.path?.[0];
+
   if (typeof fieldName !== 'string' || !fieldName.toLowerCase().includes('amount')) {
     return null;
   }
@@ -164,43 +171,144 @@ export function handleAmountValidation(
   return getAmountValidationMessage(issue, t);
 }
 
-function handleCustomAmountError(
-  issue: z.ZodIssueOptionalMessage,
+/**
+ * Получает контекст валидации из глобального хранилища
+ */
+function getValidationContext():
+  | {
+      isValid: boolean;
+      reason?: string;
+      localizationKey?: string;
+      params?: Record<string, string | number>;
+    }
+  | undefined {
+  return (globalThis as Record<string, unknown>).__currentValidationContext as
+    | {
+        isValid: boolean;
+        reason?: string;
+        localizationKey?: string;
+        params?: Record<string, string | number>;
+      }
+    | undefined;
+}
+
+/**
+ * Обрабатывает ошибки минимального значения суммы
+ */
+function handleMinAmountError(
+  validationContext:
+    | { localizationKey?: string; params?: Record<string, string | number> }
+    | undefined,
   t: NextIntlValidationConfig['t']
-): { message: string } {
-  const { message } = issue;
-  
-  if (message === 'AMOUNT_POSITIVE') {
-    return { message: t(VALIDATION_KEYS.AMOUNT_REQUIRED) };
+): { message: string } | null {
+  if (
+    validationContext?.localizationKey === 'server.errors.business.amountTooLow' &&
+    validationContext.params?.min
+  ) {
+    return { message: t(VALIDATION_KEYS.AMOUNT_MIN_VALUE, { min: validationContext.params.min }) };
   }
-  
+  return null;
+}
+
+/**
+ * Обрабатывает ошибки максимального значения суммы
+ */
+function handleMaxAmountError(
+  validationContext:
+    | { localizationKey?: string; params?: Record<string, string | number> }
+    | undefined,
+  t: NextIntlValidationConfig['t']
+): { message: string } | null {
+  if (
+    validationContext?.localizationKey === 'server.errors.business.amountTooHigh' &&
+    validationContext.params?.max
+  ) {
+    return { message: t(VALIDATION_KEYS.AMOUNT_MAX_VALUE, { max: validationContext.params.max }) };
+  }
+  return null;
+}
+
+/**
+ * Обрабатывает legacy формат сообщений через строку
+ */
+function handleLegacyAmountError(
+  message: string | undefined,
+  t: NextIntlValidationConfig['t']
+): { message: string } | null {
   if (message?.startsWith('AMOUNT_MIN_VALUE:')) {
     const min = message.split(':')[1] || '0.01';
     return { message: t(VALIDATION_KEYS.AMOUNT_MIN_VALUE, { min }) };
   }
-  
+
   if (message?.startsWith('AMOUNT_MAX_VALUE:')) {
     const max = message.split(':')[1] || '1000000';
     return { message: t(VALIDATION_KEYS.AMOUNT_MAX_VALUE, { max }) };
   }
-  
+
+  return null;
+}
+
+function handleCustomAmountError(
+  issue: z.ZodIssueOptionalMessage,
+  t: NextIntlValidationConfig['t']
+): { message: string } {
+  const validationContext = getValidationContext();
+
+  // Используем контекст из schema если доступен
+  if (validationContext && !validationContext.isValid) {
+    const minResult = handleMinAmountError(validationContext, t);
+    if (minResult) return minResult;
+
+    const maxResult = handleMaxAmountError(validationContext, t);
+    if (maxResult) return maxResult;
+  }
+
+  // LEGACY: поддержка старого формата через message
+  const legacyResult = handleLegacyAmountError(issue.message, t);
+  if (legacyResult) return legacyResult;
+
   return { message: t(VALIDATION_KEYS.AMOUNT_REQUIRED) };
+}
+
+/**
+ * Обрабатывает ошибки формата строки для сумм
+ */
+function handleAmountStringValidation(t: NextIntlValidationConfig['t']): { message: string } {
+  return { message: t(VALIDATION_KEYS.AMOUNT_FORMAT) };
+}
+
+/**
+ * Обрабатывает ошибки неправильного типа для сумм
+ */
+function handleAmountTypeValidation(t: NextIntlValidationConfig['t']): { message: string } {
+  return { message: t(VALIDATION_KEYS.AMOUNT_FORMAT) };
+}
+
+/**
+ * Обрабатывает ошибки минимального размера для сумм
+ */
+function handleAmountSizeValidation(t: NextIntlValidationConfig['t']): { message: string } {
+  return { message: t(VALIDATION_KEYS.AMOUNT_REQUIRED) || t(VALIDATION_KEYS.REQUIRED) };
 }
 
 function getAmountValidationMessage(
   issue: z.ZodIssueOptionalMessage,
   t: NextIntlValidationConfig['t']
 ): { message: string } {
-  if (issue.code === z.ZodIssueCode.invalid_string && issue.validation === 'regex') {
-    return { message: t(VALIDATION_KEYS.AMOUNT_FORMAT) };
+  if (issue.code === z.ZodIssueCode.invalid_string) {
+    return handleAmountStringValidation(t);
   }
 
   if (issue.code === z.ZodIssueCode.custom) {
     return handleCustomAmountError(issue, t);
   }
 
+  if (issue.code === z.ZodIssueCode.invalid_type) {
+    return handleAmountTypeValidation(t);
+  }
+
   if (issue.code === z.ZodIssueCode.too_small) {
-    return { message: t(VALIDATION_KEYS.AMOUNT_REQUIRED) || t(VALIDATION_KEYS.REQUIRED) };
+    return handleAmountSizeValidation(t);
   }
 
   return { message: t(VALIDATION_KEYS.INVALID) };

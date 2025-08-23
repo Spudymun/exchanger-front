@@ -8,6 +8,7 @@ import { useCallback, useState, useMemo } from 'react';
 import { z } from 'zod';
 
 import type { UseFormReturn, FormField } from './useFormTypes';
+import { createFormActions, createGetFieldProps } from './useFormWithNextIntl.helpers';
 
 /**
  * Параметры для нового хука формы с next-intl
@@ -46,9 +47,54 @@ export interface UseFormWithNextIntlReturn<T extends Record<string, unknown>> {
 }
 
 /**
+ * Создает функцию валидации поля
+ */
+function createFieldValidator<T extends Record<string, unknown>>(
+  validationSchema: z.ZodSchema<T> | undefined,
+  values: T,
+  errorMap: z.ZodErrorMap,
+  setErrors: React.Dispatch<React.SetStateAction<Partial<Record<keyof T, string>>>>
+) {
+  return useCallback(
+    (field: keyof T) => {
+      if (!validationSchema) return true;
+
+      const result = validationSchema.safeParse(values, { errorMap });
+
+      if (result.success) {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors[field];
+          return newErrors;
+        });
+        return true;
+      }
+
+      const fieldError = result.error.errors.find(
+        error => error.path.length > 0 && error.path[0] === field
+      );
+      if (fieldError) {
+        // Есть ошибка для этого поля - устанавливаем её
+        setErrors(prev => ({ ...prev, [field]: fieldError.message }));
+        return false;
+      } else {
+        // Нет ошибки для этого поля, но есть для других - убираем ошибку для этого поля
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors[field];
+          return newErrors;
+        });
+        return true;
+      }
+    },
+    [validationSchema, values, errorMap, setErrors]
+  );
+}
+
+/**
  * Создает функцию валидации формы
  */
-function createFormValidator<T extends Record<string, unknown>>(
+function createFormValidatorFn<T extends Record<string, unknown>>(
   validationSchema: z.ZodSchema<T> | undefined,
   values: T,
   errorMap: z.ZodErrorMap,
@@ -76,295 +122,103 @@ function createFormValidator<T extends Record<string, unknown>>(
 }
 
 /**
- * Создает функцию валидации поля
+ * Основная логика хука формы
  */
-function createFieldValidator<T extends Record<string, unknown>>(
-  validationSchema: z.ZodSchema<T> | undefined,
-  values: T,
-  errorMap: z.ZodErrorMap,
-  setErrors: React.Dispatch<React.SetStateAction<Partial<Record<keyof T, string>>>>
-) {
-  return useCallback(
-    (field: keyof T) => {
-      if (!validationSchema) return true;
+function useFormLogic<T extends Record<string, unknown>>(params: UseFormWithNextIntlParams<T>) {
+  const { initialValues, validationSchema, t, locale, onSubmit } = params;
 
-      const result = validationSchema.safeParse(values, { errorMap });
+  const [values, setValues] = useState<T>(initialValues);
+  const [errors, setErrors] = useState<Partial<Record<keyof T, string>>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
 
-      // Если валидация успешна для всей формы, убираем ошибку для этого поля
-      if (result.success) {
-        setErrors(prev => {
-          const newErrors = { ...prev };
-          delete newErrors[field];
-          return newErrors;
-        });
-        return true;
-      }
+  const errorMap = useMemo(() => createNextIntlZodErrorMap({ t, locale }), [t, locale]);
 
-      // Если есть ошибки, проверяем есть ли ошибка именно для этого поля
-      const fieldError = result.error.errors.find(
-        error => error.path.length > 0 && error.path[0] === field
-      );
+  const validateForm = createFormValidatorFn(validationSchema, values, errorMap, setErrors);
+  const validateField = createFieldValidator(validationSchema, values, errorMap, setErrors);
 
-      if (fieldError) {
-        // Есть ошибка для этого поля - устанавливаем её
-        setErrors(prev => ({ ...prev, [field]: fieldError.message }));
-        return false;
-      } else {
-        // Нет ошибки для этого поля, но есть для других - убираем ошибку для этого поля
-        setErrors(prev => {
-          const newErrors = { ...prev };
-          delete newErrors[field];
-          return newErrors;
-        });
-        return true;
-      }
-    },
-    [validationSchema, values, errorMap, setErrors]
-  );
+  const isValid = useMemo(() => Object.keys(errors).length === 0, [errors]);
+
+  const formActions = createFormActions({
+    values,
+    setValues,
+    setErrors,
+    setIsDirty,
+    setIsSubmitting,
+    initialValues,
+    validateForm,
+    onSubmit,
+  });
+
+  const getFieldProps = createGetFieldProps(values, formActions.setValue, validateField);
+
+  return {
+    values,
+    errors,
+    isSubmitting,
+    isDirty,
+    isValid,
+    validateForm,
+    validateField,
+    ...formActions,
+    getFieldProps,
+  };
 }
 
 /**
- * Создает функции валидации для формы
- */
-function createValidationFunctions<T extends Record<string, unknown>>(
-  validationSchema: z.ZodSchema<T> | undefined,
-  values: T,
-  errorMap: z.ZodErrorMap,
-  setErrors: React.Dispatch<React.SetStateAction<Partial<Record<keyof T, string>>>>
-) {
-  const validateFormInternal = createFormValidator(validationSchema, values, errorMap, setErrors);
-  const validateFieldInternal = createFieldValidator(validationSchema, values, errorMap, setErrors);
-
-  return { validateFormInternal, validateFieldInternal };
-}
-
-/**
- * Основной хук формы с интеграцией next-intl
- * Использует createNextIntlZodErrorMap для валидации с переводами
+ * Хук для работы с формами с поддержкой next-intl
  */
 export function useFormWithNextIntl<T extends Record<string, unknown>>(
   params: UseFormWithNextIntlParams<T>
 ): UseFormReturn<T> {
-  const { initialValues, validationSchema, t, locale, onSubmit } = params;
+  const formLogic = useFormLogic(params);
 
-  // Состояние формы
-  const [values, setValues] = useState<T>(initialValues);
-  const [errors, setErrors] = useState<Partial<Record<keyof T, string>>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  return useMemo(() => {
+    const formFields: Record<keyof T, FormField<T[keyof T]>> = {} as Record<
+      keyof T,
+      FormField<T[keyof T]>
+    >;
 
-  // Создаем errorMap для валидации с переводами
-  const errorMap = useMemo(() => {
-    return createNextIntlZodErrorMap({ t, locale });
-  }, [t, locale]);
+    for (const key in params.initialValues) {
+      formFields[key as keyof T] = {
+        name: String(key),
+        value: formLogic.values[key],
+        onChange: (
+          e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+        ) => {
+          formLogic.setValue(key as keyof T, e.target.value as T[keyof T]);
+        },
+        onBlur: () => formLogic.validateField(key as keyof T),
+      };
+    }
 
-  // Получаем функции валидации
-  const { validateFormInternal, validateFieldInternal } = createValidationFunctions(
-    validationSchema,
-    values,
-    errorMap,
-    setErrors
-  );
-
-  // Вычисляемые значения
-  const isDirty = useMemo(
-    () => JSON.stringify(values) !== JSON.stringify(initialValues),
-    [values, initialValues]
-  );
-  const isValid = useMemo(() => Object.keys(errors).length === 0, [errors]);
-
-  return useFormLogic({
-    values,
-    setValues,
-    errors,
-    setErrors,
-    isSubmitting,
-    setIsSubmitting,
-    initialValues,
-    isDirty,
-    isValid,
-    validateFormInternal,
-    validateFieldInternal,
-    onSubmit,
-  });
-}
-
-/**
- * Создает методы управления полями формы
- */
-function createFieldMethods<T extends Record<string, unknown>>(
-  setValues: React.Dispatch<React.SetStateAction<T>>,
-  setErrors: React.Dispatch<React.SetStateAction<Partial<Record<keyof T, string>>>>,
-  initialValues: T,
-  setIsSubmitting: React.Dispatch<React.SetStateAction<boolean>>
-) {
-  const setValue = useCallback(
-    <K extends keyof T>(field: K, value: T[K]) => {
-      setValues(prev => ({ ...prev, [field]: value }));
-    },
-    [setValues]
-  );
-
-  const setError = useCallback(
-    (field: string, error: string) => {
-      setErrors(prev => ({ ...prev, [field]: error }));
-    },
-    [setErrors]
-  );
-
-  const clearError = useCallback(
-    (field: string) => {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
-    },
-    [setErrors]
-  );
-
-  const clearErrors = useCallback(() => {
-    setErrors({});
-  }, [setErrors]);
-
-  const reset = useCallback(() => {
-    setValues(initialValues);
-    setErrors({});
-    setIsSubmitting(false);
-  }, [initialValues, setValues, setErrors, setIsSubmitting]);
-
-  return { setValue, setError, clearError, clearErrors, reset };
-}
-
-/**
- * Создает методы валидации и отправки
- */
-function createFormActions<T extends Record<string, unknown>>(params: {
-  validateFormInternal: () => boolean;
-  validateFieldInternal: (field: keyof T) => boolean;
-  isSubmitting: boolean;
-  setIsSubmitting: React.Dispatch<React.SetStateAction<boolean>>;
-  onSubmit: ((values: T) => void | Promise<void>) | undefined;
-  values: T;
-}) {
-  const {
-    validateFormInternal,
-    validateFieldInternal,
-    isSubmitting,
-    setIsSubmitting,
-    onSubmit,
-    values,
-  } = params;
-
-  const validateForm = useCallback(() => {
-    return validateFormInternal();
-  }, [validateFormInternal]);
-
-  const validateField = useCallback(
-    (field: string) => {
-      return validateFieldInternal(field as keyof T);
-    },
-    [validateFieldInternal]
-  );
-
-  const handleSubmit = useCallback(
-    async (e?: React.FormEvent) => {
-      if (e) e.preventDefault();
-      if (isSubmitting) return;
-
-      setIsSubmitting(true);
-      try {
-        const isValid = validateForm();
-        if (isValid && onSubmit) {
-          await onSubmit(values);
-        }
-      } finally {
-        setIsSubmitting(false);
-      }
-    },
-    [isSubmitting, setIsSubmitting, validateForm, onSubmit, values]
-  );
-
-  return { validateForm, validateField, handleSubmit };
-}
-
-/**
- * Логика формы (упрощена для соблюдения лимита строк)
- */
-/**
- * Адаптирует ошибки для совместимости с UseFormReturn
- */
-function adaptErrors(errors: Partial<Record<string, string>>): Record<string, string> {
-  const adaptedErrors: Record<string, string> = {};
-  for (const [key, value] of Object.entries(errors)) {
-    if (value) adaptedErrors[key] = value;
-  }
-  return adaptedErrors;
-}
-
-/**
- * Логика формы (упрощена для соблюдения лимита строк)
- */
-function useFormLogic<T extends Record<string, unknown>>(params: {
-  values: T;
-  setValues: React.Dispatch<React.SetStateAction<T>>;
-  errors: Partial<Record<keyof T, string>>;
-  setErrors: React.Dispatch<React.SetStateAction<Partial<Record<keyof T, string>>>>;
-  isSubmitting: boolean;
-  setIsSubmitting: React.Dispatch<React.SetStateAction<boolean>>;
-  initialValues: T;
-  isDirty: boolean;
-  isValid: boolean;
-  validateFormInternal: () => boolean;
-  validateFieldInternal: (field: keyof T) => boolean;
-  onSubmit?: (values: T) => void | Promise<void>;
-}): UseFormReturn<T> {
-  const {
-    values,
-    setValues,
-    errors,
-    setErrors,
-    isSubmitting,
-    setIsSubmitting,
-    initialValues,
-    isDirty,
-    isValid,
-    validateFormInternal,
-    validateFieldInternal,
-    onSubmit,
-  } = params;
-
-  const fieldMethods = createFieldMethods(setValues, setErrors, initialValues, setIsSubmitting);
-  const formActions = createFormActions({
-    validateFormInternal,
-    validateFieldInternal,
-    isSubmitting,
-    setIsSubmitting,
-    onSubmit,
-    values,
-  });
-
-  const getFieldProps = useCallback(
-    <K extends keyof T>(field: K): FormField<T[K]> => ({
-      name: String(field),
-      value: values[field],
-      onChange: (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-      ) => {
-        fieldMethods.setValue(field, e.target.value as T[K]);
-      },
-      onBlur: () => formActions.validateField(String(field)),
-    }),
-    [values, fieldMethods, formActions]
-  );
-
-  return {
-    values,
-    errors: adaptErrors(errors),
-    isSubmitting,
-    isDirty,
-    isValid,
-    ...fieldMethods,
-    ...formActions,
-    getFieldProps,
-  };
+    return {
+      values: formLogic.values,
+      errors: formLogic.errors as Record<string, string>,
+      isSubmitting: formLogic.isSubmitting,
+      isDirty: formLogic.isDirty,
+      isValid: formLogic.isValid,
+      fields: formFields,
+      setValue: formLogic.setValue,
+      setError: formLogic.setError,
+      clearError: formLogic.clearError,
+      clearErrors: formLogic.clearErrors,
+      reset: formLogic.reset,
+      setErrors: (errors: Record<string, string>) =>
+        formLogic.setErrors(errors as Partial<Record<keyof T, string>>),
+      validateForm: formLogic.validateForm,
+      validateField: (field: string) => formLogic.validateField(field as keyof T),
+      handleSubmit: formLogic.handleSubmit,
+      getFieldProps: <K extends keyof T>(field: K): FormField<T[K]> => ({
+        name: String(field),
+        value: formLogic.values[field],
+        onChange: (
+          e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+        ) => {
+          formLogic.setValue(field, e.target.value as T[K]);
+        },
+        onBlur: () => formLogic.validateField(field),
+      }),
+    };
+  }, [formLogic, params.initialValues]);
 }
