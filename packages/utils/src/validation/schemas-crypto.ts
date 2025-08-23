@@ -3,13 +3,11 @@
  * Извлечено из validation-schemas.ts для улучшения поддерживаемости
  */
 
-import { CRYPTOCURRENCIES, VALIDATION_PATTERNS } from '@repo/constants';
+import { CRYPTOCURRENCIES, VALIDATION_PATTERNS, DECIMAL_PRECISION } from '@repo/constants';
 import type { CryptoCurrency } from '@repo/constants';
 import { z } from 'zod';
 
 // === CRYPTO ВАЛИДАЦИЯ ===
-
-const MAX_CRYPTO_DECIMAL_PLACES = 8;
 
 /**
  * Bitcoin адрес валидация
@@ -69,7 +67,7 @@ export const cryptoAmountStringSchema = z
       if (
         decimalParts.length === 2 &&
         decimalParts[1] &&
-        decimalParts[1].length > MAX_CRYPTO_DECIMAL_PLACES
+        decimalParts[1].length > DECIMAL_PRECISION.CRYPTO_DECIMAL_PLACES
       )
         return false;
       return true;
