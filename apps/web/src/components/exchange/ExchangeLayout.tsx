@@ -1,15 +1,234 @@
 'use client';
 
+import { CRYPTOCURRENCIES, getBanksForCurrency, type FiatCurrency, isMultiNetworkToken, getTokenStandards } from '@repo/constants';
 import { UseFormReturn } from '@repo/hooks';
-import { ExchangeForm } from '@repo/ui';
+import {
+  ExchangeForm,
+  FormField,
+  FormControl,
+  FormMessage,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Input,
+} from '@repo/ui';
 
 interface ExchangeLayoutProps {
   form: UseFormReturn<Record<string, unknown>>;
   t: (key: string) => string;
+  calculatedAmount?: number;
 }
 
-// Sending section using Compound Components
-function SendingSection({ t }: { t: (key: string) => string }) {
+// TokenStandardSelector Component
+function TokenStandardSelector({
+  form,
+  t,
+}: {
+  form: UseFormReturn<Record<string, unknown>>;
+  t: (key: string) => string;
+}) {
+  const currency = form.values.fromCurrency as string;
+  const isMultiNetwork = isMultiNetworkToken(currency);
+
+  if (!isMultiNetwork) {
+    return <div className="h-[76px]"></div>;
+  }
+
+  const standards = getTokenStandards(currency);
+
+  return (
+    <ExchangeForm.FieldWrapper>
+      <FormField name="tokenStandard" error={form.errors.tokenStandard}>
+        <ExchangeForm.FieldLabel>{t('sending.tokenStandard')}</ExchangeForm.FieldLabel>
+        <FormControl>
+          <Select
+            value={form.values.tokenStandard as string}
+            onValueChange={v => form.setValue('tokenStandard', v)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={t('sending.selectStandard')} />
+            </SelectTrigger>
+            <SelectContent>
+              {standards.map(standard => (
+                <SelectItem key={standard} value={standard}>
+                  {standard}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormControl>
+        <FormMessage />
+      </FormField>
+    </ExchangeForm.FieldWrapper>
+  );
+}
+
+// AmountInput Component
+function AmountInput({
+  form,
+  t,
+}: {
+  form: UseFormReturn<Record<string, unknown>>;
+  t: (key: string) => string;
+}) {
+  return (
+    <ExchangeForm.FieldWrapper>
+      <FormField name="cryptoAmount" error={form.errors.cryptoAmount}>
+        <ExchangeForm.FieldLabel>{t('sending.amount')}</ExchangeForm.FieldLabel>
+        <FormControl>
+          <Input
+            {...form.getFieldProps('cryptoAmount')}
+            placeholder={t('sending.placeholder')}
+            inputMode="decimal"
+            className="transition-colors"
+            value={(form.values.cryptoAmount as string) || ''}
+          />
+        </FormControl>
+        <FormMessage />
+      </FormField>
+    </ExchangeForm.FieldWrapper>
+  );
+}
+
+// AmountDisplay Component  
+function AmountDisplay({ 
+  form,
+  t,
+  calculatedAmount 
+}: { 
+  form: UseFormReturn<Record<string, unknown>>;
+  t: (key: string) => string;
+  calculatedAmount: number;
+}) {
+  return (
+    <ExchangeForm.FieldWrapper>
+      <FormField name="toAmount" error={form.errors?.toAmount}>
+        <ExchangeForm.FieldLabel>{t('receiving.amount')}</ExchangeForm.FieldLabel>
+        <FormControl>
+          <Input
+            value={calculatedAmount.toFixed(2)}
+            readOnly
+            className="bg-muted/50 text-foreground cursor-default pointer-events-none transition-none focus-visible:ring-0 focus-visible:border-input border-input"
+          />
+        </FormControl>
+        <FormMessage />
+      </FormField>
+    </ExchangeForm.FieldWrapper>
+  );
+}
+
+// CardNumber Input Component
+function CardNumberInput({ 
+  form, 
+  t 
+}: { 
+  form: UseFormReturn<Record<string, unknown>>; 
+  t: (key: string) => string; 
+}) {
+  return (
+    <ExchangeForm.FieldWrapper>
+      <FormField name="cardNumber" error={form.errors.cardNumber}>
+        <ExchangeForm.FieldLabel>{t('receiving.cardNumber')}</ExchangeForm.FieldLabel>
+        <FormControl>
+          <Input
+            {...form.getFieldProps('cardNumber')}
+            placeholder="**** **** **** ****"
+            inputMode="numeric"
+            className="transition-colors"
+            value={(form.values.cardNumber as string) || ''}
+          />
+        </FormControl>
+        <FormMessage />
+      </FormField>
+    </ExchangeForm.FieldWrapper>
+  );
+}
+function BankSelector({
+  form,
+  t,
+}: {
+  form: UseFormReturn<Record<string, unknown>>;
+  t: (key: string) => string;
+}) {
+  // Following the same pattern as in useHeroExchangeForm.ts
+  const currency = form.values.toCurrency;
+  const validKeys = ['UAH', 'USD', 'EUR'] as const;
+  const banks = validKeys.includes(currency as (typeof validKeys)[number])
+    ? getBanksForCurrency(currency as FiatCurrency)
+    : [];
+
+  return (
+    <ExchangeForm.FieldWrapper>
+      <ExchangeForm.FieldLabel>{t('receiving.bank')}</ExchangeForm.FieldLabel>
+      <FormField name="selectedBank" error={form.errors.selectedBank}>
+        <FormControl>
+          <Select
+            value={form.values.selectedBank as string}
+            onValueChange={v => form.setValue('selectedBank', v)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={t('receiving.selectBank')} />
+            </SelectTrigger>
+            <SelectContent>
+              {banks.map(bank => (
+                <SelectItem key={bank.id} value={bank.id}>
+                  {bank.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormControl>
+        <FormMessage />
+      </FormField>
+    </ExchangeForm.FieldWrapper>
+  );
+}
+
+// Currency selector component
+function CurrencySelector({
+  form,
+  t,
+}: {
+  form: UseFormReturn<Record<string, unknown>>;
+  t: (key: string) => string;
+}) {
+  return (
+    <ExchangeForm.FieldWrapper>
+      <ExchangeForm.FieldLabel>{t('sending.cryptocurrency')}</ExchangeForm.FieldLabel>
+      <FormField name="fromCurrency" error={form.errors.fromCurrency}>
+        <FormControl>
+          <Select
+            value={form.values.fromCurrency as string}
+            onValueChange={v => form.setValue('fromCurrency', v)}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={t('sending.selectCurrency')} />
+            </SelectTrigger>
+            <SelectContent>
+              {CRYPTOCURRENCIES.map(currency => (
+                <SelectItem key={currency} value={currency}>
+                  {currency}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FormControl>
+        <FormMessage />
+      </FormField>
+    </ExchangeForm.FieldWrapper>
+  );
+}
+
+// Sending section using Compound Components  
+function SendingSection({ 
+  form, 
+  t 
+}: { 
+  form: UseFormReturn<Record<string, unknown>>; 
+  t: (key: string) => string; 
+}) {
   return (
     <ExchangeForm.ExchangeCard type="sending">
       <header className="section-header mb-6">
@@ -18,26 +237,28 @@ function SendingSection({ t }: { t: (key: string) => string }) {
       </header>
 
       <div className="send-content space-y-4">
-        {/* Currency Selection - будет реализовано в task 2.2 */}
-        <div className="currency-selection">
-          <div className="placeholder-content h-20 bg-background border border-dashed border-muted-foreground/30 rounded-md flex items-center justify-center">
-            <span className="text-sm text-muted-foreground">Currency Selection (Task 2.2)</span>
-          </div>
-        </div>
+        <CurrencySelector form={form} t={t} />
 
-        {/* Amount Input - будет реализовано в task 2.2 */}
-        <div className="amount-input">
-          <div className="placeholder-content h-16 bg-background border border-dashed border-muted-foreground/30 rounded-md flex items-center justify-center">
-            <span className="text-sm text-muted-foreground">Amount Input (Task 2.2)</span>
-          </div>
-        </div>
+        {/* Token Standard */}
+        <TokenStandardSelector form={form} t={t} />
+
+        {/* Amount Input */}
+        <AmountInput form={form} t={t} />
       </div>
     </ExchangeForm.ExchangeCard>
   );
 }
 
 // Receiving section using Compound Components
-function ReceivingSection({ t }: { t: (key: string) => string }) {
+function ReceivingSection({ 
+  form, 
+  t,
+  calculatedAmount = 0 
+}: { 
+  form: UseFormReturn<Record<string, unknown>>; 
+  t: (key: string) => string;
+  calculatedAmount?: number;
+}) {
   return (
     <ExchangeForm.ExchangeCard type="receiving">
       <header className="section-header mb-6">
@@ -46,19 +267,14 @@ function ReceivingSection({ t }: { t: (key: string) => string }) {
       </header>
 
       <div className="receive-content space-y-4">
-        {/* Bank Selection - будет реализовано в task 2.2 */}
-        <div className="bank-selection">
-          <div className="placeholder-content h-20 bg-background border border-dashed border-muted-foreground/30 rounded-md flex items-center justify-center">
-            <span className="text-sm text-muted-foreground">Bank Selection (Task 2.2)</span>
-          </div>
-        </div>
+        {/* Bank Selection */}
+        <BankSelector form={form} t={t} />
 
-        {/* Amount Display - будет реализовано в task 2.2 */}
-        <div className="amount-display">
-          <div className="placeholder-content h-16 bg-background border border-dashed border-muted-foreground/30 rounded-md flex items-center justify-center">
-            <span className="text-sm text-muted-foreground">Amount Display (Task 2.2)</span>
-          </div>
-        </div>
+        {/* Card Number */}
+        <CardNumberInput form={form} t={t} />
+
+        {/* Amount Display */}
+        <AmountDisplay form={form} t={t} calculatedAmount={calculatedAmount} />
       </div>
     </ExchangeForm.ExchangeCard>
   );
@@ -98,13 +314,13 @@ function AdditionalSections() {
   );
 }
 
-export function ExchangeLayout({ form, t }: ExchangeLayoutProps) {
+export function ExchangeLayout({ form, t, calculatedAmount = 0 }: ExchangeLayoutProps) {
   return (
     <form onSubmit={form.handleSubmit} className="exchange-form">
       {/* Two-Column Layout using Compound Components */}
       <ExchangeForm.CardPair layout="horizontal">
-        <SendingSection t={t} />
-        <ReceivingSection t={t} />
+        <SendingSection form={form} t={t} />
+        <ReceivingSection form={form} t={t} calculatedAmount={calculatedAmount} />
       </ExchangeForm.CardPair>
 
       <AdditionalSections />

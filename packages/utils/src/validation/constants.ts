@@ -26,7 +26,6 @@ export const VALIDATION_KEYS = {
   CONFIRM_PASSWORD_REQUIRED: 'validation.confirmPassword.required',
   CONFIRM_PASSWORD_NO_MATCH: 'validation.confirmPassword.noMatch',
   AMOUNT_FORMAT: 'validation.amount.format',
-  AMOUNT_POSITIVE: 'validation.amount.positive',
   AMOUNT_REQUIRED: 'validation.amount.required',
   AMOUNT_MIN_VALUE: 'validation.amount.minValue',
   AMOUNT_MAX_VALUE: 'validation.amount.maxValue',

@@ -168,19 +168,23 @@ function handleCustomAmountError(
   issue: z.ZodIssueOptionalMessage,
   t: NextIntlValidationConfig['t']
 ): { message: string } {
-  if (issue.message === 'AMOUNT_POSITIVE') {
-    return { message: t(VALIDATION_KEYS.AMOUNT_POSITIVE) };
+  const { message } = issue;
+  
+  if (message === 'AMOUNT_POSITIVE') {
+    return { message: t(VALIDATION_KEYS.AMOUNT_REQUIRED) };
   }
-  if (issue.message?.startsWith('AMOUNT_MIN_VALUE:')) {
-    const min = issue.message.split(':')[1] || '0.01';
+  
+  if (message?.startsWith('AMOUNT_MIN_VALUE:')) {
+    const min = message.split(':')[1] || '0.01';
     return { message: t(VALIDATION_KEYS.AMOUNT_MIN_VALUE, { min }) };
   }
-  if (issue.message?.startsWith('AMOUNT_MAX_VALUE:')) {
-    const max = issue.message.split(':')[1] || '1000000';
+  
+  if (message?.startsWith('AMOUNT_MAX_VALUE:')) {
+    const max = message.split(':')[1] || '1000000';
     return { message: t(VALIDATION_KEYS.AMOUNT_MAX_VALUE, { max }) };
   }
-  // Fallback for other custom errors
-  return { message: t(VALIDATION_KEYS.AMOUNT_POSITIVE) };
+  
+  return { message: t(VALIDATION_KEYS.AMOUNT_REQUIRED) };
 }
 
 function getAmountValidationMessage(

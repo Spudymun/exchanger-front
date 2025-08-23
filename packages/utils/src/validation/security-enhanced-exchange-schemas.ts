@@ -7,6 +7,7 @@
  */
 
 import { VALIDATION_LIMITS } from '@repo/constants';
+import { isAmountWithinLimits, type CryptoCurrency } from '@repo/exchange-core';
 import { z } from 'zod';
 
 import { sanitizeCardNumber, luhnCheck, validateCardLength } from './card-validation';
@@ -61,6 +62,95 @@ export const securityEnhancedCreateExchangeOrderSchema = z.object({
  */
 
 /**
+ * Check if amount is valid format
+ */
+function validateAmountFormat(fromAmount: string): number | null {
+  if (!fromAmount || fromAmount === '' || Number.isNaN(Number(fromAmount))) {
+    return null; // Skip if invalid format - handled by field validation
+  }
+  
+  return Number(fromAmount);
+}
+
+/**
+ * Format validation message for handlers
+ */
+function formatValidationMessage(validation: { localizationKey?: string; params?: Record<string, string | number> }): string {
+  const { localizationKey, params } = validation;
+  
+  if (localizationKey === 'server.errors.business.amountTooLow' && params?.min) {
+    return `AMOUNT_MIN_VALUE:${params.min}`;
+  }
+  
+  if (localizationKey === 'server.errors.business.amountTooHigh' && params?.max) {
+    return `AMOUNT_MAX_VALUE:${params.max}`;
+  }
+  
+  return 'validation.amount.outOfLimits';
+}
+
+/**
+ * Validate crypto amount against business limits
+ */
+function validateBusinessLimits(amount: number, fromCurrency: string, ctx: z.RefinementCtx): void {
+  try {
+    const validation = isAmountWithinLimits(amount, fromCurrency as CryptoCurrency);
+    if (!validation.isValid) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: formatValidationMessage(validation),
+        path: ['fromAmount'],
+      });
+    }
+  } catch {
+    // Skip validation on error - don't block form if business logic fails
+  }
+}
+
+/**
+ * Business logic validation helper for crypto amounts
+ */
+function validateCryptoAmountLimits(
+  fromAmount: string,
+  fromCurrency: string,
+  ctx: z.RefinementCtx
+): void {
+  const amount = validateAmountFormat(fromAmount);
+  if (amount === null || !fromCurrency) {
+    return;
+  }
+  
+  validateBusinessLimits(amount, fromCurrency, ctx);
+}
+
+/**
+ * SIMPLE EXCHANGE FORM SCHEMA 
+ * Для hero форм и базовых exchange операций - с интеграцией business validation
+ */
+export const securityEnhancedSimpleExchangeFormSchema = z.object({
+  fromAmount: z
+    .string()
+    .min(1, 'validation.amount.required')
+    .refine(val => {
+      // Allow empty string
+      if (val === '') return true;
+      // Simple numeric validation without unsafe regex
+      const num = Number(val);
+      if (Number.isNaN(num)) return false;
+      // Check decimal places
+      const decimalParts = val.split('.');
+      if (decimalParts.length > 2) return false;
+      return true;
+    }, { message: 'validation.crypto.format' }),
+  fromCurrency: currencySchema,
+  tokenStandard: z.string().optional(),
+  toCurrency: z.string(),
+  selectedBankId: z.string().optional(),
+}).superRefine((data, ctx) => {
+  validateCryptoAmountLimits(data.fromAmount, data.fromCurrency, ctx);
+});
+
+/**
  * ADVANCED EXCHANGE FORM SCHEMA
  */
 export const securityEnhancedAdvancedExchangeFormSchema = z.object({
@@ -68,9 +158,8 @@ export const securityEnhancedAdvancedExchangeFormSchema = z.object({
   tokenStandard: z.string().optional(),
   cryptoAmount: z
     .string()
-    .min(1, 'AMOUNT_REQUIRED')
-    .refine(val => !isNaN(Number(val)), 'AMOUNT_MUST_BE_NUMBER')
-    .refine(val => Number(val) > 0, 'AMOUNT_POSITIVE_REQUIRED')
+    .min(1, 'validation.amount.required')
+    .refine(val => !isNaN(Number(val)), 'validation.crypto.format')
     .transform(val => Number(val)),
   toCurrency: z.literal('UAH'),
   selectedBank: z.string().min(1, 'BANK_REQUIRED'),
@@ -101,4 +190,12 @@ export const securityEnhancedAdvancedExchangeFormSchema = z.object({
  */
 export type SecurityEnhancedCreateExchangeOrder = z.infer<
   typeof securityEnhancedCreateExchangeOrderSchema
+>;
+
+export type SecurityEnhancedSimpleExchangeForm = z.infer<
+  typeof securityEnhancedSimpleExchangeFormSchema
+>;
+
+export type SecurityEnhancedAdvancedExchangeForm = z.infer<
+  typeof securityEnhancedAdvancedExchangeFormSchema
 >;

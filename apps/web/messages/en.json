@@ -262,7 +262,10 @@
     },
     "sending": {
       "title": "You send",
+      "subtitle": "Select cryptocurrency and enter amount",
+      "currency": "Currency",
       "cryptocurrency": "Cryptocurrency",
+      "selectCurrency": "Select currency",
       "tokenStandard": "Token standard",
       "selectStandard": "Select standard",
       "amount": "Amount",
@@ -272,8 +275,10 @@
     },
     "receiving": {
       "title": "You receive",
+      "subtitle": "Select bank for receiving",
       "fiatCurrency": "Fiat currency",
       "bank": "Bank",
+      "cardNumber": "Card number",
       "selectBank": "Select bank",
       "amount": "Amount",
       "min": "min",
@@ -349,12 +354,10 @@
         "minValue": "Minimum amount: {min}",
         "maxValue": "Maximum amount: {max}",
         "required": "Amount is required",
-        "format": "Invalid amount format",
-        "positive": "Amount must be greater than 0"
+        "format": "Invalid amount format"
       },
       "crypto": {
         "format": "Invalid cryptocurrency amount format",
-        "positive": "Cryptocurrency amount must be greater than 0",
         "minAmount": "Minimum amount: {min}",
         "maxAmount": "Maximum amount: {max}"
       }

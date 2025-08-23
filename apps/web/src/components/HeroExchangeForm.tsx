@@ -14,7 +14,7 @@ export interface HeroExchangeFormData extends Record<string, unknown> {
   fromCurrency: string;
   tokenStandard?: string;
   toCurrency: string;
-  selectedBankId: string;
+  selectedBankId?: string;
 }
 
 // ========================================================================================

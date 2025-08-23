@@ -59,15 +59,11 @@ function useFormValidator(exchangeStore: ExchangeStore) {
       }
     }
 
-    // Amount validation
+    // Amount validation - только проверка формата
     if (!formData.cryptoAmount || isNaN(Number(formData.cryptoAmount))) {
       errors.push('Enter correct amount');
-    } else {
-      const amount = Number(formData.cryptoAmount);
-      if (amount <= 0) {
-        errors.push('Amount must be greater than 0');
-      }
     }
+    // Note: Отрицательные числа нельзя ввести через UI, минимальные лимиты проверяются в Zod схемах
 
     // Calculation required
     if (!calculation || !calculation.isValid) {

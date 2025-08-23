@@ -7,6 +7,7 @@ export * from './order-status';
 // УДАЛЁН: export * from './validation-schemas'; // Legacy schemas - заменены на security-enhanced
 export * from './next-intl-validation';
 export * from './validation';
+export * from './validation/security-enhanced-exchange-schemas';
 export * from './store-factory';
 export * from './input-validation';
 export * from './scroll-utils';

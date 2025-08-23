@@ -9,6 +9,7 @@ import AdaptiveContainer, {
   type AdaptiveWidthProps,
 } from './adaptive-container';
 import { ExchangeErrorBoundary } from './error-boundaries';
+import { FormLabel } from './ui/form';
 
 // ===== COMPOUND COMPONENTS ARCHITECTURE v2.0 =====
 // Unified composition system extending form.tsx pattern
@@ -174,20 +175,15 @@ export interface CardPairProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const CardPair = React.forwardRef<HTMLDivElement, CardPairProps>(
   ({ className, layout = 'horizontal', children, ...props }, ref) => {
-    const getLayoutClass = (l: 'horizontal' | 'vertical' | 'compact' | 'withArrow') => {
-      switch (l) {
-        case 'horizontal':
-          return 'grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 items-stretch';
-        case 'vertical':
-          return 'space-y-6 sm:space-y-8';
-        case 'compact':
-          return 'grid grid-cols-1 gap-6 sm:gap-8';
-        case 'withArrow':
-          return 'flex flex-col md:grid md:grid-cols-[1fr_auto_1fr] gap-6 sm:gap-8 md:gap-10 items-center';
-        default:
-          return 'grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 items-start';
-      }
-    };
+const getLayoutClass = (l: typeof layout) => {
+  switch (l) {
+    case 'horizontal': return 'grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 items-stretch';
+    case 'vertical': return 'space-y-6 sm:space-y-8';
+    case 'compact': return 'grid grid-cols-1 gap-6 sm:gap-8';
+    case 'withArrow': return 'flex flex-col md:grid md:grid-cols-[1fr_auto_1fr] gap-6 sm:gap-8 md:gap-10 items-center';
+    default: return 'grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 items-start';
+  }
+};
 
     return (
       <div ref={ref} className={cn(getLayoutClass(layout), className)} {...props}>
@@ -285,6 +281,29 @@ const FieldWrapper = React.forwardRef<HTMLDivElement, FieldWrapperProps>(
 
 FieldWrapper.displayName = 'ExchangeForm.FieldWrapper';
 
+// ===== FIELD LABEL =====
+export interface FieldLabelProps extends React.LabelHTMLAttributes<HTMLLabelElement> {
+  children: React.ReactNode;
+  required?: boolean;
+}
+
+const FieldLabel = React.forwardRef<HTMLLabelElement, FieldLabelProps>(
+  ({ className, children, required, ...props }, ref) => {
+    return (
+      <FormLabel
+        ref={ref}
+        className={cn('text-sm font-medium text-foreground', className)}
+        required={required}
+        {...props}
+      >
+        {children}
+      </FormLabel>
+    );
+  }
+);
+
+FieldLabel.displayName = 'ExchangeForm.FieldLabel';
+
 // ===== ARROW COMPONENT =====
 export interface ArrowProps extends React.HTMLAttributes<HTMLDivElement> {
   direction?: 'horizontal' | 'vertical';
@@ -355,6 +374,7 @@ export const ExchangeFormCompound = Object.assign(ExchangeForm, {
   CardPair,
   ExchangeCard,
   FieldWrapper,
+  FieldLabel,
   Arrow,
   ActionArea,
 });
@@ -367,6 +387,7 @@ export {
   CardPair,
   ExchangeCard,
   FieldWrapper,
+  FieldLabel,
   Arrow,
   ActionArea,
 };

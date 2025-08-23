@@ -19,55 +19,40 @@ interface ExchangeContainerProps {
   };
 }
 
-// Helper function to reduce complexity
-function parseInitialFormData(
-  initialParams?: ExchangeContainerProps['initialParams']
-): Record<string, unknown> {
-  if (!initialParams) {
+export function ExchangeContainer({ locale: _locale, initialParams }: ExchangeContainerProps) {
+  const tPage = useTranslations('ExchangePage');
+  const t = useTranslations('AdvancedExchangeForm');
+
+  const initialFormData = useMemo(() => {
+    if (!initialParams) {
+      return {
+        fromCurrency: EXCHANGE_DEFAULTS.FROM_CURRENCY,
+        tokenStandard: getDefaultTokenStandard(EXCHANGE_DEFAULTS.FROM_CURRENCY) || 'TRC-20',
+        toCurrency: EXCHANGE_DEFAULTS.TO_CURRENCY,
+        selectedBank: 'privatbank',
+        cryptoAmount: '',
+        email: '',
+        cardNumber: '',
+        captchaAnswer: '',
+        agreeToTerms: false,
+      };
+    }
+
+    const fromCurrency = initialParams.from?.split('-')[0] || EXCHANGE_DEFAULTS.FROM_CURRENCY;
     return {
-      fromCurrency: EXCHANGE_DEFAULTS.FROM_CURRENCY,
-      tokenStandard: getDefaultTokenStandard(EXCHANGE_DEFAULTS.FROM_CURRENCY) || 'TRC-20',
+      fromCurrency,
+      tokenStandard: getDefaultTokenStandard(fromCurrency) || 'TRC-20',
       toCurrency: EXCHANGE_DEFAULTS.TO_CURRENCY,
-      selectedBankId: 'privatbank',
-      cryptoAmount: 0,
-      uahAmount: 0,
+      selectedBank: initialParams.bank || 'privatbank',
+      cryptoAmount: initialParams.amount?.toString() || '',
       email: '',
       cardNumber: '',
       captchaAnswer: '',
       agreeToTerms: false,
-      rememberData: false,
     };
-  }
+  }, [initialParams]);
 
-  const fromCurrency = initialParams.from?.split('-')[0] || EXCHANGE_DEFAULTS.FROM_CURRENCY;
-  const tokenStandard =
-    initialParams.from?.split('-')[1] ||
-    getDefaultTokenStandard(EXCHANGE_DEFAULTS.FROM_CURRENCY) ||
-    'TRC-20';
-  const selectedBankId = initialParams.bank || 'privatbank';
-
-  return {
-    fromCurrency,
-    tokenStandard,
-    toCurrency: EXCHANGE_DEFAULTS.TO_CURRENCY,
-    selectedBankId,
-    cryptoAmount: initialParams.amount || 0,
-    uahAmount: 0,
-    email: '',
-    cardNumber: '',
-    captchaAnswer: '',
-    agreeToTerms: false,
-    rememberData: false,
-  };
-}
-
-export function ExchangeContainer({ initialParams }: ExchangeContainerProps) {
-  const t = useTranslations('AdvancedExchangeForm');
-
-  // Parse initial values from query params with memoization
-  const initialFormData = useMemo(() => parseInitialFormData(initialParams), [initialParams]);
-
-  const form = useFormWithNextIntl({
+  const form = useFormWithNextIntl<Record<string, unknown>>({
     initialValues: initialFormData,
     validationSchema: securityEnhancedAdvancedExchangeFormSchema,
     t,
@@ -77,16 +62,27 @@ export function ExchangeContainer({ initialParams }: ExchangeContainerProps) {
     },
   });
 
+  // Автоматический расчет как в HeroExchangeForm через useMemo
+  const calculatedAmount = useMemo(() => {
+    const amount = Number(form.values.cryptoAmount);
+    const MOCK_UAH_RATE = 35.5;
+    return amount > 0 ? amount * MOCK_UAH_RATE : 0;
+  }, [form.values.cryptoAmount]);
+
   return (
     <ExchangeForm.Container variant="full" className="exchange-container">
       {/* Page Header */}
       <header className="exchange-header mb-8 text-center">
-        <h1 className="text-3xl font-bold text-foreground lg:text-4xl">{t('title')}</h1>
-        <p className="mt-2 text-muted-foreground lg:text-lg">{t('subtitle')}</p>
+        <h1 className="text-3xl font-bold text-foreground lg:text-4xl">{tPage('title')}</h1>
+        <p className="mt-2 text-muted-foreground lg:text-lg">{tPage('description')}</p>
       </header>
 
       {/* Main Exchange Layout */}
-      <ExchangeLayout form={form} t={t} />
+      <ExchangeLayout 
+        form={form} 
+        t={t} 
+        calculatedAmount={calculatedAmount}
+      />
     </ExchangeForm.Container>
   );
 }
