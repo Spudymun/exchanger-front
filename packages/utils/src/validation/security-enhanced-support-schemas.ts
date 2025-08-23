@@ -18,6 +18,43 @@ import {
 } from './security-utils';
 
 /**
+ * BASE PAGINATION SCHEMAS
+ * АРХИТЕКТУРНОЕ РЕШЕНИЕ: Базовые схемы для переиспользования
+ */
+export const securityEnhancedLimitOnlySchema = z.object({
+  limit: z.number().min(1).max(100).default(SECURITY_VALIDATION_LIMITS.SEARCH_DEFAULT_LIMIT),
+});
+
+export const securityEnhancedOffsetPaginationSchema = z.object({
+  limit: z.number().min(1).max(100).default(SECURITY_VALIDATION_LIMITS.SEARCH_DEFAULT_LIMIT),
+  offset: z.number().min(0).default(0),
+});
+
+export const securityEnhancedCursorPaginationSchema = z.object({
+  limit: z.number().min(1).max(100).default(SECURITY_VALIDATION_LIMITS.SEARCH_DEFAULT_LIMIT),
+  cursor: createXSSProtectedString(0, 100).optional(),
+});
+
+/**
+ * USER ORDERS PAGINATION SCHEMA
+ * АРХИТЕКТУРНОЕ РЕШЕНИЕ: Специальная схема для user orders с USER_CONFIG константами
+ */
+export const securityEnhancedUserOrdersPaginationSchema = z.object({
+  page: z.coerce
+    .number()
+    .min(VALIDATION_LIMITS.MIN_PAGE_SIZE)
+    .max(VALIDATION_LIMITS.MAX_PAGE_SIZE)
+    .default(VALIDATION_LIMITS.DEFAULT_PAGE_SIZE)
+    .describe('Page number (1-based)'),
+  pageSize: z.coerce
+    .number()
+    .min(VALIDATION_LIMITS.MIN_PAGE_SIZE)
+    .max(VALIDATION_LIMITS.MAX_PAGE_SIZE)
+    .default(VALIDATION_LIMITS.DEFAULT_PAGE_SIZE)
+    .describe('Number of results per page'),
+});
+
+/**
  * NOTIFICATIONS SCHEMA
  */
 export const securityEnhancedUpdateNotificationsSchema = z.object({
@@ -62,8 +99,7 @@ export const securityEnhancedCreateTicketAdminSchema = z.object({
 export const securityEnhancedGetTicketsSchema = z.object({
   status: z.enum(['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']).optional(),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).optional(),
-  limit: z.number().min(1).max(100).default(SECURITY_VALIDATION_LIMITS.SEARCH_DEFAULT_LIMIT),
-  offset: z.number().min(0).default(0),
+  ...securityEnhancedOffsetPaginationSchema.shape,
 });
 
 export const securityEnhancedUpdateTicketStatusSchema = z.object({
@@ -81,21 +117,19 @@ export const securityEnhancedSearchOrdersSchema = z.object({
   currency: currencySchema.optional(),
   dateFrom: z.string().optional(),
   dateTo: z.string().optional(),
-  limit: z.number().min(1).max(100).default(SECURITY_VALIDATION_LIMITS.SEARCH_DEFAULT_LIMIT),
-  offset: z.number().min(0).default(0),
+  ...securityEnhancedOffsetPaginationSchema.shape,
 });
 
 export const securityEnhancedSearchUsersSchema = z.object({
   query: createXSSProtectedString(0, 100).optional(),
   verified: z.boolean().optional(),
-  limit: z.number().min(1).max(100).default(SECURITY_VALIDATION_LIMITS.SEARCH_DEFAULT_LIMIT),
-  offset: z.number().min(0).default(0),
+  ...securityEnhancedOffsetPaginationSchema.shape,
 });
 
 export const securityEnhancedSearchKnowledgeSchema = z.object({
   query: createXSSProtectedString(1, SECURITY_VALIDATION_LIMITS.SEARCH_QUERY_MAX_LENGTH),
   category: createXSSProtectedString(0, SECURITY_VALIDATION_LIMITS.TAG_MAX_LENGTH).optional(),
-  limit: z.number().min(1).max(100).default(SECURITY_VALIDATION_LIMITS.SEARCH_DEFAULT_LIMIT),
+  ...securityEnhancedLimitOnlySchema.shape,
 });
 
 /**
@@ -193,16 +227,6 @@ export const securityEnhancedOrderStatusSchema = z.enum([
   'cancelled',
   'failed',
 ] as const);
-
-export const securityEnhancedOffsetPaginationSchema = z.object({
-  limit: z.number().min(1).max(100).default(SECURITY_VALIDATION_LIMITS.SEARCH_DEFAULT_LIMIT),
-  offset: z.number().min(0).default(0),
-});
-
-export const securityEnhancedCursorPaginationSchema = z.object({
-  limit: z.number().min(1).max(100).default(SECURITY_VALIDATION_LIMITS.SEARCH_DEFAULT_LIMIT),
-  cursor: createXSSProtectedString(0, 100).optional(),
-});
 
 /**
  * TYPE EXPORTS

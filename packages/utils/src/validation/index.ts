@@ -17,3 +17,4 @@ export * from './security-enhanced-schemas';
 export * from './security-enhanced-exchange-schemas';
 export * from './security-enhanced-operator';
 export * from './security-enhanced-utils';
+export * from './security-enhanced-support-schemas';

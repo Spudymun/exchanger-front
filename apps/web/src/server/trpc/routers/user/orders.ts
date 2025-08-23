@@ -1,9 +1,4 @@
-import {
-  USER_SUCCESS_MESSAGES,
-  USER_CONFIG,
-  CANCELLABLE_ORDER_STATUSES,
-  ORDER_STATUSES,
-} from '@repo/constants';
+import { USER_SUCCESS_MESSAGES, CANCELLABLE_ORDER_STATUSES, ORDER_STATUSES } from '@repo/constants';
 import { orderManager, validateUserAccess, validateOrderAccess } from '@repo/exchange-core';
 import {
   sortOrders,
@@ -11,6 +6,7 @@ import {
   paginateOrders,
   createOrderError,
   securityEnhancedOrderStatusSchema,
+  securityEnhancedUserOrdersPaginationSchema,
 } from '@repo/utils';
 
 import { z } from 'zod';
@@ -23,18 +19,17 @@ export const ordersRouter = createTRPCRouter({
   getOrderHistory: protectedProcedure
     .input(
       z.object({
-        limit: z
-          .number()
-          .min(1)
-          .max(USER_CONFIG.MAX_ORDERS_LIMIT)
-          .default(USER_CONFIG.DEFAULT_ORDERS_LIMIT),
-        offset: z.number().min(0).default(0),
+        ...securityEnhancedUserOrdersPaginationSchema.shape,
         status: securityEnhancedOrderStatusSchema.optional(),
       })
     )
     .query(async ({ input, ctx }) => {
       const user = validateUserAccess(ctx.user.id);
       const allOrders = orderManager.findByEmail(user.email);
+
+      // Преобразуем page/pageSize в limit/offset для совместимости с существующим API
+      const limit = input.pageSize;
+      const offset = (input.page - 1) * input.pageSize;
 
       // Используем централизованные утилиты для фильтрации, сортировки и пагинации
       const result = paginateOrders(
@@ -46,8 +41,8 @@ export const ordersRouter = createTRPCRouter({
           })
         ),
         {
-          limit: input.limit,
-          offset: input.offset,
+          limit,
+          offset,
         }
       );
 
