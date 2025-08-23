@@ -105,6 +105,9 @@ export const SECURITY_VALIDATION_LIMITS = {
 
 /**
  * Security patterns for consistent validation
+ *
+ * NOTE: XSS detection patterns moved to XSS_PATTERNS array above.
+ * All XSS protection uses the comprehensive XSS_PATTERNS through containsPotentialXSS() function.
  */
 export const SECURITY_PATTERNS = {
   // Безопасный phone pattern
@@ -112,10 +115,4 @@ export const SECURITY_PATTERNS = {
 
   // Безопасный slug pattern
   SLUG: /^[a-z0-9-]+$/,
-
-  // XSS detection patterns (для проверки, НЕ для replace)
-  XSS_SCRIPT: /<script[^>]*>/i,
-  XSS_JAVASCRIPT: /javascript:/i,
-  XSS_EVENT_HANDLER: /on\w+\s*=/i,
-  XSS_DATA_URL: /data:\s*text\/html/i,
 } as const;

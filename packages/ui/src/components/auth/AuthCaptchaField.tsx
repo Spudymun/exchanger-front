@@ -35,13 +35,6 @@ function useCaptchaLogic<T extends CaptchaFormFields>(
   const captcha = useMathCaptchaLocal(config);
 
   // Мемоизированные callbacks
-  const updateCaptchaValue = React.useCallback(
-    (value: string) => {
-      form.setValue('captcha', value);
-    },
-    [form.setValue]
-  );
-
   const clearCaptchaError = React.useCallback(() => {
     if (form.clearError) {
       form.clearError('captcha');
@@ -59,8 +52,12 @@ function useCaptchaLogic<T extends CaptchaFormFields>(
 
   // Effects для управления состоянием
   React.useEffect(() => {
-    updateCaptchaValue(captcha.userAnswer);
-  }, [captcha.userAnswer, updateCaptchaValue]);
+    // Избегаем бесконечного цикла - устанавливаем значение только если оно отличается
+    const currentValue = form.values.captcha || '';
+    if (currentValue !== captcha.userAnswer) {
+      form.setValue('captcha', captcha.userAnswer);
+    }
+  }, [captcha.userAnswer, form.values.captcha, form.setValue]);
 
   React.useEffect(() => {
     if (captcha.isVerified) {
