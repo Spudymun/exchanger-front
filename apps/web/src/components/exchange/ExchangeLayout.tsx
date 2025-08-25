@@ -1,17 +1,11 @@
 'use client';
 
-import { CRYPTOCURRENCIES, getBanksForCurrency, type FiatCurrency } from '@repo/constants';
 import { UseFormReturn } from '@repo/hooks';
 import {
   ExchangeForm,
   FormField,
   FormControl,
   FormMessage,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Input,
   TokenStandardSelector,
   CryptoCurrencySelector,
@@ -23,36 +17,6 @@ interface ExchangeLayoutProps {
   form: UseFormReturn<Record<string, unknown>>;
   t: (key: string) => string;
   calculatedAmount?: number;
-}
-
-/**
- * ❌ BACKUP: Дублированный компонент - заменить на CryptoAmountInput из @repo/ui
- * @deprecated Использовать CryptoAmountInput с useValidation=false
- */
-function _AmountInput({
-  form,
-  t,
-}: {
-  form: UseFormReturn<Record<string, unknown>>;
-  t: (key: string) => string;
-}) {
-  return (
-    <ExchangeForm.FieldWrapper>
-      <FormField name="fromAmount" error={form.errors.fromAmount}>
-        <ExchangeForm.FieldLabel>{t('sending.amount')}</ExchangeForm.FieldLabel>
-        <FormControl>
-          <Input
-            {...form.getFieldProps('fromAmount')}
-            type="text"
-            placeholder={t('sending.amount')}
-            value={(form.values.fromAmount as string) || ''}
-            onChange={e => form.setValue('fromAmount', e.target.value)}
-          />
-        </FormControl>
-        <FormMessage />
-      </FormField>
-    </ExchangeForm.FieldWrapper>
-  );
 }
 
 // AmountDisplay Component
@@ -108,89 +72,8 @@ function CardNumberInput({
     </ExchangeForm.FieldWrapper>
   );
 }
-/**
- * ❌ BACKUP: Дублированный компонент - заменить на ExchangeBankSelector из @repo/ui
- * @deprecated Использовать ExchangeBankSelector без передачи banks (автовычисление)
- */
-function _BankSelector({
-  form,
-  t,
-}: {
-  form: UseFormReturn<Record<string, unknown>>;
-  t: (key: string) => string;
-}) {
-  // Following the same pattern as in useHeroExchangeForm.ts
-  const currency = form.values.toCurrency;
-  const validKeys = ['UAH', 'USD', 'EUR'] as const;
-  const banks = validKeys.includes(currency as (typeof validKeys)[number])
-    ? getBanksForCurrency(currency as FiatCurrency)
-    : [];
-
-  return (
-    <ExchangeForm.FieldWrapper>
-      <ExchangeForm.FieldLabel>{t('receiving.bank')}</ExchangeForm.FieldLabel>
-      <FormField name="selectedBankId" error={form.errors.selectedBankId}>
-        <FormControl>
-          <Select
-            value={form.values.selectedBankId as string}
-            onValueChange={v => form.setValue('selectedBankId', v)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={t('receiving.selectBank')} />
-            </SelectTrigger>
-            <SelectContent>
-              {banks.map(bank => (
-                <SelectItem key={bank.id} value={bank.id}>
-                  {bank.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FormControl>
-        <FormMessage />
-      </FormField>
-    </ExchangeForm.FieldWrapper>
-  );
-}
 
 // Currency selector component
-/**
- * ❌ BACKUP: Дублированный компонент - заменить на CryptoCurrencySelector из @repo/ui
- * @deprecated Использовать CryptoCurrencySelector с autoSetTokenStandard=false
- */
-function _CurrencySelector({
-  form,
-  t,
-}: {
-  form: UseFormReturn<Record<string, unknown>>;
-  t: (key: string) => string;
-}) {
-  return (
-    <ExchangeForm.FieldWrapper>
-      <ExchangeForm.FieldLabel>{t('sending.cryptocurrency')}</ExchangeForm.FieldLabel>
-      <FormField name="fromCurrency" error={form.errors.fromCurrency}>
-        <FormControl>
-          <Select
-            value={form.values.fromCurrency as string}
-            onValueChange={v => form.setValue('fromCurrency', v)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={t('sending.selectCurrency')} />
-            </SelectTrigger>
-            <SelectContent>
-              {CRYPTOCURRENCIES.map(currency => (
-                <SelectItem key={currency} value={currency}>
-                  {currency}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FormControl>
-        <FormMessage />
-      </FormField>
-    </ExchangeForm.FieldWrapper>
-  );
-}
 
 // Sending section using Compound Components
 function SendingSection({

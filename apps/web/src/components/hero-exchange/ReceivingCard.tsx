@@ -65,44 +65,6 @@ export function FiatCurrencySelector({
   );
 }
 
-/**
- * ❌ BACKUP: Дублированный компонент - заменить на ExchangeBankSelector из @repo/ui
- * @deprecated Использовать ExchangeBankSelector с передачей banks как пропс
- */
-export function BankSelector({
-  form,
-  banks,
-  t,
-}: {
-  form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>;
-  banks: ReturnType<typeof getBanksForCurrency>;
-  t: (key: string) => string;
-}) {
-  return (
-    <FormField name="selectedBankId" error={form.errors.selectedBankId}>
-      <FormLabel>{t('receiving.bank')}</FormLabel>
-      <FormControl>
-        <Select
-          value={form.values.selectedBankId as string}
-          onValueChange={v => form.setValue('selectedBankId', v)}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder={t('receiving.selectBank')} />
-          </SelectTrigger>
-          <SelectContent>
-            {banks.map(b => (
-              <SelectItem key={b.id} value={b.id}>
-                {b.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FormControl>
-      <FormMessage />
-    </FormField>
-  );
-}
-
 function ReceivingInfo({
   form,
   t,

@@ -1,20 +1,10 @@
 'use client';
 
-import { getDefaultTokenStandard, CRYPTOCURRENCIES, type CryptoCurrency } from '@repo/constants';
+import { type CryptoCurrency } from '@repo/constants';
 import { calculateUahAmount } from '@repo/exchange-core';
 import { type UseFormReturn } from '@repo/hooks';
 import { useFormWithNextIntl } from '@repo/hooks/src/client-hooks';
 import {
-  FormField,
-  FormLabel,
-  FormControl,
-  FormMessage,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Card,
   CardContent,
   CardHeader,
@@ -23,7 +13,6 @@ import {
   CryptoCurrencySelector,
   CryptoAmountInput,
 } from '@repo/ui';
-import { useNumericInput } from '@repo/utils';
 import React from 'react';
 
 import type { HeroExchangeFormData } from '../HeroExchangeForm';
@@ -32,83 +21,6 @@ interface SendingCardProps {
   form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>;
   t: (key: string) => string;
   minAmount: number;
-}
-
-/**
- * ❌ BACKUP: Дублированный компонент - заменить на CryptoAmountInput из @repo/ui
- * @deprecated Использовать CryptoAmountInput с useValidation=true
- */
-function _AmountInput({
-  form,
-  t,
-}: {
-  form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>;
-  t: (key: string) => string;
-}) {
-  const { handleKeyDown } = useNumericInput(form.values.fromCurrency as string);
-
-  const handleAmountKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    handleKeyDown(e, form.values.fromAmount as string);
-  };
-
-  return (
-    <FormField name="fromAmount" error={form.errors.fromAmount}>
-      <FormLabel>{t('sending.amount')}</FormLabel>
-      <FormControl>
-        <Input
-          {...form.getFieldProps('fromAmount')}
-          onKeyDown={handleAmountKeyDown}
-          placeholder={t('sending.placeholder')}
-          aria-invalid={!!form.errors.fromAmount}
-        />
-      </FormControl>
-      <FormMessage />
-    </FormField>
-  );
-}
-
-/**
- * ❌ BACKUP: Дублированный компонент - заменить на CryptoCurrencySelector из @repo/ui
- * @deprecated Использовать CryptoCurrencySelector с autoSetTokenStandard=true
- */
-export function _CurrencySelector({
-  form,
-  t,
-}: {
-  form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>;
-  t: (key: string) => string;
-}) {
-  return (
-    <FormField name="fromCurrency" error={form.errors.fromCurrency}>
-      <FormLabel>{t('sending.cryptocurrency')}</FormLabel>
-      <FormControl>
-        <Select
-          value={form.values.fromCurrency as string}
-          onValueChange={v => {
-            form.setValue('fromCurrency', v);
-            const defaultStandard = getDefaultTokenStandard(v);
-            if (defaultStandard) {
-              form.setValue('tokenStandard', defaultStandard);
-            } else {
-              form.setValue('tokenStandard', '');
-            }
-          }}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {CRYPTOCURRENCIES.map(c => (
-              <SelectItem key={c} value={c}>
-                {c}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FormControl>
-      <FormMessage />
-    </FormField>
-  );
 }
 
 function SendingInfo({
