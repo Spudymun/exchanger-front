@@ -1,9 +1,10 @@
 'use client';
 
-import { EXCHANGE_DEFAULTS, getDefaultTokenStandard } from '@repo/constants';
+import { EXCHANGE_DEFAULTS, getDefaultTokenStandard, type CryptoCurrency } from '@repo/constants';
+import { calculateUahAmount } from '@repo/exchange-core';
 import { useFormWithNextIntl } from '@repo/hooks/src/client-hooks';
 import { ExchangeForm } from '@repo/ui';
-import { securityEnhancedAdvancedExchangeFormSchema } from '@repo/utils';
+import { securityEnhancedUnifiedExchangeFormSchema } from '@repo/utils';
 import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
@@ -19,18 +20,16 @@ interface ExchangeContainerProps {
   };
 }
 
-export function ExchangeContainer({ locale: _locale, initialParams }: ExchangeContainerProps) {
-  const tPage = useTranslations('ExchangePage');
-  const t = useTranslations('AdvancedExchangeForm');
-
-  const initialFormData = useMemo(() => {
+// ✅ Хук для инициализации формы
+function useExchangeFormData(initialParams?: ExchangeContainerProps['initialParams']) {
+  return useMemo(() => {
     if (!initialParams) {
       return {
         fromCurrency: EXCHANGE_DEFAULTS.FROM_CURRENCY,
         tokenStandard: getDefaultTokenStandard(EXCHANGE_DEFAULTS.FROM_CURRENCY) || 'TRC-20',
         toCurrency: EXCHANGE_DEFAULTS.TO_CURRENCY,
-        selectedBank: 'privatbank',
-        cryptoAmount: '',
+        selectedBankId: 'privatbank',
+        fromAmount: '',
         email: '',
         cardNumber: '',
         captchaAnswer: '',
@@ -43,18 +42,33 @@ export function ExchangeContainer({ locale: _locale, initialParams }: ExchangeCo
       fromCurrency,
       tokenStandard: getDefaultTokenStandard(fromCurrency) || 'TRC-20',
       toCurrency: EXCHANGE_DEFAULTS.TO_CURRENCY,
-      selectedBank: initialParams.bank || 'privatbank',
-      cryptoAmount: initialParams.amount?.toString() || '',
+      selectedBankId: initialParams.bank || 'privatbank',
+      fromAmount: initialParams.amount?.toString() || '',
       email: '',
       cardNumber: '',
       captchaAnswer: '',
       agreeToTerms: false,
     };
   }, [initialParams]);
+}
+
+// ✅ Хук для расчета обмена
+function useExchangeCalculations(fromAmount: string, fromCurrency: string) {
+  return useMemo(() => {
+    const amount = Number(fromAmount);
+    return amount > 0 ? calculateUahAmount(amount, fromCurrency as CryptoCurrency) : 0;
+  }, [fromAmount, fromCurrency]);
+}
+
+export function ExchangeContainer({ locale: _locale, initialParams }: ExchangeContainerProps) {
+  const tPage = useTranslations('ExchangePage');
+  const t = useTranslations('AdvancedExchangeForm');
+
+  const initialFormData = useExchangeFormData(initialParams);
 
   const form = useFormWithNextIntl<Record<string, unknown>>({
     initialValues: initialFormData,
-    validationSchema: securityEnhancedAdvancedExchangeFormSchema,
+    validationSchema: securityEnhancedUnifiedExchangeFormSchema,
     t,
     onSubmit: async (_values: Record<string, unknown>) => {
       // Form submission logic будет в task 2.4
@@ -62,12 +76,10 @@ export function ExchangeContainer({ locale: _locale, initialParams }: ExchangeCo
     },
   });
 
-  // Автоматический расчет как в HeroExchangeForm через useMemo
-  const calculatedAmount = useMemo(() => {
-    const amount = Number(form.values.cryptoAmount);
-    const MOCK_UAH_RATE = 35.5;
-    return amount > 0 ? amount * MOCK_UAH_RATE : 0;
-  }, [form.values.cryptoAmount]);
+  const calculatedAmount = useExchangeCalculations(
+    form.values.fromAmount as string,
+    form.values.fromCurrency as string
+  );
 
   return (
     <ExchangeForm.Container variant="full" className="exchange-container">
@@ -78,11 +90,7 @@ export function ExchangeContainer({ locale: _locale, initialParams }: ExchangeCo
       </header>
 
       {/* Main Exchange Layout */}
-      <ExchangeLayout 
-        form={form} 
-        t={t} 
-        calculatedAmount={calculatedAmount}
-      />
+      <ExchangeLayout form={form} t={t} calculatedAmount={calculatedAmount} />
     </ExchangeForm.Container>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { FIAT_CURRENCIES, getBanksForCurrency } from '@repo/constants';
-import { useFormWithNextIntl } from '@repo/hooks/src/client-hooks';
+import { useFormWithNextIntl, type UseFormReturn } from '@repo/hooks';
 import {
   FormField,
   FormLabel,
@@ -17,6 +17,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  ExchangeBankSelector,
 } from '@repo/ui';
 import React from 'react';
 
@@ -64,6 +65,10 @@ export function FiatCurrencySelector({
   );
 }
 
+/**
+ * ❌ BACKUP: Дублированный компонент - заменить на ExchangeBankSelector из @repo/ui
+ * @deprecated Использовать ExchangeBankSelector с передачей banks как пропс
+ */
 export function BankSelector({
   form,
   banks,
@@ -124,7 +129,11 @@ export function ReceivingCard({ form, banks, calculatedAmount, t }: ReceivingCar
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FiatCurrencySelector form={form} t={t} />
-          <BankSelector form={form} banks={banks} t={t} />
+          <ExchangeBankSelector
+            form={form as unknown as UseFormReturn<Record<string, unknown>>}
+            banks={banks}
+            t={t}
+          />
         </div>
 
         <FormField name="toAmount">

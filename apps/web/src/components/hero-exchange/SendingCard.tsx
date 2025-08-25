@@ -1,6 +1,8 @@
 'use client';
 
-import { getDefaultTokenStandard, isMultiNetworkToken, getTokenStandards } from '@repo/constants';
+import { getDefaultTokenStandard, CRYPTOCURRENCIES, type CryptoCurrency } from '@repo/constants';
+import { calculateUahAmount } from '@repo/exchange-core';
+import { type UseFormReturn } from '@repo/hooks';
 import { useFormWithNextIntl } from '@repo/hooks/src/client-hooks';
 import {
   FormField,
@@ -17,6 +19,9 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  TokenStandardSelector,
+  CryptoCurrencySelector,
+  CryptoAmountInput,
 } from '@repo/ui';
 import { useNumericInput } from '@repo/utils';
 import React from 'react';
@@ -26,52 +31,14 @@ import type { HeroExchangeFormData } from '../HeroExchangeForm';
 interface SendingCardProps {
   form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>;
   t: (key: string) => string;
-  exchangeRate: number;
   minAmount: number;
 }
 
-export function TokenStandardSelector({
-  form,
-  t,
-}: {
-  form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>;
-  t: (key: string) => string;
-}) {
-  const currency = form.values.fromCurrency as string;
-  const isMultiNetwork = isMultiNetworkToken(currency);
-
-  if (!isMultiNetwork) {
-    return <div className="h-[76px]"></div>;
-  }
-
-  const standards = getTokenStandards(currency);
-
-  return (
-    <FormField name="tokenStandard" error={form.errors.tokenStandard}>
-      <FormLabel>{t('sending.tokenStandard')}</FormLabel>
-      <FormControl>
-        <Select
-          value={form.values.tokenStandard as string}
-          onValueChange={v => form.setValue('tokenStandard', v)}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder={t('sending.selectStandard')} />
-          </SelectTrigger>
-          <SelectContent>
-            {standards.map(standard => (
-              <SelectItem key={standard} value={standard}>
-                {standard}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FormControl>
-      <FormMessage />
-    </FormField>
-  );
-}
-
-function AmountInput({
+/**
+ * ❌ BACKUP: Дублированный компонент - заменить на CryptoAmountInput из @repo/ui
+ * @deprecated Использовать CryptoAmountInput с useValidation=true
+ */
+function _AmountInput({
   form,
   t,
 }: {
@@ -100,7 +67,11 @@ function AmountInput({
   );
 }
 
-export function CurrencySelector({
+/**
+ * ❌ BACKUP: Дублированный компонент - заменить на CryptoCurrencySelector из @repo/ui
+ * @deprecated Использовать CryptoCurrencySelector с autoSetTokenStandard=true
+ */
+export function _CurrencySelector({
   form,
   t,
 }: {
@@ -127,7 +98,7 @@ export function CurrencySelector({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {['BTC', 'ETH', 'USDT', 'LTC'].map(c => (
+            {CRYPTOCURRENCIES.map(c => (
               <SelectItem key={c} value={c}>
                 {c}
               </SelectItem>
@@ -143,28 +114,28 @@ export function CurrencySelector({
 function SendingInfo({
   form,
   t,
-  exchangeRate,
   minAmount,
 }: {
   form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>;
   t: (key: string) => string;
-  exchangeRate: number;
   minAmount: number;
 }) {
+  const fromCurrency = form.values.fromCurrency as CryptoCurrency;
+  const exchangeRate = calculateUahAmount(1, fromCurrency);
+
   return (
     <div className="text-sm text-muted-foreground space-y-1">
       <div>
-        {t('sending.min')}: {minAmount} {form.values.fromCurrency as string}
+        {t('sending.min')}: {minAmount} {fromCurrency}
       </div>
       <div>
-        {t('sending.rate')}: 1 {form.values.fromCurrency as string} = {exchangeRate}{' '}
-        {form.values.toCurrency as string}
+        {t('sending.rate')}: 1 {fromCurrency} = {exchangeRate} UAH
       </div>
     </div>
   );
 }
 
-export function SendingCard({ form, t, exchangeRate, minAmount }: SendingCardProps) {
+export function SendingCard({ form, t, minAmount }: SendingCardProps) {
   return (
     <Card className="bg-card text-card-foreground border-l-4 border-l-primary shadow-lg hover:shadow-xl transition-all duration-200">
       <CardHeader>
@@ -172,11 +143,22 @@ export function SendingCard({ form, t, exchangeRate, minAmount }: SendingCardPro
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <CurrencySelector form={form} t={t} />
-          <TokenStandardSelector form={form} t={t} />
+          <CryptoCurrencySelector
+            form={form as unknown as UseFormReturn<Record<string, unknown>>}
+            t={t}
+            autoSetTokenStandard={true}
+          />
+          <TokenStandardSelector
+            form={form as unknown as UseFormReturn<Record<string, unknown>>}
+            t={t}
+          />
         </div>
-        <AmountInput form={form} t={t} />
-        <SendingInfo form={form} t={t} exchangeRate={exchangeRate} minAmount={minAmount} />
+        <CryptoAmountInput
+          form={form as unknown as UseFormReturn<Record<string, unknown>>}
+          t={t}
+          useValidation={true}
+        />
+        <SendingInfo form={form} t={t} minAmount={minAmount} />
       </CardContent>
     </Card>
   );

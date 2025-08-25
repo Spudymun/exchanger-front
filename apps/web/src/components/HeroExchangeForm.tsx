@@ -55,12 +55,7 @@ function ExchangeFormCards({
   return (
     <ExchangeForm.CardPair layout="withArrow">
       <ExchangeForm.FieldWrapper>
-        <SendingCard
-          form={form}
-          t={t}
-          exchangeRate={constants.EXCHANGE_RATE}
-          minAmount={constants.MIN_AMOUNTS.from}
-        />
+        <SendingCard form={form} t={t} minAmount={constants.MIN_AMOUNTS.from} />
       </ExchangeForm.FieldWrapper>
 
       <ExchangeForm.Arrow direction="horizontal" />
@@ -89,6 +84,44 @@ function ExchangeFormAction({ isValid, t }: ExchangeFormActionProps) {
         {t('exchange')}
       </Button>
     </ExchangeForm.ActionArea>
+  );
+}
+
+// ===== RENDER COMPONENTS =====
+function HeroExchangeFormContent({
+  useAdaptiveContainer,
+  adaptiveProps,
+  cardsProps,
+  actionProps,
+  form,
+  isValid,
+}: {
+  useAdaptiveContainer: boolean;
+  adaptiveProps: AdaptiveWidthProps;
+  cardsProps: Parameters<typeof ExchangeFormCards>[0];
+  actionProps: Parameters<typeof ExchangeFormAction>[0];
+  form: ReturnType<typeof useHeroExchangeForm>['form'];
+  isValid: boolean;
+}) {
+  return (
+    <ExchangeForm
+      exchangeData={form.values}
+      isSubmitting={form.isSubmitting}
+      isValid={isValid}
+      onSubmit={form.handleSubmit}
+    >
+      {useAdaptiveContainer ? (
+        <ExchangeForm.EnhancedContainer variant="adaptive-hero" adaptiveProps={adaptiveProps}>
+          <ExchangeFormCards {...cardsProps} />
+          <ExchangeFormAction {...actionProps} />
+        </ExchangeForm.EnhancedContainer>
+      ) : (
+        <ExchangeForm.Container variant="hero">
+          <ExchangeFormCards {...cardsProps} />
+          <ExchangeFormAction {...actionProps} />
+        </ExchangeForm.Container>
+      )}
+    </ExchangeForm>
   );
 }
 
@@ -127,24 +160,14 @@ export function HeroExchangeForm(props: HeroExchangeFormProps) {
     >
       <div className="space-y-6 sm:space-y-8">
         <ExchangeBenefits t={t} />
-        <ExchangeForm
-          exchangeData={form.values}
-          isSubmitting={form.isSubmitting}
+        <HeroExchangeFormContent
+          useAdaptiveContainer={useAdaptiveContainer}
+          adaptiveProps={adaptiveProps}
+          cardsProps={cardsProps}
+          actionProps={actionProps}
+          form={form}
           isValid={isValid}
-          onSubmit={form.handleSubmit}
-        >
-          {useAdaptiveContainer ? (
-            <ExchangeForm.EnhancedContainer variant="adaptive-hero" adaptiveProps={adaptiveProps}>
-              <ExchangeFormCards {...cardsProps} />
-              <ExchangeFormAction {...actionProps} />
-            </ExchangeForm.EnhancedContainer>
-          ) : (
-            <ExchangeForm.Container variant="hero">
-              <ExchangeFormCards {...cardsProps} />
-              <ExchangeFormAction {...actionProps} />
-            </ExchangeForm.Container>
-          )}
-        </ExchangeForm>
+        />
       </div>
     </div>
   );

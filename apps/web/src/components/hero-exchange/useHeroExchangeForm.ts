@@ -3,16 +3,17 @@
 import {
   getBanksForCurrency,
   type FiatCurrency,
+  type CryptoCurrency,
   getDefaultTokenStandard,
   EXCHANGE_DEFAULTS,
 } from '@repo/constants';
+import { calculateUahAmount } from '@repo/exchange-core';
 import { useFormWithNextIntl } from '@repo/hooks';
-import { securityEnhancedSimpleExchangeFormSchema } from '@repo/utils';
+import { securityEnhancedHeroExchangeFormSchema } from '@repo/utils';
 import { useMemo } from 'react';
 
 import type { HeroExchangeFormData } from '../HeroExchangeForm';
 
-const EXCHANGE_RATE = 40.5;
 const MIN_AMOUNTS = { from: 10, to: 100 };
 
 export function useHeroExchangeForm(
@@ -27,15 +28,15 @@ export function useHeroExchangeForm(
       toCurrency: EXCHANGE_DEFAULTS.TO_CURRENCY,
       selectedBankId: '',
     },
-    validationSchema: securityEnhancedSimpleExchangeFormSchema,
+    validationSchema: securityEnhancedHeroExchangeFormSchema,
     t,
     onSubmit: async values => onExchange?.(values),
   });
 
   const calculatedAmount = useMemo(() => {
     const amount = Number(form.values.fromAmount);
-    return amount > 0 ? amount * EXCHANGE_RATE : 0;
-  }, [form.values.fromAmount]);
+    return amount > 0 ? calculateUahAmount(amount, form.values.fromCurrency as CryptoCurrency) : 0;
+  }, [form.values.fromAmount, form.values.fromCurrency]);
 
   const banks = useMemo(() => {
     const currency = form.values.toCurrency;
@@ -57,7 +58,6 @@ export function useHeroExchangeForm(
     banks,
     isValid,
     constants: {
-      EXCHANGE_RATE,
       MIN_AMOUNTS,
     },
   };

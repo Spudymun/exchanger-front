@@ -1,6 +1,6 @@
 'use client';
 
-import { CRYPTOCURRENCIES, getBanksForCurrency, type FiatCurrency, isMultiNetworkToken, getTokenStandards } from '@repo/constants';
+import { CRYPTOCURRENCIES, getBanksForCurrency, type FiatCurrency } from '@repo/constants';
 import { UseFormReturn } from '@repo/hooks';
 import {
   ExchangeForm,
@@ -13,6 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
   Input,
+  TokenStandardSelector,
+  CryptoCurrencySelector,
+  ExchangeBankSelector,
+  CryptoAmountInput,
 } from '@repo/ui';
 
 interface ExchangeLayoutProps {
@@ -21,52 +25,11 @@ interface ExchangeLayoutProps {
   calculatedAmount?: number;
 }
 
-// TokenStandardSelector Component
-function TokenStandardSelector({
-  form,
-  t,
-}: {
-  form: UseFormReturn<Record<string, unknown>>;
-  t: (key: string) => string;
-}) {
-  const currency = form.values.fromCurrency as string;
-  const isMultiNetwork = isMultiNetworkToken(currency);
-
-  if (!isMultiNetwork) {
-    return <div className="h-[76px]"></div>;
-  }
-
-  const standards = getTokenStandards(currency);
-
-  return (
-    <ExchangeForm.FieldWrapper>
-      <FormField name="tokenStandard" error={form.errors.tokenStandard}>
-        <ExchangeForm.FieldLabel>{t('sending.tokenStandard')}</ExchangeForm.FieldLabel>
-        <FormControl>
-          <Select
-            value={form.values.tokenStandard as string}
-            onValueChange={v => form.setValue('tokenStandard', v)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={t('sending.selectStandard')} />
-            </SelectTrigger>
-            <SelectContent>
-              {standards.map(standard => (
-                <SelectItem key={standard} value={standard}>
-                  {standard}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </FormControl>
-        <FormMessage />
-      </FormField>
-    </ExchangeForm.FieldWrapper>
-  );
-}
-
-// AmountInput Component
-function AmountInput({
+/**
+ * ❌ BACKUP: Дублированный компонент - заменить на CryptoAmountInput из @repo/ui
+ * @deprecated Использовать CryptoAmountInput с useValidation=false
+ */
+function _AmountInput({
   form,
   t,
 }: {
@@ -75,15 +38,15 @@ function AmountInput({
 }) {
   return (
     <ExchangeForm.FieldWrapper>
-      <FormField name="cryptoAmount" error={form.errors.cryptoAmount}>
+      <FormField name="fromAmount" error={form.errors.fromAmount}>
         <ExchangeForm.FieldLabel>{t('sending.amount')}</ExchangeForm.FieldLabel>
         <FormControl>
           <Input
-            {...form.getFieldProps('cryptoAmount')}
-            placeholder={t('sending.placeholder')}
-            inputMode="decimal"
-            className="transition-colors"
-            value={(form.values.cryptoAmount as string) || ''}
+            {...form.getFieldProps('fromAmount')}
+            type="text"
+            placeholder={t('sending.amount')}
+            value={(form.values.fromAmount as string) || ''}
+            onChange={e => form.setValue('fromAmount', e.target.value)}
           />
         </FormControl>
         <FormMessage />
@@ -92,12 +55,12 @@ function AmountInput({
   );
 }
 
-// AmountDisplay Component  
-function AmountDisplay({ 
+// AmountDisplay Component
+function AmountDisplay({
   form,
   t,
-  calculatedAmount 
-}: { 
+  calculatedAmount,
+}: {
   form: UseFormReturn<Record<string, unknown>>;
   t: (key: string) => string;
   calculatedAmount: number;
@@ -120,12 +83,12 @@ function AmountDisplay({
 }
 
 // CardNumber Input Component
-function CardNumberInput({ 
-  form, 
-  t 
-}: { 
-  form: UseFormReturn<Record<string, unknown>>; 
-  t: (key: string) => string; 
+function CardNumberInput({
+  form,
+  t,
+}: {
+  form: UseFormReturn<Record<string, unknown>>;
+  t: (key: string) => string;
 }) {
   return (
     <ExchangeForm.FieldWrapper>
@@ -145,7 +108,11 @@ function CardNumberInput({
     </ExchangeForm.FieldWrapper>
   );
 }
-function BankSelector({
+/**
+ * ❌ BACKUP: Дублированный компонент - заменить на ExchangeBankSelector из @repo/ui
+ * @deprecated Использовать ExchangeBankSelector без передачи banks (автовычисление)
+ */
+function _BankSelector({
   form,
   t,
 }: {
@@ -162,11 +129,11 @@ function BankSelector({
   return (
     <ExchangeForm.FieldWrapper>
       <ExchangeForm.FieldLabel>{t('receiving.bank')}</ExchangeForm.FieldLabel>
-      <FormField name="selectedBank" error={form.errors.selectedBank}>
+      <FormField name="selectedBankId" error={form.errors.selectedBankId}>
         <FormControl>
           <Select
-            value={form.values.selectedBank as string}
-            onValueChange={v => form.setValue('selectedBank', v)}
+            value={form.values.selectedBankId as string}
+            onValueChange={v => form.setValue('selectedBankId', v)}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder={t('receiving.selectBank')} />
@@ -187,7 +154,11 @@ function BankSelector({
 }
 
 // Currency selector component
-function CurrencySelector({
+/**
+ * ❌ BACKUP: Дублированный компонент - заменить на CryptoCurrencySelector из @repo/ui
+ * @deprecated Использовать CryptoCurrencySelector с autoSetTokenStandard=false
+ */
+function _CurrencySelector({
   form,
   t,
 }: {
@@ -221,13 +192,13 @@ function CurrencySelector({
   );
 }
 
-// Sending section using Compound Components  
-function SendingSection({ 
-  form, 
-  t 
-}: { 
-  form: UseFormReturn<Record<string, unknown>>; 
-  t: (key: string) => string; 
+// Sending section using Compound Components
+function SendingSection({
+  form,
+  t,
+}: {
+  form: UseFormReturn<Record<string, unknown>>;
+  t: (key: string) => string;
 }) {
   return (
     <ExchangeForm.ExchangeCard type="sending">
@@ -237,25 +208,25 @@ function SendingSection({
       </header>
 
       <div className="send-content space-y-4">
-        <CurrencySelector form={form} t={t} />
+        <CryptoCurrencySelector form={form} t={t} autoSetTokenStandard={false} />
 
         {/* Token Standard */}
         <TokenStandardSelector form={form} t={t} />
 
         {/* Amount Input */}
-        <AmountInput form={form} t={t} />
+        <CryptoAmountInput form={form} t={t} useValidation={false} />
       </div>
     </ExchangeForm.ExchangeCard>
   );
 }
 
 // Receiving section using Compound Components
-function ReceivingSection({ 
-  form, 
+function ReceivingSection({
+  form,
   t,
-  calculatedAmount = 0 
-}: { 
-  form: UseFormReturn<Record<string, unknown>>; 
+  calculatedAmount = 0,
+}: {
+  form: UseFormReturn<Record<string, unknown>>;
   t: (key: string) => string;
   calculatedAmount?: number;
 }) {
@@ -268,7 +239,7 @@ function ReceivingSection({
 
       <div className="receive-content space-y-4">
         {/* Bank Selection */}
-        <BankSelector form={form} t={t} />
+        <ExchangeBankSelector form={form} t={t} />
 
         {/* Card Number */}
         <CardNumberInput form={form} t={t} />

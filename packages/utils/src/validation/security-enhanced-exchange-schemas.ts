@@ -156,18 +156,35 @@ export const securityEnhancedSimpleExchangeFormSchema = z
   });
 
 /**
- * ADVANCED EXCHANGE FORM SCHEMA
+ * UNIFIED EXCHANGE FORM SCHEMA - Композиция Simple схемы с дополнительными полями
+ * ✅ SECURITY-ENHANCED: Унифицированная схема обмена (расширение Simple схемы)
+ *
+ * Наследует проверенную валидацию от securityEnhancedSimpleExchangeFormSchema
+ * и добавляет дополнительные поля для расширенной формы обмена
  */
-export const securityEnhancedAdvancedExchangeFormSchema = z.object({
-  fromCurrency: currencySchema,
-  tokenStandard: z.string().optional(),
-  cryptoAmount: z
+const unifiedExchangeBaseSchema = z.object({
+  // Базовые поля из Simple схемы
+  fromAmount: z
     .string()
     .min(1) // БЕЗ кастомного сообщения - позволяем errorMap работать
-    .refine(val => !isNaN(Number(val))) // БЕЗ кастомного сообщения
-    .transform(val => Number(val)),
-  toCurrency: z.literal('UAH'),
-  selectedBank: z.string().min(1), // БЕЗ кастомного сообщения
+    .refine(val => {
+      // Allow empty string
+      if (val === '') return true;
+      // Simple numeric validation without unsafe regex
+      const num = Number(val);
+      if (Number.isNaN(num)) return false;
+      // Check decimal places
+      const decimalParts = val.split('.');
+      if (decimalParts.length > 2) return false;
+      return true;
+    }), // БЕЗ кастомного сообщения - позволяем errorMap работать
+  fromCurrency: currencySchema,
+  tokenStandard: z.string().optional(),
+  toCurrency: z.string(),
+  selectedBankId: z.string().optional(),
+
+  // Дополнительные поля для расширенной формы обмена
+  email: emailSchema,
   cardNumber: z
     .string()
     .min(1, 'CARD_NUMBER_REQUIRED')
@@ -185,10 +202,30 @@ export const securityEnhancedAdvancedExchangeFormSchema = z.object({
     })
     .refine(sanitized => validateCardLength(sanitized), 'INVALID_CARD_LENGTH')
     .refine(sanitized => luhnCheck(sanitized), 'INVALID_CARD_NUMBER'),
-  email: emailSchema,
   captchaAnswer: createXSSProtectedString(1, SECURITY_VALIDATION_LIMITS.AUTH_CODE_MAX_LENGTH),
   agreeToTerms: z.boolean().refine(val => val === true, 'TERMS_ACCEPTANCE_REQUIRED'),
 });
+
+export const securityEnhancedUnifiedExchangeFormSchema = unifiedExchangeBaseSchema.superRefine(
+  (data, ctx) => {
+    // Используем ту же business validation что и в Simple схеме
+    validateCryptoAmountLimits(data.fromAmount, data.fromCurrency, ctx);
+  }
+);
+
+// ✅ Схема для hero формы (pick от базовой схемы без superRefine)
+export const securityEnhancedHeroExchangeFormSchema = unifiedExchangeBaseSchema
+  .pick({
+    fromAmount: true,
+    fromCurrency: true,
+    tokenStandard: true,
+    toCurrency: true,
+    selectedBankId: true,
+  })
+  .superRefine((data, ctx) => {
+    // Используем ту же business validation что и в Simple схеме
+    validateCryptoAmountLimits(data.fromAmount, data.fromCurrency, ctx);
+  });
 
 /**
  * TYPE EXPORTS
@@ -201,6 +238,10 @@ export type SecurityEnhancedSimpleExchangeForm = z.infer<
   typeof securityEnhancedSimpleExchangeFormSchema
 >;
 
-export type SecurityEnhancedAdvancedExchangeForm = z.infer<
-  typeof securityEnhancedAdvancedExchangeFormSchema
+export type SecurityEnhancedUnifiedExchangeForm = z.infer<
+  typeof securityEnhancedUnifiedExchangeFormSchema
+>;
+
+export type SecurityEnhancedHeroExchangeForm = z.infer<
+  typeof securityEnhancedHeroExchangeFormSchema
 >;
