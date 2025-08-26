@@ -45,6 +45,7 @@ Root path: `e:\project\kiro\exchanger-front`
 │   │   │   ├── 🖼️ vercel.svg - Логотип Vercel | SVG | Брендинг платформы деплоя
 │   │   │   └── 🖼️ window.svg - Иконка окна | SVG | UI элементы интерфейса
 │   │   ├── 🚫 .gitignore - Игнорируемые Git файлы | Git конфигурация | Исключения из версионирования
+│   │   ├── 🚫 .gitignore - Игнорируемые Git файлы | Git конфигурация | Исключения из версионирования
 │   │   ├── 📖 README.md - Документация пакета | Markdown | Инструкции по документационному сайту
 │   │   ├── 📄 next-env.d.ts - TypeScript конфигурация Next.js | Автогенерируемые типы | Подключение типов Next.js к TS
 │   │   ├── 📄 next.config.js - Конфигурация Next.js | Build settings | Настройка поведения сайта документации
@@ -301,6 +302,7 @@ Root path: `e:\project\kiro\exchanger-front`
 │   │   │   │   ├── 📄 authMessages.ts - Сообщения авторизации | Auth messaging | Хуки для сообщений системы авторизации
 │   │   │   │   ├── 📄 useExchange.ts - Хук обмена | Exchange logic | Основная логика процесса обмена
 │   │   │   │   ├── 📄 useFormTypes.ts - Типы форм | Form type management | Управление типами форм
+│   │   │   │   ├── 📄 useFormWithNextIntl.helpers.ts - Помощники форм с i18n | i18n form helpers | Вспомогательные функции для интернационализированных форм
 │   │   │   │   ├── 📄 useFormWithNextIntl.ts - Формы с интернационализацией | i18n forms | Локализованные формы
 │   │   │   │   ├── 📄 useMathCaptcha.ts - Математическая капча | Security captcha | Хук для математических проверок
 │   │   │   │   └── 📄 useOrderTracking.ts - Отслеживание заказов | Order tracking | Логика отслеживания состояния заказов
@@ -419,6 +421,11 @@ Root path: `e:\project\kiro\exchanger-front`
 │   │   │   │   │   ├── 📄 exchange-error-boundary.tsx - Обработчик ошибок обмена | Exchange error boundary | Специализированная обработка ошибок обмена
 │   │   │   │   │   ├── 📄 index.ts - Экспорты error boundaries | Error boundary exports | Централизованный экспорт обработчиков ошибок
 │   │   │   │   │   └── 📄 layout-error-boundary.tsx - Обработчик ошибок layout | Layout error boundary | Обработка ошибок в layout компонентах
+│   │   │   │   ├── 📁 exchange/ - Компоненты обмена | Exchange components | UI элементы для форм обмена валют
+│   │   │   │   │   ├── 📄 CryptoAmountInput.tsx - Поле ввода криптосуммы | Crypto amount input | Компонент ввода количества криптовалюты
+│   │   │   │   │   ├── 📄 CryptoCurrencySelector.tsx - Селектор криптовалют | Crypto selector | Компонент выбора криптовалюты
+│   │   │   │   │   ├── 📄 ExchangeBankSelector.tsx - Селектор банков | Bank selector | Компонент выбора банка для обмена
+│   │   │   │   │   └── 📄 TokenStandardSelector.tsx - Селектор стандартов токенов | Token standard selector | Компонент выбора стандарта токена (ERC-20, TRC-20)
 │   │   │   │   ├── 📁 tree-view/ - Компоненты дерева | Tree components | UI для отображения древовидных структур
 │   │   │   │   │   └── 📄 TreeNodeItem.tsx - Элемент узла дерева | Tree node | Компонент для отображения узла в дереве
 │   │   │   │   ├── 📁 ui/ - Базовые UI компоненты | shadcn/ui primitives | Основные переиспользуемые UI элементы
@@ -536,6 +543,7 @@ Root path: `e:\project\kiro\exchanger-front`
 │   ├── 🐚 analyze-project-structure.ps1 - Анализ структуры проекта | PowerShell script | Скрипт анализа архитектуры проекта
 │   ├── 📄 bundle-analyzer.js - Анализатор бандла | Bundle analysis | Скрипт для анализа размера сборки
 │   ├── 📄 checklist-reminder.mjs - Напоминания чек-листов | Checklist automation | Автоматизация напоминаний о процедурах
+│   ├── 🐚 final-api-check.ps1 - Финальная проверка API | PowerShell script | Скрипт финальной проверки API endpoints
 │   └── 📄 validate-cleanup.js - Валидация очистки | Cleanup validation | Проверка корректности очистки временных файлов
 ├── 🚫 .gitignore - Игнорируемые Git файлы | Git configuration | Файлы и папки исключенные из версионирования
 ├── 📄 .lintstagedrc.json - Конфигурация lint-staged | Pre-commit linting | Настройки линтинга для staged файлов
