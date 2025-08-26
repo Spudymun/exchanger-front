@@ -27,6 +27,8 @@ import {
   handleConfirmPasswordValidation,
   handleAmountValidation,
   handleCurrencyValidation,
+  handleCardNumberValidation,
+  handleTermsValidation,
   handleGeneralValidation,
 } from './handlers';
 
@@ -37,7 +39,17 @@ function handleValidationIssue(
   issue: z.ZodIssueOptionalMessage,
   t: NextIntlValidationConfig['t']
 ): { message: string } | null {
-  // Проверяем специальные случаи в порядке приоритета
+  // Проверяем специальные случаи формы в порядке приоритета
+  return handleFormFieldValidation(issue, t) || handleGeneralValidation(issue, t);
+}
+
+/**
+ * Обрабатывает специфичные поля формы
+ */
+function handleFormFieldValidation(
+  issue: z.ZodIssueOptionalMessage,
+  t: NextIntlValidationConfig['t']
+): { message: string } | null {
   return (
     handleCaptchaValidation(issue, t) ||
     handleEmailValidation(issue, t) ||
@@ -45,7 +57,8 @@ function handleValidationIssue(
     handleConfirmPasswordValidation(issue, t) ||
     handleAmountValidation(issue, t) ||
     handleCurrencyValidation(issue, t) ||
-    handleGeneralValidation(issue, t)
+    handleCardNumberValidation(issue, t) ||
+    handleTermsValidation(issue, t)
   );
 }
 

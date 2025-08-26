@@ -20,6 +20,28 @@ import {
 } from './security-utils';
 
 /**
+ * CENTRALIZED CARD NUMBER SCHEMA
+ * Единая схема для валидации номера карты - DRY принцип
+ */
+const cardNumberSchema = z
+  .string()
+  .min(1) // Стандартная zod валидация - обрабатывается handleCardNumberValidation
+  .transform(val => {
+    if (containsPotentialXSS(val)) {
+      throw new z.ZodError([
+        {
+          code: 'custom',
+          message: 'INVALID_CHARACTERS_DETECTED',
+          path: [],
+        },
+      ]);
+    }
+    return sanitizeCardNumber(val);
+  })
+  .refine(sanitized => validateCardLength(sanitized)) // Стандартная zod валидация
+  .refine(sanitized => luhnCheck(sanitized)); // Стандартная zod валидация
+
+/**
  * CREATE EXCHANGE ORDER SCHEMA
  */
 export const securityEnhancedCreateExchangeOrderSchema = z.object({
@@ -37,18 +59,7 @@ export const securityEnhancedCreateExchangeOrderSchema = z.object({
   currency: currencySchema,
   paymentDetails: z
     .object({
-      cardNumber: z
-        .string()
-        .min(SECURITY_VALIDATION_LIMITS.CARD_NUMBER_MIN_LENGTH, 'CARD_NUMBER_TOO_SHORT')
-        .max(SECURITY_VALIDATION_LIMITS.CARD_NUMBER_MAX_LENGTH, 'CARD_NUMBER_TOO_LONG')
-        .regex(/^\d+$/, 'CARD_NUMBER_DIGITS_ONLY')
-        .transform(val => {
-          if (containsPotentialXSS(val)) {
-            throw new Error('INVALID_CHARACTERS_DETECTED');
-          }
-          return val.replace(/\s/g, '');
-        })
-        .optional(),
+      cardNumber: cardNumberSchema.optional(), // Используем централизованную схему
       bankDetails: createXSSProtectedString(
         0,
         SECURITY_VALIDATION_LIMITS.MESSAGE_MAX_LENGTH
@@ -185,25 +196,9 @@ const unifiedExchangeBaseSchema = z.object({
 
   // Дополнительные поля для расширенной формы обмена
   email: emailSchema,
-  cardNumber: z
-    .string()
-    .min(1, 'CARD_NUMBER_REQUIRED')
-    .transform(val => {
-      if (containsPotentialXSS(val)) {
-        throw new z.ZodError([
-          {
-            code: 'custom',
-            message: 'INVALID_CHARACTERS_DETECTED',
-            path: [],
-          },
-        ]);
-      }
-      return sanitizeCardNumber(val);
-    })
-    .refine(sanitized => validateCardLength(sanitized), 'INVALID_CARD_LENGTH')
-    .refine(sanitized => luhnCheck(sanitized), 'INVALID_CARD_NUMBER'),
+  cardNumber: cardNumberSchema, // Используем централизованную схему
   captchaAnswer: createXSSProtectedString(1, SECURITY_VALIDATION_LIMITS.AUTH_CODE_MAX_LENGTH),
-  agreeToTerms: z.boolean().refine(val => val === true, 'TERMS_ACCEPTANCE_REQUIRED'),
+  agreeToTerms: z.boolean().refine(val => val === true), // Убираем кастомное сообщение
 });
 
 // ✅ Схема для hero формы (pick от базовой схемы без superRefine)
@@ -221,6 +216,18 @@ export const securityEnhancedHeroExchangeFormSchema = unifiedExchangeBaseSchema
   });
 
 /**
+ * FULL EXCHANGE FORM SCHEMA с card validation
+ * Используется на странице /exchange для полного процесса обмена
+ * Включает все поля из unifiedExchangeBaseSchema с card validation
+ */
+export const securityEnhancedFullExchangeFormSchema = unifiedExchangeBaseSchema.superRefine(
+  (data, ctx) => {
+    // Существующая business validation
+    validateCryptoAmountLimits(data.fromAmount, data.fromCurrency, ctx);
+  }
+);
+
+/**
  * TYPE EXPORTS
  */
 export type SecurityEnhancedCreateExchangeOrder = z.infer<
@@ -233,4 +240,8 @@ export type SecurityEnhancedSimpleExchangeForm = z.infer<
 
 export type SecurityEnhancedHeroExchangeForm = z.infer<
   typeof securityEnhancedHeroExchangeFormSchema
+>;
+
+export type SecurityEnhancedFullExchangeForm = z.infer<
+  typeof securityEnhancedFullExchangeFormSchema
 >;

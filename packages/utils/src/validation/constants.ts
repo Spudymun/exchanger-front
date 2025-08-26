@@ -31,6 +31,9 @@ export const VALIDATION_KEYS = {
   AMOUNT_MIN_VALUE: 'validation.amount.minValue',
   AMOUNT_MAX_VALUE: 'validation.amount.maxValue',
   CURRENCY_INVALID: 'validation.currency.invalid',
+  CARD_NUMBER_REQUIRED: 'validation.cardNumber.required',
+  CARD_NUMBER_INVALID: 'validation.cardNumber.invalid',
+  TERMS_ACCEPTANCE_REQUIRED: 'validation.terms.required',
 } as const;
 
 /**

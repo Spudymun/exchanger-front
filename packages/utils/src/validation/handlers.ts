@@ -334,6 +334,50 @@ export function handleCurrencyValidation(
 }
 
 /**
+ * Обрабатывает специальные случаи валидации номера карты
+ */
+export function handleCardNumberValidation(
+  issue: z.ZodIssueOptionalMessage,
+  t: NextIntlValidationConfig['t']
+): { message: string } | null {
+  if (issue.path?.length !== 1 || issue.path[0] !== 'cardNumber') {
+    return null;
+  }
+
+  if (issue.code === z.ZodIssueCode.too_small) {
+    return { message: t(VALIDATION_KEYS.CARD_NUMBER_REQUIRED) };
+  }
+
+  if (issue.code === z.ZodIssueCode.custom) {
+    if (issue.message === 'INVALID_CHARACTERS_DETECTED') {
+      return { message: t(VALIDATION_KEYS.XSS_DETECTED) };
+    }
+    // Для refine без кастомного сообщения - общая ошибка валидации карты
+    return { message: t(VALIDATION_KEYS.CARD_NUMBER_INVALID) };
+  }
+
+  return null;
+}
+
+/**
+ * Обрабатывает специальные случаи валидации согласия с условиями
+ */
+export function handleTermsValidation(
+  issue: z.ZodIssueOptionalMessage,
+  t: NextIntlValidationConfig['t']
+): { message: string } | null {
+  if (issue.path?.length !== 1 || issue.path[0] !== 'agreeToTerms') {
+    return null;
+  }
+
+  if (issue.code === z.ZodIssueCode.custom) {
+    return { message: t(VALIDATION_KEYS.TERMS_ACCEPTANCE_REQUIRED) };
+  }
+
+  return null;
+}
+
+/**
  * Обрабатывает общие случаи валидации
  */
 export function handleGeneralValidation(

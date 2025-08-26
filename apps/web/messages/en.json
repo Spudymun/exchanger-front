@@ -363,6 +363,13 @@
         "format": "Invalid cryptocurrency amount format",
         "minAmount": "Minimum amount: {min}",
         "maxAmount": "Maximum amount: {max}"
+      },
+      "cardNumber": {
+        "required": "Card number is required",
+        "invalid": "Invalid card number"
+      },
+      "terms": {
+        "required": "You must agree to the terms"
       }
     },
     "fiatNames": {

@@ -4,11 +4,12 @@ import { EXCHANGE_DEFAULTS, getDefaultTokenStandard, type CryptoCurrency } from 
 import { calculateUahAmount, getCurrencyLimits } from '@repo/exchange-core';
 import { useFormWithNextIntl } from '@repo/hooks/src/client-hooks';
 import { ExchangeForm } from '@repo/ui';
-import { securityEnhancedHeroExchangeFormSchema } from '@repo/utils';
+import {
+  securityEnhancedFullExchangeFormSchema,
+  type SecurityEnhancedFullExchangeForm,
+} from '@repo/utils';
 import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
-
-import type { HeroExchangeFormData } from '../HeroExchangeForm';
 
 import { ExchangeLayout } from './ExchangeLayout';
 
@@ -68,11 +69,11 @@ export function ExchangeContainer({ locale: _locale, initialParams }: ExchangeCo
 
   const initialFormData = useExchangeFormData(initialParams);
 
-  const form = useFormWithNextIntl<HeroExchangeFormData>({
+  const form = useFormWithNextIntl<SecurityEnhancedFullExchangeForm>({
     initialValues: initialFormData,
-    validationSchema: securityEnhancedHeroExchangeFormSchema,
+    validationSchema: securityEnhancedFullExchangeFormSchema,
     t,
-    onSubmit: async (_values: HeroExchangeFormData) => {
+    onSubmit: async (_values: SecurityEnhancedFullExchangeForm) => {
       // Form submission logic будет в task 2.4
       throw new Error('Form submission not yet implemented');
     },
