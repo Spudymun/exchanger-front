@@ -11,7 +11,7 @@ import {
   AuthSubmitButton,
   AuthSwitchButton,
 } from '@repo/ui';
-import { securityEnhancedLoginSchema } from '@repo/utils';
+import { fullySecurityEnhancedLoginSchema } from '@repo/utils';
 import { useTranslations } from 'next-intl';
 import React from 'react';
 
@@ -35,7 +35,7 @@ function useLoginForm(onSuccess?: () => void) {
 
   const form = useFormWithNextIntl<LoginFormData>({
     initialValues: { email: '', password: '', captcha: '' },
-    validationSchema: securityEnhancedLoginSchema,
+    validationSchema: fullySecurityEnhancedLoginSchema,
     t: tValidation,
     onSubmit: async (values: LoginFormData) => {
       try {

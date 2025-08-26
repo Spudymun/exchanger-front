@@ -1,23 +1,18 @@
 'use client';
 
-import { FIAT_CURRENCIES, getBanksForCurrency } from '@repo/constants';
+import { getBanksForCurrency } from '@repo/constants';
 import { useFormWithNextIntl, type UseFormReturn } from '@repo/hooks';
 import {
-  FormField,
-  FormLabel,
-  FormControl,
-  FormMessage,
   Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   ExchangeBankSelector,
+  FiatCurrencySelector,
+  FormField,
+  FormLabel,
+  FormControl,
 } from '@repo/ui';
 import React from 'react';
 
@@ -30,42 +25,7 @@ interface ReceivingCardProps {
   t: (key: string) => string;
 }
 
-export function FiatCurrencySelector({
-  form,
-  t,
-}: {
-  form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>;
-  t: (key: string) => string;
-}) {
-  return (
-    <FormField name="toCurrency" error={form.errors.toCurrency}>
-      <FormLabel>{t('receiving.fiatCurrency')}</FormLabel>
-      <FormControl>
-        <Select
-          value={form.values.toCurrency as string}
-          onValueChange={v => {
-            form.setValue('toCurrency', v);
-            form.setValue('selectedBankId', '');
-          }}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {FIAT_CURRENCIES.map(c => (
-              <SelectItem key={c} value={c}>
-                {c}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </FormControl>
-      <FormMessage />
-    </FormField>
-  );
-}
-
-function ReceivingInfo({
+export function ReceivingInfo({
   form,
   t,
 }: {
@@ -90,7 +50,10 @@ export function ReceivingCard({ form, banks, calculatedAmount, t }: ReceivingCar
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <FiatCurrencySelector form={form} t={t} />
+          <FiatCurrencySelector
+            form={form as unknown as UseFormReturn<Record<string, unknown>>}
+            t={t}
+          />
           <ExchangeBankSelector
             form={form as unknown as UseFormReturn<Record<string, unknown>>}
             banks={banks}

@@ -16,6 +16,7 @@
 export const VALIDATION_KEYS = {
   INVALID: 'validation.invalid',
   REQUIRED: 'validation.required',
+  XSS_DETECTED: 'validation.xss.detected',
   CAPTCHA_REQUIRED: 'validation.captcha.required',
   CAPTCHA_NOT_VERIFIED: 'validation.captcha.notVerified',
   EMAIL_INVALID: 'validation.email.invalid',

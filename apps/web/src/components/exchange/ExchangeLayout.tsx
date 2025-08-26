@@ -3,74 +3,22 @@
 import { UseFormReturn } from '@repo/hooks';
 import {
   ExchangeForm,
-  FormField,
-  FormControl,
-  FormMessage,
-  Input,
   TokenStandardSelector,
   CryptoCurrencySelector,
   ExchangeBankSelector,
   CryptoAmountInput,
+  CardNumberInput,
+  AmountDisplay,
+  SendingInfo,
 } from '@repo/ui';
 
+import type { HeroExchangeFormData } from '../HeroExchangeForm';
+
 interface ExchangeLayoutProps {
-  form: UseFormReturn<Record<string, unknown>>;
+  form: UseFormReturn<HeroExchangeFormData>;
   t: (key: string) => string;
   calculatedAmount?: number;
-}
-
-// AmountDisplay Component
-function AmountDisplay({
-  form,
-  t,
-  calculatedAmount,
-}: {
-  form: UseFormReturn<Record<string, unknown>>;
-  t: (key: string) => string;
-  calculatedAmount: number;
-}) {
-  return (
-    <ExchangeForm.FieldWrapper>
-      <FormField name="toAmount" error={form.errors?.toAmount}>
-        <ExchangeForm.FieldLabel>{t('receiving.amount')}</ExchangeForm.FieldLabel>
-        <FormControl>
-          <Input
-            value={calculatedAmount.toFixed(2)}
-            readOnly
-            className="bg-muted/50 text-foreground cursor-default pointer-events-none transition-none focus-visible:ring-0 focus-visible:border-input border-input"
-          />
-        </FormControl>
-        <FormMessage />
-      </FormField>
-    </ExchangeForm.FieldWrapper>
-  );
-}
-
-// CardNumber Input Component
-function CardNumberInput({
-  form,
-  t,
-}: {
-  form: UseFormReturn<Record<string, unknown>>;
-  t: (key: string) => string;
-}) {
-  return (
-    <ExchangeForm.FieldWrapper>
-      <FormField name="cardNumber" error={form.errors.cardNumber}>
-        <ExchangeForm.FieldLabel>{t('receiving.cardNumber')}</ExchangeForm.FieldLabel>
-        <FormControl>
-          <Input
-            {...form.getFieldProps('cardNumber')}
-            placeholder="**** **** **** ****"
-            inputMode="numeric"
-            className="transition-colors"
-            value={(form.values.cardNumber as string) || ''}
-          />
-        </FormControl>
-        <FormMessage />
-      </FormField>
-    </ExchangeForm.FieldWrapper>
-  );
+  isValid?: boolean;
 }
 
 // Currency selector component
@@ -80,7 +28,7 @@ function SendingSection({
   form,
   t,
 }: {
-  form: UseFormReturn<Record<string, unknown>>;
+  form: UseFormReturn<HeroExchangeFormData>;
   t: (key: string) => string;
 }) {
   return (
@@ -91,13 +39,27 @@ function SendingSection({
       </header>
 
       <div className="send-content space-y-4">
-        <CryptoCurrencySelector form={form} t={t} autoSetTokenStandard={false} />
+        <CryptoCurrencySelector
+          form={form as unknown as UseFormReturn<Record<string, unknown>>}
+          t={t}
+          autoSetTokenStandard={false}
+        />
 
         {/* Token Standard */}
-        <TokenStandardSelector form={form} t={t} />
+        <TokenStandardSelector
+          form={form as unknown as UseFormReturn<Record<string, unknown>>}
+          t={t}
+        />
 
         {/* Amount Input */}
-        <CryptoAmountInput form={form} t={t} useValidation={false} />
+        <CryptoAmountInput
+          form={form as unknown as UseFormReturn<Record<string, unknown>>}
+          t={t}
+          useValidation={true}
+        />
+
+        {/* Sending Info */}
+        <SendingInfo form={form as unknown as UseFormReturn<Record<string, unknown>>} t={t} />
       </div>
     </ExchangeForm.ExchangeCard>
   );
@@ -109,7 +71,7 @@ function ReceivingSection({
   t,
   calculatedAmount = 0,
 }: {
-  form: UseFormReturn<Record<string, unknown>>;
+  form: UseFormReturn<HeroExchangeFormData>;
   t: (key: string) => string;
   calculatedAmount?: number;
 }) {
@@ -122,13 +84,20 @@ function ReceivingSection({
 
       <div className="receive-content space-y-4">
         {/* Bank Selection */}
-        <ExchangeBankSelector form={form} t={t} />
+        <ExchangeBankSelector
+          form={form as unknown as UseFormReturn<Record<string, unknown>>}
+          t={t}
+        />
 
         {/* Card Number */}
-        <CardNumberInput form={form} t={t} />
+        <CardNumberInput form={form as unknown as UseFormReturn<Record<string, unknown>>} t={t} />
 
         {/* Amount Display */}
-        <AmountDisplay form={form} t={t} calculatedAmount={calculatedAmount} />
+        <AmountDisplay
+          form={form as unknown as UseFormReturn<Record<string, unknown>>}
+          t={t}
+          calculatedAmount={calculatedAmount}
+        />
       </div>
     </ExchangeForm.ExchangeCard>
   );
@@ -168,7 +137,12 @@ function AdditionalSections() {
   );
 }
 
-export function ExchangeLayout({ form, t, calculatedAmount = 0 }: ExchangeLayoutProps) {
+export function ExchangeLayout({
+  form,
+  t,
+  calculatedAmount = 0,
+  isValid: _isValid,
+}: ExchangeLayoutProps) {
   return (
     <form onSubmit={form.handleSubmit} className="exchange-form">
       {/* Two-Column Layout using Compound Components */}

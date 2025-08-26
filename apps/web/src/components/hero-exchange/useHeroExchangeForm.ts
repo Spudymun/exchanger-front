@@ -7,14 +7,12 @@ import {
   getDefaultTokenStandard,
   EXCHANGE_DEFAULTS,
 } from '@repo/constants';
-import { calculateUahAmount } from '@repo/exchange-core';
+import { calculateUahAmount, getCurrencyLimits } from '@repo/exchange-core';
 import { useFormWithNextIntl } from '@repo/hooks';
 import { securityEnhancedHeroExchangeFormSchema } from '@repo/utils';
 import { useMemo } from 'react';
 
 import type { HeroExchangeFormData } from '../HeroExchangeForm';
-
-const MIN_AMOUNTS = { from: 10, to: 100 };
 
 export function useHeroExchangeForm(
   t: (key: string) => string,
@@ -46,10 +44,15 @@ export function useHeroExchangeForm(
       : [];
   }, [form.values.toCurrency]);
 
+  // Динамические лимиты для текущей криптовалюты
+  const limits = useMemo(() => {
+    return getCurrencyLimits(form.values.fromCurrency as CryptoCurrency);
+  }, [form.values.fromCurrency]);
+
   const isValid =
     form.isValid &&
-    Number(form.values.fromAmount) >= MIN_AMOUNTS.from &&
-    calculatedAmount >= MIN_AMOUNTS.to &&
+    Number(form.values.fromAmount) >= limits.minCrypto &&
+    calculatedAmount >= 100 && // минимум UAH остается 100
     Boolean(form.values.selectedBankId);
 
   return {
@@ -58,7 +61,9 @@ export function useHeroExchangeForm(
     banks,
     isValid,
     constants: {
-      MIN_AMOUNTS,
+      minCryptoAmount: limits.minCrypto,
+      minUahAmount: 100,
+      limits,
     },
   };
 }

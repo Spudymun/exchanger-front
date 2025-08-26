@@ -12,9 +12,9 @@ export * from './card-validation';
 export * from './schema-helpers';
 export * from './zod-helpers';
 
-// Security-enhanced schemas
-export * from './security-enhanced-schemas';
+// Security-enhanced schemas (прямые экспорты вместо промежуточного файла)
+export * from './security-enhanced-auth-schemas';
 export * from './security-enhanced-exchange-schemas';
+export * from './security-enhanced-support-schemas';
 export * from './security-enhanced-operator';
 export * from './security-enhanced-utils';
-export * from './security-enhanced-support-schemas';

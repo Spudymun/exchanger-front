@@ -57,17 +57,28 @@ export function CryptoAmountInput({
   const fieldValue = (form.values[fieldName as keyof typeof form.values] as string) || '';
   const fieldError = form.errors[fieldName as keyof typeof form.errors];
 
+  // Получаем field props БЕЗ перезаписи onChange/onBlur
+  const fieldProps = form.getFieldProps(fieldName);
+
   return (
     <ExchangeForm.FieldWrapper>
       <FormField name={fieldName} error={fieldError}>
         <ExchangeForm.FieldLabel>{t('sending.amount')}</ExchangeForm.FieldLabel>
         <FormControl>
           <Input
-            {...form.getFieldProps(fieldName)}
             type={type}
             placeholder={placeholder || t('sending.amount')}
             value={fieldValue}
-            onChange={e => form.setValue(fieldName as keyof typeof form.values, e.target.value)}
+            onChange={e => {
+              // Вызываем ОРИГИНАЛЬНЫЙ onChange из getFieldProps (содержит валидацию)
+              fieldProps.onChange(e);
+            }}
+            onBlur={() => {
+              // Вызываем ОРИГИНАЛЬНЫЙ onBlur из getFieldProps (запускает business validation)
+              if (fieldProps.onBlur) {
+                fieldProps.onBlur();
+              }
+            }}
             onKeyDown={useValidation ? handleAmountKeyDown : undefined}
             aria-invalid={!!fieldError}
           />

@@ -1,12 +1,14 @@
 'use client';
 
 import { EXCHANGE_DEFAULTS, getDefaultTokenStandard, type CryptoCurrency } from '@repo/constants';
-import { calculateUahAmount } from '@repo/exchange-core';
+import { calculateUahAmount, getCurrencyLimits } from '@repo/exchange-core';
 import { useFormWithNextIntl } from '@repo/hooks/src/client-hooks';
 import { ExchangeForm } from '@repo/ui';
-import { securityEnhancedUnifiedExchangeFormSchema } from '@repo/utils';
+import { securityEnhancedHeroExchangeFormSchema } from '@repo/utils';
 import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
+
+import type { HeroExchangeFormData } from '../HeroExchangeForm';
 
 import { ExchangeLayout } from './ExchangeLayout';
 
@@ -66,11 +68,11 @@ export function ExchangeContainer({ locale: _locale, initialParams }: ExchangeCo
 
   const initialFormData = useExchangeFormData(initialParams);
 
-  const form = useFormWithNextIntl<Record<string, unknown>>({
+  const form = useFormWithNextIntl<HeroExchangeFormData>({
     initialValues: initialFormData,
-    validationSchema: securityEnhancedUnifiedExchangeFormSchema,
+    validationSchema: securityEnhancedHeroExchangeFormSchema,
     t,
-    onSubmit: async (_values: Record<string, unknown>) => {
+    onSubmit: async (_values: HeroExchangeFormData) => {
       // Form submission logic будет в task 2.4
       throw new Error('Form submission not yet implemented');
     },
@@ -81,6 +83,17 @@ export function ExchangeContainer({ locale: _locale, initialParams }: ExchangeCo
     form.values.fromCurrency as string
   );
 
+  // Динамические лимиты для валидации (аналогично hero форме)
+  const limits = useMemo(() => {
+    return getCurrencyLimits(form.values.fromCurrency as CryptoCurrency);
+  }, [form.values.fromCurrency]);
+
+  const isValid =
+    form.isValid &&
+    Number(form.values.fromAmount) >= limits.minCrypto &&
+    calculatedAmount >= 100 && // минимум UAH
+    Boolean(form.values.selectedBankId);
+
   return (
     <ExchangeForm.Container variant="full" className="exchange-container">
       {/* Page Header */}
@@ -90,7 +103,7 @@ export function ExchangeContainer({ locale: _locale, initialParams }: ExchangeCo
       </header>
 
       {/* Main Exchange Layout */}
-      <ExchangeLayout form={form} t={t} calculatedAmount={calculatedAmount} />
+      <ExchangeLayout form={form} t={t} calculatedAmount={calculatedAmount} isValid={isValid} />
     </ExchangeForm.Container>
   );
 }

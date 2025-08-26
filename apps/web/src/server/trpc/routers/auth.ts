@@ -6,8 +6,8 @@ import {
   isAuthenticatedUser,
 } from '@repo/exchange-core';
 import {
-  securityEnhancedRegisterSchema, // ENHANCED SECURITY SCHEMA
-  securityEnhancedLoginSchema, // ENHANCED SECURITY SCHEMA
+  fullySecurityEnhancedRegisterSchema, // FULLY XSS-PROTECTED REGISTER SCHEMA
+  fullySecurityEnhancedLoginSchema, // FULLY XSS-PROTECTED LOGIN SCHEMA
   createUserError,
   createValidationError,
   createBadRequestError,
@@ -30,7 +30,7 @@ import { rateLimitMiddleware } from '../middleware/rateLimit';
 export const authRouter = createTRPCRouter({
   // Регистрация нового пользователя
   register: rateLimitMiddleware.register
-    .input(securityEnhancedRegisterSchema)
+    .input(fullySecurityEnhancedRegisterSchema)
     .mutation(async ({ input, ctx }) => {
       // Имитация задержки
       await createDelay(AUTH_CONSTANTS.AUTH_REQUEST_DELAY_MS);
@@ -41,7 +41,7 @@ export const authRouter = createTRPCRouter({
       }
 
       // ИСПРАВЛЕНО: Убираем дублирование валидации
-      // tRPC уже валидирует input через securityEnhancedRegisterSchema, дополнительная валидация избыточна
+      // tRPC уже валидирует input через fullySecurityEnhancedRegisterSchema, дополнительная валидация избыточна
       const sanitizedEmail = sanitizeEmail(input.email);
 
       // Проверяем, не существует ли уже пользователь
@@ -88,7 +88,7 @@ export const authRouter = createTRPCRouter({
 
   // Вход в систему
   login: rateLimitMiddleware.login
-    .input(securityEnhancedLoginSchema)
+    .input(fullySecurityEnhancedLoginSchema)
     .mutation(async ({ input, ctx }) => {
       // Имитация задержки
       await createDelay(AUTH_CONSTANTS.LOGIN_REQUEST_DELAY_MS);

@@ -351,6 +351,10 @@ export function handleGeneralValidation(
   }
 
   if (issue.code === z.ZodIssueCode.custom) {
+    // Проверяем на XSS валидацию
+    if (issue.message === 'XSS content detected') {
+      return { message: t(VALIDATION_KEYS.XSS_DETECTED) };
+    }
     return { message: t(VALIDATION_KEYS.INVALID) };
   }
 

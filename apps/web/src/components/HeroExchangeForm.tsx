@@ -55,7 +55,7 @@ function ExchangeFormCards({
   return (
     <ExchangeForm.CardPair layout="withArrow">
       <ExchangeForm.FieldWrapper>
-        <SendingCard form={form} t={t} minAmount={constants.MIN_AMOUNTS.from} />
+        <SendingCard form={form} t={t} minAmount={constants.minCryptoAmount} />
       </ExchangeForm.FieldWrapper>
 
       <ExchangeForm.Arrow direction="horizontal" />

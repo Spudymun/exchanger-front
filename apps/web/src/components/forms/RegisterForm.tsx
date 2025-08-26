@@ -12,7 +12,7 @@ import {
   AuthSubmitButton,
   AuthSwitchButton,
 } from '@repo/ui';
-import { securityEnhancedRegisterSchema } from '@repo/utils';
+import { fullySecurityEnhancedRegisterSchema } from '@repo/utils';
 import { useTranslations } from 'next-intl';
 import React from 'react';
 
@@ -36,7 +36,7 @@ function useRegisterForm(onSuccess?: () => void) {
 
   const form = useFormWithNextIntl<RegisterFormData>({
     initialValues: { email: '', password: '', confirmPassword: '', captcha: '' },
-    validationSchema: securityEnhancedRegisterSchema,
+    validationSchema: fullySecurityEnhancedRegisterSchema,
     t: tValidation,
     onSubmit: async (values: RegisterFormData) => {
       try {

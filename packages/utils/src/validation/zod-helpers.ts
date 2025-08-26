@@ -18,3 +18,11 @@ export function validateWithZodSchema<T>(schema: z.ZodSchema<T>, value: unknown)
 
   return createValidationResult(result.error.issues.map(issue => issue.message));
 }
+
+// Консолидация: экспорт string validation helpers для единого API
+export {
+  isEmptyString,
+  isEmptyValue,
+  toValidationString,
+  isEmptyAfterTrim,
+} from './validation-utils';

@@ -34,3 +34,6 @@ export function toValidationString(value: unknown): string {
 export function isEmptyAfterTrim(value: unknown): boolean {
   return toValidationString(value) === '';
 }
+
+// Консолидация: экспорт Zod helpers для единого API
+export { validateWithZodSchema } from './zod-helpers';

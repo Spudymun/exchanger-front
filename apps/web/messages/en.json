@@ -308,6 +308,9 @@
     "validation": {
       "required": "This field is required",
       "invalid": "Invalid value",
+      "xss": {
+        "detected": "Potentially dangerous content detected"
+      },
       "enterAmount": "Enter amount",
       "selectBank": "Select bank",
       "email": {

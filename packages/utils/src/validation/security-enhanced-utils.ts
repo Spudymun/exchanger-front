@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { currencySchema } from './schemas-crypto';
 
-import { securityEnhancedEmailSchema } from './security-enhanced-schemas';
+import { securityEnhancedEmailSchema } from './security-enhanced-auth-schemas';
 import {
   createXSSProtectedString,
   SECURITY_VALIDATION_LIMITS,

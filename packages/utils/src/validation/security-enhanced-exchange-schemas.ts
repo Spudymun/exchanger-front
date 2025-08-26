@@ -206,13 +206,6 @@ const unifiedExchangeBaseSchema = z.object({
   agreeToTerms: z.boolean().refine(val => val === true, 'TERMS_ACCEPTANCE_REQUIRED'),
 });
 
-export const securityEnhancedUnifiedExchangeFormSchema = unifiedExchangeBaseSchema.superRefine(
-  (data, ctx) => {
-    // Используем ту же business validation что и в Simple схеме
-    validateCryptoAmountLimits(data.fromAmount, data.fromCurrency, ctx);
-  }
-);
-
 // ✅ Схема для hero формы (pick от базовой схемы без superRefine)
 export const securityEnhancedHeroExchangeFormSchema = unifiedExchangeBaseSchema
   .pick({
@@ -236,10 +229,6 @@ export type SecurityEnhancedCreateExchangeOrder = z.infer<
 
 export type SecurityEnhancedSimpleExchangeForm = z.infer<
   typeof securityEnhancedSimpleExchangeFormSchema
->;
-
-export type SecurityEnhancedUnifiedExchangeForm = z.infer<
-  typeof securityEnhancedUnifiedExchangeFormSchema
 >;
 
 export type SecurityEnhancedHeroExchangeForm = z.infer<

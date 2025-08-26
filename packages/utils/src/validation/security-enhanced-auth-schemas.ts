@@ -9,12 +9,16 @@
 import { VALIDATION_LIMITS } from '@repo/constants';
 import { z } from 'zod';
 
+import { VALIDATION_KEYS } from './constants';
 import { emailSchema, passwordSchema } from './schemas-basic';
 import {
   createXSSProtectedString,
   containsPotentialXSS,
   SECURITY_VALIDATION_LIMITS,
 } from './security-utils';
+
+// Константа для XSS сообщения
+const XSS_CONTENT_DETECTED_MESSAGE = VALIDATION_KEYS.XSS_DETECTED;
 
 /**
  * CAPTCHA SCHEMA с enhanced security
@@ -38,19 +42,87 @@ export const securityEnhancedCaptchaSchema = z
 export const securityEnhancedEmailSchema = emailSchema;
 
 /**
+ * FULLY XSS-PROTECTED EMAIL SCHEMA
+ */
+export const fullySecurityEnhancedEmailSchema = z
+  .string()
+  .min(1, 'EMAIL_REQUIRED')
+  .max(VALIDATION_LIMITS.EMAIL_MAX_LENGTH, 'EMAIL_TOO_LONG')
+  .email('INVALID_EMAIL_FORMAT')
+  .refine(val => !containsPotentialXSS(val), {
+    message: XSS_CONTENT_DETECTED_MESSAGE,
+  });
+
+/**
+ * FULLY XSS-PROTECTED PASSWORD SCHEMA
+ */
+export const fullySecurityEnhancedPasswordSchema = createXSSProtectedString(
+  VALIDATION_LIMITS.PASSWORD_MIN_LENGTH,
+  VALIDATION_LIMITS.PASSWORD_MAX_LENGTH
+);
+
+/**
  * AUTH FORMS SCHEMAS
  */
-export const securityEnhancedLoginSchema = z.object({
-  email: emailSchema,
-  password: passwordSchema,
+
+/**
+ * FULLY XSS-PROTECTED LOGIN SCHEMA
+ */
+export const fullySecurityEnhancedLoginSchema = z.object({
+  email: z
+    .string()
+    .min(1)
+    .email()
+    .max(VALIDATION_LIMITS.EMAIL_MAX_LENGTH)
+    .refine(val => !containsPotentialXSS(val), {
+      message: XSS_CONTENT_DETECTED_MESSAGE,
+    }),
+  password: z
+    .string()
+    .min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH)
+    .regex(/[A-Z]/) // Заглавная буква
+    .regex(/[a-z]/) // Строчная буква
+    .regex(/[0-9]/) // Цифра
+    .regex(/[^A-Za-z0-9]/) // Специальный символ
+    .refine(val => !containsPotentialXSS(val), {
+      message: XSS_CONTENT_DETECTED_MESSAGE,
+    }),
   captcha: securityEnhancedCaptchaSchema,
 });
 
-export const securityEnhancedRegisterSchema = z
+/**
+ * FULLY XSS-PROTECTED REGISTER SCHEMA
+ */
+export const fullySecurityEnhancedRegisterSchema = z
   .object({
-    email: emailSchema,
-    password: passwordSchema,
-    confirmPassword: z.string().min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH),
+    email: z
+      .string()
+      .min(1)
+      .email()
+      .max(VALIDATION_LIMITS.EMAIL_MAX_LENGTH)
+      .refine(val => !containsPotentialXSS(val), {
+        message: XSS_CONTENT_DETECTED_MESSAGE,
+      }),
+    password: z
+      .string()
+      .min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH)
+      .regex(/[A-Z]/) // Заглавная буква
+      .regex(/[a-z]/) // Строчная буква
+      .regex(/[0-9]/) // Цифра
+      .regex(/[^A-Za-z0-9]/) // Специальный символ
+      .refine(val => !containsPotentialXSS(val), {
+        message: XSS_CONTENT_DETECTED_MESSAGE,
+      }),
+    confirmPassword: z
+      .string()
+      .min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH)
+      .regex(/[A-Z]/) // Заглавная буква
+      .regex(/[a-z]/) // Строчная буква
+      .regex(/[0-9]/) // Цифра
+      .regex(/[^A-Za-z0-9]/) // Специальный символ
+      .refine(val => !containsPotentialXSS(val), {
+        message: XSS_CONTENT_DETECTED_MESSAGE,
+      }),
     captcha: securityEnhancedCaptchaSchema,
   })
   .refine(data => data.password === data.confirmPassword, {
@@ -96,8 +168,6 @@ export const securityEnhancedChangePasswordSchema = z
 /**
  * TYPE EXPORTS
  */
-export type SecurityEnhancedLoginForm = z.infer<typeof securityEnhancedLoginSchema>;
-export type SecurityEnhancedRegisterForm = z.infer<typeof securityEnhancedRegisterSchema>;
 export type SecurityEnhancedResetPassword = z.infer<typeof securityEnhancedResetPasswordSchema>;
 export type SecurityEnhancedConfirmResetPassword = z.infer<
   typeof securityEnhancedConfirmResetPasswordSchema
@@ -106,3 +176,9 @@ export type SecurityEnhancedConfirmEmail = z.infer<typeof securityEnhancedConfir
 export type SecurityEnhancedChangePassword = z.infer<typeof securityEnhancedChangePasswordSchema>;
 export type SecurityEnhancedCaptcha = z.infer<typeof securityEnhancedCaptchaSchema>;
 export type SecurityEnhancedEmail = z.infer<typeof securityEnhancedEmailSchema>;
+
+// Type exports для новых XSS-защищенных схем
+export type FullySecurityEnhancedEmail = z.infer<typeof fullySecurityEnhancedEmailSchema>;
+export type FullySecurityEnhancedPassword = z.infer<typeof fullySecurityEnhancedPasswordSchema>;
+export type FullySecurityEnhancedLoginForm = z.infer<typeof fullySecurityEnhancedLoginSchema>;
+export type FullySecurityEnhancedRegisterForm = z.infer<typeof fullySecurityEnhancedRegisterSchema>;

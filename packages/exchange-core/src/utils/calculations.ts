@@ -140,3 +140,16 @@ export function getCurrencyLimits(currency: CryptoCurrency) {
     maxUSD: AMOUNT_LIMITS.MAX_USD,
   };
 }
+
+/**
+ * Получить минимальную сумму криптовалюты для отображения в UI
+ * @param currency - Тип криптовалюты
+ * @returns Минимальная сумма для отправки
+ * @example
+ * const minAmount = getMinCryptoAmountForUI('BTC');
+ * console.log(minAmount); // 0.00025 (для $10 при курсе $40000)
+ */
+export function getMinCryptoAmountForUI(currency: CryptoCurrency): number {
+  const limits = getCurrencyLimits(currency);
+  return limits.minCrypto;
+}

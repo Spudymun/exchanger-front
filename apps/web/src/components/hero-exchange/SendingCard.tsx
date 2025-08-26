@@ -1,7 +1,5 @@
 'use client';
 
-import { type CryptoCurrency } from '@repo/constants';
-import { calculateUahAmount } from '@repo/exchange-core';
 import { type UseFormReturn } from '@repo/hooks';
 import { useFormWithNextIntl } from '@repo/hooks/src/client-hooks';
 import {
@@ -12,6 +10,7 @@ import {
   TokenStandardSelector,
   CryptoCurrencySelector,
   CryptoAmountInput,
+  SendingInfo,
 } from '@repo/ui';
 import React from 'react';
 
@@ -21,30 +20,6 @@ interface SendingCardProps {
   form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>;
   t: (key: string) => string;
   minAmount: number;
-}
-
-function SendingInfo({
-  form,
-  t,
-  minAmount,
-}: {
-  form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>;
-  t: (key: string) => string;
-  minAmount: number;
-}) {
-  const fromCurrency = form.values.fromCurrency as CryptoCurrency;
-  const exchangeRate = calculateUahAmount(1, fromCurrency);
-
-  return (
-    <div className="text-sm text-muted-foreground space-y-1">
-      <div>
-        {t('sending.min')}: {minAmount} {fromCurrency}
-      </div>
-      <div>
-        {t('sending.rate')}: 1 {fromCurrency} = {exchangeRate} UAH
-      </div>
-    </div>
-  );
 }
 
 export function SendingCard({ form, t, minAmount }: SendingCardProps) {
@@ -70,7 +45,11 @@ export function SendingCard({ form, t, minAmount }: SendingCardProps) {
           t={t}
           useValidation={true}
         />
-        <SendingInfo form={form} t={t} minAmount={minAmount} />
+        <SendingInfo
+          form={form as unknown as UseFormReturn<Record<string, unknown>>}
+          t={t}
+          minAmount={minAmount}
+        />
       </CardContent>
     </Card>
   );

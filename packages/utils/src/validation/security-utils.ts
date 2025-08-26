@@ -2,6 +2,8 @@
 import { VALIDATION_LIMITS } from '@repo/constants';
 import { z } from 'zod';
 
+import { PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH, SEARCH_QUERY_MAX_LENGTH } from './schemas-basic';
+
 /**
  * Advanced XSS detection patterns following OWASP guidelines
  * Detects: script tags, event handlers, data URIs, javascript: URLs,
@@ -64,8 +66,8 @@ export const xssProtectedStringSchema = createXSSProtectedString();
  */
 export const SECURITY_VALIDATION_LIMITS = {
   // Authentication limits - imported from centralized constants
-  PASSWORD_MIN_LENGTH: VALIDATION_LIMITS.PASSWORD_MIN_LENGTH, // was: 8
-  PASSWORD_MAX_LENGTH: VALIDATION_LIMITS.PASSWORD_MAX_LENGTH, // was: 128
+  PASSWORD_MIN_LENGTH, // Используем импорт из schemas-basic
+  PASSWORD_MAX_LENGTH, // Используем импорт из schemas-basic
   EMAIL_MAX_LENGTH: VALIDATION_LIMITS.EMAIL_MAX_LENGTH, // was: 254, now 255 (unified)
   NAME_MAX_LENGTH: 100,
   NAME_MIN_LENGTH: 2,
@@ -81,7 +83,7 @@ export const SECURITY_VALIDATION_LIMITS = {
   // System limits
   TAG_MAX_LENGTH: 50,
   AUTH_CODE_MAX_LENGTH: 10,
-  SEARCH_QUERY_MAX_LENGTH: VALIDATION_LIMITS.SEARCH_QUERY_MAX_LENGTH, // was: 100
+  SEARCH_QUERY_MAX_LENGTH, // Используем импорт из schemas-basic
 
   // Additional validation limits
   AMOUNT_MAX_LENGTH: 50,
