@@ -108,7 +108,6 @@ export { CryptoCurrencySelector } from './exchange/CryptoCurrencySelector';
 export { ExchangeBankSelector } from './exchange/ExchangeBankSelector';
 export { CryptoAmountInput } from './exchange/CryptoAmountInput';
 export { CardNumberInput } from './exchange/CardNumberInput';
-export { AmountDisplay } from './exchange/AmountDisplay';
 export { FiatCurrencySelector } from './exchange/FiatCurrencySelector';
 export { SendingInfo } from './exchange/SendingInfo';
 

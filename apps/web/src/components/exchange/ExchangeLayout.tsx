@@ -8,8 +8,11 @@ import {
   ExchangeBankSelector,
   CryptoAmountInput,
   CardNumberInput,
-  AmountDisplay,
   SendingInfo,
+  FormField,
+  FormLabel,
+  FormControl,
+  Input,
 } from '@repo/ui';
 
 import type { HeroExchangeFormData } from '../HeroExchangeForm';
@@ -93,11 +96,16 @@ function ReceivingSection({
         <CardNumberInput form={form as unknown as UseFormReturn<Record<string, unknown>>} t={t} />
 
         {/* Amount Display */}
-        <AmountDisplay
-          form={form as unknown as UseFormReturn<Record<string, unknown>>}
-          t={t}
-          calculatedAmount={calculatedAmount}
-        />
+        <FormField name="toAmount">
+          <FormLabel>{t('receiving.amount')}</FormLabel>
+          <FormControl>
+            <Input
+              value={calculatedAmount.toFixed(2)}
+              readOnly
+              className="bg-muted/50 text-foreground cursor-default pointer-events-none transition-none focus-visible:ring-0 focus-visible:border-input border-input"
+            />
+          </FormControl>
+        </FormField>
       </div>
     </ExchangeForm.ExchangeCard>
   );
