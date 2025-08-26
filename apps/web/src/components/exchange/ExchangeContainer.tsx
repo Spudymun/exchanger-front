@@ -8,6 +8,7 @@ import {
   securityEnhancedFullExchangeFormSchema,
   type SecurityEnhancedFullExchangeForm,
 } from '@repo/utils';
+
 import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
@@ -33,6 +34,7 @@ function useExchangeFormData(initialParams?: ExchangeContainerProps['initialPara
         toCurrency: EXCHANGE_DEFAULTS.TO_CURRENCY,
         selectedBankId: 'privatbank',
         fromAmount: '',
+        // Дополнительные поля для полной формы
         email: '',
         cardNumber: '',
         captchaAnswer: '',
@@ -47,6 +49,7 @@ function useExchangeFormData(initialParams?: ExchangeContainerProps['initialPara
       toCurrency: EXCHANGE_DEFAULTS.TO_CURRENCY,
       selectedBankId: initialParams.bank || 'privatbank',
       fromAmount: initialParams.amount?.toString() || '',
+      // Дополнительные поля для полной формы
       email: '',
       cardNumber: '',
       captchaAnswer: '',

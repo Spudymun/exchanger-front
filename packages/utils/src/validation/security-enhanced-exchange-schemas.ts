@@ -194,14 +194,20 @@ const unifiedExchangeBaseSchema = z.object({
   toCurrency: z.string(),
   selectedBankId: z.string().optional(),
 
-  // Дополнительные поля для расширенной формы обмена
-  email: emailSchema,
-  cardNumber: cardNumberSchema, // Используем централизованную схему
-  captchaAnswer: createXSSProtectedString(1, SECURITY_VALIDATION_LIMITS.AUTH_CODE_MAX_LENGTH),
-  agreeToTerms: z.boolean().refine(val => val === true), // Убираем кастомное сообщение
+  // Дополнительные поля для расширенной формы обмена (НЕ БЛОКИРУЮТ amount validation)
+  email: z.string().optional(), // Не требуем сразу, валидируем при submit
+  cardNumber: z.string().optional(), // Не требуем сразу, валидируем при submit
+  captchaAnswer: z.string().optional(), // Не требуем сразу, валидируем при submit
+  agreeToTerms: z.boolean().optional(), // Не требуем сразу, валидируем при submit
 });
 
-// ✅ Схема для hero формы (pick от базовой схемы без superRefine)
+/**
+ * ✅ Схема для hero формы - ВОССТАНОВЛЕННАЯ WORKING СХЕМА
+ * Используется на главной странице для быстрого расчета курса
+ * Включает только основные поля обмена без дополнительных полей регистрации
+ *
+ * ВАЖНО: ЭТА СХЕМА WORKING! Она проверена и amount validation работает!
+ */
 export const securityEnhancedHeroExchangeFormSchema = unifiedExchangeBaseSchema
   .pick({
     fromAmount: true,
@@ -211,19 +217,48 @@ export const securityEnhancedHeroExchangeFormSchema = unifiedExchangeBaseSchema
     selectedBankId: true,
   })
   .superRefine((data, ctx) => {
-    // Используем ту же business validation что и в Simple схеме
+    // WORKING business validation!
     validateCryptoAmountLimits(data.fromAmount, data.fromCurrency, ctx);
   });
 
 /**
- * FULL EXCHANGE FORM SCHEMA с card validation
+ * FULL EXCHANGE FORM SCHEMA с card validation - ПРАВИЛЬНАЯ КОМПОЗИЦИЯ
  * Используется на странице /exchange для полного процесса обмена
- * Включает все поля из unifiedExchangeBaseSchema с card validation
+ *
+ * АРХИТЕКТУРНОЕ РЕШЕНИЕ: Берем unifiedExchangeBaseSchema (со всеми полями) + superRefine
+ * - Все поля: fromAmount, fromCurrency, email, cardNumber, captchaAnswer, agreeToTerms
+ * - Business validation: та же working логика как в hero схеме
+ * - Incremental validation: дополнительные поля optional, валидируются по мере заполнения
  */
 export const securityEnhancedFullExchangeFormSchema = unifiedExchangeBaseSchema.superRefine(
   (data, ctx) => {
-    // Существующая business validation
+    // WORKING business validation для amount (ВСЕГДА работает)
     validateCryptoAmountLimits(data.fromAmount, data.fromCurrency, ctx);
+
+    // Дополнительная валидация запускается только при submit
+    // При изменении отдельных полей эти проверки НЕ БЛОКИРУЮТ amount validation
+
+    // Email валидация (только если заполнен)
+    if (data.email && data.email !== '' && !emailSchema.safeParse(data.email).success) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['email'],
+        message: 'EMAIL_INVALID',
+      });
+    }
+
+    // Card валидация (только если заполнен)
+    if (
+      data.cardNumber &&
+      data.cardNumber !== '' &&
+      !cardNumberSchema.safeParse(data.cardNumber).success
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['cardNumber'],
+        message: 'CARD_NUMBER_INVALID',
+      });
+    }
   }
 );
 

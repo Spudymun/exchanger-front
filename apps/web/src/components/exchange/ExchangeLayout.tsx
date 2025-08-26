@@ -12,6 +12,7 @@ import {
   FormField,
   FormLabel,
   FormControl,
+  FormMessage,
   Input,
 } from '@repo/ui';
 import { type SecurityEnhancedFullExchangeForm } from '@repo/utils';
@@ -96,16 +97,19 @@ function ReceivingSection({
         <CardNumberInput form={form as unknown as UseFormReturn<Record<string, unknown>>} t={t} />
 
         {/* Amount Display */}
-        <FormField name="toAmount">
-          <FormLabel>{t('receiving.amount')}</FormLabel>
-          <FormControl>
-            <Input
-              value={calculatedAmount.toFixed(2)}
-              readOnly
-              className="bg-muted/50 text-foreground cursor-default pointer-events-none transition-none focus-visible:ring-0 focus-visible:border-input border-input"
-            />
-          </FormControl>
-        </FormField>
+        <ExchangeForm.FieldWrapper>
+          <FormField name="toAmount" error={form.errors.toAmount}>
+            <ExchangeForm.FieldLabel>{t('receiving.amount')}</ExchangeForm.FieldLabel>
+            <FormControl>
+              <Input
+                value={calculatedAmount.toFixed(2)}
+                readOnly
+                className="bg-muted/50 text-foreground cursor-default pointer-events-none transition-none focus-visible:ring-0 focus-visible:border-input border-input"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormField>
+        </ExchangeForm.FieldWrapper>
       </div>
     </ExchangeForm.ExchangeCard>
   );

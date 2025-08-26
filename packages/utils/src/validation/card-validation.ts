@@ -101,7 +101,7 @@ function isAmex(sanitized: string): boolean {
 /**
  * Card brand detection based on BIN patterns
  */
-export function getCardBrand(cardNumber: string): string {
+function getCardBrand(cardNumber: string): string {
   const sanitized = sanitizeCardNumber(cardNumber);
 
   if (isVisa(sanitized)) return 'visa';
@@ -150,79 +150,4 @@ export function validateCardLength(cardNumber: string): boolean {
   const brand = getCardBrand(sanitized);
 
   return isValidLengthForBrand(sanitized.length, brand);
-}
-
-/**
- * Formats card number with spaces for display
- */
-export function formatCardNumber(cardNumber: string): string {
-  const sanitized = sanitizeCardNumber(cardNumber);
-  const brand = getCardBrand(sanitized);
-
-  // American Express: XXXX XXXXXX XXXXX
-  if (brand === 'amex') {
-    return sanitized.replace(/(\d{4})(\d{6})(\d{5})/, '$1 $2 $3');
-  }
-
-  // Diners Club: XXXX XXXXXX XXXX
-  if (brand === 'diners') {
-    return sanitized.replace(/(\d{4})(\d{6})(\d{4})/, '$1 $2 $3');
-  }
-
-  // Default: XXXX XXXX XXXX XXXX
-  return sanitized.replace(/(\d{4})(?=\d)/g, '$1 ');
-}
-
-/**
- * Collect validation errors for card number
- */
-function collectCardErrors(sanitized: string): string[] {
-  const errors: string[] = [];
-
-  if (sanitized.length === 0) {
-    errors.push('CARD_NUMBER_REQUIRED');
-    return errors;
-  }
-
-  if (sanitized.length < CARD_MIN_LENGTH) {
-    errors.push('CARD_NUMBER_TOO_SHORT');
-  }
-
-  if (sanitized.length > CARD_MAX_LENGTH) {
-    errors.push('CARD_NUMBER_TOO_LONG');
-  }
-
-  return errors;
-}
-
-/**
- * Complete card validation combining all checks
- */
-export function validateCard(cardNumber: string): {
-  isValid: boolean;
-  brand: string;
-  errors: string[];
-} {
-  const sanitized = sanitizeCardNumber(cardNumber);
-  const errors = collectCardErrors(sanitized);
-
-  if (errors.length > 0) {
-    return { isValid: false, brand: 'unknown', errors };
-  }
-
-  const brand = getCardBrand(sanitized);
-
-  if (!validateCardLength(sanitized)) {
-    errors.push('CARD_NUMBER_INVALID_LENGTH');
-  }
-
-  if (!luhnCheck(sanitized)) {
-    errors.push('CARD_NUMBER_INVALID');
-  }
-
-  return {
-    isValid: errors.length === 0,
-    brand,
-    errors,
-  };
 }
