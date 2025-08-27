@@ -13,6 +13,7 @@ import { z } from 'zod';
 import { sanitizeCardNumber, luhnCheck, validateCardLength } from './card-validation';
 import { emailSchema } from './schemas-basic';
 import { currencySchema } from './schemas-crypto';
+import { securityEnhancedCaptchaSchema } from './security-enhanced-auth-schemas';
 import {
   createXSSProtectedString,
   containsPotentialXSS,
@@ -194,10 +195,13 @@ const unifiedExchangeBaseSchema = z.object({
   toCurrency: z.string(),
   selectedBankId: z.string().optional(),
 
-  // Дополнительные поля для расширенной формы обмена (НЕ БЛОКИРУЮТ amount validation)
-  email: z.string().optional(), // Не требуем сразу, валидируем при submit
+  // Дополнительные поля для расширенной формы обмена
+  email: z
+    .string()
+    .min(1) // Без кастомного сообщения - система сама замапит на validation.email.required
+    .email(), // Без кастомного сообщения - система сама замапит на validation.email.invalid
   cardNumber: z.string().optional(), // Не требуем сразу, валидируем при submit
-  captchaAnswer: z.string().optional(), // Не требуем сразу, валидируем при submit
+  captcha: securityEnhancedCaptchaSchema, // Та же валидация, что в модальных окнах
   agreeToTerms: z.boolean().optional(), // Не требуем сразу, валидируем при submit
 });
 
@@ -237,15 +241,6 @@ export const securityEnhancedFullExchangeFormSchema = unifiedExchangeBaseSchema.
 
     // Дополнительная валидация запускается только при submit
     // При изменении отдельных полей эти проверки НЕ БЛОКИРУЮТ amount validation
-
-    // Email валидация (только если заполнен)
-    if (data.email && data.email !== '' && !emailSchema.safeParse(data.email).success) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ['email'],
-        message: 'EMAIL_INVALID',
-      });
-    }
 
     // Card валидация (только если заполнен)
     if (

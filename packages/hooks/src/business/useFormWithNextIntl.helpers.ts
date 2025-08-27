@@ -3,6 +3,7 @@
  */
 
 import { createNextIntlZodErrorMap } from '@repo/utils';
+import React from 'react';
 import { z } from 'zod';
 
 /**
@@ -43,26 +44,35 @@ interface CreateFormActionsParams<T extends Record<string, unknown>> {
 function createFieldActions<T extends Record<string, unknown>>(params: CreateFormActionsParams<T>) {
   const { setValues, setErrors, setIsDirty } = params;
 
-  const setValue = (field: keyof T, value: T[keyof T]) => {
-    setValues(prev => ({ ...prev, [field]: value }));
-    setIsDirty(true);
-  };
+  const setValue = React.useCallback(
+    (field: keyof T, value: T[keyof T]) => {
+      setValues(prev => ({ ...prev, [field]: value }));
+      setIsDirty(true);
+    },
+    [setValues, setIsDirty]
+  );
 
-  const setError = (field: keyof T, message: string) => {
-    setErrors(prev => ({ ...prev, [field]: message }));
-  };
+  const setError = React.useCallback(
+    (field: keyof T, message: string) => {
+      setErrors(prev => ({ ...prev, [field]: message }));
+    },
+    [setErrors]
+  );
 
-  const clearError = (field: keyof T) => {
-    setErrors(prev => {
-      const newErrors = { ...prev };
-      delete newErrors[field];
-      return newErrors;
-    });
-  };
+  const clearError = React.useCallback(
+    (field: keyof T) => {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    },
+    [setErrors]
+  );
 
-  const clearErrors = () => {
+  const clearErrors = React.useCallback(() => {
     setErrors({});
-  };
+  }, [setErrors]);
 
   return { setValue, setError, clearError, clearErrors };
 }
@@ -84,29 +94,32 @@ function createFormControlActions<T extends Record<string, unknown>>(
     onSubmit,
   } = params;
 
-  const reset = () => {
+  const reset = React.useCallback(() => {
     setValues(initialValues);
     setErrors({});
     setIsDirty(false);
     setIsSubmitting(false);
-  };
+  }, [setValues, setErrors, setIsDirty, setIsSubmitting, initialValues]);
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    e?.preventDefault();
+  const handleSubmit = React.useCallback(
+    async (e?: React.FormEvent) => {
+      e?.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
-
-    if (onSubmit) {
-      setIsSubmitting(true);
-      try {
-        await onSubmit(values);
-      } finally {
-        setIsSubmitting(false);
+      if (!validateForm()) {
+        return;
       }
-    }
-  };
+
+      if (onSubmit) {
+        setIsSubmitting(true);
+        try {
+          await onSubmit(values);
+        } finally {
+          setIsSubmitting(false);
+        }
+      }
+    },
+    [validateForm, onSubmit, values, setIsSubmitting]
+  );
 
   return { reset, handleSubmit };
 }

@@ -222,6 +222,9 @@ export {
   type LayoutErrorBoundaryProps,
 } from './error-boundaries';
 
+// Form Fields - Universal components
+export { FormEmailField, FormCaptchaField } from './form-fields';
+
 // === LEGACY EXPORTS REMOVED ===
 // Legacy components have been successfully removed and migrated to compound versions
 // All legacy exports have been cleaned up

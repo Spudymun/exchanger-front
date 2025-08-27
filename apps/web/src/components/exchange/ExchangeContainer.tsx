@@ -37,7 +37,7 @@ function useExchangeFormData(initialParams?: ExchangeContainerProps['initialPara
         // Дополнительные поля для полной формы
         email: '',
         cardNumber: '',
-        captchaAnswer: '',
+        captcha: '',
         agreeToTerms: false,
       };
     }
@@ -52,7 +52,7 @@ function useExchangeFormData(initialParams?: ExchangeContainerProps['initialPara
       // Дополнительные поля для полной формы
       email: '',
       cardNumber: '',
-      captchaAnswer: '',
+      captcha: '',
       agreeToTerms: false,
     };
   }, [initialParams]);

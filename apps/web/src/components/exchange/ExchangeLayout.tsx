@@ -14,8 +14,11 @@ import {
   FormControl,
   FormMessage,
   Input,
+  AuthEmailField,
+  FormCaptchaField,
 } from '@repo/ui';
 import { type SecurityEnhancedFullExchangeForm } from '@repo/utils';
+import React from 'react';
 
 interface ExchangeLayoutProps {
   form: UseFormReturn<SecurityEnhancedFullExchangeForm>;
@@ -129,22 +132,17 @@ function PersonalDataSection({
         <h2 className="text-xl font-semibold text-foreground">Персональные данные</h2>
       </header>
 
-      {/* Email Field */}
-      <FormField name="email">
-        <FormLabel>{t('field.email')}</FormLabel>
-        <FormControl>
-          <Input
-            {...form.getFieldProps('email')}
-            type="email"
-            placeholder="your@email.com"
-            className="transition-colors"
-          />
-        </FormControl>
-      </FormField>
+      {/* Email Field - используем AuthEmailField как в модальных окнах */}
+      <AuthEmailField
+        form={form as unknown as UseFormReturn<{ email: string }>}
+        t={t}
+        fieldId="exchange-email"
+      />
     </section>
   );
 }
 
+// Security Section Component
 // Security Section Component
 function SecuritySection({
   form,
@@ -153,6 +151,9 @@ function SecuritySection({
   form: UseFormReturn<SecurityEnhancedFullExchangeForm>;
   t: (key: string) => string;
 }) {
+  // Мемоизированные props для FormCaptchaField для предотвращения бесконечных циклов
+  const memoizedT = React.useCallback((key: string) => t(key), [t]);
+
   return (
     <section className="security-section bg-muted/50 border border-border rounded-lg p-6">
       <header className="section-header mb-6">
@@ -160,17 +161,12 @@ function SecuritySection({
       </header>
 
       <div className="space-y-4">
-        {/* Captcha Field */}
-        <FormField name="captchaAnswer">
-          <FormLabel>{t('field.captcha')}</FormLabel>
-          <FormControl>
-            <Input
-              {...form.getFieldProps('captchaAnswer')}
-              placeholder="Ответ на задачу"
-              className="transition-colors"
-            />
-          </FormControl>
-        </FormField>
+        {/* CAPTCHA Field - добавлено точно как в модальных окнах */}
+        <FormCaptchaField
+          form={form as unknown as UseFormReturn<{ captcha: string }>}
+          t={memoizedT}
+          isLoading={false}
+        />
 
         {/* Terms Agreement */}
         <FormField name="agreeToTerms">
