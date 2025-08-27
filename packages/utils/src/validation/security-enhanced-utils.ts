@@ -2,9 +2,8 @@
 import { VALIDATION_LIMITS, EXCHANGE_VALIDATION_PATTERNS } from '@repo/constants';
 import { z } from 'zod';
 
+import { emailSchema } from './schemas-basic';
 import { currencySchema } from './schemas-crypto';
-
-import { securityEnhancedEmailSchema } from './security-enhanced-auth-schemas';
 import {
   createXSSProtectedString,
   SECURITY_VALIDATION_LIMITS,
@@ -34,7 +33,7 @@ export const securityEnhancedOrderByIdSchema = z.object({
  * Security-enhanced getOrderHistoryByEmail schema
  */
 export const securityEnhancedGetOrderHistoryByEmailSchema = z.object({
-  email: securityEnhancedEmailSchema,
+  email: emailSchema,
   limit: z.number().min(1).max(100).default(VALIDATION_LIMITS.MIN_PAGE_SIZE),
 });
 

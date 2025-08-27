@@ -1,4 +1,4 @@
-import { securityEnhancedEmailSchema } from '@repo/utils';
+import { emailSchema } from '@repo/utils';
 
 import {
   useExchangeStore as useExchangeStoreBase,
@@ -35,7 +35,7 @@ const validateEmailField = (userEmail: string) => {
     return ['Enter email'];
   }
 
-  const result = securityEnhancedEmailSchema.safeParse(userEmail);
+  const result = emailSchema.safeParse(userEmail);
   return result.success ? [] : result.error.issues.map(issue => issue.message);
 };
 

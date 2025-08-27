@@ -1,6 +1,7 @@
 import { UseFormReturn } from '@repo/hooks';
 import React from 'react';
 
+import { EmailFormFields } from '../../types/auth-fields';
 import { FormField, FormControl, FormLabel, FormMessage } from '../ui/form';
 import { Input } from '../ui/input';
 
@@ -9,10 +10,6 @@ import { Input } from '../ui/input';
  * Рефакторинг: переименовано из AuthEmailField для универсального использования
  * Устраняет дублирование между LoginForm, RegisterForm, ExchangeForm и другими
  */
-interface EmailFormFields {
-  email: string;
-}
-
 interface FormEmailFieldProps<T extends EmailFormFields = EmailFormFields> {
   form?: UseFormReturn<T>;
   isLoading?: boolean;
