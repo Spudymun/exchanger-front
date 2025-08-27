@@ -5,7 +5,7 @@ import { LoginFormData, LoginFormProps } from '@repo/exchange-core';
 import { useFormWithNextIntl, UseFormReturn } from '@repo/hooks';
 import {
   AuthForm,
-  AuthEmailField,
+  FormEmailField,
   AuthPasswordField,
   AuthCaptchaField,
   AuthSubmitButton,
@@ -71,7 +71,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
     >
       <AuthForm.FormWrapper>
         <AuthForm.FieldWrapper>
-          <AuthEmailField />
+          <FormEmailField />
           <AuthPasswordField />
           <AuthCaptchaField />
         </AuthForm.FieldWrapper>

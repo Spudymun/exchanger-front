@@ -14,7 +14,7 @@ import {
   FormControl,
   FormMessage,
   Input,
-  AuthEmailField,
+  FormEmailField,
   FormCaptchaField,
 } from '@repo/ui';
 import { type SecurityEnhancedFullExchangeForm } from '@repo/utils';
@@ -132,8 +132,8 @@ function PersonalDataSection({
         <h2 className="text-xl font-semibold text-foreground">Персональные данные</h2>
       </header>
 
-      {/* Email Field - используем AuthEmailField как в модальных окнах */}
-      <AuthEmailField
+      {/* Email Field - используем FormEmailField как универсальный компонент */}
+      <FormEmailField
         form={form as unknown as UseFormReturn<{ email: string }>}
         t={t}
         fieldId="exchange-email"

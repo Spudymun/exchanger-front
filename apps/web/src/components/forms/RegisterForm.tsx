@@ -5,7 +5,7 @@ import { RegisterFormData, RegisterFormProps } from '@repo/exchange-core';
 import { useFormWithNextIntl, UseFormReturn } from '@repo/hooks';
 import {
   AuthForm,
-  AuthEmailField,
+  FormEmailField,
   AuthPasswordField,
   AuthConfirmPasswordField,
   AuthCaptchaField,
@@ -74,7 +74,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
     >
       <AuthForm.FormWrapper>
         <AuthForm.FieldWrapper>
-          <AuthEmailField />
+          <FormEmailField />
           <AuthPasswordField />
           <AuthConfirmPasswordField />
           <AuthCaptchaField />
