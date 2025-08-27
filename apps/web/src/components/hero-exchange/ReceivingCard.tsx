@@ -13,6 +13,7 @@ import {
   FormField,
   FormLabel,
   FormControl,
+  ReceivingInfo,
 } from '@repo/ui';
 import React from 'react';
 
@@ -23,23 +24,6 @@ interface ReceivingCardProps {
   banks: ReturnType<typeof getBanksForCurrency>;
   calculatedAmount: number;
   t: (key: string) => string;
-}
-
-export function ReceivingInfo({
-  form,
-  t,
-}: {
-  form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>;
-  t: (key: string) => string;
-}) {
-  return (
-    <div className="text-sm text-muted-foreground space-y-1">
-      <div>
-        {t('receiving.reserve')}: 10,000,000 {form.values.toCurrency as string}
-      </div>
-      <div>{t('receiving.processing')}</div>
-    </div>
-  );
 }
 
 export function ReceivingCard({ form, banks, calculatedAmount, t }: ReceivingCardProps) {
@@ -72,7 +56,7 @@ export function ReceivingCard({ form, banks, calculatedAmount, t }: ReceivingCar
           </FormControl>
         </FormField>
 
-        <ReceivingInfo form={form} t={t} />
+        <ReceivingInfo form={form as unknown as UseFormReturn<Record<string, unknown>>} t={t} />
       </CardContent>
     </Card>
   );

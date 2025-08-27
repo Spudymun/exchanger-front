@@ -110,6 +110,7 @@ export { CryptoAmountInput } from './exchange/CryptoAmountInput';
 export { CardNumberInput } from './exchange/CardNumberInput';
 export { FiatCurrencySelector } from './exchange/FiatCurrencySelector';
 export { SendingInfo } from './exchange/SendingInfo';
+export { ReceivingInfo } from './exchange/ReceivingInfo';
 
 // Data Table Compound Components (Primary export)
 export {

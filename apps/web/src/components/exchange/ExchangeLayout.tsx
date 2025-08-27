@@ -9,6 +9,7 @@ import {
   CryptoAmountInput,
   CardNumberInput,
   SendingInfo,
+  ReceivingInfo,
   FormField,
   FormLabel,
   FormControl,
@@ -113,6 +114,14 @@ function ReceivingSection({
             <FormMessage />
           </FormField>
         </ExchangeForm.FieldWrapper>
+
+        {/* ✅ NEW: ReceivingInfo component */}
+        <ReceivingInfo
+          form={form as unknown as UseFormReturn<Record<string, unknown>>}
+          t={t}
+          currencyFieldName="toCurrency"
+          bankFieldName="selectedBankId"
+        />
       </div>
     </ExchangeForm.ExchangeCard>
   );
