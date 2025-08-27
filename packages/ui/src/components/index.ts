@@ -223,6 +223,7 @@ export {
 
 // Form Fields - Universal components
 export { FormEmailField, FormCaptchaField } from './form-fields';
+export type { EmailFormFields, CaptchaFormFields } from './form-fields';
 
 // === LEGACY EXPORTS REMOVED ===
 // Legacy components have been successfully removed and migrated to compound versions
