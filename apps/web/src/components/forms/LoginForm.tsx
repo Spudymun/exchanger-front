@@ -7,7 +7,7 @@ import {
   AuthForm,
   FormEmailField,
   AuthPasswordField,
-  AuthCaptchaField,
+  FormCaptchaField,
   AuthSubmitButton,
   AuthSwitchButton,
 } from '@repo/ui';
@@ -73,7 +73,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
         <AuthForm.FieldWrapper>
           <FormEmailField />
           <AuthPasswordField />
-          <AuthCaptchaField />
+          <FormCaptchaField />
         </AuthForm.FieldWrapper>
         <AuthForm.ActionsWrapper>
           <AuthSubmitButton />
