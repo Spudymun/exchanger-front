@@ -138,7 +138,7 @@ function PersonalDataSection({
   return (
     <section className="personal-data-section bg-muted/50 border border-border rounded-lg p-6">
       <header className="section-header mb-6">
-        <h2 className="text-xl font-semibold text-foreground">Персональные данные</h2>
+        <h2 className="text-xl font-semibold text-foreground">{t('personalData.title')}</h2>
       </header>
 
       {/* Email Field - используем FormEmailField как универсальный компонент */}
@@ -166,7 +166,7 @@ function SecuritySection({
   return (
     <section className="security-section bg-muted/50 border border-border rounded-lg p-6">
       <header className="section-header mb-6">
-        <h2 className="text-xl font-semibold text-foreground">Безопасность</h2>
+        <h2 className="text-xl font-semibold text-foreground">{t('security.title')}</h2>
       </header>
 
       <div className="space-y-4">
