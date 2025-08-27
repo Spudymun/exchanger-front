@@ -1,7 +1,8 @@
 'use client';
 
-import { Button, ExchangeForm, type AdaptiveWidthProps, cn } from '@repo/ui';
+import { AuthSubmitButton, ExchangeForm, type AdaptiveWidthProps, cn } from '@repo/ui';
 import { useTranslations } from 'next-intl';
+
 import React from 'react';
 
 import { ExchangeBenefits } from './hero-exchange/ExchangeBenefits';
@@ -75,14 +76,15 @@ interface ExchangeFormActionProps {
 function ExchangeFormAction({ isValid, t }: ExchangeFormActionProps) {
   return (
     <ExchangeForm.ActionArea variant="simple">
-      <Button
-        type="submit"
+      <AuthSubmitButton
+        submitStyle="hero" // ✅ Используем новый prop согласно плану
         size="lg"
-        disabled={!isValid}
-        className="w-full sm:w-auto sm:min-w-[200px] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+        isValid={isValid} // ✅ Legacy compatibility
+        t={t}
+        variant="default"
       >
         {t('exchange')}
-      </Button>
+      </AuthSubmitButton>
     </ExchangeForm.ActionArea>
   );
 }

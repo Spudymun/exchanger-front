@@ -86,7 +86,7 @@ export const ALERT_VARIANTS = {
 } as const;
 
 export const BUTTON_VARIANTS = {
-  PRIMARY: 'primary',
+  PRIMARY: 'default', // ✅ ИСПРАВЛЕНО: primary → default для соответствия button.tsx
   SECONDARY: 'secondary',
   DESTRUCTIVE: 'destructive',
   OUTLINE: 'outline',
@@ -96,9 +96,18 @@ export const BUTTON_VARIANTS = {
 
 export const BUTTON_SIZES = {
   SM: 'sm',
-  MD: 'md',
+  DEFAULT: 'default', // ✅ ИСПРАВЛЕНО: MD → DEFAULT для соответствия button.tsx
   LG: 'lg',
-  ICON: 'icon',
+  ICON: 'icon', // ✅ ДОБАВЛЕНО: отсутствующий размер из button.tsx
+  COMPACT: 'compact', // ✅ ДОБАВЛЕНО: отсутствующий размер из button.tsx
+  XS: 'xs', // ✅ ДОБАВЛЕНО: отсутствующий размер из button.tsx
+} as const;
+
+// НОВЫЕ константы для submit button styling согласно плану
+export const SUBMIT_BUTTON_STYLES = {
+  HERO_ANIMATION: 'transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]',
+  EXCHANGE_RESPONSIVE: 'w-full sm:w-auto sm:min-w-[200px]',
+  AUTH_STANDARD: 'submit-button',
 } as const;
 
 export const BADGE_VARIANTS = {
