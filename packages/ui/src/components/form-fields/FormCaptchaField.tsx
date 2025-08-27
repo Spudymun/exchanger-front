@@ -3,6 +3,7 @@ import { UseFormReturn } from '@repo/hooks';
 import React from 'react';
 
 import { useMathCaptchaLocal, CAPTCHA_CONFIGS_LOCAL } from '../../lib/useMathCaptchaLocal';
+import { CaptchaFormFields } from '../../types/auth-fields';
 import { FormField, FormMessage } from '../ui/form';
 import { MathCaptcha } from '../ui/math-captcha';
 
@@ -12,10 +13,6 @@ import { MathCaptcha } from '../ui/math-captcha';
  * Использует централизованную конфигурацию из констант
  * Устранена избыточность двойного поля captcha/captchaVerified
  */
-interface CaptchaFormFields {
-  captcha: string;
-  // Убрано: captchaVerified - избыточность устранена
-}
 
 interface FormCaptchaFieldProps<T extends CaptchaFormFields = CaptchaFormFields> {
   form?: UseFormReturn<T>;

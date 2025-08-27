@@ -1,6 +1,7 @@
 import { UseFormReturn } from '@repo/hooks';
 import React from 'react';
 
+import { CaptchaFormFields } from '../../types/auth-fields';
 import { FormCaptchaField } from '../form-fields/FormCaptchaField';
 
 /**
@@ -12,10 +13,6 @@ import { FormCaptchaField } from '../form-fields/FormCaptchaField';
  * Использует централизованную конфигурацию из констант
  * Устранена избыточность двойного поля captcha/captchaVerified
  */
-interface CaptchaFormFields {
-  captcha: string;
-  // Убрано: captchaVerified - избыточность устранена
-}
 
 interface AuthCaptchaFieldProps<T extends CaptchaFormFields = CaptchaFormFields> {
   form?: UseFormReturn<T>;
