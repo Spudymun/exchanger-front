@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useCallback, useMemo, useEffect } from 'react';
 
 /**
@@ -51,17 +53,17 @@ const DEFAULT_CONFIG: MathCaptchaConfig = {
  */
 function generateMathChallenge(config: MathCaptchaConfig = DEFAULT_CONFIG): MathChallenge {
   const { minNumber, maxNumber, operations } = config;
-  
+
   // Generate random numbers within range
   const num1 = Math.floor(Math.random() * (maxNumber - minNumber + 1)) + minNumber;
   const num2 = Math.floor(Math.random() * (maxNumber - minNumber + 1)) + minNumber;
-  
+
   // Select random operation
   const operation = operations[Math.floor(Math.random() * operations.length)];
-  
+
   let question: string;
   let answer: number;
-  
+
   switch (operation) {
     case 'add': {
       question = `${num1} + ${num2}`;
@@ -90,7 +92,7 @@ function generateMathChallenge(config: MathCaptchaConfig = DEFAULT_CONFIG): Math
       answer = num1 + num2;
     }
   }
-  
+
   return {
     question,
     answer,
@@ -105,7 +107,7 @@ function useUserAnswer() {
   const [userAnswer, setUserAnswer] = useState<string>('');
   const [isVerified, setIsVerified] = useState<boolean>(false);
   const [hasBlurred, setHasBlurred] = useState<boolean>(false);
-  
+
   // Reset verification status when answer changes
   const setUserAnswerWithReset = useCallback((answer: string) => {
     setUserAnswer(answer);
@@ -120,7 +122,7 @@ function useUserAnswer() {
   const onBlur = useCallback(() => {
     setHasBlurred(true);
   }, []);
-  
+
   return {
     userAnswer,
     isVerified,
@@ -135,31 +137,29 @@ function useUserAnswer() {
  * Hook для управления вызовами (challenge)
  */
 function useChallenge(config: MathCaptchaConfig) {
-  const [challenge, setChallenge] = useState<MathChallenge>(() => 
-    generateMathChallenge(config)
-  );
-  
+  const [challenge, setChallenge] = useState<MathChallenge>(() => generateMathChallenge(config));
+
   const refreshChallenge = useCallback(() => {
     setChallenge(generateMathChallenge(config));
   }, [config]);
-  
+
   return { challenge, refreshChallenge };
 }
 
 /**
  * Custom hook for mathematical CAPTCHA functionality
- * 
+ *
  * Provides bot protection through simple mathematical questions
  * that are easy for humans but challenging for basic bots.
- * 
+ *
  * @param config - Optional configuration for CAPTCHA generation
  * @returns Object with CAPTCHA state and control methods
- * 
+ *
  * @example
  * ```tsx
  * function LoginForm() {
  *   const captcha = useMathCaptcha();
- *   
+ *
  *   return (
  *     <form onSubmit={(e) => {
  *       e.preventDefault();
@@ -192,8 +192,9 @@ function useChallenge(config: MathCaptchaConfig) {
  */
 export function useMathCaptcha(config: MathCaptchaConfig = DEFAULT_CONFIG): UseMathCaptchaReturn {
   const { challenge, refreshChallenge } = useChallenge(config);
-  const { userAnswer, isVerified, hasBlurred, setUserAnswer, setIsVerified, onBlur } = useUserAnswer();
-  
+  const { userAnswer, isVerified, hasBlurred, setUserAnswer, setIsVerified, onBlur } =
+    useUserAnswer();
+
   // Check if current answer is valid (correct number)
   const isValid = useMemo(() => {
     const numericAnswer = parseInt(userAnswer.trim(), 10);
@@ -204,7 +205,7 @@ export function useMathCaptcha(config: MathCaptchaConfig = DEFAULT_CONFIG): UseM
   const hasError = useMemo(() => {
     return hasBlurred && userAnswer.trim() !== '' && !isValid;
   }, [hasBlurred, userAnswer, isValid]);
-  
+
   // Управляем isVerified состоянием
   useEffect(() => {
     if (isValid && userAnswer.trim() !== '') {
@@ -213,7 +214,7 @@ export function useMathCaptcha(config: MathCaptchaConfig = DEFAULT_CONFIG): UseM
       setIsVerified(false);
     }
   }, [isValid, userAnswer, setIsVerified]);
-  
+
   // Verify answer and mark as verified if correct
   const verify = useCallback((): boolean => {
     if (isValid) {
@@ -222,13 +223,13 @@ export function useMathCaptcha(config: MathCaptchaConfig = DEFAULT_CONFIG): UseM
     }
     return false;
   }, [isValid, setIsVerified]);
-  
+
   // Reset all state
   const reset = useCallback(() => {
     refreshChallenge();
     setIsVerified(false);
   }, [refreshChallenge, setIsVerified]);
-  
+
   return {
     challenge,
     userAnswer,

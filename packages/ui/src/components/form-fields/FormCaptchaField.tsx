@@ -1,8 +1,8 @@
 import { AUTH_CAPTCHA_CONFIG } from '@repo/constants';
 import { UseFormReturn } from '@repo/hooks';
+import { useMathCaptcha, CAPTCHA_CONFIGS } from '@repo/hooks/src/business/useMathCaptcha';
 import React from 'react';
 
-import { useMathCaptchaLocal, CAPTCHA_CONFIGS_LOCAL } from '../../lib/useMathCaptchaLocal';
 import { CaptchaFormFields } from '../../types/auth-fields';
 import { FormField, FormMessage } from '../ui/form';
 import { MathCaptcha } from '../ui/math-captcha';
@@ -27,10 +27,9 @@ function useCaptchaLogic<T extends CaptchaFormFields>(
   form: UseFormReturn<T>,
   t: (key: string) => string
 ) {
-  // Use local CAPTCHA hook to avoid dependency on @repo/hooks
-  const config =
-    CAPTCHA_CONFIGS_LOCAL[AUTH_CAPTCHA_CONFIG.DIFFICULTY] || CAPTCHA_CONFIGS_LOCAL.medium;
-  const captcha = useMathCaptchaLocal(config);
+  // Use centralized CAPTCHA hook from @repo/hooks (eliminate duplication)
+  const config = CAPTCHA_CONFIGS[AUTH_CAPTCHA_CONFIG.DIFFICULTY] || CAPTCHA_CONFIGS.medium;
+  const captcha = useMathCaptcha(config);
 
   // Мемоизированные callbacks с стабильными зависимостями
   const clearCaptchaError = React.useCallback(() => {
