@@ -368,6 +368,17 @@
       "UAH": "Ukrainian hryvnia",
       "USD": "US Dollar",
       "EUR": "Euro"
+    },
+    "title": "Cryptocurrency Exchange",
+    "subtitle": "Fast • Secure • No registration",
+    "personalData": {
+      "title": "Recipient Information"
+    },
+    "security": {
+      "title": "Security and Verification",
+      "terms": {
+        "agreement": "I agree to the terms of use and privacy policy"
+      }
     }
   },
   "ExchangePage": {

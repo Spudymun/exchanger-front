@@ -186,7 +186,7 @@ function SecuritySection({
               onChange={e => form.setValue('agreeToTerms', e.target.checked)}
               className="h-4 w-4 rounded border-border"
             />
-            <FormLabel className="text-sm">{t('field.agreeToTerms')}</FormLabel>
+            <FormLabel className="text-sm">{t('security.terms.agreement')}</FormLabel>
           </div>
         </FormField>
       </div>
