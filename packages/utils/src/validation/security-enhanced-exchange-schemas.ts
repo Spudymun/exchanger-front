@@ -230,7 +230,7 @@ export const securityEnhancedHeroExchangeFormSchema = unifiedExchangeBaseSchema
  * Используется на странице /exchange для полного процесса обмена
  *
  * АРХИТЕКТУРНОЕ РЕШЕНИЕ: Берем unifiedExchangeBaseSchema (со всеми полями) + superRefine
- * - Все поля: fromAmount, fromCurrency, email, cardNumber, captchaAnswer, agreeToTerms
+ * - Все поля: fromAmount, fromCurrency, email, cardNumber, captcha, agreeToTerms
  * - Business validation: та же working логика как в hero схеме
  * - Incremental validation: дополнительные поля optional, валидируются по мере заполнения
  */

@@ -27,7 +27,7 @@ export interface ExchangeFormData {
   selectedBankId: string; // string as used in real forms
   cardNumber: string;
   email: string;
-  captchaAnswer: string;
+  captcha: string; // ✅ UNIFIED: rename captchaAnswer → captcha (consistent with auth forms)
   agreeToTerms: boolean;
   rememberData?: boolean;
 }

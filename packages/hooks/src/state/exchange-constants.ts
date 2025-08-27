@@ -12,7 +12,7 @@ export const DEFAULT_FORM_DATA: ExchangeFormData = {
   selectedBankId: '',
   cardNumber: '',
   email: '',
-  captchaAnswer: '',
+  captcha: '', // ✅ UNIFIED: rename captchaAnswer → captcha (consistent with auth forms)
   agreeToTerms: false,
   rememberData: false,
 };
