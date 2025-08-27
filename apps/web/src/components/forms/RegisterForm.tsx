@@ -8,7 +8,7 @@ import {
   FormEmailField,
   AuthPasswordField,
   AuthConfirmPasswordField,
-  AuthCaptchaField,
+  FormCaptchaField,
   AuthSubmitButton,
   AuthSwitchButton,
 } from '@repo/ui';
@@ -25,7 +25,7 @@ import { useAuthMutationAdapter } from '../../hooks/useAuthMutationAdapter';
 /**
  * Register Form Component
  * Рефакторинг: использует переиспользуемые компоненты полей
- * - AuthEmailField, AuthPasswordField, AuthConfirmPasswordField, AuthCaptchaField - устраняют дублирование
+ * - FormEmailField, AuthPasswordField, AuthConfirmPasswordField, FormCaptchaField - устраняют дублирование
  * - Централизованные константы из @repo/constants
  * - Типы из @repo/exchange-core
  */
@@ -77,7 +77,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
           <FormEmailField />
           <AuthPasswordField />
           <AuthConfirmPasswordField />
-          <AuthCaptchaField />
+          <FormCaptchaField />
         </AuthForm.FieldWrapper>
         <AuthForm.ActionsWrapper>
           <AuthSubmitButton />
