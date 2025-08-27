@@ -179,10 +179,6 @@
     },
     "forms": {
       "login": {
-        "email": {
-          "label": "Email",
-          "placeholder": "your@email.com"
-        },
         "password": {
           "label": "Пароль",
           "placeholder": "Введите пароль"
@@ -192,10 +188,6 @@
         "switchToRegister": "Нет аккаунта? Зарегистрироваться"
       },
       "register": {
-        "email": {
-          "label": "Email",
-          "placeholder": "your@email.com"
-        },
         "password": {
           "label": "Пароль",
           "placeholder": "Минимум 6 символов"

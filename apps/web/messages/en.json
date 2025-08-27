@@ -179,10 +179,6 @@
     },
     "forms": {
       "login": {
-        "email": {
-          "label": "Email",
-          "placeholder": "your@email.com"
-        },
         "password": {
           "label": "Password",
           "placeholder": "Enter your password"
@@ -192,10 +188,6 @@
         "switchToRegister": "Don't have an account? Sign up"
       },
       "register": {
-        "email": {
-          "label": "Email",
-          "placeholder": "your@email.com"
-        },
         "password": {
           "label": "Password",
           "placeholder": "Minimum 6 characters"
