@@ -39,5 +39,4 @@ export type AuthConfirmPasswordFieldProps<
   T extends ConfirmPasswordFormFields = ConfirmPasswordFormFields,
 > = BaseAuthFieldProps<T>;
 
-export type AuthCaptchaFieldProps<T extends CaptchaFormFields = CaptchaFormFields> =
-  BaseAuthFieldProps<T>;
+// AuthCaptchaFieldProps removed - use FormCaptchaField with CaptchaFormFields instead

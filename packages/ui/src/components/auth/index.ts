@@ -12,6 +12,6 @@ export { AuthSubmitButton } from './AuthSubmitButton';
 
 // Regular components (original versions - work with direct props)
 export { AuthConfirmPasswordField } from './AuthConfirmPasswordField';
-export { AuthCaptchaField } from './AuthCaptchaField';
+// AuthCaptchaField removed - use FormCaptchaField from @repo/ui/form-fields instead
 export { AuthSwitchButton } from './AuthSwitchButton';
 export { AuthFormLayout } from './AuthFormLayout';

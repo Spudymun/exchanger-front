@@ -190,7 +190,6 @@ export { AuthForm } from './auth';
 export {
   AuthPasswordField,
   AuthConfirmPasswordField,
-  AuthCaptchaField,
   AuthSubmitButton,
   AuthSwitchButton,
   AuthFormLayout,
