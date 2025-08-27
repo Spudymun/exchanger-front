@@ -188,7 +188,6 @@ export {
 export { AuthForm } from './auth';
 
 export {
-  AuthEmailField,
   AuthPasswordField,
   AuthConfirmPasswordField,
   AuthCaptchaField,

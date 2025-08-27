@@ -11,7 +11,6 @@ export { AuthPasswordField } from './AuthPasswordField';
 export { AuthSubmitButton } from './AuthSubmitButton';
 
 // Regular components (original versions - work with direct props)
-export { AuthEmailField } from './AuthEmailField';
 export { AuthConfirmPasswordField } from './AuthConfirmPasswordField';
 export { AuthCaptchaField } from './AuthCaptchaField';
 export { AuthSwitchButton } from './AuthSwitchButton';
