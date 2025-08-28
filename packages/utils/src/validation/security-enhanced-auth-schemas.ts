@@ -37,19 +37,36 @@ export const securityEnhancedCaptchaSchema = z
   });
 
 /**
- * EMAIL SCHEMA с enhanced security
+ * @deprecated Бесполезный алиас - используй emailSchema напрямую
+ * УДАЛИТЬ ПОСЛЕ: Замены всех использований на emailSchema
+ * ПРОБЛЕМА: Не добавляет функциональности, только усложняет код
  */
 export const securityEnhancedEmailSchema = emailSchema;
 
 /**
  * FULLY XSS-PROTECTED EMAIL SCHEMA
  */
-export const fullySecurityEnhancedEmailSchema = emailSchema.refine(val => !containsPotentialXSS(val), {
+export const fullySecurityEnhancedEmailSchema = emailSchema.refine(
+  val => !containsPotentialXSS(val),
+  {
+    message: XSS_CONTENT_DETECTED_MESSAGE,
+  }
+);
+
+/**
+ * ENHANCED PASSWORD SCHEMA - Унифицированная версия
+ * АРХИТЕКТУРНОЕ РЕШЕНИЕ: Базовая passwordSchema + XSS protection
+ * ЗАМЕНЯЕТ: fullySecurityEnhancedPasswordSchema (другая логика)
+ * ЦЕЛЬ: Единый стандарт password validation во всех формах
+ */
+export const enhancedPasswordSchema = passwordSchema.refine(val => !containsPotentialXSS(val), {
   message: XSS_CONTENT_DETECTED_MESSAGE,
 });
 
 /**
- * FULLY XSS-PROTECTED PASSWORD SCHEMA
+ * @deprecated Используй enhancedPasswordSchema - унифицированную версию
+ * ПРОБЛЕМА: Использует createXSSProtectedString вместо passwordSchema
+ * УДАЛИТЬ ПОСЛЕ: Замены всех использований на enhancedPasswordSchema
  */
 export const fullySecurityEnhancedPasswordSchema = createXSSProtectedString(
   VALIDATION_LIMITS.PASSWORD_MIN_LENGTH,
@@ -65,9 +82,7 @@ export const fullySecurityEnhancedPasswordSchema = createXSSProtectedString(
  */
 export const fullySecurityEnhancedLoginSchema = z.object({
   email: fullySecurityEnhancedEmailSchema,
-  password: passwordSchema.refine(val => !containsPotentialXSS(val), {
-    message: XSS_CONTENT_DETECTED_MESSAGE,
-  }),
+  password: enhancedPasswordSchema, // ← УНИФИЦИРОВАННАЯ СХЕМА
   captcha: securityEnhancedCaptchaSchema,
 });
 
@@ -77,12 +92,8 @@ export const fullySecurityEnhancedLoginSchema = z.object({
 export const fullySecurityEnhancedRegisterSchema = z
   .object({
     email: fullySecurityEnhancedEmailSchema,
-    password: passwordSchema.refine(val => !containsPotentialXSS(val), {
-      message: XSS_CONTENT_DETECTED_MESSAGE,
-    }),
-    confirmPassword: passwordSchema.refine(val => !containsPotentialXSS(val), {
-      message: XSS_CONTENT_DETECTED_MESSAGE,
-    }),
+    password: enhancedPasswordSchema, // ← УНИФИЦИРОВАННАЯ СХЕМА
+    confirmPassword: enhancedPasswordSchema, // ← УНИФИЦИРОВАННАЯ СХЕМА
     captcha: securityEnhancedCaptchaSchema,
   })
   .refine(data => data.password === data.confirmPassword, {
@@ -140,5 +151,6 @@ export type SecurityEnhancedEmail = z.infer<typeof securityEnhancedEmailSchema>;
 // Type exports для новых XSS-защищенных схем
 export type FullySecurityEnhancedEmail = z.infer<typeof fullySecurityEnhancedEmailSchema>;
 export type FullySecurityEnhancedPassword = z.infer<typeof fullySecurityEnhancedPasswordSchema>;
+export type EnhancedPassword = z.infer<typeof enhancedPasswordSchema>; // ← НОВЫЙ ТИП
 export type FullySecurityEnhancedLoginForm = z.infer<typeof fullySecurityEnhancedLoginSchema>;
 export type FullySecurityEnhancedRegisterForm = z.infer<typeof fullySecurityEnhancedRegisterSchema>;

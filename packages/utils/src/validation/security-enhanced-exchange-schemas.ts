@@ -10,7 +10,12 @@ import { VALIDATION_LIMITS } from '@repo/constants';
 import { isAmountWithinLimits, type CryptoCurrency } from '@repo/exchange-core';
 import { z } from 'zod';
 
-import { sanitizeCardNumber, luhnCheck, validateCardLength } from './card-validation';
+import {
+  sanitizeCardNumber,
+  luhnCheck,
+  validateCardLength,
+  isNotTestCard,
+} from './card-validation';
 import { emailSchema, cardNumberSchema } from './schemas-basic';
 import { currencySchema } from './schemas-crypto';
 import { securityEnhancedCaptchaSchema } from './security-enhanced-auth-schemas';
@@ -22,9 +27,12 @@ import {
 
 /**
  * SECURITY-ENHANCED CARD NUMBER SCHEMA
+ * АРХИТЕКТУРНОЕ РЕШЕНИЕ: Экспортируемая схема для переиспользования
+ * БЫЛО: const (недоступна для import)
+ * СТАЛО: export (доступна для переиспользования в других файлах)
  * Extends base cardNumberSchema with XSS protection and sanitation
  */
-const securityEnhancedCardNumberSchema = cardNumberSchema
+export const securityEnhancedCardNumberSchema = cardNumberSchema
   .transform(val => {
     if (containsPotentialXSS(val)) {
       throw new z.ZodError([
@@ -38,7 +46,8 @@ const securityEnhancedCardNumberSchema = cardNumberSchema
     return sanitizeCardNumber(val);
   })
   .refine(sanitized => validateCardLength(sanitized)) // Стандартная zod валидация
-  .refine(sanitized => luhnCheck(sanitized)); // Стандартная zod валидация
+  .refine(sanitized => luhnCheck(sanitized)) // Стандартная zod валидация
+  .refine(sanitized => isNotTestCard(sanitized), 'Тестовые номера карт не допускаются'); // BIN валидация
 
 /**
  * CREATE EXCHANGE ORDER SCHEMA
@@ -254,6 +263,8 @@ export const securityEnhancedFullExchangeFormSchema = unifiedExchangeBaseSchema.
 /**
  * TYPE EXPORTS
  */
+export type SecurityEnhancedCardNumber = z.infer<typeof securityEnhancedCardNumberSchema>; // ← НОВЫЙ ТИП
+
 export type SecurityEnhancedCreateExchangeOrder = z.infer<
   typeof securityEnhancedCreateExchangeOrderSchema
 >;

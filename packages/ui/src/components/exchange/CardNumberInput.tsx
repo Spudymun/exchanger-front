@@ -44,6 +44,9 @@ export function CardNumberInput({
             inputMode="numeric"
             className="transition-colors"
             value={fieldValue}
+            autoComplete="cc-number"
+            name="cardNumber"
+            id="card-number"
             required
           />
         </FormControl>
