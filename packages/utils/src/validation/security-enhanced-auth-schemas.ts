@@ -54,16 +54,6 @@ export const fullySecurityEnhancedEmailSchema = emailSchema.refine(
 export const enhancedPasswordSchema = xssProtectedPasswordSchema;
 
 /**
- * @deprecated Используй enhancedPasswordSchema - унифицированную версию
- * ПРОБЛЕМА: Использует createXSSProtectedString вместо passwordSchema
- * УДАЛИТЬ ПОСЛЕ: Замены всех использований на enhancedPasswordSchema
- */
-export const fullySecurityEnhancedPasswordSchema = createXSSProtectedStringWithLength(
-  VALIDATION_LIMITS.PASSWORD_MIN_LENGTH,
-  VALIDATION_LIMITS.PASSWORD_MAX_LENGTH
-);
-
-/**
  * AUTH FORMS SCHEMAS
  */
 
@@ -139,7 +129,7 @@ export type SecurityEnhancedCaptcha = z.infer<typeof securityEnhancedCaptchaSche
 
 // Type exports для новых XSS-защищенных схем
 export type FullySecurityEnhancedEmail = z.infer<typeof fullySecurityEnhancedEmailSchema>;
-export type FullySecurityEnhancedPassword = z.infer<typeof fullySecurityEnhancedPasswordSchema>;
+export type FullySecurityEnhancedPassword = z.infer<typeof enhancedPasswordSchema>; // ✅ LEGACY REMOVED: use enhancedPasswordSchema
 export type EnhancedPassword = z.infer<typeof enhancedPasswordSchema>; // ← НОВЫЙ ТИП
 export type FullySecurityEnhancedLoginForm = z.infer<typeof fullySecurityEnhancedLoginSchema>;
 export type FullySecurityEnhancedRegisterForm = z.infer<typeof fullySecurityEnhancedRegisterSchema>;

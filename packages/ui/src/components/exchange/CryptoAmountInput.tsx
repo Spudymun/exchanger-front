@@ -45,8 +45,8 @@ export function CryptoAmountInput({
   placeholder,
   type = 'text',
 }: CryptoAmountInputProps) {
-  // Определяем поле валюты на основе fieldName
-  const currencyFieldName = fieldName === 'fromAmount' ? 'fromCurrency' : 'toCurrency';
+  // ✅ SIMPLIFIED: Direct use of known field names (eliminated unused flexibility)
+  const currencyFieldName = 'fromCurrency';
 
   // Валидация ввода с правильным полем валюты
   const { handleKeyDown } = useNumericInput(
