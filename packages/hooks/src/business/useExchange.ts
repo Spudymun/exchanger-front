@@ -20,16 +20,16 @@ export function useExchange() {
 
   // Auto-calculate when form changes
   React.useEffect(() => {
-    const { cryptoAmount } = exchangeStore.formData;
+    const { fromAmount } = exchangeStore.formData; // ✅ UNIFIED: cryptoAmount → fromAmount
 
-    if (cryptoAmount && !isNaN(Number(cryptoAmount)) && Number(cryptoAmount) > 0) {
+    if (fromAmount && !isNaN(Number(fromAmount)) && Number(fromAmount) > 0) {
       const debounceTimeout = setTimeout(() => {
         exchangeStore.calculateExchange();
       }, UI_DEBOUNCE_CONSTANTS.EXCHANGE_CALCULATION_DELAY);
 
       return () => clearTimeout(debounceTimeout);
     }
-  }, [exchangeStore.formData.cryptoAmount, exchangeStore.formData.fromCurrency, exchangeStore]);
+  }, [exchangeStore.formData.fromAmount, exchangeStore.formData.fromCurrency, exchangeStore]); // ✅ UNIFIED: cryptoAmount → fromAmount
 
   // Display helpers
   const getDisplayRate = useDisplayRateHelper(exchangeStore);
@@ -60,7 +60,8 @@ function useFormValidator(exchangeStore: ExchangeStore) {
     }
 
     // Amount validation - только проверка формата
-    if (!formData.cryptoAmount || isNaN(Number(formData.cryptoAmount))) {
+    if (!formData.fromAmount || isNaN(Number(formData.fromAmount))) {
+      // ✅ UNIFIED: cryptoAmount → fromAmount
       errors.push('Enter correct amount');
     }
     // Note: Отрицательные числа нельзя ввести через UI, минимальные лимиты проверяются в Zod схемах
@@ -112,7 +113,7 @@ export function useExchangeForm() {
   const exchangeStore = useExchangeStore();
 
   const setFromAmount = (amount: string) => {
-    exchangeStore.updateFormData({ cryptoAmount: Number(amount) });
+    exchangeStore.updateFormData({ fromAmount: Number(amount) }); // ✅ UNIFIED: cryptoAmount → fromAmount
   };
 
   const setFromCurrency = (currency: CryptoCurrency) => {

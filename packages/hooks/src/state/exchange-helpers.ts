@@ -8,12 +8,12 @@ export const calculateExchangeRate = (
   formData: ExchangeFormData,
   availableRates: ExchangeRate[]
 ): ExchangeCalculation | null => {
-  if (!formData.fromCurrency || !formData.cryptoAmount) {
+  if (!formData.fromCurrency || !formData.fromAmount) {
     return null;
   }
 
-  const fromAmount = formData.cryptoAmount;
-  if (isNaN(fromAmount) || fromAmount <= 0) {
+  // ✅ UNIFIED: direct use formData.fromAmount (eliminated cryptoAmount duplication)
+  if (isNaN(formData.fromAmount) || formData.fromAmount <= 0) {
     return {
       fromAmount: 0,
       toAmount: 0,
@@ -29,7 +29,7 @@ export const calculateExchangeRate = (
   const rate = availableRates.find((r: ExchangeRate) => r.currency === formData.fromCurrency);
   if (!rate) {
     return {
-      fromAmount,
+      fromAmount: formData.fromAmount, // ✅ UNIFIED: consistent fromAmount usage
       toAmount: 0,
       rate: 0,
       commission: 0,
@@ -41,12 +41,12 @@ export const calculateExchangeRate = (
   }
 
   // Use centralized calculation utilities instead of local logic
-  const toAmount = calculateUahAmount(fromAmount, formData.fromCurrency);
-  const commissionAmount = calculateCommission(fromAmount, formData.fromCurrency);
+  const toAmount = calculateUahAmount(formData.fromAmount, formData.fromCurrency);
+  const commissionAmount = calculateCommission(formData.fromAmount, formData.fromCurrency);
   const finalAmount = toAmount;
 
   return {
-    fromAmount,
+    fromAmount: formData.fromAmount, // ✅ UNIFIED: consistent fromAmount usage
     toAmount,
     rate: rate.uahRate,
     commission: rate.commission,

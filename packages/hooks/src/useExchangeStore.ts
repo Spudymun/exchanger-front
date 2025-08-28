@@ -14,8 +14,9 @@ const validateBasicFields = (formData: ExchangeStore['formData']) => {
     errors.fromCurrency = ['Select currency to exchange'];
   }
 
-  if (!formData.cryptoAmount || formData.cryptoAmount <= 0) {
-    errors.cryptoAmount = ['Enter correct amount'];
+  if (!formData.fromAmount || formData.fromAmount <= 0) {
+    // ✅ UNIFIED: cryptoAmount → fromAmount
+    errors.fromAmount = ['Enter correct amount']; // ✅ UNIFIED: cryptoAmount → fromAmount
   }
 
   if (!formData.cardNumber) {
@@ -76,7 +77,7 @@ const createHelperMethods = (store: ExchangeStore) => ({
       case 0:
         return !!(
           formData.fromCurrency &&
-          formData.cryptoAmount &&
+          formData.fromAmount && // ✅ UNIFIED: cryptoAmount → fromAmount
           formData.cardNumber &&
           formData.email &&
           calculation?.isValid
@@ -96,7 +97,7 @@ const createHelperMethods = (store: ExchangeStore) => ({
     const totalSteps = 6;
 
     if (formData.fromCurrency) progress++;
-    if (formData.cryptoAmount && formData.cryptoAmount > 0) progress++;
+    if (formData.fromAmount && formData.fromAmount > 0) progress++; // ✅ UNIFIED: cryptoAmount → fromAmount
     if (formData.cardNumber) progress++;
     if (formData.email) progress++;
     if (calculation?.isValid) progress++;

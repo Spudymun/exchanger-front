@@ -7,7 +7,7 @@ export const DEFAULT_FORM_DATA: ExchangeFormData = {
   fromCurrency: EXCHANGE_DEFAULTS.FROM_CURRENCY,
   tokenStandard: getDefaultTokenStandard(EXCHANGE_DEFAULTS.FROM_CURRENCY) || 'TRC-20',
   toCurrency: EXCHANGE_DEFAULTS.TO_CURRENCY,
-  cryptoAmount: 0,
+  fromAmount: 0, // ✅ UNIFIED: rename cryptoAmount → fromAmount (consistent with calculations)
   uahAmount: 0,
   selectedBankId: '',
   cardNumber: '',

@@ -22,7 +22,7 @@ export interface ExchangeFormData {
   fromCurrency: CryptoCurrency;
   tokenStandard: string; // string as used in real forms
   toCurrency: 'UAH';
-  cryptoAmount: number; // number for calculations
+  fromAmount: number; // ✅ UNIFIED: rename cryptoAmount → fromAmount (consistent with calculations)
   uahAmount: number; // number for calculations
   selectedBankId: string; // string as used in real forms
   cardNumber: string;
@@ -124,7 +124,7 @@ const createFormActions = (
     }));
 
     // Автоматический пересчет при изменении валюты или суммы с debounce
-    if (data.fromCurrency || data.cryptoAmount) {
+    if (data.fromCurrency || data.fromAmount) {
       const debouncedCalculate = createDebounceAction({
         set,
         get,
@@ -144,7 +144,7 @@ const createCalculationActions = (
   calculateExchange: () => {
     const { formData, availableRates } = get();
 
-    if (!formData.fromCurrency || formData.cryptoAmount <= 0) {
+    if (!formData.fromCurrency || formData.fromAmount <= 0) {
       set(() => ({ calculation: null }));
       return;
     }

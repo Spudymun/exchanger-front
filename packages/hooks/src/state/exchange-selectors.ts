@@ -13,7 +13,7 @@ export const selectIsFormValid = (state: ExchangeStore) => {
   const { formData, calculation } = state;
   return !!(
     formData.fromCurrency &&
-    formData.cryptoAmount &&
+    formData.fromAmount && // ✅ UNIFIED: cryptoAmount → fromAmount
     formData.cardNumber &&
     formData.email &&
     formData.agreeToTerms &&
