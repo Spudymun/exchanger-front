@@ -1,5 +1,8 @@
+/* eslint-disable max-lines */
 /**
- * Обработчики валидации для различных типов полей
+ * Validation handlers for form fields with translations
+ *
+ * АРХИТЕКТУРНАЯ ЦЕЛЬ:
  */
 
 import { VALIDATION_LIMITS } from '@repo/constants';
@@ -34,7 +37,10 @@ function createCaptchaNotVerifiedMessage(t: NextIntlValidationConfig['t']): { me
   return { message: t(VALIDATION_KEYS.CAPTCHA_NOT_VERIFIED) };
 }
 
-function createValidationMessage(key: string, t: NextIntlValidationConfig['t']): { message: string } {
+function createValidationMessage(
+  key: string,
+  t: NextIntlValidationConfig['t']
+): { message: string } {
   return { message: t(key) };
 }
 
@@ -42,14 +48,18 @@ function createValidationMessage(key: string, t: NextIntlValidationConfig['t']):
  * Проверяет, является ли ошибка связанной с пустым полем
  */
 function isEmptyFieldError(issue: z.ZodIssueOptionalMessage): boolean {
-  const hasEmptyInput = 'input' in issue && (issue.input === '' || issue.input === null || issue.input === undefined);
-  const hasEmptyReceived = 'received' in issue && (issue.received === '' || issue.received === '""' || issue.received === 'undefined');
+  const hasEmptyInput =
+    'input' in issue && (issue.input === '' || issue.input === null || issue.input === undefined);
+  const hasEmptyReceived =
+    'received' in issue &&
+    (issue.received === '' || issue.received === '""' || issue.received === 'undefined');
   return hasEmptyInput || hasEmptyReceived;
 }
 
 /**
  * Обрабатывает валидацию email поля
  */
+// eslint-disable-next-line complexity
 export function handleEmailValidation(
   issue: z.ZodIssueOptionalMessage,
   t: NextIntlValidationConfig['t']
@@ -76,6 +86,7 @@ export function handleEmailValidation(
 /**
  * Обрабатывает валидацию password поля - ОБНОВЛЕНО для работы с централизованными схемами
  */
+// eslint-disable-next-line complexity, max-statements
 export function handlePasswordValidation(
   issue: z.ZodIssueOptionalMessage,
   t: NextIntlValidationConfig['t']
@@ -119,7 +130,7 @@ function handlePasswordInvalidString(
   issue: z.ZodIssueOptionalMessage,
   t: NextIntlValidationConfig['t']
 ): { message: string } {
-  // ЗАЩИТА: Если поле пустое, но пришел regex validation - показываем "обязательно" 
+  // ЗАЩИТА: Если поле пустое, но пришел regex validation - показываем "обязательно"
   if (isEmptyFieldError(issue)) {
     return { message: t(VALIDATION_KEYS.PASSWORD_REQUIRED) };
   }
@@ -353,10 +364,10 @@ export function handleNameValidation(
   issue: z.ZodIssueOptionalMessage,
   t: NextIntlValidationConfig['t']
 ): { message: string } | null {
-  const isNameField = issue.path?.some(p => 
-    typeof p === 'string' && (p.includes('name') || p.includes('Name'))
+  const isNameField = issue.path?.some(
+    p => typeof p === 'string' && (p.includes('name') || p.includes('Name'))
   );
-  
+
   if (!isNameField) return null;
 
   if (issue.code === z.ZodIssueCode.too_small) {
@@ -393,14 +404,23 @@ export function handleGeneralValidation(
   return null;
 }
 
-function handleTooSmallString(fieldName: unknown, t: NextIntlValidationConfig['t']): { message: string } {
+function handleTooSmallString(
+  fieldName: unknown,
+  t: NextIntlValidationConfig['t']
+): { message: string } {
   if (typeof fieldName === 'string' && fieldName.toLowerCase().includes('bank')) {
-    return createValidationMessage('validation.bank.required', t) || createValidationMessage('validation.selectBank', t);
+    return (
+      createValidationMessage('validation.bank.required', t) ||
+      createValidationMessage('validation.selectBank', t)
+    );
   }
   return createValidationMessage(VALIDATION_KEYS.REQUIRED, t);
 }
 
-function handleCustomValidation(message: string | undefined, t: NextIntlValidationConfig['t']): { message: string } {
+function handleCustomValidation(
+  message: string | undefined,
+  t: NextIntlValidationConfig['t']
+): { message: string } {
   if (message === 'XSS content detected') {
     return createValidationMessage(VALIDATION_KEYS.XSS_DETECTED, t);
   }
