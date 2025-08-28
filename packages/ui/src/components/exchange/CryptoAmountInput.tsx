@@ -10,11 +10,6 @@ interface CryptoAmountInputProps {
   form: UseFormReturn<Record<string, unknown>>;
   t: (key: string) => string;
   /**
-   * Поле в форме для хранения суммы
-   * @default 'fromAmount'
-   */
-  fieldName?: string;
-  /**
    * Использовать ли валидацию ввода useNumericInput
    * @default true
    */
@@ -40,7 +35,6 @@ interface CryptoAmountInputProps {
 export function CryptoAmountInput({
   form,
   t,
-  fieldName = 'fromAmount',
   useValidation = true,
   placeholder,
   type = 'text',
@@ -55,19 +49,21 @@ export function CryptoAmountInput({
 
   const handleAmountKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (useValidation) {
-      handleKeyDown(e, form.values[fieldName as keyof typeof form.values] as string);
+      handleKeyDown(e, form.values.fromAmount as string); // ✅ SIMPLIFIED: direct field name usage
     }
   };
 
-  const fieldValue = (form.values[fieldName as keyof typeof form.values] as string) || '';
-  const fieldError = form.errors[fieldName as keyof typeof form.errors];
+  const fieldValue = (form.values.fromAmount as string) || ''; // ✅ SIMPLIFIED: direct field name usage
+  const fieldError = form.errors.fromAmount; // ✅ SIMPLIFIED: direct field name usage
 
   // Получаем field props БЕЗ перезаписи onChange/onBlur
-  const fieldProps = form.getFieldProps(fieldName);
+  const fieldProps = form.getFieldProps('fromAmount'); // ✅ SIMPLIFIED: direct field name usage
 
   return (
     <ExchangeForm.FieldWrapper>
-      <FormField name={fieldName} error={fieldError}>
+      <FormField name="fromAmount" error={fieldError}>
+        {' '}
+        {/* ✅ SIMPLIFIED: direct field name usage */}
         <ExchangeForm.FieldLabel>{t('sending.amount')}</ExchangeForm.FieldLabel>
         <FormControl>
           <Input
