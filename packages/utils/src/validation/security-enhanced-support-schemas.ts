@@ -9,13 +9,10 @@
 import { VALIDATION_LIMITS } from '@repo/constants';
 import { z } from 'zod';
 
+import { createXSSProtectedStringWithLength } from './enhanced-building-blocks';
 import { emailSchema } from './schemas-basic';
 import { currencySchema } from './schemas-crypto';
-import {
-  createXSSProtectedString,
-  SECURITY_VALIDATION_LIMITS,
-  SECURITY_PATTERNS,
-} from './security-utils';
+import { SECURITY_VALIDATION_LIMITS, SECURITY_PATTERNS } from './security-utils';
 
 /**
  * BASE PAGINATION SCHEMAS
@@ -32,7 +29,7 @@ export const securityEnhancedOffsetPaginationSchema = z.object({
 
 export const securityEnhancedCursorPaginationSchema = z.object({
   limit: z.number().min(1).max(100).default(SECURITY_VALIDATION_LIMITS.SEARCH_DEFAULT_LIMIT),
-  cursor: createXSSProtectedString(0, 100).optional(),
+  cursor: createXSSProtectedStringWithLength(0, 100).optional(),
 });
 
 /**
@@ -71,11 +68,11 @@ export const securityEnhancedUpdateNotificationsSchema = z.object({
  * SUPPORT SCHEMAS
  */
 export const securityEnhancedCreateTicketSchema = z.object({
-  subject: createXSSProtectedString(
+  subject: createXSSProtectedStringWithLength(
     VALIDATION_LIMITS.USERNAME_MIN_LENGTH,
     SECURITY_VALIDATION_LIMITS.SUBJECT_MAX_LENGTH
   ),
-  description: createXSSProtectedString(
+  description: createXSSProtectedStringWithLength(
     SECURITY_VALIDATION_LIMITS.MESSAGE_MIN_LENGTH,
     SECURITY_VALIDATION_LIMITS.MESSAGE_MAX_LENGTH
   ),
@@ -84,16 +81,16 @@ export const securityEnhancedCreateTicketSchema = z.object({
 
 export const securityEnhancedCreateTicketAdminSchema = z.object({
   userId: z.string().uuid('INVALID_USER_ID'),
-  subject: createXSSProtectedString(
+  subject: createXSSProtectedStringWithLength(
     VALIDATION_LIMITS.USERNAME_MIN_LENGTH,
     SECURITY_VALIDATION_LIMITS.SUBJECT_MAX_LENGTH
   ),
-  description: createXSSProtectedString(
+  description: createXSSProtectedStringWithLength(
     VALIDATION_LIMITS.PASSWORD_MIN_LENGTH,
     SECURITY_VALIDATION_LIMITS.MESSAGE_MAX_LENGTH
   ),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).default('MEDIUM'),
-  category: createXSSProtectedString(1, SECURITY_VALIDATION_LIMITS.TAG_MAX_LENGTH),
+  category: createXSSProtectedStringWithLength(1, SECURITY_VALIDATION_LIMITS.TAG_MAX_LENGTH),
 });
 
 export const securityEnhancedGetTicketsSchema = z.object({
@@ -105,14 +102,17 @@ export const securityEnhancedGetTicketsSchema = z.object({
 export const securityEnhancedUpdateTicketStatusSchema = z.object({
   ticketId: z.string().uuid('INVALID_TICKET_ID'),
   status: z.enum(['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED']),
-  comment: createXSSProtectedString(0, SECURITY_VALIDATION_LIMITS.MESSAGE_MAX_LENGTH).optional(),
+  comment: createXSSProtectedStringWithLength(
+    0,
+    SECURITY_VALIDATION_LIMITS.MESSAGE_MAX_LENGTH
+  ).optional(),
 });
 
 /**
  * SEARCH SCHEMAS
  */
 export const securityEnhancedSearchOrdersSchema = z.object({
-  query: createXSSProtectedString(0, 100).optional(),
+  query: createXSSProtectedStringWithLength(0, 100).optional(),
   status: z.enum(['pending', 'completed', 'cancelled']).optional(),
   currency: currencySchema.optional(),
   dateFrom: z.string().optional(),
@@ -121,14 +121,17 @@ export const securityEnhancedSearchOrdersSchema = z.object({
 });
 
 export const securityEnhancedSearchUsersSchema = z.object({
-  query: createXSSProtectedString(0, 100).optional(),
+  query: createXSSProtectedStringWithLength(0, 100).optional(),
   verified: z.boolean().optional(),
   ...securityEnhancedOffsetPaginationSchema.shape,
 });
 
 export const securityEnhancedSearchKnowledgeSchema = z.object({
-  query: createXSSProtectedString(1, SECURITY_VALIDATION_LIMITS.SEARCH_QUERY_MAX_LENGTH),
-  category: createXSSProtectedString(0, SECURITY_VALIDATION_LIMITS.TAG_MAX_LENGTH).optional(),
+  query: createXSSProtectedStringWithLength(1, SECURITY_VALIDATION_LIMITS.SEARCH_QUERY_MAX_LENGTH),
+  category: createXSSProtectedStringWithLength(
+    0,
+    SECURITY_VALIDATION_LIMITS.TAG_MAX_LENGTH
+  ).optional(),
   ...securityEnhancedLimitOnlySchema.shape,
 });
 
@@ -136,11 +139,11 @@ export const securityEnhancedSearchKnowledgeSchema = z.object({
  * USER PROFILE SCHEMAS
  */
 export const securityEnhancedUserProfileSchema = z.object({
-  name: createXSSProtectedString(
+  name: createXSSProtectedStringWithLength(
     SECURITY_VALIDATION_LIMITS.NAME_MIN_LENGTH,
     VALIDATION_LIMITS.FIRST_NAME_MAX_LENGTH
   ),
-  bio: createXSSProtectedString(0, SECURITY_VALIDATION_LIMITS.BIO_MAX_LENGTH).optional(),
+  bio: createXSSProtectedStringWithLength(0, SECURITY_VALIDATION_LIMITS.BIO_MAX_LENGTH).optional(),
   website: z
     .string()
     .url('WEBSITE_INVALID_URL')
@@ -160,16 +163,16 @@ export const securityEnhancedUserProfileSchema = z.object({
  * CONTACT FORM SCHEMA
  */
 export const securityEnhancedContactSchema = z.object({
-  name: createXSSProtectedString(
+  name: createXSSProtectedStringWithLength(
     SECURITY_VALIDATION_LIMITS.NAME_MIN_LENGTH,
     VALIDATION_LIMITS.FIRST_NAME_MAX_LENGTH
   ),
   email: emailSchema,
-  subject: createXSSProtectedString(
+  subject: createXSSProtectedStringWithLength(
     SECURITY_VALIDATION_LIMITS.SUBJECT_MIN_LENGTH,
     SECURITY_VALIDATION_LIMITS.SUBJECT_MAX_LENGTH
   ),
-  message: createXSSProtectedString(
+  message: createXSSProtectedStringWithLength(
     SECURITY_VALIDATION_LIMITS.MESSAGE_MIN_LENGTH,
     SECURITY_VALIDATION_LIMITS.MESSAGE_MAX_LENGTH
   ),
@@ -184,7 +187,7 @@ export const securityEnhancedContactSchema = z.object({
  * ADMIN CONTENT SCHEMA
  */
 export const securityEnhancedAdminContentSchema = z.object({
-  title: createXSSProtectedString(
+  title: createXSSProtectedStringWithLength(
     SECURITY_VALIDATION_LIMITS.TITLE_MIN_LENGTH,
     SECURITY_VALIDATION_LIMITS.TITLE_MAX_LENGTH
   ),
@@ -204,7 +207,7 @@ export const securityEnhancedAdminContentSchema = z.object({
     .default('draft'),
   tags: z
     .array(
-      createXSSProtectedString(
+      createXSSProtectedStringWithLength(
         SECURITY_VALIDATION_LIMITS.TAG_MIN_LENGTH,
         SECURITY_VALIDATION_LIMITS.TAG_MAX_LENGTH
       )

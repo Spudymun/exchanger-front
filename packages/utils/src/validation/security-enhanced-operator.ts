@@ -2,8 +2,9 @@
 import { ORDER_STATUSES } from '@repo/constants';
 import { z } from 'zod';
 
+import { createXSSProtectedStringWithLength } from './enhanced-building-blocks';
 import { securityEnhancedCursorPaginationSchema } from './security-enhanced-schemas';
-import { createXSSProtectedString, SECURITY_VALIDATION_LIMITS } from './security-utils';
+import { SECURITY_VALIDATION_LIMITS } from './security-utils';
 
 const OPERATOR_CHANGEABLE_STATUSES = [
   ORDER_STATUSES.PROCESSING,
@@ -27,7 +28,10 @@ export const securityEnhancedOperatorOrdersSchema = z.object({
 export const securityEnhancedUpdateOrderStatusSchema = z.object({
   orderId: z.string().uuid('INVALID_ORDER_ID'),
   status: z.enum(OPERATOR_CHANGEABLE_STATUSES),
-  comment: createXSSProtectedString(0, SECURITY_VALIDATION_LIMITS.COMMENT_MAX_LENGTH).optional(),
+  comment: createXSSProtectedStringWithLength(
+    0,
+    SECURITY_VALIDATION_LIMITS.COMMENT_MAX_LENGTH
+  ).optional(),
 });
 
 export type SecurityEnhancedOperatorOrders = z.infer<typeof securityEnhancedOperatorOrdersSchema>;

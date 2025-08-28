@@ -1,6 +1,5 @@
 // Security utilities for XSS protection and validation
 import { VALIDATION_LIMITS } from '@repo/constants';
-import { z } from 'zod';
 
 import { PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH, SEARCH_QUERY_MAX_LENGTH } from './schemas-basic';
 
@@ -35,30 +34,6 @@ export function containsPotentialXSS(value: string): boolean {
 
   return XSS_PATTERNS.some(pattern => pattern.test(normalizedValue));
 }
-
-/**
- * Creates XSS-protected string schema with validation
- * @param minLength - Minimum string length (default: 0)
- * @param maxLength - Maximum string length (default: 500)
- * @returns Zod schema with XSS protection
- */
-export function createXSSProtectedString(
-  minLength: number = 0,
-  maxLength: number = 500
-): z.ZodEffects<z.ZodString, string, string> {
-  return z
-    .string()
-    .min(minLength, `Минимальная длина: ${minLength} символов`)
-    .max(maxLength, `Максимальная длина: ${maxLength} символов`)
-    .refine(val => !containsPotentialXSS(val), {
-      message: 'Обнаружен потенциально опасный контент',
-    });
-}
-
-/**
- * Base XSS-protected string schema for general use
- */
-export const xssProtectedStringSchema = createXSSProtectedString();
 
 /**
  * Security validation limits for consistent validation across the app
