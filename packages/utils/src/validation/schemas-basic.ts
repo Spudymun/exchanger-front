@@ -60,11 +60,14 @@ export const emailSchema = z
  */
 export const passwordSchema = z
   .string()
-  .min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH)
-  .regex(/[A-Z]/) // Заглавная буква
-  .regex(/[a-z]/) // Строчная буква
-  .regex(/[0-9]/) // Цифра
-  .regex(/[^A-Za-z0-9]/); // Специальный символ
+  .min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH) // Пустая строка → too_small → "Пароль обязателен"
+  .refine(val => {
+    // Если строка не пустая, проверяем требования к паролю
+    if (val.length > 0) {
+      return /[A-Z]/.test(val) && /[a-z]/.test(val) && /[0-9]/.test(val) && /[^A-Za-z0-9]/.test(val);
+    }
+    return true; // Пустая строка уже обработана в min()
+  });
 
 /**
  * Имя пользователя

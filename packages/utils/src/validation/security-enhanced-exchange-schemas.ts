@@ -248,7 +248,6 @@ export const securityEnhancedFullExchangeFormSchema = unifiedExchangeBaseSchema.
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['cardNumber'],
-        message: 'CARD_NUMBER_INVALID',
       });
     }
   }

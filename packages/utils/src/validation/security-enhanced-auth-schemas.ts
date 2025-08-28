@@ -44,14 +44,9 @@ export const securityEnhancedEmailSchema = emailSchema;
 /**
  * FULLY XSS-PROTECTED EMAIL SCHEMA
  */
-export const fullySecurityEnhancedEmailSchema = z
-  .string()
-  .min(1, 'EMAIL_REQUIRED')
-  .max(VALIDATION_LIMITS.EMAIL_MAX_LENGTH, 'EMAIL_TOO_LONG')
-  .email('INVALID_EMAIL_FORMAT')
-  .refine(val => !containsPotentialXSS(val), {
-    message: XSS_CONTENT_DETECTED_MESSAGE,
-  });
+export const fullySecurityEnhancedEmailSchema = emailSchema.refine(val => !containsPotentialXSS(val), {
+  message: XSS_CONTENT_DETECTED_MESSAGE,
+});
 
 /**
  * FULLY XSS-PROTECTED PASSWORD SCHEMA
@@ -69,24 +64,12 @@ export const fullySecurityEnhancedPasswordSchema = createXSSProtectedString(
  * FULLY XSS-PROTECTED LOGIN SCHEMA
  */
 export const fullySecurityEnhancedLoginSchema = z.object({
-  email: z
-    .string()
-    .min(1)
-    .email()
-    .max(VALIDATION_LIMITS.EMAIL_MAX_LENGTH)
-    .refine(val => !containsPotentialXSS(val), {
-      message: XSS_CONTENT_DETECTED_MESSAGE,
-    }),
-  password: z
-    .string()
-    .min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH)
-    .regex(/[A-Z]/) // Заглавная буква
-    .regex(/[a-z]/) // Строчная буква
-    .regex(/[0-9]/) // Цифра
-    .regex(/[^A-Za-z0-9]/) // Специальный символ
-    .refine(val => !containsPotentialXSS(val), {
-      message: XSS_CONTENT_DETECTED_MESSAGE,
-    }),
+  email: emailSchema.refine(val => !containsPotentialXSS(val), {
+    message: XSS_CONTENT_DETECTED_MESSAGE,
+  }),
+  password: passwordSchema.refine(val => !containsPotentialXSS(val), {
+    message: XSS_CONTENT_DETECTED_MESSAGE,
+  }),
   captcha: securityEnhancedCaptchaSchema,
 });
 
@@ -95,34 +78,15 @@ export const fullySecurityEnhancedLoginSchema = z.object({
  */
 export const fullySecurityEnhancedRegisterSchema = z
   .object({
-    email: z
-      .string()
-      .min(1)
-      .email()
-      .max(VALIDATION_LIMITS.EMAIL_MAX_LENGTH)
-      .refine(val => !containsPotentialXSS(val), {
-        message: XSS_CONTENT_DETECTED_MESSAGE,
-      }),
-    password: z
-      .string()
-      .min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH)
-      .regex(/[A-Z]/) // Заглавная буква
-      .regex(/[a-z]/) // Строчная буква
-      .regex(/[0-9]/) // Цифра
-      .regex(/[^A-Za-z0-9]/) // Специальный символ
-      .refine(val => !containsPotentialXSS(val), {
-        message: XSS_CONTENT_DETECTED_MESSAGE,
-      }),
-    confirmPassword: z
-      .string()
-      .min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH)
-      .regex(/[A-Z]/) // Заглавная буква
-      .regex(/[a-z]/) // Строчная буква
-      .regex(/[0-9]/) // Цифра
-      .regex(/[^A-Za-z0-9]/) // Специальный символ
-      .refine(val => !containsPotentialXSS(val), {
-        message: XSS_CONTENT_DETECTED_MESSAGE,
-      }),
+    email: emailSchema.refine(val => !containsPotentialXSS(val), {
+      message: XSS_CONTENT_DETECTED_MESSAGE,
+    }),
+    password: passwordSchema.refine(val => !containsPotentialXSS(val), {
+      message: XSS_CONTENT_DETECTED_MESSAGE,
+    }),
+    confirmPassword: passwordSchema.refine(val => !containsPotentialXSS(val), {
+      message: XSS_CONTENT_DETECTED_MESSAGE,
+    }),
     captcha: securityEnhancedCaptchaSchema,
   })
   .refine(data => data.password === data.confirmPassword, {

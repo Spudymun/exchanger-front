@@ -84,8 +84,15 @@ export const AuthSubmitButton = <T extends Record<string, unknown> = Record<stri
   submitStyle = 'auth',
   children,
   className,
-  ...props
-}: AuthSubmitButtonProps<T>) => {
+  // Исключаем non-DOM props из ...props
+  fieldId: _fieldId,
+  formType: _formType,
+  ...domProps
+}: AuthSubmitButtonProps<T> & {
+  fieldId?: string;
+  formType?: string;
+  [key: string]: unknown;
+}) => {
   // СУЩЕСТВУЮЩАЯ валидация logic (сохранена для обратной совместимости)
   const getFormValidation = (): boolean => {
     if (form) {
@@ -104,7 +111,7 @@ export const AuthSubmitButton = <T extends Record<string, unknown> = Record<stri
       size={getFinalSize(submitStyle, size)}
       disabled={finalDisabled}
       className={cn(getSubmitStyles(submitStyle), className)}
-      {...props}
+      {...domProps}
     >
       {getButtonText(children, t, isLoading, submitStyle)}
     </Button>

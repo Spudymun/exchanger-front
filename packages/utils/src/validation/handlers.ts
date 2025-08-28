@@ -1,23 +1,5 @@
 /**
  * Обработчики валидации для различных типов полей
- *
- * АРХИТЕКТУРА NEXT-INTL ВАЛИДАЦИИ:
- *
- * 1. Формы используют: useTranslations('AdvancedExchangeForm') → создает функцию t
- * 2  // НОВОЕ: получаем контекст из schema  
-  const validationContext = (globalThis as Record<string, unknown>).__currentValidationContext as {
-    isValid: boolean;
-    reason?: string;
-    localizationKey?: string;
-    params?: Record<string, string | number>;
-  } | undefined;Handlers используют: t('validation.captcha.required')
- * 3. Next-intl автоматически ищет: AdvancedExchangeForm.validation.captcha.required
- * 4. Ключ найден в JSON: возвращается переведенное сообщение
- *
- * ПОЧЕМУ ЭТО РАБОТАЕТ:
- * - useTranslations('AdvancedExchangeForm') создает функцию t с префиксом
- * - Все ключи в handlers.ts автоматически получают префикс формы
- * - Переводы лежат в структуре: FormName.validation.field.error
  */
 
 import { VALIDATION_LIMITS } from '@repo/constants';
@@ -25,15 +7,6 @@ import { z } from 'zod';
 
 import { NextIntlValidationConfig, VALIDATION_KEYS } from './constants';
 
-/**
- * Обрабатывает специальные случаи валидации CAPTCHA
- *
- * МЕХАНИЗМ РАБОТЫ:
- * - Функция t получена из useTranslations('AdvancedExchangeForm')
- * - Ключ 'validation.captcha.required' превращается в 'AdvancedExchangeForm.validation.captcha.required'
- * - Next-intl ищет этот ключ в messages/ru.json и messages/en.json
- * - Возвращает переведенное сообщение или fallback
- */
 export function handleCaptchaValidation(
   issue: z.ZodIssueOptionalMessage,
   t: NextIntlValidationConfig['t']
@@ -53,35 +26,29 @@ export function handleCaptchaValidation(
   return null;
 }
 
-/**
- * Создает сообщение о необходимости заполнить CAPTCHA
- * УПРОЩЕННАЯ ЛОГИКА: Доверяем next-intl, убираем сложную проверку fallback
- */
 function createCaptchaRequiredMessage(t: NextIntlValidationConfig['t']): { message: string } {
   return { message: t(VALIDATION_KEYS.CAPTCHA_REQUIRED) };
 }
 
-/**
- * Создает сообщение о необходимости подтвердить CAPTCHA
- * УПРОЩЕННАЯ ЛОГИКА: Доверяем next-intl, убираем сложную проверку fallback
- */
 function createCaptchaNotVerifiedMessage(t: NextIntlValidationConfig['t']): { message: string } {
   return { message: t(VALIDATION_KEYS.CAPTCHA_NOT_VERIFIED) };
 }
 
-/**
- * Проверяет является ли ошибка связанной с невалидным форматом email
- */
-function isEmailFormatError(issue: z.ZodIssueOptionalMessage): boolean {
-  return (
-    issue.code === z.ZodIssueCode.invalid_string &&
-    (issue.validation === 'email' || issue.validation === 'regex')
-  );
+function createValidationMessage(key: string, t: NextIntlValidationConfig['t']): { message: string } {
+  return { message: t(key) };
 }
 
 /**
- * Обрабатывает валидацию email поля - ОБНОВЛЕНО для работы с централизованной emailSchema
- * ИСПРАВЛЕНИЕ: Обработка refine валидации для правильного приоритета сообщений
+ * Проверяет, является ли ошибка связанной с пустым полем
+ */
+function isEmptyFieldError(issue: z.ZodIssueOptionalMessage): boolean {
+  const hasEmptyInput = 'input' in issue && (issue.input === '' || issue.input === null || issue.input === undefined);
+  const hasEmptyReceived = 'received' in issue && (issue.received === '' || issue.received === '""' || issue.received === 'undefined');
+  return hasEmptyInput || hasEmptyReceived;
+}
+
+/**
+ * Обрабатывает валидацию email поля
  */
 export function handleEmailValidation(
   issue: z.ZodIssueOptionalMessage,
@@ -91,19 +58,16 @@ export function handleEmailValidation(
     return null;
   }
 
-  // ПРИОРИТЕТ 1: Пустое поле - всегда показываем "Email обязателен"
-  if (issue.code === z.ZodIssueCode.too_small) {
-    return { message: t(VALIDATION_KEYS.EMAIL_REQUIRED) };
+  if (issue.code === z.ZodIssueCode.too_small && issue.type === 'string') {
+    return createValidationMessage(VALIDATION_KEYS.EMAIL_REQUIRED, t);
   }
 
-  // ПРИОРИТЕТ 2: Невалидный формат через refine
+  if (issue.code === z.ZodIssueCode.invalid_type && issue.expected === 'string') {
+    return createValidationMessage(VALIDATION_KEYS.EMAIL_REQUIRED, t);
+  }
+
   if (issue.code === z.ZodIssueCode.custom) {
-    return { message: t(VALIDATION_KEYS.EMAIL_INVALID) };
-  }
-
-  // ПРИОРИТЕТ 3: Невалидный формат через встроенные валидации (legacy)
-  if (isEmailFormatError(issue)) {
-    return { message: t(VALIDATION_KEYS.EMAIL_INVALID) };
+    return createValidationMessage(VALIDATION_KEYS.EMAIL_INVALID, t);
   }
 
   return null;
@@ -124,8 +88,18 @@ export function handlePasswordValidation(
     return handlePasswordTooSmall(issue, t);
   }
 
+  // ЗАЩИТА: Если поле пустое, но пришел invalid_string - показываем "обязательно"
+  if (issue.code === z.ZodIssueCode.invalid_string && isEmptyFieldError(issue)) {
+    return { message: t(VALIDATION_KEYS.PASSWORD_REQUIRED) };
+  }
+
   if (issue.code === z.ZodIssueCode.invalid_string) {
     return handlePasswordInvalidString(issue, t);
+  }
+
+  // НОВОЕ: Обработка refine валидации (слабый пароль)
+  if (issue.code === z.ZodIssueCode.custom) {
+    return { message: t(VALIDATION_KEYS.PASSWORD_WEAK) };
   }
 
   return null;
@@ -145,6 +119,11 @@ function handlePasswordInvalidString(
   issue: z.ZodIssueOptionalMessage,
   t: NextIntlValidationConfig['t']
 ): { message: string } {
+  // ЗАЩИТА: Если поле пустое, но пришел regex validation - показываем "обязательно" 
+  if (isEmptyFieldError(issue)) {
+    return { message: t(VALIDATION_KEYS.PASSWORD_REQUIRED) };
+  }
+
   if ('validation' in issue && issue.validation === 'regex') {
     return { message: t(VALIDATION_KEYS.PASSWORD_WEAK) };
   }
@@ -186,6 +165,11 @@ function handleConfirmPasswordInvalidString(
   issue: z.ZodIssueOptionalMessage,
   t: NextIntlValidationConfig['t']
 ): { message: string } {
+  // ЗАЩИТА: Если поле пустое, но пришел regex validation - показываем "обязательно"
+  if (isEmptyFieldError(issue)) {
+    return { message: t(VALIDATION_KEYS.CONFIRM_PASSWORD_REQUIRED) };
+  }
+
   if ('validation' in issue && issue.validation === 'regex') {
     // Для пустого поля показываем "требуется", не "слабый пароль"
     return { message: t(VALIDATION_KEYS.CONFIRM_PASSWORD_REQUIRED) };
@@ -308,23 +292,14 @@ function handleCustomAmountError(
   return { message: t(VALIDATION_KEYS.AMOUNT_REQUIRED) };
 }
 
-/**
- * Обрабатывает ошибки формата строки для сумм
- */
 function handleAmountStringValidation(t: NextIntlValidationConfig['t']): { message: string } {
   return { message: t(VALIDATION_KEYS.AMOUNT_FORMAT) };
 }
 
-/**
- * Обрабатывает ошибки неправильного типа для сумм
- */
 function handleAmountTypeValidation(t: NextIntlValidationConfig['t']): { message: string } {
   return { message: t(VALIDATION_KEYS.AMOUNT_FORMAT) };
 }
 
-/**
- * Обрабатывает ошибки минимального размера для сумм
- */
 function handleAmountSizeValidation(t: NextIntlValidationConfig['t']): { message: string } {
   return { message: t(VALIDATION_KEYS.AMOUNT_REQUIRED) || t(VALIDATION_KEYS.REQUIRED) };
 }
@@ -352,9 +327,6 @@ function getAmountValidationMessage(
   return { message: t(VALIDATION_KEYS.INVALID) };
 }
 
-/**
- * Обрабатывает валидацию поля валюты (currency)
- */
 export function handleCurrencyValidation(
   issue: z.ZodIssueOptionalMessage,
   t: NextIntlValidationConfig['t']
@@ -363,17 +335,12 @@ export function handleCurrencyValidation(
   if (typeof fieldName !== 'string' || !fieldName.toLowerCase().includes('currency')) {
     return null;
   }
-
   if (issue.code === z.ZodIssueCode.custom) {
     return { message: t(VALIDATION_KEYS.CURRENCY_INVALID) };
   }
-
   return null;
 }
 
-/**
- * Обрабатывает специальные случаи валидации номера карты
- */
 export function handleCardNumberValidation(
   issue: z.ZodIssueOptionalMessage,
   t: NextIntlValidationConfig['t']
@@ -381,25 +348,18 @@ export function handleCardNumberValidation(
   if (issue.path?.length !== 1 || issue.path[0] !== 'cardNumber') {
     return null;
   }
-
   if (issue.code === z.ZodIssueCode.too_small) {
     return { message: t(VALIDATION_KEYS.CARD_NUMBER_REQUIRED) };
   }
-
   if (issue.code === z.ZodIssueCode.custom) {
     if (issue.message === 'INVALID_CHARACTERS_DETECTED') {
       return { message: t(VALIDATION_KEYS.XSS_DETECTED) };
     }
-    // Для refine без кастомного сообщения - общая ошибка валидации карты
     return { message: t(VALIDATION_KEYS.CARD_NUMBER_INVALID) };
   }
-
   return null;
 }
 
-/**
- * Обрабатывает специальные случаи валидации согласия с условиями
- */
 export function handleTermsValidation(
   issue: z.ZodIssueOptionalMessage,
   t: NextIntlValidationConfig['t']
@@ -407,25 +367,18 @@ export function handleTermsValidation(
   if (issue.path?.length !== 1 || issue.path[0] !== 'agreeToTerms') {
     return null;
   }
-
   if (issue.code === z.ZodIssueCode.custom) {
     return { message: t(VALIDATION_KEYS.TERMS_ACCEPTANCE_REQUIRED) };
   }
-
   return null;
 }
 
-/**
- * Обрабатывает общие случаи валидации
- */
 export function handleGeneralValidation(
   issue: z.ZodIssueOptionalMessage,
   t: NextIntlValidationConfig['t']
 ): { message: string } | null {
-  const fieldName = issue.path?.[0];
-
   if (issue.code === z.ZodIssueCode.too_small && issue.type === 'string') {
-    return handleTooSmallString(fieldName, t);
+    return handleTooSmallString(issue.path?.[0], t);
   }
 
   if (issue.code === z.ZodIssueCode.invalid_type && issue.expected === 'string') {
@@ -433,23 +386,22 @@ export function handleGeneralValidation(
   }
 
   if (issue.code === z.ZodIssueCode.custom) {
-    // Проверяем на XSS валидацию
-    if (issue.message === 'XSS content detected') {
-      return { message: t(VALIDATION_KEYS.XSS_DETECTED) };
-    }
-    return { message: t(VALIDATION_KEYS.INVALID) };
+    return handleCustomValidation(issue.message, t);
   }
 
   return null;
 }
 
-function handleTooSmallString(
-  fieldName: unknown,
-  t: NextIntlValidationConfig['t']
-): { message: string } {
-  // Специальная обработка для поля банка
+function handleTooSmallString(fieldName: unknown, t: NextIntlValidationConfig['t']): { message: string } {
   if (typeof fieldName === 'string' && fieldName.toLowerCase().includes('bank')) {
-    return { message: t('validation.bank.required') || t('validation.selectBank') };
+    return createValidationMessage('validation.bank.required', t) || createValidationMessage('validation.selectBank', t);
   }
-  return { message: t(VALIDATION_KEYS.REQUIRED) };
+  return createValidationMessage(VALIDATION_KEYS.REQUIRED, t);
+}
+
+function handleCustomValidation(message: string | undefined, t: NextIntlValidationConfig['t']): { message: string } {
+  if (message === 'XSS content detected') {
+    return createValidationMessage(VALIDATION_KEYS.XSS_DETECTED, t);
+  }
+  return createValidationMessage(VALIDATION_KEYS.INVALID, t);
 }
