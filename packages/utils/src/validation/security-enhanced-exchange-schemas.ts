@@ -93,6 +93,22 @@ export function getCurrentValidationContext() {
 }
 
 /**
+ * Helper function for amount format validation
+ * Извлечено для устранения дублирования кода
+ */
+function validateExchangeAmountFormat(val: string): boolean {
+  // Allow empty string
+  if (val === '') return true;
+  // Simple numeric validation without unsafe regex
+  const num = Number(val);
+  if (Number.isNaN(num)) return false;
+  // Check decimal places
+  const decimalParts = val.split('.');
+  if (decimalParts.length > 2) return false;
+  return true;
+}
+
+/**
  * Check if amount is valid format
  */
 function validateAmountFormat(fromAmount: string): number | null {
@@ -151,17 +167,7 @@ export const securityEnhancedSimpleExchangeFormSchema = z
     fromAmount: z
       .string()
       .min(1) // БЕЗ кастомного сообщения - позволяем errorMap работать
-      .refine(val => {
-        // Allow empty string
-        if (val === '') return true;
-        // Simple numeric validation without unsafe regex
-        const num = Number(val);
-        if (Number.isNaN(num)) return false;
-        // Check decimal places
-        const decimalParts = val.split('.');
-        if (decimalParts.length > 2) return false;
-        return true;
-      }), // БЕЗ кастомного сообщения - позволяем errorMap работать
+      .refine(validateExchangeAmountFormat), // БЕЗ кастомного сообщения - позволяем errorMap работать
     fromCurrency: currencySchema,
     tokenStandard: z.string().optional(),
     toCurrency: z.string(),
@@ -183,17 +189,7 @@ const unifiedExchangeBaseSchema = z.object({
   fromAmount: z
     .string()
     .min(1) // БЕЗ кастомного сообщения - позволяем errorMap работать
-    .refine(val => {
-      // Allow empty string
-      if (val === '') return true;
-      // Simple numeric validation without unsafe regex
-      const num = Number(val);
-      if (Number.isNaN(num)) return false;
-      // Check decimal places
-      const decimalParts = val.split('.');
-      if (decimalParts.length > 2) return false;
-      return true;
-    }), // БЕЗ кастомного сообщения - позволяем errorMap работать
+    .refine(validateExchangeAmountFormat), // БЕЗ кастомного сообщения - позволяем errorMap работать
   fromCurrency: currencySchema,
   tokenStandard: z.string().optional(),
   toCurrency: z.string(),
