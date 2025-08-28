@@ -7,6 +7,22 @@ import { cn } from '../../lib/utils';
 import { useAuthFormContext } from '../auth-form-compound';
 import { useExchangeFormContext } from '../exchange-form';
 
+// Утилитарная функция для определения defaultErrorStyling (устраняет избыточность)
+function resolveErrorStyling(
+  errorStyling: string | undefined,
+  ...contexts: Array<{ defaultErrorStyling?: string } | undefined>
+): 'auto' | 'disabled' | 'forced' {
+  if (errorStyling) return errorStyling as 'auto' | 'disabled' | 'forced';
+
+  for (const context of contexts) {
+    if (context?.defaultErrorStyling) {
+      return context.defaultErrorStyling as 'auto' | 'disabled' | 'forced';
+    }
+  }
+
+  return 'auto';
+}
+
 // Form Context
 export interface FormContextValue {
   id?: string;
@@ -29,21 +45,23 @@ export interface FormFieldProps extends React.HTMLAttributes<HTMLDivElement> {
   error?: string;
   required?: boolean;
   disabled?: boolean;
+  errorStyling?: 'auto' | 'disabled' | 'forced'; // ДОБАВЛЯЕМ ТОЛЬКО ЭТОТ ПРОП
 }
 
 const FormField = React.forwardRef<HTMLDivElement, FormFieldProps>(
-  ({ className, name, error, required, disabled, children, ...props }, ref) => {
+  ({ className, name, error, required, disabled, errorStyling, children, ...props }, ref) => {
     const id = React.useId();
     const parentContext = useFormContext(); // Получаем parent context
     const authContext = useAuthFormContext(); // Получаем auth context
     const exchangeContext = useExchangeFormContext(); // Получаем exchange context
 
-    // Определяем defaultErrorStyling из доступных контекстов
-    const defaultErrorStyling =
-      parentContext?.defaultErrorStyling ||
-      authContext?.defaultErrorStyling ||
-      exchangeContext?.defaultErrorStyling ||
-      'auto';
+    // Используем утилитарную функцию (устраняет дублирование логики)
+    const defaultErrorStyling = resolveErrorStyling(
+      errorStyling,
+      parentContext,
+      authContext,
+      exchangeContext
+    );
 
     const contextValue: FormContextValue = React.useMemo(
       () => ({
