@@ -67,7 +67,7 @@ export const securityEnhancedGetCurrencyRateSchema = z.object({
  * CALCULATE AMOUNT SCHEMA с enhanced security
  */
 export const securityEnhancedCalculateAmountSchema = z.object({
-  amount: z.number().positive(),
+  amount: z.number().positive('AMOUNT_POSITIVE_REQUIRED'),
   currency: currencySchema,
   direction: z.enum(['crypto-to-uah', 'uah-to-crypto']),
 });

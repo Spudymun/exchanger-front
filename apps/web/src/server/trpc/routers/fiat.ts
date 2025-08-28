@@ -120,7 +120,7 @@ export const fiatRouter = createTRPCRouter({
   calculateFiatExchange: publicProcedure
     .input(
       z.object({
-        cryptoAmount: z.number().positive(),
+        cryptoAmount: z.number().positive('AMOUNT_POSITIVE_REQUIRED'),
         fromCurrency: z.enum(CRYPTOCURRENCIES),
         toCurrency: z.enum(FIAT_CURRENCIES),
         bankId: z.string(),

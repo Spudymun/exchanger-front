@@ -57,10 +57,7 @@ export const securityEnhancedCreateExchangeOrderSchema = z.object({
     .min(VALIDATION_LIMITS.MIN_ORDER_AMOUNT, 'AMOUNT_MIN_REQUIRED')
     .max(VALIDATION_LIMITS.MAX_ORDER_AMOUNT, 'AMOUNT_MAX_EXCEEDED')
     .finite('AMOUNT_MUST_BE_FINITE'),
-  uahAmount: z
-    .number()
-    .positive('UAH_AMOUNT_POSITIVE_REQUIRED')
-    .finite('UAH_AMOUNT_MUST_BE_FINITE'),
+  uahAmount: z.number().positive('AMOUNT_POSITIVE_REQUIRED').finite('UAH_AMOUNT_MUST_BE_FINITE'),
   currency: currencySchema,
   paymentDetails: z
     .object({
