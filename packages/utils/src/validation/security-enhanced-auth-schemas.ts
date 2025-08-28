@@ -10,13 +10,12 @@ import { VALIDATION_LIMITS } from '@repo/constants';
 import { z } from 'zod';
 
 import { VALIDATION_KEYS } from './constants';
-import { xssProtectedPasswordSchema } from './enhanced-building-blocks';
-import { emailSchema, passwordSchema } from './schemas-basic';
 import {
-  createXSSProtectedString,
-  containsPotentialXSS,
-  SECURITY_VALIDATION_LIMITS,
-} from './security-utils';
+  xssProtectedPasswordSchema,
+  createXSSProtectedStringWithLength,
+} from './enhanced-building-blocks';
+import { emailSchema, passwordSchema } from './schemas-basic';
+import { containsPotentialXSS, SECURITY_VALIDATION_LIMITS } from './security-utils';
 
 // Константа для XSS сообщения
 const XSS_CONTENT_DETECTED_MESSAGE = VALIDATION_KEYS.XSS_DETECTED;
@@ -66,7 +65,7 @@ export const enhancedPasswordSchema = xssProtectedPasswordSchema;
  * ПРОБЛЕМА: Использует createXSSProtectedString вместо passwordSchema
  * УДАЛИТЬ ПОСЛЕ: Замены всех использований на enhancedPasswordSchema
  */
-export const fullySecurityEnhancedPasswordSchema = createXSSProtectedString(
+export const fullySecurityEnhancedPasswordSchema = createXSSProtectedStringWithLength(
   VALIDATION_LIMITS.PASSWORD_MIN_LENGTH,
   VALIDATION_LIMITS.PASSWORD_MAX_LENGTH
 );
@@ -108,19 +107,19 @@ export const securityEnhancedResetPasswordSchema = z.object({
 
 export const securityEnhancedConfirmResetPasswordSchema = z.object({
   email: emailSchema,
-  resetCode: createXSSProtectedString(1, SECURITY_VALIDATION_LIMITS.AUTH_CODE_MAX_LENGTH).refine(
-    val => val.length > 0,
-    'RESET_CODE_REQUIRED'
-  ),
+  resetCode: createXSSProtectedStringWithLength(
+    1,
+    SECURITY_VALIDATION_LIMITS.AUTH_CODE_MAX_LENGTH
+  ).refine((val: string) => val.length > 0, 'RESET_CODE_REQUIRED'),
   newPassword: passwordSchema,
 });
 
 export const securityEnhancedConfirmEmailSchema = z.object({
   email: emailSchema,
-  verificationCode: createXSSProtectedString(
+  verificationCode: createXSSProtectedStringWithLength(
     1,
     SECURITY_VALIDATION_LIMITS.AUTH_CODE_MAX_LENGTH
-  ).refine(val => val.length > 0, 'VERIFICATION_CODE_REQUIRED'),
+  ).refine((val: string) => val.length > 0, 'VERIFICATION_CODE_REQUIRED'),
 });
 
 export const securityEnhancedChangePasswordSchema = z

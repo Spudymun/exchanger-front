@@ -2,13 +2,10 @@
 import { VALIDATION_LIMITS, EXCHANGE_VALIDATION_PATTERNS } from '@repo/constants';
 import { z } from 'zod';
 
+import { createXSSProtectedStringWithLength } from './enhanced-building-blocks';
 import { emailSchema } from './schemas-basic';
 import { currencySchema } from './schemas-crypto';
-import {
-  createXSSProtectedString,
-  SECURITY_VALIDATION_LIMITS,
-  containsPotentialXSS,
-} from './security-utils';
+import { SECURITY_VALIDATION_LIMITS, containsPotentialXSS } from './security-utils';
 
 /**
  * Security-enhanced ID schema
@@ -45,12 +42,18 @@ export const securityEnhancedRecipientDataSchema = z.object({
     .string()
     .regex(EXCHANGE_VALIDATION_PATTERNS.CARD_NUMBER, 'Номер карты должен содержать точно 16 цифр')
     .optional(),
-  bankDetails: createXSSProtectedString(
+  bankDetails: createXSSProtectedStringWithLength(
     0,
     SECURITY_VALIDATION_LIMITS.COMMENT_MAX_LENGTH
   ).optional(),
-  recipientName: createXSSProtectedString(0, SECURITY_VALIDATION_LIMITS.NAME_MAX_LENGTH).optional(),
-  phone: createXSSProtectedString(0, SECURITY_VALIDATION_LIMITS.PHONE_MAX_LENGTH).optional(),
+  recipientName: createXSSProtectedStringWithLength(
+    0,
+    SECURITY_VALIDATION_LIMITS.NAME_MAX_LENGTH
+  ).optional(),
+  phone: createXSSProtectedStringWithLength(
+    0,
+    SECURITY_VALIDATION_LIMITS.PHONE_MAX_LENGTH
+  ).optional(),
 });
 
 /**
@@ -104,4 +107,4 @@ export type SecurityEnhancedQuickActions = z.infer<typeof securityEnhancedQuickA
 export type SecurityEnhancedCalculateAmount = z.infer<typeof securityEnhancedCalculateAmountSchema>;
 
 // Re-export security utility functions
-export { containsPotentialXSS, createXSSProtectedString } from './security-utils';
+export { containsPotentialXSS } from './security-utils';
