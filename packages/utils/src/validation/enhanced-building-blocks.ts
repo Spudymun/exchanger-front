@@ -67,20 +67,6 @@ export function createXSSProtectedStringWithLength(minLength = 0, maxLength?: nu
 /**
  * XSS-защищенные числовые схемы
  */
-export const xssProtectedAmountSchema = createXSSProtectedSchema(
-  z
-    .string()
-    .min(1)
-    .refine(val => {
-      // Безопасная проверка формата суммы без небезопасного regex
-      const parts = val.split('.');
-      if (parts.length > 2) return false; // Больше одной точки
-      if (parts[0] && !/^\d+$/u.test(parts[0])) return false; // Целая часть не число
-      if (parts[1] && !/^\d{1,2}$/u.test(parts[1])) return false; // Дробная часть не 1-2 цифры
-      return true;
-    }, 'Некорректный формат суммы')
-);
-
 export const xssProtectedNumberStringSchema = createXSSProtectedSchema(
   z.string().refine(val => /^\d+$/u.test(val), 'Только цифры')
 );
@@ -92,4 +78,3 @@ export type XSSProtectedEmail = z.infer<typeof xssProtectedEmailSchema>;
 export type XSSProtectedPassword = z.infer<typeof xssProtectedPasswordSchema>;
 export type XSSProtectedUsername = z.infer<typeof xssProtectedUsernameSchema>;
 export type XSSProtectedName = z.infer<typeof xssProtectedNameSchema>;
-export type XSSProtectedAmount = z.infer<typeof xssProtectedAmountSchema>;

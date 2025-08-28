@@ -7,6 +7,8 @@ import { CRYPTOCURRENCIES, VALIDATION_PATTERNS, DECIMAL_PRECISION } from '@repo/
 import type { CryptoCurrency } from '@repo/constants';
 import { z } from 'zod';
 
+import { containsPotentialXSS } from './security-utils';
+
 // === CRYPTO ВАЛИДАЦИЯ ===
 
 /**
@@ -50,10 +52,11 @@ export const createCryptoAddressSchema = (currency: CryptoCurrency) => {
 };
 
 /**
- * Криптовалютная сумма в строковом формате
+ * Криптовалютная сумма в строковом формате с XSS защитой
  */
 export const cryptoAmountStringSchema = z
   .string()
+  .refine(val => !containsPotentialXSS(val), 'INVALID_CHARACTERS_DETECTED')
   .refine(
     val => {
       // Allow empty string

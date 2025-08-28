@@ -93,10 +93,13 @@ export function getCurrentValidationContext() {
 }
 
 /**
- * Helper function for amount format validation
+ * Helper function for amount format validation with XSS protection
  * Извлечено для устранения дублирования кода
  */
 function validateExchangeAmountFormat(val: string): boolean {
+  // XSS защита по примеру других полей в проекте
+  if (containsPotentialXSS(val)) return false;
+
   // Allow empty string
   if (val === '') return true;
   // Simple numeric validation without unsafe regex
