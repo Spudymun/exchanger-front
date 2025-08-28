@@ -16,14 +16,11 @@ import {
   validateCardLength,
   isNotTestCard,
 } from './card-validation';
+import { createXSSProtectedStringWithLength } from './enhanced-building-blocks';
 import { emailSchema, cardNumberSchema } from './schemas-basic';
 import { currencySchema } from './schemas-crypto';
 import { securityEnhancedCaptchaSchema } from './security-enhanced-auth-schemas';
-import {
-  createXSSProtectedString,
-  containsPotentialXSS,
-  SECURITY_VALIDATION_LIMITS,
-} from './security-utils';
+import { containsPotentialXSS, SECURITY_VALIDATION_LIMITS } from './security-utils';
 
 /**
  * SECURITY-ENHANCED CARD NUMBER SCHEMA
@@ -68,7 +65,7 @@ export const securityEnhancedCreateExchangeOrderSchema = z.object({
   paymentDetails: z
     .object({
       cardNumber: securityEnhancedCardNumberSchema.optional(), // Используем security-enhanced схему
-      bankDetails: createXSSProtectedString(
+      bankDetails: createXSSProtectedStringWithLength(
         0,
         SECURITY_VALIDATION_LIMITS.MESSAGE_MAX_LENGTH
       ).optional(),

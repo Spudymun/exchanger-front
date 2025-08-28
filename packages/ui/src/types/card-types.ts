@@ -2,6 +2,8 @@
  * Types for saved card management
  */
 
+import type { UseFormReturn } from '@repo/hooks';
+
 export interface SavedCard {
   id: string;
   lastFourDigits: string;

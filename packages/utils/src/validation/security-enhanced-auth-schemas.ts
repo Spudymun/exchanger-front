@@ -10,6 +10,7 @@ import { VALIDATION_LIMITS } from '@repo/constants';
 import { z } from 'zod';
 
 import { VALIDATION_KEYS } from './constants';
+import { xssProtectedPasswordSchema } from './enhanced-building-blocks';
 import { emailSchema, passwordSchema } from './schemas-basic';
 import {
   createXSSProtectedString,
@@ -22,11 +23,12 @@ const XSS_CONTENT_DETECTED_MESSAGE = VALIDATION_KEYS.XSS_DETECTED;
 
 /**
  * CAPTCHA SCHEMA с enhanced security
+ * ЭТАП 2: Заменено на XSS-защищенную схему из enhanced-building-blocks
  */
 export const securityEnhancedCaptchaSchema = z
   .string()
   .min(1)
-  .refine(value => {
+  .refine((value: string) => {
     if (containsPotentialXSS(value)) {
       return false;
     }
@@ -54,14 +56,10 @@ export const fullySecurityEnhancedEmailSchema = emailSchema.refine(
 );
 
 /**
- * ENHANCED PASSWORD SCHEMA - Унифицированная версия
- * АРХИТЕКТУРНОЕ РЕШЕНИЕ: Базовая passwordSchema + XSS protection
- * ЗАМЕНЯЕТ: fullySecurityEnhancedPasswordSchema (другая логика)
- * ЦЕЛЬ: Единый стандарт password validation во всех формах
+ * UNIFIED PASSWORD SCHEMA
+ * ЭТАП 2: Заменено на XSS-защищенную схему из enhanced-building-blocks
  */
-export const enhancedPasswordSchema = passwordSchema.refine(val => !containsPotentialXSS(val), {
-  message: XSS_CONTENT_DETECTED_MESSAGE,
-});
+export const enhancedPasswordSchema = xssProtectedPasswordSchema;
 
 /**
  * @deprecated Используй enhancedPasswordSchema - унифицированную версию
