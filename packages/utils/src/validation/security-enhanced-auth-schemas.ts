@@ -38,13 +38,6 @@ export const securityEnhancedCaptchaSchema = z
   });
 
 /**
- * @deprecated Бесполезный алиас - используй emailSchema напрямую
- * УДАЛИТЬ ПОСЛЕ: Замены всех использований на emailSchema
- * ПРОБЛЕМА: Не добавляет функциональности, только усложняет код
- */
-export const securityEnhancedEmailSchema = emailSchema;
-
-/**
  * FULLY XSS-PROTECTED EMAIL SCHEMA
  */
 export const fullySecurityEnhancedEmailSchema = emailSchema.refine(
@@ -143,7 +136,6 @@ export type SecurityEnhancedConfirmResetPassword = z.infer<
 export type SecurityEnhancedConfirmEmail = z.infer<typeof securityEnhancedConfirmEmailSchema>;
 export type SecurityEnhancedChangePassword = z.infer<typeof securityEnhancedChangePasswordSchema>;
 export type SecurityEnhancedCaptcha = z.infer<typeof securityEnhancedCaptchaSchema>;
-export type SecurityEnhancedEmail = z.infer<typeof securityEnhancedEmailSchema>;
 
 // Type exports для новых XSS-защищенных схем
 export type FullySecurityEnhancedEmail = z.infer<typeof fullySecurityEnhancedEmailSchema>;
