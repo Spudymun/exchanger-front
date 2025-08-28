@@ -77,7 +77,7 @@ const ExchangeForm = React.forwardRef<HTMLFormElement, ExchangeFormProps>(
     return (
       <ExchangeErrorBoundary>
         <ExchangeFormContext.Provider value={contextValue}>
-          <form ref={ref} className={cn('space-y-6', className)} {...props}>
+          <form ref={ref} className={cn('space-y-6', className)} {...props} noValidate>
             {children}
           </form>
         </ExchangeFormContext.Provider>
@@ -175,15 +175,20 @@ export interface CardPairProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const CardPair = React.forwardRef<HTMLDivElement, CardPairProps>(
   ({ className, layout = 'horizontal', children, ...props }, ref) => {
-const getLayoutClass = (l: typeof layout) => {
-  switch (l) {
-    case 'horizontal': return 'grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 items-stretch';
-    case 'vertical': return 'space-y-6 sm:space-y-8';
-    case 'compact': return 'grid grid-cols-1 gap-6 sm:gap-8';
-    case 'withArrow': return 'flex flex-col md:grid md:grid-cols-[1fr_auto_1fr] gap-6 sm:gap-8 md:gap-10 items-center';
-    default: return 'grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 items-start';
-  }
-};
+    const getLayoutClass = (l: typeof layout) => {
+      switch (l) {
+        case 'horizontal':
+          return 'grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 items-stretch';
+        case 'vertical':
+          return 'space-y-6 sm:space-y-8';
+        case 'compact':
+          return 'grid grid-cols-1 gap-6 sm:gap-8';
+        case 'withArrow':
+          return 'flex flex-col md:grid md:grid-cols-[1fr_auto_1fr] gap-6 sm:gap-8 md:gap-10 items-center';
+        default:
+          return 'grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 lg:gap-10 items-start';
+      }
+    };
 
     return (
       <div ref={ref} className={cn(getLayoutClass(layout), className)} {...props}>

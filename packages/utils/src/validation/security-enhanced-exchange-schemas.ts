@@ -196,11 +196,8 @@ const unifiedExchangeBaseSchema = z.object({
   selectedBankId: z.string().optional(),
 
   // Дополнительные поля для расширенной формы обмена
-  email: z
-    .string()
-    .min(1) // Без кастомного сообщения - система сама замапит на validation.email.required
-    .email(), // Без кастомного сообщения - система сама замапит на validation.email.invalid
-  cardNumber: z.string().optional(), // Не требуем сразу, валидируем при submit
+  email: emailSchema,
+  cardNumber: z.string().min(1), // Требуем заполнения - система замапит на validation.cardNumber.required
   captcha: securityEnhancedCaptchaSchema, // Та же валидация, что в модальных окнах
   agreeToTerms: z.boolean().optional(), // Не требуем сразу, валидируем при submit
 });

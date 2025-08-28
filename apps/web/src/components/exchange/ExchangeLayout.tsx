@@ -17,6 +17,7 @@ import {
   Input,
   FormEmailField,
   FormCaptchaField,
+  SubmitButton,
 } from '@repo/ui';
 import { type SecurityEnhancedFullExchangeForm } from '@repo/utils';
 import React from 'react';
@@ -207,11 +208,11 @@ function AdditionalSections({
       <PersonalDataSection form={form} t={t} />
       <SecuritySection form={form} t={t} />
 
-      {/* Submit Section - будет реализовано в task 2.4 */}
+      {/* Submit Section - РЕАЛИЗОВАНО */}
       <section className="submit-section">
-        <div className="placeholder-content h-16 bg-primary/10 border border-dashed border-primary/30 rounded-md flex items-center justify-center">
-          <span className="text-sm text-primary">Submit Button & Actions (Task 2.4)</span>
-        </div>
+        <ExchangeForm.ActionArea variant="separated">
+          <SubmitButton form={form} context="exchange" t={t} variant="default" size="lg" />
+        </ExchangeForm.ActionArea>
       </section>
     </div>
   );
@@ -224,7 +225,7 @@ export function ExchangeLayout({
   isValid: _isValid,
 }: ExchangeLayoutProps) {
   return (
-    <form onSubmit={form.handleSubmit} className="exchange-form">
+    <form onSubmit={form.handleSubmit} className="exchange-form" noValidate>
       {/* Two-Column Layout using Compound Components */}
       <ExchangeForm.CardPair layout="horizontal">
         <SendingSection form={form} t={t} />

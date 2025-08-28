@@ -32,13 +32,19 @@ export const idSchema = z.string().min(1);
  * Усиленная схема email с правильным regex
  * АРХИТЕКТУРНОЕ РЕШЕНИЕ: Без хардкод сообщений - используется createNextIntlZodErrorMap
  * Сообщения переводов обрабатываются через handlers.ts с ключами типа 'validation.email.required'
+ * ИСПРАВЛЕНИЕ: Используем refine для контроля приоритетов валидации
  */
 export const emailSchema = z
   .string()
-  .min(1)
-  .email()
-  .max(VALIDATION_LIMITS.EMAIL_MAX_LENGTH)
-  .regex(VALIDATION_PATTERNS.EMAIL);
+  .min(1) // Пустая строка → too_small → "Email обязателен"
+  .refine(val => {
+    // Если строка не пустая, проверяем email формат
+    if (val.length > 0) {
+      return z.string().email().safeParse(val).success && VALIDATION_PATTERNS.EMAIL.test(val);
+    }
+    return true; // Пустая строка уже обработана в min(1)
+  })
+  .refine(val => val.length <= VALIDATION_LIMITS.EMAIL_MAX_LENGTH);
 
 /**
  * Новая система паролей - усиленные требования безопасности

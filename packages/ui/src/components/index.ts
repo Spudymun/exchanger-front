@@ -199,14 +199,16 @@ export {
 // Auth Types - Enhanced with new AuthSubmitButton props
 export type { AuthSubmitButtonProps } from './auth/AuthSubmitButton';
 
-// НОВЫЕ aliases для унификации согласно плану
-export { AuthSubmitButton as SubmitButton } from './auth';
+// ===== SUBMIT BUTTON (SEMANTIC NAMING) =====
+export { SubmitButton, type SubmitButtonProps } from './forms/SubmitButton';
+
+// LEGACY aliases для унификации согласно плану
+export { AuthSubmitButton as SubmitButtonLegacy } from './auth';
 export { AuthSubmitButton as ExchangeSubmitButton } from './auth';
 export { AuthSubmitButton as HeroSubmitButton } from './auth';
 
 // Type exports для полной совместимости
 export type {
-  AuthSubmitButtonProps as SubmitButtonProps,
   AuthSubmitButtonProps as ExchangeSubmitButtonProps,
   AuthSubmitButtonProps as HeroSubmitButtonProps,
 } from './auth/AuthSubmitButton';

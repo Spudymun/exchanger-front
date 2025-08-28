@@ -70,7 +70,18 @@ function createCaptchaNotVerifiedMessage(t: NextIntlValidationConfig['t']): { me
 }
 
 /**
+ * Проверяет является ли ошибка связанной с невалидным форматом email
+ */
+function isEmailFormatError(issue: z.ZodIssueOptionalMessage): boolean {
+  return (
+    issue.code === z.ZodIssueCode.invalid_string &&
+    (issue.validation === 'email' || issue.validation === 'regex')
+  );
+}
+
+/**
  * Обрабатывает валидацию email поля - ОБНОВЛЕНО для работы с централизованной emailSchema
+ * ИСПРАВЛЕНИЕ: Обработка refine валидации для правильного приоритета сообщений
  */
 export function handleEmailValidation(
   issue: z.ZodIssueOptionalMessage,
@@ -80,12 +91,19 @@ export function handleEmailValidation(
     return null;
   }
 
-  if (issue.code === z.ZodIssueCode.invalid_string && issue.validation === 'email') {
+  // ПРИОРИТЕТ 1: Пустое поле - всегда показываем "Email обязателен"
+  if (issue.code === z.ZodIssueCode.too_small) {
+    return { message: t(VALIDATION_KEYS.EMAIL_REQUIRED) };
+  }
+
+  // ПРИОРИТЕТ 2: Невалидный формат через refine
+  if (issue.code === z.ZodIssueCode.custom) {
     return { message: t(VALIDATION_KEYS.EMAIL_INVALID) };
   }
 
-  if (issue.code === z.ZodIssueCode.too_small) {
-    return { message: t(VALIDATION_KEYS.EMAIL_REQUIRED) };
+  // ПРИОРИТЕТ 3: Невалидный формат через встроенные валидации (legacy)
+  if (isEmailFormatError(issue)) {
+    return { message: t(VALIDATION_KEYS.EMAIL_INVALID) };
   }
 
   return null;

@@ -47,7 +47,7 @@ export const WithError: Story = {
 
 export const FormExample: Story = {
   render: () => (
-    <form className="space-y-4 w-80">
+    <form className="space-y-4 w-80" noValidate>
       <FormField name="name" required>
         <FormLabel>Имя</FormLabel>
         <FormControl>

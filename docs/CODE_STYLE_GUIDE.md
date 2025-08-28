@@ -993,8 +993,41 @@ import { loginSchema } from '@repo/utils'; // Уязвимо к XSS!
 
 1. **Security-First**: XSS protection на уровне schemas
 2. **Type Safety**: SecurityEnhanced\* типы для всех форм
-3. **Compositional Design**: Building blocks + security layer
-4. **Legacy Deprecation**: Миграция от небезопасных patterns
+
+### HTML5 Validation Rules
+
+**КРИТИЧНО**: Все `<form>` элементы ДОЛЖНЫ иметь атрибут `noValidate` для правильной работы Zod валидации.
+
+#### ✅ Правильный подход:
+
+```typescript
+// ✅ Отключение HTML5 валидации для использования Zod schemas
+<form onSubmit={handleSubmit} noValidate>
+  {/* Form fields */}
+</form>
+
+// ✅ В компонентах форм
+<form ref={ref} className="space-y-4" {...props} noValidate>
+  {children}
+</form>
+```
+
+#### ❌ Неправильный подход:
+
+```typescript
+// ❌ Без noValidate - HTML5 валидация перехватывает submit
+<form onSubmit={handleSubmit}>
+  {/* Browser validation will override Zod! */}
+</form>
+```
+
+#### Почему важно:
+
+- **Порядок валидации**: HTML5 валидация срабатывает РАНЬШЕ чем Zod
+- **Конфликт сообщений**: Браузерные сообщения заменяют кастомные
+- **UX проблемы**: Неправильный порядок валидации полей (email вместо amount)
+
+**Правило**: ВСЕГДА добавляйте `noValidate` к любому `<form>` элементу в проекте. 3. **Compositional Design**: Building blocks + security layer 4. **Legacy Deprecation**: Миграция от небезопасных patterns
 
 ---
 

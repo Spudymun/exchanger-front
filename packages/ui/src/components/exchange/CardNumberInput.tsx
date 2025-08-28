@@ -44,6 +44,7 @@ export function CardNumberInput({
             inputMode="numeric"
             className="transition-colors"
             value={fieldValue}
+            required
           />
         </FormControl>
         <FormMessage />

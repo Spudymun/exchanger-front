@@ -101,7 +101,13 @@ const FormWrapper = React.forwardRef<HTMLFormElement, FormWrapperProps>(
     } = props as Record<string, unknown>;
 
     return (
-      <form ref={ref} className={cn('space-y-4', className)} onSubmit={handleSubmit} {...domProps}>
+      <form
+        ref={ref}
+        className={cn('space-y-4', className)}
+        onSubmit={handleSubmit}
+        {...domProps}
+        noValidate
+      >
         {enhancedChildren}
       </form>
     );
