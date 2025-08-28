@@ -7,28 +7,9 @@ import {
 import { useNotifications } from './useNotifications';
 
 // Helper function to validate basic form fields
-const validateBasicFields = (formData: ExchangeStore['formData']) => {
-  const errors: Record<string, string[]> = {};
-
-  if (!formData.fromCurrency) {
-    errors.fromCurrency = ['Select currency to exchange'];
-  }
-
-  if (!formData.fromAmount || formData.fromAmount <= 0) {
-    // ✅ UNIFIED: cryptoAmount → fromAmount
-    errors.fromAmount = ['Enter correct amount']; // ✅ UNIFIED: cryptoAmount → fromAmount
-  }
-
-  if (!formData.cardNumber) {
-    errors.cardNumber = ['Enter card number'];
-  }
-
-  if (!formData.agreeToTerms) {
-    errors.agreement = ['Agreement must be accepted'];
-  }
-
-  return errors;
-};
+// ✅ REDUNDANCY ELIMINATION: Removed validateBasicFields() duplication
+// Zod схемы уже проверяют: fromCurrency.min(1), fromAmount validation, cardNumber.min(1), agreeToTerms
+// Избегаем дублирования валидационной логики - используем только Zod
 
 // Helper function to validate email using Zod schema
 const validateEmailField = (userEmail: string) => {
@@ -47,7 +28,10 @@ const createValidationFunction = (
 ) => {
   return () => {
     const { formData, calculation } = store;
-    const errors = validateBasicFields(formData);
+    // ✅ REDUNDANCY ELIMINATION: Only calculation validation needed here
+    // Basic field validation (fromCurrency, fromAmount, cardNumber, agreeToTerms)
+    // is handled by Zod schemas in forms - no duplication needed
+    const errors: Record<string, string[]> = {};
 
     // Use centralized email validation
     const emailErrors = validateEmailField(formData.email);
