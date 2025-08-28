@@ -3,11 +3,9 @@
  * Извлечено из validation-schemas.ts для улучшения поддерживаемости
  */
 
-import { CRYPTOCURRENCIES, VALIDATION_PATTERNS, DECIMAL_PRECISION } from '@repo/constants';
+import { CRYPTOCURRENCIES, VALIDATION_PATTERNS } from '@repo/constants';
 import type { CryptoCurrency } from '@repo/constants';
 import { z } from 'zod';
-
-import { containsPotentialXSS } from './security-utils';
 
 // === CRYPTO ВАЛИДАЦИЯ ===
 
@@ -52,32 +50,10 @@ export const createCryptoAddressSchema = (currency: CryptoCurrency) => {
 };
 
 /**
- * Криптовалютная сумма в строковом формате с XSS защитой
+ * DEPRECATED: cryptoAmountStringSchema удалена
+ * Использовать validateExchangeAmountFormat() в security-enhanced schemas
+ * Причина: не используется в активном коде, только в legacy useExchangeStoreWithTranslations
  */
-export const cryptoAmountStringSchema = z
-  .string()
-  .refine(val => !containsPotentialXSS(val), 'INVALID_CHARACTERS_DETECTED')
-  .refine(
-    val => {
-      // Allow empty string
-      if (val === '') return true;
-      // Simple numeric validation without unsafe regex
-      const num = Number(val);
-      if (Number.isNaN(num)) return false;
-      // Check decimal places
-      const decimalParts = val.split('.');
-      if (decimalParts.length > 2) return false;
-      if (
-        decimalParts.length === 2 &&
-        decimalParts[1] &&
-        decimalParts[1].length > DECIMAL_PRECISION.CRYPTO_DECIMAL_PLACES
-      )
-        return false;
-      return true;
-    },
-    { message: 'AMOUNT_FORMAT' }
-  )
-  .refine(val => val === '' || Number(val) > 0, { message: 'AMOUNT_POSITIVE' });
 
 /**
  * Валидация криптовалюты
