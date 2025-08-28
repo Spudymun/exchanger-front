@@ -93,6 +93,10 @@ export function getCurrentValidationContext() {
  * Helper function for amount format validation with XSS protection
  * Извлечено для устранения дублирования кода
  */
+/**
+ * Unified amount validation function
+ * Объединяет validateExchangeAmountFormat + validateAmountFormat
+ */
 function validateExchangeAmountFormat(val: string): boolean {
   // XSS защита по примеру других полей в проекте
   if (containsPotentialXSS(val)) return false;
@@ -109,10 +113,12 @@ function validateExchangeAmountFormat(val: string): boolean {
 }
 
 /**
- * Check if amount is valid format
+ * Parse amount format and return number (used internally)
+ * Заменяет validateAmountFormat()
  */
-function validateAmountFormat(fromAmount: string): number | null {
-  if (!fromAmount || fromAmount === '' || Number.isNaN(Number(fromAmount))) {
+function parseValidAmountFormat(fromAmount: string): number | null {
+  // Используем основную валидацию для проверки формата
+  if (!validateExchangeAmountFormat(fromAmount) || fromAmount === '') {
     return null; // Skip if invalid format - handled by field validation
   }
 
@@ -150,7 +156,7 @@ function validateCryptoAmountLimits(
   fromCurrency: string,
   ctx: z.RefinementCtx
 ): void {
-  const amount = validateAmountFormat(fromAmount);
+  const amount = parseValidAmountFormat(fromAmount);
   if (amount === null || !fromCurrency) {
     return;
   }
