@@ -35,16 +35,27 @@
 
 ```typescript
 // ✅ ПРАВИЛЬНО: Единое место определения
-// packages/utils/src/validation-schemas.ts
+// packages/utils/src/validation/schemas-basic.ts
 export const passwordSchema = z
   .string()
-  .min(8, { message: 'PASSWORD_MIN_LENGTH:8' })
-  .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/, {
-    message: 'PASSWORD_WEAK',
-  });
+  .min(VALIDATION_LIMITS.PASSWORD_MIN_LENGTH, 'Минимум 8 символов')
+  .max(VALIDATION_LIMITS.PASSWORD_MAX_LENGTH, 'Максимум 128 символов')
+  .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/, 'Слабый пароль');
+
+export const cardNumberSchema = z
+  .string()
+  .min(1)
+  .refine(val => {
+    const cleaned = val.replace(/[\s-]/g, '');
+    return (
+      /^\d+$/.test(cleaned) &&
+      cleaned.length >= VALIDATION_LIMITS.CARD_NUMBER_MIN_LENGTH &&
+      cleaned.length <= VALIDATION_LIMITS.CARD_NUMBER_MAX_LENGTH
+    );
+  }, 'Номер карты должен содержать 13-19 цифр');
 
 // ✅ Использование везде одинаково
-import { passwordSchema } from '@repo/utils/validation-schemas';
+import { passwordSchema, cardNumberSchema } from '@repo/utils';
 ```
 
 ### 2. Separation of Concerns (Разделение ответственности)
@@ -60,7 +71,7 @@ import { passwordSchema } from '@repo/utils/validation-schemas';
 #### Layer 2: Building Blocks (Базовые схемы)
 
 - **Ответственность**: Атомарные валидаторы без XSS рисков
-- **Инструменты**: Базовые Zod schemas
+- **Инструменты**: Базовые Zod schemas (emailSchema, passwordSchema, cardNumberSchema, nameSchema, phoneInternationalSchema)
 - **Расположение**: `packages/utils/src/validation/schemas-basic.ts`, `schemas-crypto.ts`
 
 #### Layer 3: Business Validation
@@ -186,7 +197,7 @@ if (index === VALIDATION_LIMITS.NOT_FOUND) return undefined;
 ├── security-enhanced-utils.ts      # Утилитарные schemas
 │
 📦 Building Blocks Layer (Базовые компоненты)
-├── schemas-basic.ts               # email, password, username
+├── schemas-basic.ts               # email, password, username, cardNumber, name, phone
 ├── schemas-crypto.ts              # currency, crypto addresses
 │
 🏗️ Infrastructure Layer

@@ -103,3 +103,33 @@ export const searchQuerySchema = z
  * Международный номер телефона
  */
 export const phoneInternationalSchema = z.string().regex(/^\+?[1-9]\d{1,14}$/);
+
+/**
+ * Номер банковской карты с базовой валидацией
+ * АРХИТЕКТУРНОЕ РЕШЕНИЕ: Базовая схема без XSS защиты для переиспользования
+ * XSS защита добавляется в security-enhanced схемах
+ */
+export const cardNumberSchema = z
+  .string()
+  .min(1)
+  .refine(
+    (val) => {
+      // Удаляем пробелы и дефисы для проверки
+      const cleaned = val.replace(/[\s-]/g, '');
+      return /^\d+$/.test(cleaned) && 
+             cleaned.length >= VALIDATION_LIMITS.CARD_NUMBER_MIN_LENGTH && 
+             cleaned.length <= VALIDATION_LIMITS.CARD_NUMBER_MAX_LENGTH;
+    },
+    'Номер карты должен содержать 13-19 цифр'
+  );
+
+/**
+ * Схема для имени/фамилии
+ * АРХИТЕКТУРНОЕ РЕШЕНИЕ: Базовая схема без XSS защиты для переиспользования
+ */
+export const nameSchema = z
+  .string()
+  .min(VALIDATION_LIMITS.FIRST_NAME_MIN_LENGTH, 'Минимум 1 символ')
+  .max(VALIDATION_LIMITS.FIRST_NAME_MAX_LENGTH, 'Максимум 50 символов')
+  .regex(VALIDATION_PATTERNS.NAME, 'Некорректные символы в имени')
+  .trim();

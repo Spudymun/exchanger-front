@@ -11,7 +11,7 @@ import { isAmountWithinLimits, type CryptoCurrency } from '@repo/exchange-core';
 import { z } from 'zod';
 
 import { sanitizeCardNumber, luhnCheck, validateCardLength } from './card-validation';
-import { emailSchema } from './schemas-basic';
+import { emailSchema, cardNumberSchema } from './schemas-basic';
 import { currencySchema } from './schemas-crypto';
 import { securityEnhancedCaptchaSchema } from './security-enhanced-auth-schemas';
 import {
@@ -21,12 +21,10 @@ import {
 } from './security-utils';
 
 /**
- * CENTRALIZED CARD NUMBER SCHEMA
- * Единая схема для валидации номера карты - DRY принцип
+ * SECURITY-ENHANCED CARD NUMBER SCHEMA
+ * Extends base cardNumberSchema with XSS protection and sanitation
  */
-const cardNumberSchema = z
-  .string()
-  .min(1) // Стандартная zod валидация - обрабатывается handleCardNumberValidation
+const securityEnhancedCardNumberSchema = cardNumberSchema
   .transform(val => {
     if (containsPotentialXSS(val)) {
       throw new z.ZodError([
@@ -60,7 +58,7 @@ export const securityEnhancedCreateExchangeOrderSchema = z.object({
   currency: currencySchema,
   paymentDetails: z
     .object({
-      cardNumber: cardNumberSchema.optional(), // Используем централизованную схему
+      cardNumber: securityEnhancedCardNumberSchema.optional(), // Используем security-enhanced схему
       bankDetails: createXSSProtectedString(
         0,
         SECURITY_VALIDATION_LIMITS.MESSAGE_MAX_LENGTH
@@ -243,7 +241,7 @@ export const securityEnhancedFullExchangeFormSchema = unifiedExchangeBaseSchema.
     if (
       data.cardNumber &&
       data.cardNumber !== '' &&
-      !cardNumberSchema.safeParse(data.cardNumber).success
+      !securityEnhancedCardNumberSchema.safeParse(data.cardNumber).success
     ) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

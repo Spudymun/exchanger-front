@@ -373,6 +373,31 @@ export function handleTermsValidation(
   return null;
 }
 
+export function handleNameValidation(
+  issue: z.ZodIssueOptionalMessage,
+  t: NextIntlValidationConfig['t']
+): { message: string } | null {
+  const isNameField = issue.path?.some(p => 
+    typeof p === 'string' && (p.includes('name') || p.includes('Name'))
+  );
+  
+  if (!isNameField) return null;
+
+  if (issue.code === z.ZodIssueCode.too_small) {
+    return { message: t('validation.name.tooShort') };
+  }
+
+  if (issue.code === z.ZodIssueCode.too_big) {
+    return { message: t('validation.name.tooLong') };
+  }
+
+  if (issue.code === z.ZodIssueCode.invalid_string) {
+    return { message: t('validation.name.invalidCharacters') };
+  }
+
+  return null;
+}
+
 export function handleGeneralValidation(
   issue: z.ZodIssueOptionalMessage,
   t: NextIntlValidationConfig['t']

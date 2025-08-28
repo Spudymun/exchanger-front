@@ -29,6 +29,10 @@ export const VALIDATION_LIMITS = {
   MIN_WITHDRAWAL_AMOUNT: 10,
   MAX_WITHDRAWAL_AMOUNT: 100000,
 
+  // Card validation
+  CARD_NUMBER_MIN_LENGTH: 13, // Visa 13-digit cards
+  CARD_NUMBER_MAX_LENGTH: 19, // American Express extended
+
   // Trading
   ORDER_ITEMS_MAX: 50,
   PORTFOLIO_ASSETS_MAX: 100,
@@ -87,6 +91,12 @@ export const VALIDATION_PATTERNS = {
    * Начинается с L, M или 3, длина 26-33 символа, Base58
    */
   LTC_ADDRESS: /^[LM3][a-km-zA-HJ-NP-Z1-9]{26,33}$/u,
+
+  /**
+   * Имена/фамилии - латиница и кириллица
+   * Разрешены: буквы, пробелы, дефисы, апострофы
+   */
+  NAME: /^[a-zA-Zа-яА-ЯёЁ\s'-]+$/u,
 } as const;
 
 // ===== ДУБЛИРУЮЩИЕ СИСТЕМЫ ВАЛИДАЦИИ УДАЛЕНЫ =====

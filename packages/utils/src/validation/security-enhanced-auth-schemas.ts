@@ -64,9 +64,7 @@ export const fullySecurityEnhancedPasswordSchema = createXSSProtectedString(
  * FULLY XSS-PROTECTED LOGIN SCHEMA
  */
 export const fullySecurityEnhancedLoginSchema = z.object({
-  email: emailSchema.refine(val => !containsPotentialXSS(val), {
-    message: XSS_CONTENT_DETECTED_MESSAGE,
-  }),
+  email: fullySecurityEnhancedEmailSchema,
   password: passwordSchema.refine(val => !containsPotentialXSS(val), {
     message: XSS_CONTENT_DETECTED_MESSAGE,
   }),
@@ -78,9 +76,7 @@ export const fullySecurityEnhancedLoginSchema = z.object({
  */
 export const fullySecurityEnhancedRegisterSchema = z
   .object({
-    email: emailSchema.refine(val => !containsPotentialXSS(val), {
-      message: XSS_CONTENT_DETECTED_MESSAGE,
-    }),
+    email: fullySecurityEnhancedEmailSchema,
     password: passwordSchema.refine(val => !containsPotentialXSS(val), {
       message: XSS_CONTENT_DETECTED_MESSAGE,
     }),

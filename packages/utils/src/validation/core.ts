@@ -28,6 +28,7 @@ import {
   handleAmountValidation,
   handleCurrencyValidation,
   handleCardNumberValidation,
+  handleNameValidation,
   handleTermsValidation,
   handleGeneralValidation,
 } from './handlers';
@@ -58,6 +59,7 @@ function handleFormFieldValidation(
     handleAmountValidation(issue, t) ||
     handleCurrencyValidation(issue, t) ||
     handleCardNumberValidation(issue, t) ||
+    handleNameValidation(issue, t) ||
     handleTermsValidation(issue, t)
   );
 }
