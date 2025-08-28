@@ -4,7 +4,15 @@ export * from './validation-helpers';
 export * from './order-utils';
 export * from './trpc-errors';
 export * from './order-status';
-// УДАЛЁН: export * from './validation-schemas'; // Legacy schemas - заменены на security-enhanced
+// Core validation functionality
+export * from './validation/core';
+export * from './validation/handlers';
+export * from './validation/schemas-basic';
+export * from './validation/security-enhanced-auth-schemas';
+export * from './validation/security-enhanced-exchange-schemas';
+export * from './validation/security-utils';
+
+// Форматирование // Legacy schemas - заменены на security-enhanced
 export * from './next-intl-validation';
 export * from './validation';
 export * from './validation/security-enhanced-exchange-schemas';
