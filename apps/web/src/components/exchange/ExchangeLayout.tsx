@@ -225,7 +225,7 @@ export function ExchangeLayout({
   isValid: _isValid,
 }: ExchangeLayoutProps) {
   return (
-    <form onSubmit={form.handleSubmit} className="exchange-form" noValidate>
+    <div className="exchange-layout">
       {/* Two-Column Layout using Compound Components */}
       <ExchangeForm.CardPair layout="horizontal">
         <SendingSection form={form} t={t} />
@@ -233,6 +233,6 @@ export function ExchangeLayout({
       </ExchangeForm.CardPair>
 
       <AdditionalSections form={form} t={t} />
-    </form>
+    </div>
   );
 }

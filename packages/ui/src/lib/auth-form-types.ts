@@ -12,4 +12,5 @@ export interface AuthFormContextValue {
   formType?: 'login' | 'register';
   onSubmit?: (data?: Record<string, unknown>) => void | Promise<void>;
   validationErrors?: Record<string, string>;
+  defaultErrorStyling?: 'auto' | 'disabled' | 'forced';
 }

@@ -107,7 +107,15 @@ export function ExchangeContainer({ locale: _locale, initialParams }: ExchangeCo
       </header>
 
       {/* Main Exchange Layout */}
-      <ExchangeLayout form={form} t={t} calculatedAmount={calculatedAmount} isValid={isValid} />
+      <ExchangeForm
+        exchangeData={form.values}
+        isSubmitting={form.isSubmitting}
+        isValid={isValid}
+        defaultErrorStyling="disabled"
+        onSubmit={form.handleSubmit}
+      >
+        <ExchangeLayout form={form} t={t} calculatedAmount={calculatedAmount} isValid={isValid} />
+      </ExchangeForm>
     </ExchangeForm.Container>
   );
 }

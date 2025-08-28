@@ -27,11 +27,23 @@ export interface AuthFormProviderProps
   formType?: 'login' | 'register';
   onSubmit?: (data?: Record<string, unknown>) => void;
   validationErrors?: Record<string, string>;
+  defaultErrorStyling?: 'auto' | 'disabled' | 'forced';
 }
 
 const AuthFormProvider = React.forwardRef<HTMLDivElement, AuthFormProviderProps>(
   (
-    { children, form, isLoading, t, fieldId, formType, onSubmit, validationErrors, ...htmlProps },
+    {
+      children,
+      form,
+      isLoading,
+      t,
+      fieldId,
+      formType,
+      onSubmit,
+      validationErrors,
+      defaultErrorStyling,
+      ...htmlProps
+    },
     ref
   ) => {
     const contextValue = React.useMemo<AuthFormContextValue>(
@@ -43,8 +55,9 @@ const AuthFormProvider = React.forwardRef<HTMLDivElement, AuthFormProviderProps>
         formType,
         onSubmit,
         validationErrors,
+        defaultErrorStyling,
       }),
-      [form, isLoading, t, fieldId, formType, onSubmit, validationErrors]
+      [form, isLoading, t, fieldId, formType, onSubmit, validationErrors, defaultErrorStyling]
     );
 
     const enhancedChildren = React.Children.map(children, child =>

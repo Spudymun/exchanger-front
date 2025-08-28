@@ -111,6 +111,7 @@ function HeroExchangeFormContent({
       isSubmitting={form.isSubmitting}
       isValid={isValid}
       onSubmit={form.handleSubmit}
+      defaultErrorStyling="disabled"
     >
       {useAdaptiveContainer ? (
         <ExchangeForm.EnhancedContainer variant="adaptive-hero" adaptiveProps={adaptiveProps}>

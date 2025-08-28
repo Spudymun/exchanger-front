@@ -4,6 +4,8 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 
 import { cn } from '../../lib/utils';
+import { useAuthFormContext } from '../auth-form-compound';
+import { useExchangeFormContext } from '../exchange-form';
 
 // Form Context
 export interface FormContextValue {
@@ -12,6 +14,7 @@ export interface FormContextValue {
   error?: string;
   required?: boolean;
   disabled?: boolean;
+  defaultErrorStyling?: 'auto' | 'disabled' | 'forced';
 }
 
 const FormContext = React.createContext<FormContextValue | undefined>(undefined);
@@ -31,6 +34,17 @@ export interface FormFieldProps extends React.HTMLAttributes<HTMLDivElement> {
 const FormField = React.forwardRef<HTMLDivElement, FormFieldProps>(
   ({ className, name, error, required, disabled, children, ...props }, ref) => {
     const id = React.useId();
+    const parentContext = useFormContext(); // Получаем parent context
+    const authContext = useAuthFormContext(); // Получаем auth context
+    const exchangeContext = useExchangeFormContext(); // Получаем exchange context
+
+    // Определяем defaultErrorStyling из доступных контекстов
+    const defaultErrorStyling =
+      parentContext?.defaultErrorStyling ||
+      authContext?.defaultErrorStyling ||
+      exchangeContext?.defaultErrorStyling ||
+      'auto';
+
     const contextValue: FormContextValue = React.useMemo(
       () => ({
         id,
@@ -38,8 +52,9 @@ const FormField = React.forwardRef<HTMLDivElement, FormFieldProps>(
         error,
         required,
         disabled,
+        defaultErrorStyling,
       }),
-      [id, name, error, required, disabled]
+      [id, name, error, required, disabled, defaultErrorStyling]
     );
 
     return (
@@ -80,12 +95,28 @@ export interface FormLabelProps
   extends React.LabelHTMLAttributes<HTMLLabelElement>,
     VariantProps<typeof formLabelVariants> {
   required?: boolean;
+  errorStyling?: 'auto' | 'disabled' | 'forced';
 }
 
 const FormLabel = React.forwardRef<HTMLLabelElement, FormLabelProps>(
-  ({ className, variant, size, required, children, ...props }, ref) => {
+  ({ className, variant, size, required, errorStyling, children, ...props }, ref) => {
     const context = useFormContext();
-    const isError = variant === 'error' || !!context?.error;
+
+    // Determine error styling behavior
+    const effectiveErrorStyling = errorStyling ?? context?.defaultErrorStyling ?? 'auto';
+
+    const shouldShowError = (() => {
+      switch (effectiveErrorStyling) {
+        case 'disabled':
+          return false;
+        case 'forced':
+          return true;
+        case 'auto':
+        default:
+          return variant === 'error' || !!context?.error;
+      }
+    })();
+
     const isRequired = required ?? context?.required;
 
     return (
@@ -94,7 +125,7 @@ const FormLabel = React.forwardRef<HTMLLabelElement, FormLabelProps>(
         htmlFor={context?.id}
         className={cn(
           formLabelVariants({
-            variant: isError ? 'error' : 'default',
+            variant: shouldShowError ? 'error' : 'default',
             size,
           }),
           className

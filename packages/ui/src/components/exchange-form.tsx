@@ -45,6 +45,7 @@ export interface ExchangeFormContextValue {
   isValid?: boolean;
   exchangeData?: Record<string, unknown>;
   onValueChange?: (field: string, value: unknown) => void;
+  defaultErrorStyling?: 'auto' | 'disabled' | 'forced';
 }
 
 const ExchangeFormContext = React.createContext<ExchangeFormContextValue | undefined>(undefined);
@@ -59,19 +60,33 @@ export interface ExchangeFormProps extends React.FormHTMLAttributes<HTMLFormElem
   isSubmitting?: boolean;
   isValid?: boolean;
   onValueChange?: (field: string, value: unknown) => void;
+  defaultErrorStyling?: 'auto' | 'disabled' | 'forced';
   children: React.ReactNode;
 }
 
 const ExchangeForm = React.forwardRef<HTMLFormElement, ExchangeFormProps>(
-  ({ className, children, exchangeData, isSubmitting, isValid, onValueChange, ...props }, ref) => {
+  (
+    {
+      className,
+      children,
+      exchangeData,
+      isSubmitting,
+      isValid,
+      onValueChange,
+      defaultErrorStyling,
+      ...props
+    },
+    ref
+  ) => {
     const contextValue: ExchangeFormContextValue = React.useMemo(
       () => ({
         isSubmitting,
         isValid,
         exchangeData,
         onValueChange,
+        defaultErrorStyling,
       }),
-      [isSubmitting, isValid, exchangeData, onValueChange]
+      [isSubmitting, isValid, exchangeData, onValueChange, defaultErrorStyling]
     );
 
     return (
@@ -297,8 +312,9 @@ const FieldLabel = React.forwardRef<HTMLLabelElement, FieldLabelProps>(
     return (
       <FormLabel
         ref={ref}
-        className={cn('text-sm font-medium text-foreground', className)}
+        className={cn('text-sm font-medium', className)}
         required={required}
+        errorStyling="disabled"
         {...props}
       >
         {children}
@@ -397,5 +413,4 @@ export {
   ActionArea,
 };
 
-// Default export as compound component
 export default ExchangeFormCompound;

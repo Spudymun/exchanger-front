@@ -68,6 +68,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
       t={tValidation}
       fieldId={AUTH_FIELD_IDS.LOGIN.EMAIL}
       formType="login"
+      defaultErrorStyling="disabled"
     >
       <AuthForm.FormWrapper>
         <AuthForm.FieldWrapper>
