@@ -250,26 +250,6 @@ function handleMaxAmountError(
   return null;
 }
 
-/**
- * Обрабатывает legacy формат сообщений через строку
- */
-function handleLegacyAmountError(
-  message: string | undefined,
-  t: NextIntlValidationConfig['t']
-): { message: string } | null {
-  if (message?.startsWith('AMOUNT_MIN_VALUE:')) {
-    const min = message.split(':')[1] || '0.01';
-    return { message: t(VALIDATION_KEYS.AMOUNT_MIN_VALUE, { min }) };
-  }
-
-  if (message?.startsWith('AMOUNT_MAX_VALUE:')) {
-    const max = message.split(':')[1] || '1000000';
-    return { message: t(VALIDATION_KEYS.AMOUNT_MAX_VALUE, { max }) };
-  }
-
-  return null;
-}
-
 function handleCustomAmountError(
   issue: z.ZodIssueOptionalMessage,
   t: NextIntlValidationConfig['t']
@@ -284,10 +264,6 @@ function handleCustomAmountError(
     const maxResult = handleMaxAmountError(validationContext, t);
     if (maxResult) return maxResult;
   }
-
-  // LEGACY: поддержка старого формата через message
-  const legacyResult = handleLegacyAmountError(issue.message, t);
-  if (legacyResult) return legacyResult;
 
   return { message: t(VALIDATION_KEYS.AMOUNT_REQUIRED) };
 }
