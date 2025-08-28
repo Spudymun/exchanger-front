@@ -170,7 +170,27 @@ export function handleConfirmPasswordValidation(
     return { message: t(VALIDATION_KEYS.CONFIRM_PASSWORD_NO_MATCH) };
   }
 
+  // Обработка regex валидации (переиспользуем логику password поля)
+  if (issue.code === z.ZodIssueCode.invalid_string) {
+    return handleConfirmPasswordInvalidString(issue, t);
+  }
+
   return null;
+}
+
+/**
+ * Обрабатывает invalid_string ошибки для confirmPassword поля
+ * Переиспользует логику handlePasswordInvalidString
+ */
+function handleConfirmPasswordInvalidString(
+  issue: z.ZodIssueOptionalMessage,
+  t: NextIntlValidationConfig['t']
+): { message: string } {
+  if ('validation' in issue && issue.validation === 'regex') {
+    // Для пустого поля показываем "требуется", не "слабый пароль"
+    return { message: t(VALIDATION_KEYS.CONFIRM_PASSWORD_REQUIRED) };
+  }
+  return { message: t(VALIDATION_KEYS.CONFIRM_PASSWORD_REQUIRED) };
 }
 
 /**
