@@ -105,6 +105,3 @@ export const securityEnhancedQuickActionsSchema = z.object({
 
 export type SecurityEnhancedQuickActions = z.infer<typeof securityEnhancedQuickActionsSchema>;
 export type SecurityEnhancedCalculateAmount = z.infer<typeof securityEnhancedCalculateAmountSchema>;
-
-// Re-export security utility functions
-export { containsPotentialXSS } from './security-utils';
