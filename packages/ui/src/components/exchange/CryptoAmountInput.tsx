@@ -45,8 +45,13 @@ export function CryptoAmountInput({
   placeholder,
   type = 'text',
 }: CryptoAmountInputProps) {
-  // Валидация ввода для героической формы
-  const { handleKeyDown } = useNumericInput(form.values.fromCurrency as string);
+  // Определяем поле валюты на основе fieldName
+  const currencyFieldName = fieldName === 'fromAmount' ? 'fromCurrency' : 'toCurrency';
+
+  // Валидация ввода с правильным полем валюты
+  const { handleKeyDown } = useNumericInput(
+    form.values[currencyFieldName as keyof typeof form.values] as string
+  );
 
   const handleAmountKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (useValidation) {
