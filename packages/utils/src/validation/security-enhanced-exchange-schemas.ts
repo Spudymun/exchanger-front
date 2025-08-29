@@ -17,8 +17,11 @@ import {
   isNotTestCard,
 } from './card-validation';
 import { VALIDATION_KEYS } from './constants'; // ✅ UNIFIED: import validation keys for consistent error messages
-import { createXSSProtectedStringWithLength } from './enhanced-building-blocks';
-import { emailSchema, cardNumberSchema } from './schemas-basic';
+import {
+  createXSSProtectedStringWithLength,
+  xssProtectedEmailSchema,
+} from './enhanced-building-blocks';
+import { cardNumberSchema } from './schemas-basic';
 import { currencySchema } from './schemas-crypto';
 import { securityEnhancedCaptchaSchema } from './security-enhanced-auth-schemas';
 import { containsPotentialXSS, SECURITY_VALIDATION_LIMITS } from './security-utils';
@@ -51,7 +54,7 @@ export const securityEnhancedCardNumberSchema = cardNumberSchema
  * CREATE EXCHANGE ORDER SCHEMA
  */
 export const securityEnhancedCreateExchangeOrderSchema = z.object({
-  email: emailSchema,
+  email: xssProtectedEmailSchema, // ✅ XSS PROTECTION: Exchange-specific XSS protection
   cryptoAmount: z
     .number()
     .positive('AMOUNT_POSITIVE_REQUIRED')
@@ -203,7 +206,7 @@ const unifiedExchangeBaseSchema = z.object({
   selectedBankId: z.string().optional(),
 
   // Дополнительные поля для расширенной формы обмена
-  email: emailSchema,
+  email: xssProtectedEmailSchema, // ✅ XSS PROTECTION: Exchange-specific XSS protection
   cardNumber: z.string().min(1), // Требуем заполнения - система замапит на validation.cardNumber.required
   captcha: securityEnhancedCaptchaSchema, // Та же валидация, что в модальных окнах
   agreeToTerms: z.boolean().optional(), // Не требуем сразу, валидируем при submit

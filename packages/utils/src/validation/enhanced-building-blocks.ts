@@ -5,7 +5,7 @@
 
 import { z } from 'zod';
 
-import { emailSchema, passwordSchema, usernameSchema, nameSchema, idSchema } from './schemas-basic';
+import { passwordSchema, usernameSchema, nameSchema, idSchema, emailSchema } from './schemas-basic';
 
 import { containsPotentialXSS } from './security-utils';
 
@@ -23,10 +23,18 @@ function createXSSProtectedSchema<T extends z.ZodType>(
  * ЦЕЛЬ: Заменить 28 дублирующихся вызовов createXSSProtectedString
  */
 
+/**
+ * XSS-PROTECTED SCHEMAS
+ * ✅ УЛУЧШЕННАЯ ВЕРСИЯ: Объединяет лучшее от обеих схем
+ */
 export const xssProtectedEmailSchema = emailSchema.refine(
-  val => !containsPotentialXSS(val),
-  'INVALID_CHARACTERS_DETECTED'
+  (val: string) => !containsPotentialXSS(val),
+  {
+    message: 'INVALID_CHARACTERS_DETECTED', // Совместимость с handlers.ts
+    // В handlers.ts уже есть mapping: 'INVALID_CHARACTERS_DETECTED' -> VALIDATION_KEYS.XSS_DETECTED
+  }
 );
+// ✅ REPLACE: fullySecurityEnhancedEmailSchema -> use xssProtectedEmailSchema everywhere
 
 export const xssProtectedPasswordSchema = passwordSchema.refine(
   val => !containsPotentialXSS(val),

@@ -9,16 +9,16 @@
 import { VALIDATION_LIMITS } from '@repo/constants';
 import { z } from 'zod';
 
-import { VALIDATION_KEYS } from './constants';
 import {
   xssProtectedPasswordSchema,
   createXSSProtectedStringWithLength,
+  xssProtectedEmailSchema,
 } from './enhanced-building-blocks';
 import { emailSchema, passwordSchema } from './schemas-basic';
 import { containsPotentialXSS, SECURITY_VALIDATION_LIMITS } from './security-utils';
 
-// Константа для XSS сообщения
-const XSS_CONTENT_DETECTED_MESSAGE = VALIDATION_KEYS.XSS_DETECTED;
+// Константа для XSS сообщения - больше не нужна
+// const XSS_CONTENT_DETECTED_MESSAGE = VALIDATION_KEYS.XSS_DETECTED;
 
 /**
  * CAPTCHA SCHEMA с enhanced security
@@ -38,14 +38,10 @@ export const securityEnhancedCaptchaSchema = z
   });
 
 /**
- * FULLY XSS-PROTECTED EMAIL SCHEMA
+ * ✅ UNIFIED EMAIL SCHEMA
+ * Теперь используем единую схему xssProtectedEmailSchema везде
  */
-export const fullySecurityEnhancedEmailSchema = emailSchema.refine(
-  val => !containsPotentialXSS(val),
-  {
-    message: XSS_CONTENT_DETECTED_MESSAGE,
-  }
-);
+// Удаляем дублирующую схему - используем xssProtectedEmailSchema
 
 /**
  * UNIFIED PASSWORD SCHEMA
@@ -61,7 +57,7 @@ export const enhancedPasswordSchema = xssProtectedPasswordSchema;
  * FULLY XSS-PROTECTED LOGIN SCHEMA
  */
 export const fullySecurityEnhancedLoginSchema = z.object({
-  email: fullySecurityEnhancedEmailSchema,
+  email: xssProtectedEmailSchema, // ✅ UNIFIED: Теперь используем единую схему везде
   password: enhancedPasswordSchema, // ← УНИФИЦИРОВАННАЯ СХЕМА
   captcha: securityEnhancedCaptchaSchema,
 });
@@ -71,7 +67,7 @@ export const fullySecurityEnhancedLoginSchema = z.object({
  */
 export const fullySecurityEnhancedRegisterSchema = z
   .object({
-    email: fullySecurityEnhancedEmailSchema,
+    email: xssProtectedEmailSchema, // ✅ UNIFIED: Теперь используем единую схему везде
     password: enhancedPasswordSchema, // ← УНИФИЦИРОВАННАЯ СХЕМА
     confirmPassword: enhancedPasswordSchema, // ← УНИФИЦИРОВАННАЯ СХЕМА
     captcha: securityEnhancedCaptchaSchema,
@@ -128,7 +124,8 @@ export type SecurityEnhancedChangePassword = z.infer<typeof securityEnhancedChan
 export type SecurityEnhancedCaptcha = z.infer<typeof securityEnhancedCaptchaSchema>;
 
 // Type exports для новых XSS-защищенных схем
-export type FullySecurityEnhancedEmail = z.infer<typeof fullySecurityEnhancedEmailSchema>;
+// ✅ UNIFIED TYPES: Используем единые типы
+export type FullySecurityEnhancedEmail = z.infer<typeof xssProtectedEmailSchema>;
 export type FullySecurityEnhancedPassword = z.infer<typeof enhancedPasswordSchema>; // ✅ LEGACY REMOVED: use enhancedPasswordSchema
 export type EnhancedPassword = z.infer<typeof enhancedPasswordSchema>; // ← НОВЫЙ ТИП
 export type FullySecurityEnhancedLoginForm = z.infer<typeof fullySecurityEnhancedLoginSchema>;
