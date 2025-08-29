@@ -184,15 +184,18 @@ export const cardNumberSchema = z
 
 **❌ Проблема:** Три разных правила валидации для номера карты!
 
-#### 4. ДУБЛИРОВАНИЕ ПЕРЕВОДОВ (НЕЗНАЧИТЕЛЬНОЕ)
+#### 4. ДУБЛИРОВАНИЕ ПЕРЕВОДОВ (КРИТИЧЕСКОЕ)
 
 **🔍 Местоположения:**
 
-- `validation.cardNumber.required/invalid` в переводах
-- `receiving.cardNumber` в Layout переводах
-- `EXCHANGE_VALIDATION_MESSAGES.CARD_NUMBER_INVALID` в константах
+- `validation.cardNumber.required/invalid` в переводах (i18n)
+- `receiving.cardNumber` в Layout переводах (label)
+- `exchange.validation.enterCardNumber` в переводах (placeholder)
+- `EXCHANGE_VALIDATION_MESSAGES.CARD_NUMBER_INVALID` в константах (hardcode)
 
-**⚖️ Статус:** АРХИТЕКТУРНО ОПРАВДАННО - разные контексты использования.
+**❌ ПРОБЛЕМА:** `EXCHANGE_VALIDATION_MESSAGES.CARD_NUMBER_INVALID` дублирует `validation.cardNumber.invalid`!
+
+**🔧 РЕШЕНИЕ:** Удалить константу и использовать только i18n переводы.
 
 ### ✅ АРХИТЕКТУРНО ОПРАВДАННЫЕ повторения:
 
@@ -271,7 +274,10 @@ export const cardNumberSchema = z
    - Рабочая схема `cardNumberSchema` остается источником истины
    - Безопасность через `securityEnhancedCardNumberSchema` с XSS защитой
 
-4. **📝 СРЕДНИЙ:** ~~Удалить устаревшие паттерны из exchange.ts~~ (БОЛЬШЕ НЕ НУЖНО)
+4. **✅ ИСПРАВЛЕНО:** Устранено дублирование переводов
+   - Удалена избыточная константа `EXCHANGE_VALIDATION_MESSAGES.CARD_NUMBER_INVALID`
+   - Используется только i18n система через `validation.cardNumber.invalid`
+   - Архитектурно оправданные переводы сохранены (labels vs validation vs placeholders)
 
 ### 🔍 Анализ завершен на 100%
 
@@ -294,7 +300,8 @@ export const cardNumberSchema = z
 
 1. `packages/utils/src/validation/card-validation.ts` - удалены дублированные константы
 2. `packages/utils/src/validation/security-utils.ts` - удалены дублированные константы
-3. `packages/utils/src/validation/security-enhanced-utils.ts` - заменена conflicting схема на унифицированную
+3. `packages/utils/src/validation/security-enhanced-utils.ts` - исправлен circular import, унифицирована схема
+4. `packages/constants/src/exchange.ts` - удалена избыточная константа `CARD_NUMBER_INVALID`
 
 **📊 АРХИТЕКТУРНАЯ ЦЕЛОСТНОСТЬ:**
 

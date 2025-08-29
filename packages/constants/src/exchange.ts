@@ -29,7 +29,7 @@ export const EXCHANGE_VALIDATION_MESSAGES = {
   AMOUNT_TOO_LOW: `Min amount: $${AMOUNT_LIMITS.MIN_USD}`, // English fallback
   AMOUNT_TOO_HIGH: `Max amount: $${AMOUNT_LIMITS.MAX_USD}`, // English fallback
   CURRENCY_INVALID: 'Unsupported cryptocurrency', // English fallback
-  CARD_NUMBER_INVALID: 'Invalid card number', // English fallback
+  // CARD_NUMBER_INVALID removed: use i18n 'validation.cardNumber.invalid' instead
 } as const;
 
 // Exchange router constants (derived from centralized order statuses)
