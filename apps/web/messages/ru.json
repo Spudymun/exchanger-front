@@ -190,7 +190,7 @@
       "register": {
         "password": {
           "label": "Пароль",
-          "placeholder": "Минимум 6 символов"
+          "placeholder": "Введите пароль"
         },
         "confirmPassword": {
           "label": "Подтвердите пароль",
@@ -288,14 +288,6 @@
     "email": {
       "label": "Email",
       "placeholder": "your@email.com"
-    },
-    "password": {
-      "label": "Пароль",
-      "placeholder": "Введите пароль"
-    },
-    "confirmPassword": {
-      "label": "Подтверждение пароля",
-      "placeholder": "Подтвердите пароль"
     },
     "validation": {
       "invalid": "Некорректное значение",

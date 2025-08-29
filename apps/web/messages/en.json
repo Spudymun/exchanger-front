@@ -181,7 +181,7 @@
       "login": {
         "password": {
           "label": "Password",
-          "placeholder": "Enter your password"
+          "placeholder": "Enter password"
         },
         "submit": "Sign In",
         "submitting": "Signing in...",
@@ -190,7 +190,7 @@
       "register": {
         "password": {
           "label": "Password",
-          "placeholder": "Minimum 6 characters"
+          "placeholder": "Enter password"
         },
         "confirmPassword": {
           "label": "Confirm Password",
@@ -288,14 +288,6 @@
     "email": {
       "label": "Email",
       "placeholder": "your@email.com"
-    },
-    "password": {
-      "label": "Password",
-      "placeholder": "Enter password"
-    },
-    "confirmPassword": {
-      "label": "Confirm Password",
-      "placeholder": "Confirm password"
     },
     "validation": {
       "required": "This field is required",
