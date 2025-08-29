@@ -1,4 +1,4 @@
-import { emailSchema } from '@repo/utils';
+import { emailSchema, validateWithZodSchema } from '@repo/utils';
 
 import {
   useExchangeStore as useExchangeStoreBase,
@@ -6,20 +6,12 @@ import {
 } from './state/exchange-store';
 import { useNotifications } from './useNotifications';
 
-// Helper function to validate basic form fields
 // ✅ REDUNDANCY ELIMINATION: Removed validateBasicFields() duplication
 // Zod схемы уже проверяют: fromCurrency.min(1), fromAmount validation, cardNumber.min(1), agreeToTerms
 // Избегаем дублирования валидационной логики - используем только Zod
 
-// Helper function to validate email using Zod schema
-const validateEmailField = (userEmail: string) => {
-  if (!userEmail) {
-    return ['Enter email'];
-  }
-
-  const result = emailSchema.safeParse(userEmail);
-  return result.success ? [] : result.error.issues.map(issue => issue.message);
-};
+// ✅ REFACTOR: Use centralized validation helper instead of duplicate email validation
+// Replaces duplicate validateEmailField() with existing validateWithZodSchema
 
 // Validation helper using centralized validation utilities
 const createValidationFunction = (
@@ -33,10 +25,10 @@ const createValidationFunction = (
     // is handled by Zod schemas in forms - no duplication needed
     const errors: Record<string, string[]> = {};
 
-    // Use centralized email validation
-    const emailErrors = validateEmailField(formData.email);
-    if (emailErrors.length > 0) {
-      errors.email = emailErrors;
+    // ✅ REFACTOR: Use centralized validation instead of duplicate validateEmailField
+    const emailValidation = validateWithZodSchema(emailSchema, formData.email);
+    if (!emailValidation.isValid) {
+      errors.email = emailValidation.errors;
     }
 
     if (!calculation?.isValid) {

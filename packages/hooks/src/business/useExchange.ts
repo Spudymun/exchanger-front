@@ -1,7 +1,6 @@
 import { UI_DEBOUNCE_CONSTANTS } from '@repo/constants';
 import type { CryptoCurrency } from '@repo/exchange-core';
-import { emailSchema } from '@repo/utils';
-
+import { emailSchema, validateWithZodSchema } from '@repo/utils';
 import React from 'react';
 
 import type { ExchangeStore } from '../state/exchange-store';
@@ -49,14 +48,10 @@ function useFormValidator(exchangeStore: ExchangeStore) {
     const { formData, calculation } = exchangeStore;
     const errors: string[] = [];
 
-    // Use Zod schema for email validation
-    if (!formData.email) {
-      errors.push('Enter email for notifications');
-    } else {
-      const result = emailSchema.safeParse(formData.email);
-      if (!result.success) {
-        errors.push('Enter correct email address');
-      }
+    // ✅ REFACTOR: Use centralized validation instead of duplicate email validation
+    const emailValidation = validateWithZodSchema(emailSchema, formData.email);
+    if (!emailValidation.isValid) {
+      errors.push(...emailValidation.errors);
     }
 
     // Amount validation - только проверка формата
