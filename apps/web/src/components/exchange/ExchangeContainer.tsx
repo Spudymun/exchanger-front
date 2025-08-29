@@ -67,7 +67,6 @@ function useExchangeCalculations(fromAmount: string, fromCurrency: string) {
 }
 
 export function ExchangeContainer({ locale: _locale, initialParams }: ExchangeContainerProps) {
-  const tPage = useTranslations('ExchangePage');
   const t = useTranslations('AdvancedExchangeForm');
 
   const initialFormData = useExchangeFormData(initialParams);
@@ -100,12 +99,6 @@ export function ExchangeContainer({ locale: _locale, initialParams }: ExchangeCo
 
   return (
     <ExchangeForm.Container variant="full" className="exchange-container">
-      {/* Page Header */}
-      <header className="exchange-header mb-8 text-center">
-        <h1 className="text-3xl font-bold text-foreground lg:text-4xl">{tPage('title')}</h1>
-        <p className="mt-2 text-muted-foreground lg:text-lg">{tPage('description')}</p>
-      </header>
-
       {/* Main Exchange Layout */}
       <ExchangeForm
         exchangeData={form.values}

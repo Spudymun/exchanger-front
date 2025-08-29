@@ -191,6 +191,55 @@ function SecuritySection({
   );
 }
 
+// Exchange Terms Section Component
+function ExchangeTermsSection({
+  form: _form,
+  t,
+}: {
+  form: UseFormReturn<SecurityEnhancedFullExchangeForm>;
+  t: (key: string) => string;
+}) {
+  return (
+    <section className="exchange-terms-section bg-muted/50 border border-border rounded-lg p-6">
+      <header className="section-header mb-6">
+        <h2 className="text-xl font-semibold text-foreground">{t('exchangeTerms.title')}</h2>
+      </header>
+
+      <div className="space-y-4">
+        {/* Processing Time */}
+        <div className="terms-item">
+          <h3 className="font-medium text-foreground mb-2">
+            {t('exchangeTerms.processingTime.title')}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            {t('exchangeTerms.processingTime.description')}
+          </p>
+        </div>
+
+        {/* Confirmations */}
+        <div className="terms-item">
+          <h3 className="font-medium text-foreground mb-2">
+            {t('exchangeTerms.confirmations.title')}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            {t('exchangeTerms.confirmations.description')}
+          </p>
+        </div>
+
+        {/* Operational Details */}
+        <div className="terms-item">
+          <h3 className="font-medium text-foreground mb-2">
+            {t('exchangeTerms.operationalDetails.title')}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            {t('exchangeTerms.operationalDetails.description')}
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // Additional sections component
 function AdditionalSections({
   form,
@@ -222,6 +271,11 @@ export function ExchangeLayout({
 }: ExchangeLayoutProps) {
   return (
     <div className="exchange-layout">
+      {/* Exchange Terms Section - на самом верху */}
+      <div className="mb-8">
+        <ExchangeTermsSection form={form} t={t} />
+      </div>
+
       {/* Two-Column Layout using Compound Components */}
       <ExchangeForm.CardPair layout="horizontal">
         <SendingSection form={form} t={t} />

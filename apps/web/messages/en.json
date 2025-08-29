@@ -374,11 +374,22 @@
       "terms": {
         "agreement": "I agree to the terms of use and privacy policy"
       }
+    },
+    "exchangeTerms": {
+      "title": "Exchange Terms and Procedures",
+      "processingTime": {
+        "title": "Operation Processing Time",
+        "description": "Operations are usually processed within 5-15 minutes. In rare cases, the time may be extended to 30 minutes during high network load."
+      },
+      "confirmations": {
+        "title": "Number of Confirmations",
+        "description": "USDT TRC20 requires 1 TRON network confirmation. For other cryptocurrencies, the number of confirmations may vary depending on the network type."
+      },
+      "operationalDetails": {
+        "title": "Operational Details",
+        "description": "Minimum exchange amount: 10 USDT. Maximum amount: 50,000 USDT. The rate is fixed at the time of order creation and is valid for 30 minutes."
+      }
     }
-  },
-  "ExchangePage": {
-    "title": "Advanced Exchange",
-    "description": "Professional cryptocurrency exchange with fiat currency support and bank integration"
   },
   "server": {
     "errors": {
