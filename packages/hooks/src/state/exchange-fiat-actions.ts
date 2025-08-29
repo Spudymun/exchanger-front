@@ -1,4 +1,4 @@
-import { UI_DEBOUNCE_CONSTANTS } from '@repo/constants';
+import { UI_DEBOUNCE_CONSTANTS, getBanksForCurrency } from '@repo/constants';
 import type { FiatCurrency, Bank } from '@repo/exchange-core';
 import { createDebounceAction } from '@repo/utils';
 
@@ -16,9 +16,8 @@ export const createFiatActions = (
     set(() => ({ availableBanks: banks }));
   },
 
-  getBanksForCurrency: (_currency: FiatCurrency) => {
-    const { availableBanks } = get();
-    return availableBanks;
+  getBanksForCurrency: (currency: FiatCurrency) => {
+    return getBanksForCurrency(currency);
   },
 
   selectFiatCurrency: (_currency: FiatCurrency) => {
