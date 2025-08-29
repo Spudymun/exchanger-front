@@ -3,9 +3,9 @@
  * Supports Luhn algorithm, BIN detection, and card formatting
  */
 
+import { VALIDATION_LIMITS } from '@repo/constants';
+
 // Constants
-const CARD_MIN_LENGTH = 13;
-const CARD_MAX_LENGTH = 19;
 const LUHN_DOUBLE_THRESHOLD = 9;
 const LUHN_MODULO = 10;
 const ASCII_ZERO = 48;
@@ -34,7 +34,10 @@ export function sanitizeCardNumber(cardNumber: string): string {
  * Internal function to validate card number length range
  */
 function isValidCardNumberLength(length: number): boolean {
-  return length >= CARD_MIN_LENGTH && length <= CARD_MAX_LENGTH;
+  return (
+    length >= VALIDATION_LIMITS.CARD_NUMBER_MIN_LENGTH &&
+    length <= VALIDATION_LIMITS.CARD_NUMBER_MAX_LENGTH
+  );
 }
 
 /**

@@ -1,9 +1,9 @@
 // Security-enhanced utility schemas
-import { VALIDATION_LIMITS, EXCHANGE_VALIDATION_PATTERNS } from '@repo/constants';
+import { VALIDATION_LIMITS } from '@repo/constants';
 import { z } from 'zod';
 
 import { createXSSProtectedStringWithLength } from './enhanced-building-blocks';
-import { emailSchema } from './schemas-basic';
+import { cardNumberSchema, emailSchema } from './schemas-basic';
 import { currencySchema } from './schemas-crypto';
 import { SECURITY_VALIDATION_LIMITS, containsPotentialXSS } from './security-utils';
 
@@ -38,10 +38,9 @@ export const securityEnhancedGetOrderHistoryByEmailSchema = z.object({
  * RECIPIENT DATA SCHEMA с enhanced security
  */
 export const securityEnhancedRecipientDataSchema = z.object({
-  cardNumber: z
-    .string()
-    .regex(EXCHANGE_VALIDATION_PATTERNS.CARD_NUMBER, 'Номер карты должен содержать точно 16 цифр')
-    .optional(),
+  cardNumber: cardNumberSchema
+    .refine(val => !containsPotentialXSS(val), 'XSS patterns detected in card number')
+    .optional(), // ✅ UNIFIED: Base schema (13-19 digits) + XSS protection
   bankDetails: createXSSProtectedStringWithLength(
     0,
     SECURITY_VALIDATION_LIMITS.COMMENT_MAX_LENGTH
