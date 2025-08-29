@@ -104,7 +104,7 @@ export interface ExchangeStore extends TimerState {
   // Fiat currency and bank management
   updateFiatCurrencies: (currencies: FiatCurrency[]) => void;
   updateBanksForCurrency: (currency: FiatCurrency, banks: Bank[]) => void;
-  getBanksForCurrency: (currency: FiatCurrency) => Bank[];
+  getBanksForCurrency: (currency: FiatCurrency) => readonly Bank[];
   selectFiatCurrency: (currency: FiatCurrency) => void;
   selectBank: (bank: Bank) => void;
 
