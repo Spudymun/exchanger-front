@@ -1,6 +1,6 @@
 'use client';
 
-import { getBanksForCurrency, type FiatCurrency } from '@repo/constants';
+import { getBanksForCurrency, type FiatCurrency, FIAT_CURRENCIES } from '@repo/constants';
 
 import type { UseFormReturn } from '@repo/hooks';
 
@@ -53,8 +53,7 @@ export function ExchangeBankSelector({
     providedBanks ||
     (() => {
       const currency = form.values.toCurrency;
-      const validKeys = ['UAH', 'USD', 'EUR'] as const;
-      return validKeys.includes(currency as (typeof validKeys)[number])
+      return FIAT_CURRENCIES.includes(currency as (typeof FIAT_CURRENCIES)[number])
         ? getBanksForCurrency(currency as FiatCurrency)
         : [];
     })();

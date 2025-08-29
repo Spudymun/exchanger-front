@@ -2,6 +2,7 @@
   "editor.formatOnSave": true,
   "css.validate": false,
   "scss.validate": false,
+  "less.validate": false,
   "stylelint.enable": true,
   "stylelint.validate": ["css", "scss"],
   "editor.codeActionsOnSave": {
@@ -17,5 +18,18 @@
   "[scss]": {
     "editor.defaultFormatter": "vscode.css-language-features"
   },
-  "typescript.autoClosingTags": false
+  "typescript.autoClosingTags": false,
+  "css.customData": [".vscode/css_custom_data.json"],
+  "tailwindCSS.includeLanguages": {
+    "css": "css",
+    "javascript": "javascript",
+    "typescript": "typescript"
+  },
+  "tailwindCSS.lint.cssConflict": "warning",
+  "tailwindCSS.lint.invalidApply": "error",
+  "tailwindCSS.lint.invalidScreen": "error",
+  "tailwindCSS.lint.invalidVariant": "error",
+  "tailwindCSS.lint.invalidConfigPath": "error",
+  "tailwindCSS.lint.invalidTailwindDirective": "error",
+  "tailwindCSS.lint.recommendedVariantOrder": "warning"
 }

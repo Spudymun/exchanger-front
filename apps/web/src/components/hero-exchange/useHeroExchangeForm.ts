@@ -6,6 +6,7 @@ import {
   type CryptoCurrency,
   getDefaultTokenStandard,
   EXCHANGE_DEFAULTS,
+  FIAT_CURRENCIES,
 } from '@repo/constants';
 import { calculateUahAmount, getCurrencyLimits } from '@repo/exchange-core';
 import { useFormWithNextIntl } from '@repo/hooks';
@@ -38,8 +39,7 @@ export function useHeroExchangeForm(
 
   const banks = useMemo(() => {
     const currency = form.values.toCurrency;
-    const validKeys = ['UAH', 'USD', 'EUR'] as const;
-    return validKeys.includes(currency as (typeof validKeys)[number])
+    return FIAT_CURRENCIES.includes(currency as (typeof FIAT_CURRENCIES)[number])
       ? getBanksForCurrency(currency as FiatCurrency)
       : [];
   }, [form.values.toCurrency]);
