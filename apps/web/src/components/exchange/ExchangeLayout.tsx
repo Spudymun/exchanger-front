@@ -161,9 +161,6 @@ function SecuritySection({
   form: UseFormReturn<SecurityEnhancedFullExchangeForm>;
   t: (key: string) => string;
 }) {
-  // Мемоизированные props для FormCaptchaField для предотвращения бесконечных циклов
-  const memoizedT = React.useCallback((key: string) => t(key), [t]);
-
   return (
     <section className="security-section bg-muted/50 border border-border rounded-lg p-6">
       <header className="section-header mb-6">
@@ -171,10 +168,9 @@ function SecuritySection({
       </header>
 
       <div className="space-y-4">
-        {/* CAPTCHA Field - добавлено точно как в модальных окнах */}
+        {/* CAPTCHA Field - теперь использует централизованные переводы из Layout.captcha */}
         <FormCaptchaField
           form={form as unknown as UseFormReturn<{ captcha: string }>}
-          t={memoizedT}
           isLoading={false}
         />
 

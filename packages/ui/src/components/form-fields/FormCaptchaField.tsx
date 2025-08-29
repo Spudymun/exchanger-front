@@ -1,6 +1,7 @@
 import { AUTH_CAPTCHA_CONFIG } from '@repo/constants';
 import { UseFormReturn } from '@repo/hooks';
 import { useMathCaptcha, CAPTCHA_CONFIGS } from '@repo/hooks/src/business/useMathCaptcha';
+import { useTranslations } from 'next-intl';
 import React from 'react';
 
 import { CaptchaFormFields } from '../../types/auth-fields';
@@ -12,24 +13,25 @@ import { MathCaptcha } from '../ui/math-captcha';
  * Рефакторинг: переименовано из AuthCaptchaField для универсального использования
  * Использует централизованную конфигурацию из констант
  * Устранена избыточность двойного поля captcha/captchaVerified
+ * Централизованные переводы из Layout.captcha для устранения дублирования
  */
 
 interface FormCaptchaFieldProps<T extends CaptchaFormFields = CaptchaFormFields> {
   form?: UseFormReturn<T>;
   isLoading?: boolean;
-  t?: (key: string) => string;
+  // Убираем t?: (key: string) => string - используем централизованные переводы
 }
 
 /**
  * Custom hook для управления CAPTCHA логикой
  */
-function useCaptchaLogic<T extends CaptchaFormFields>(
-  form: UseFormReturn<T>,
-  t: (key: string) => string
-) {
+function useCaptchaLogic<T extends CaptchaFormFields>(form: UseFormReturn<T>) {
   // Use centralized CAPTCHA hook from @repo/hooks (eliminate duplication)
   const config = CAPTCHA_CONFIGS[AUTH_CAPTCHA_CONFIG.DIFFICULTY] || CAPTCHA_CONFIGS.medium;
   const captcha = useMathCaptcha(config);
+
+  // Централизованные переводы капчи из Layout контекста
+  const tCaptcha = useTranslations('Layout.captcha');
 
   // Мемоизированные callbacks с стабильными зависимостями
   const clearCaptchaError = React.useCallback(() => {
@@ -48,7 +50,7 @@ function useCaptchaLogic<T extends CaptchaFormFields>(
   );
 
   // Мемоизированная функция для получения сообщения об ошибке
-  const getErrorMessage = React.useCallback(() => t('error'), [t]);
+  const getErrorMessage = React.useCallback(() => tCaptcha('error'), [tCaptcha]);
 
   // Стабильная ссылка на setValue
   const stableSetValue = React.useCallback(
@@ -81,21 +83,21 @@ function useCaptchaLogic<T extends CaptchaFormFields>(
     }
   }, [captcha.hasError, captcha.userAnswer, setCaptchaError, getErrorMessage]);
 
-  return { captcha, captchaError: form.errors.captcha };
+  return { captcha, captchaError: form.errors.captcha, tCaptcha };
 }
 
 export const FormCaptchaField = <T extends CaptchaFormFields = CaptchaFormFields>(
   props: FormCaptchaFieldProps<T>
 ) => {
-  const { form, isLoading = false, t } = props;
+  const { form, isLoading = false } = props;
 
   // Guard clause for required props when used without context
-  if (!form || !t) {
-    console.warn('FormCaptchaField: form and t props are required when used without context');
+  if (!form) {
+    console.warn('FormCaptchaField: form prop is required');
     return <div className="text-sm text-muted-foreground">Captcha field requires form context</div>;
   }
 
-  const { captcha, captchaError } = useCaptchaLogic(form, t);
+  const { captcha, captchaError, tCaptcha } = useCaptchaLogic(form);
 
   return (
     <FormField name="captcha" error={captchaError}>
@@ -111,11 +113,11 @@ export const FormCaptchaField = <T extends CaptchaFormFields = CaptchaFormFields
         disabled={isLoading}
         hideLabel={AUTH_CAPTCHA_CONFIG.HIDE_LABEL}
         labels={{
-          question: t('question'),
-          placeholder: t('placeholder'),
-          refresh: t('refresh'),
-          verification: t('verification'),
-          error: t('error'),
+          question: tCaptcha('question'),
+          placeholder: tCaptcha('placeholder'),
+          refresh: tCaptcha('refresh'),
+          verification: tCaptcha('verification'),
+          error: tCaptcha('error'),
         }}
       />
       <FormMessage />

@@ -280,11 +280,6 @@
     "exchange": "Exchange",
     "submit": "Submit",
     "submitting": "Submitting...",
-    "question": "Solve the problem:",
-    "placeholder": "Enter answer",
-    "refresh": "Refresh problem",
-    "verification": "Verification passed ✓",
-    "error": "Wrong answer. Try again.",
     "email": {
       "label": "Email",
       "placeholder": "your@email.com"

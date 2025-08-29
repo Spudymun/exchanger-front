@@ -280,11 +280,6 @@
     "exchange": "Обменять",
     "submit": "Отправить",
     "submitting": "Отправка...",
-    "question": "Решите пример:",
-    "placeholder": "Введите ответ",
-    "refresh": "Обновить пример",
-    "verification": "Проверка пройдена ✓",
-    "error": "Неправильный ответ. Попробуйте еще раз.",
     "email": {
       "label": "Email",
       "placeholder": "your@email.com"
