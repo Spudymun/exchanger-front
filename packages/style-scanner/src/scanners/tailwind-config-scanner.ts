@@ -3,9 +3,9 @@
 
 import { resolve, dirname } from 'node:path';
 import { OPERATION_TIMEOUT_CONSTANTS } from '@repo/constants';
-import { BaseScanner } from './base-scanner.js';
-import { findFiles, fileExists, readFileSafely } from '../utils/file-utils.js';
-import { analyzeClassNames } from '../utils/style-extractor.js';
+import { BaseScanner } from './base-scanner';
+import { findFiles, fileExists, readFileSafely } from '../utils/file-utils';
+import { analyzeClassNames } from '../utils/style-extractor';
 import type {
   TailwindConfigScanResult,
   ConfigIssue,
