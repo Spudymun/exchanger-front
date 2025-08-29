@@ -460,7 +460,6 @@ Root path: `e:\project\kiro\exchanger-front`
 │   │   │   │   ├── 📄 header-helpers.tsx - Помощники шапки | Header helpers | Утилиты для компонентов шапки
 │   │   │   │   ├── 📄 header-types.ts - Типы шапки | Header types | TypeScript типы для компонентов шапки
 │   │   │   │   ├── 📄 shared-styles.ts - Общие стили | Shared styles | Переиспользуемые стили и CSS классы
-│   │   │   │   ├── 📄 useMathCaptchaLocal.ts - Локальный хук капчи | Local captcha hook | Хук математической капчи для UI пакета
 │   │   │   │   └── 📄 utils.ts - Общие утилиты | UI utilities | Общие вспомогательные функции UI
 │   │   │   ├── 📁 stories/ - Storybook истории | Component stories | Документация компонентов в Storybook
 │   │   │   │   ├── 📁 design-tokens/ - Истории токенов дизайна | Design token stories | Storybook для токенов дизайн-системы

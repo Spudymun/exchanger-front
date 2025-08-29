@@ -69,8 +69,7 @@ packages/ui/src/
 │   ├── shared-styles.ts      # Centralized CSS classes
 │   ├── header-helpers.tsx    # Context enhancement
 │   ├── header-types.ts       # TypeScript definitions
-│   ├── auth-helpers.tsx      # Auth context enhancement
-│   └── useMathCaptchaLocal.ts # Local CAPTCHA logic
+│   └── auth-helpers.tsx      # Auth context enhancement
 │
 ├── stories/                   # 📚 Storybook Documentation
 │   ├── Button.stories.tsx
@@ -614,7 +613,6 @@ npm run lint:styles
 - `utils.ts` - Tailwind merge helpers
 - `shared-styles.ts` - Centralized CSS classes
 - `header-helpers.tsx` - Context enhancement utilities
-- `useMathCaptchaLocal.ts` - Local CAPTCHA state management
 
 ## 🔗 Dependencies
 

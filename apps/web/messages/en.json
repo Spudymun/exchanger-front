@@ -289,6 +289,14 @@
       "label": "Email",
       "placeholder": "your@email.com"
     },
+    "password": {
+      "label": "Password",
+      "placeholder": "Enter password"
+    },
+    "confirmPassword": {
+      "label": "Confirm Password",
+      "placeholder": "Confirm password"
+    },
     "validation": {
       "required": "This field is required",
       "invalid": "Invalid value",
@@ -391,7 +399,6 @@
         "field": "Validation error for field \"{field}\": {issue}",
         "fieldError": "Validation error for field \"{field}\": {issue}",
         "invalidAmount": "Invalid amount",
-        "captcha": "CAPTCHA not filled",
         "invalidPassword": "Invalid current password",
         "verification": "Verification error",
         "passwordValidation": "Password validation error"

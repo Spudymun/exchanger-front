@@ -289,6 +289,14 @@
       "label": "Email",
       "placeholder": "your@email.com"
     },
+    "password": {
+      "label": "Пароль",
+      "placeholder": "Введите пароль"
+    },
+    "confirmPassword": {
+      "label": "Подтверждение пароля",
+      "placeholder": "Подтвердите пароль"
+    },
     "validation": {
       "invalid": "Некорректное значение",
       "required": "Поле обязательно для заполнения",
@@ -400,7 +408,6 @@
         "field": "Ошибка валидации поля \"{field}\": {issue}",
         "fieldError": "Ошибка валидации поля \"{field}\": {issue}",
         "invalidAmount": "Некорректная сумма",
-        "captcha": "CAPTCHA не заполнена",
         "invalidPassword": "Неверный текущий пароль",
         "verification": "Ошибка верификации",
         "passwordValidation": "Ошибка валидации пароля"
