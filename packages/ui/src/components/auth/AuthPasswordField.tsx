@@ -1,7 +1,6 @@
-import { UseFormReturn } from '@repo/hooks';
 import React from 'react';
 
-import { PasswordFormFields } from '../../types/auth-fields';
+import { PasswordFormFields, AuthPasswordFieldProps } from '../../types/auth-fields';
 import { FormField, FormControl, FormLabel, FormMessage } from '../ui/form';
 import { Input } from '../ui/input';
 
@@ -9,12 +8,6 @@ import { Input } from '../ui/input';
  * Переиспользуемое поле Password для форм аутентификации
  * Устраняет дублирование между LoginForm и RegisterForm
  */
-interface AuthPasswordFieldProps<T extends PasswordFormFields = PasswordFormFields> {
-  form?: UseFormReturn<T>;
-  isLoading?: boolean;
-  t?: (key: string) => string;
-  fieldId?: string;
-}
 
 export const AuthPasswordField = <T extends PasswordFormFields = PasswordFormFields>({
   form,

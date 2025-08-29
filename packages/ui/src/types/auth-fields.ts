@@ -24,11 +24,12 @@ export interface CaptchaFormFields extends Record<string, unknown> {
 }
 
 // Базовый интерфейс для всех auth полей
+// Поддерживает опциональность для использования в контексте
 export interface BaseAuthFieldProps<T extends Record<string, unknown>> {
-  form: UseFormReturn<T>;
-  isLoading: boolean;
-  t: (key: string) => string;
-  fieldId: string;
+  form?: UseFormReturn<T>;
+  isLoading?: boolean;
+  t?: (key: string) => string;
+  fieldId?: string;
 }
 
 // Специализированные типы

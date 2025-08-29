@@ -1,7 +1,6 @@
-import { UseFormReturn } from '@repo/hooks';
 import React from 'react';
 
-import { ConfirmPasswordFormFields } from '../../types/auth-fields';
+import { ConfirmPasswordFormFields, AuthConfirmPasswordFieldProps } from '../../types/auth-fields';
 import { FormField, FormControl, FormLabel, FormMessage } from '../ui/form';
 import { Input } from '../ui/input';
 
@@ -9,14 +8,6 @@ import { Input } from '../ui/input';
  * Переиспользуемое поле ConfirmPassword для форм аутентификации
  * Устраняет дублирование между LoginForm и RegisterForm
  */
-interface AuthConfirmPasswordFieldProps<
-  T extends ConfirmPasswordFormFields = ConfirmPasswordFormFields,
-> {
-  form?: UseFormReturn<T>;
-  isLoading?: boolean;
-  t?: (key: string) => string;
-  fieldId?: string;
-}
 
 export const AuthConfirmPasswordField = <
   T extends ConfirmPasswordFormFields = ConfirmPasswordFormFields,
