@@ -2,6 +2,7 @@
 // Отвечает за: поиск конфигураций, валидацию content путей, обнаружение проблем
 
 import { resolve, dirname } from 'node:path';
+import { OPERATION_TIMEOUT_CONSTANTS } from '@repo/constants';
 import { BaseScanner } from './base-scanner.js';
 import { findFiles, fileExists, readFileSafely } from '../utils/file-utils.js';
 import { analyzeClassNames } from '../utils/style-extractor.js';
@@ -275,7 +276,10 @@ export class TailwindConfigScanner extends BaseScanner {
     try {
       // Используем таймаут для предотвращения зависания на широких паттернах
       const timeoutPromise = new Promise<string[]>((_, reject) => {
-        setTimeout(() => reject(new Error('Glob pattern timeout')), 5000);
+        setTimeout(
+          () => reject(new Error('Glob pattern timeout')),
+          OPERATION_TIMEOUT_CONSTANTS.GLOB_PATTERN_TIMEOUT
+        );
       });
 
       const findFilesPromise = findFiles(pattern, baseDir);

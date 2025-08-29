@@ -3,6 +3,8 @@
  * Настройки производительности с обоснованием значений
  */
 
+import { OPERATION_TIMEOUT_CONSTANTS } from '@repo/constants';
+
 /**
  * Настройки глубины сканирования
  */
@@ -61,7 +63,7 @@ export const TIMEOUT_CONFIG = {
    * Таймаут для одного компонента (5 секунд)
    * Обоснование: Защита от зависания на сложных компонентах
    */
-  SINGLE_COMPONENT: 5000,
+  SINGLE_COMPONENT: OPERATION_TIMEOUT_CONSTANTS.COMPONENT_SCAN_TIMEOUT,
 } as const;
 
 /**

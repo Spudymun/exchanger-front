@@ -53,6 +53,18 @@ export const REQUEST_TIMEOUT_CONSTANTS = {
 } as const;
 
 /**
+ * Общие таймауты для операций (в миллисекундах)
+ */
+export const OPERATION_TIMEOUT_CONSTANTS = {
+  /** Стандартный таймаут для UI операций (5 секунд) */
+  DEFAULT_OPERATION_TIMEOUT: 5000,
+  /** Таймаут для одного компонента при сканировании (5 секунд) */
+  COMPONENT_SCAN_TIMEOUT: 5000,
+  /** Таймаут для glob pattern операций (5 секунд) */
+  GLOB_PATTERN_TIMEOUT: 5000,
+} as const;
+
+/**
  * Константы для работы с датами и форматированием
  */
 export const DATE_FORMAT_CONSTANTS = {

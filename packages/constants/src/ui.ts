@@ -45,7 +45,6 @@ export const UI_NUMERIC_CONSTANTS = {
   // Time and durations (in ms)
   DEFAULT_PORT: 3000,
   QUERY_STALE_TIME: 5000,
-  NOTIFICATION_AUTO_REMOVE_TIMEOUT: 5000,
   ORDER_STATUS_REFRESH_INTERVAL: 30000,
 
   // Time constants (keep only unique ones)
