@@ -3,9 +3,9 @@ import { getTranslations } from 'next-intl/server';
 import { ExchangeContainer } from '../../../src/components/exchange/ExchangeContainer';
 
 interface ExchangePageProps {
-  params: {
+  params: Promise<{
     locale: string;
-  };
+  }>;
   searchParams: Promise<{
     from?: string;
     to?: string;
@@ -37,13 +37,14 @@ export async function generateMetadata({ searchParams }: ExchangePageProps) {
 }
 
 export default async function ExchangePage({ params, searchParams }: ExchangePageProps) {
+  const resolvedParams = await params;
   const resolvedSearchParams = await searchParams;
 
   return (
     <main role="main" className="exchange-page min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 lg:py-12">
         <ExchangeContainer
-          locale={params.locale}
+          locale={resolvedParams.locale}
           initialParams={{
             from: resolvedSearchParams.from,
             to: resolvedSearchParams.to,

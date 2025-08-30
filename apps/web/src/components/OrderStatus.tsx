@@ -4,6 +4,7 @@ import { ORDER_STATUS_CONFIG, ORDER_STATUSES, UI_REFRESH_INTERVALS } from '@repo
 import type { Order } from '@repo/exchange-core';
 import { statusStyles, textStyles, cardStyles, combineStyles, BaseErrorBoundary } from '@repo/ui';
 import { CheckCircle, Clock, Loader2, XCircle } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import { useMemo } from 'react';
 
 import { useOrderStatus } from '../hooks/useExchangeMutation';
@@ -71,6 +72,8 @@ function OrderStatusDetails({
   orderData: Order;
   statusConfig: StatusConfig;
 }) {
+  const locale = useLocale(); // ✅ Локаль для форматирования дат и чисел
+
   return (
     <div className={cardStyles.base}>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -93,7 +96,7 @@ function OrderStatusDetails({
           <p className={textStyles.heading.sm}>Сумма</p>
           <p className={textStyles.body.md}>
             {orderData.cryptoAmount} {orderData.currency} →{' '}
-            {orderData.uahAmount.toLocaleString('ru-RU')} ₴
+            {orderData.uahAmount.toLocaleString(locale)} ₴
           </p>
         </div>
         <div>
@@ -105,13 +108,13 @@ function OrderStatusDetails({
         <div>
           <p className={textStyles.heading.sm}>Создано</p>
           <p className={textStyles.body.md}>
-            {new Date(orderData.createdAt).toLocaleString('ru-RU')}
+            {new Date(orderData.createdAt).toLocaleString(locale)}
           </p>
         </div>
         <div>
           <p className={textStyles.heading.sm}>Обновлено</p>
           <p className={textStyles.body.md}>
-            {new Date(orderData.updatedAt).toLocaleString('ru-RU')}
+            {new Date(orderData.updatedAt).toLocaleString(locale)}
           </p>
         </div>
         {orderData.txHash && (
@@ -127,13 +130,12 @@ function OrderStatusDetails({
   );
 }
 
-export function OrderStatus({ orderId, showDetails = true }: OrderStatusProps) {
+export function OrderStatus({ orderId, showDetails = false }: OrderStatusProps) {
   const {
     data: orderData,
     isLoading,
     error,
   } = useOrderStatus(orderId, {
-    enabled: !!orderId,
     refetchInterval: UI_REFRESH_INTERVALS.ORDER_STATUS_REFRESH,
   });
 

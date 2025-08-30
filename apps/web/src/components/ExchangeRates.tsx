@@ -4,6 +4,7 @@ import { CURRENCY_NAMES } from '@repo/constants';
 import type { ExchangeRate } from '@repo/exchange-core';
 import { cardStyles, textStyles, loadingStyles, gridStyles, combineStyles } from '@repo/ui';
 import { Loader2, TrendingUp } from 'lucide-react';
+import { useLocale } from 'next-intl';
 
 import { useExchangeRates } from '../hooks/useExchangeMutation';
 
@@ -15,6 +16,8 @@ interface RatesResponse {
 
 // Компонент для отображения карточки курса
 function RateCard({ rate }: { rate: ExchangeRate }) {
+  const locale = useLocale(); // ✅ Динамическая локаль для форматирования
+
   return (
     <div key={rate.currency} className={cardStyles.base}>
       <div className="flex items-center justify-between">
@@ -25,7 +28,7 @@ function RateCard({ rate }: { rate: ExchangeRate }) {
           </p>
         </div>
         <div className="text-right">
-          <p className={textStyles.heading.md}>{rate.uahRate.toLocaleString('ru-RU')} ₴</p>
+          <p className={textStyles.heading.md}>{rate.uahRate.toLocaleString(locale)} ₴</p>
           <p className={textStyles.body.sm}>за 1 {rate.currency}</p>
         </div>
       </div>
@@ -43,11 +46,13 @@ function RateCard({ rate }: { rate: ExchangeRate }) {
 
 // Компонент для отображения информации о последнем обновлении
 function LastUpdateInfo({ timestamp }: { timestamp?: Date }) {
+  const locale = useLocale(); // ✅ Динамическая локаль для форматирования даты
+
   return (
     <div className="rounded-lg bg-info/10 p-3">
       <p className={combineStyles(textStyles.body.sm, textStyles.accent.primary)}>
         Курсы обновляются каждые 5 минут. Последнее обновление:{' '}
-        {timestamp ? new Date(timestamp).toLocaleString('ru-RU') : 'Неизвестно'}
+        {timestamp ? new Date(timestamp).toLocaleString(locale) : 'Неизвестно'}
       </p>
     </div>
   );
