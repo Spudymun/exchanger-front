@@ -1,4 +1,18 @@
 /* eslint-disable security/detect-object-injection */
+/**
+ * Enhanced i18n configuration with lazy loading for optimal performance
+ *
+ * PERFORMANCE FEATURES:
+ * 1. Route-based conditional loading (Implemented in Stages 1-2)
+ * 2. Server-side caching with Map storage (Implemented in Stage 2)
+ * 3. Lazy loading for rare modules (NEW in Stage 3)
+ *
+ * STAGE 3 IMPROVEMENTS:
+ * - Critical vs Lazy module separation
+ * - Development mode enhanced loading
+ * - Admin features conditional loading
+ * - Debug mode server errors
+ */
 import { headers } from 'next/headers';
 import { hasLocale } from 'next-intl';
 import { getRequestConfig } from 'next-intl/server';
@@ -10,7 +24,10 @@ import { routing } from './routing';
  * Each route loads only required translation modules
  */
 interface RouteModuleConfig {
-  modules: string[];
+  /** Critical modules - always loaded for this route */
+  critical: string[];
+  /** Lazy modules - loaded only under specific conditions */
+  lazy: string[];
   description: string;
 }
 
@@ -21,30 +38,64 @@ interface LoadedModule {
   data: TranslationData;
 }
 
+/**
+ * Lazy loading conditions - when to load optional modules
+ */
+interface _LazyLoadingConditions {
+  /** Load dashboard/admin modules */
+  hasAdminMode: boolean;
+  /** Load enhanced trading features */
+  hasAdvancedTrading: boolean;
+  /** Load server error details */
+  hasDebugMode: boolean;
+  /** Load all notification types */
+  hasFullNotifications: boolean;
+}
+
 // Cache for loaded translation modules to avoid repeated imports
 const translationCache = new Map<string, TranslationData>();
 
+// Common lazy module constants to avoid duplication
+const LAZY_MODULES = {
+  DASHBOARD_NAV: 'dashboard-nav',
+  NOTIFICATIONS: 'notifications',
+  SERVER_ERRORS: 'server-errors',
+  COMMON_UI: 'common-ui',
+  LAYOUT: 'layout',
+} as const;
+
 const ROUTE_MODULE_MAP: Record<string, RouteModuleConfig> = {
-  // Home page - 4/8 modules (50% reduction)
+  // Home page - 2 critical + 2 lazy modules
   '/': {
-    modules: ['home-page', 'layout', 'common-ui', 'notifications'],
+    critical: ['home-page', LAZY_MODULES.LAYOUT],
+    lazy: [LAZY_MODULES.COMMON_UI, LAZY_MODULES.NOTIFICATIONS],
     description: 'Home page with hero, features, layout',
   },
 
-  // Exchange page - 3/8 modules (62% reduction)
+  // Exchange page - 2 critical + 1 lazy modules
   '/exchange': {
-    modules: ['advanced-exchange', 'layout', 'notifications'],
+    critical: ['advanced-exchange', LAZY_MODULES.LAYOUT],
+    lazy: [LAZY_MODULES.NOTIFICATIONS],
     description: 'Exchange page with forms and trading',
   },
 
-  // Error/404 pages - 2/8 modules (75% reduction)
+  // Error/404 pages - 1 critical + 1 lazy modules
   '/not-found': {
-    modules: ['common-ui', 'layout'],
+    critical: [LAZY_MODULES.COMMON_UI],
+    lazy: [LAZY_MODULES.LAYOUT],
     description: 'Error and 404 pages',
   },
   '/error': {
-    modules: ['common-ui', 'layout'],
+    critical: [LAZY_MODULES.COMMON_UI],
+    lazy: [LAZY_MODULES.LAYOUT],
     description: 'Error pages',
+  },
+
+  // Admin routes - special handling
+  '/admin': {
+    critical: [LAZY_MODULES.LAYOUT, LAZY_MODULES.COMMON_UI],
+    lazy: [LAZY_MODULES.DASHBOARD_NAV, LAZY_MODULES.NOTIFICATIONS, LAZY_MODULES.SERVER_ERRORS],
+    description: 'Admin panel with full feature set',
   },
 };
 
@@ -63,21 +114,69 @@ const MODULE_NAMESPACE_MAP = {
 } as const;
 
 /**
- * Determine which modules to load based on current route
+ * STAGE 3: Determine lazy loading conditions based on environment and user context
  */
-function getRequiredModules(pathname: string): string[] {
+function getLazyConditions(headersList: Headers) {
+  const isDevMode = process.env.NODE_ENV === 'development';
+  const userAgent = headersList.get('user-agent') || '';
+  const isMobile = userAgent.includes('Mobile');
+
+  return {
+    hasAdminMode: headersList.get('x-admin-mode') === 'true' || isDevMode,
+    hasDebugMode: headersList.get('x-debug-mode') === 'true' || isDevMode,
+    shouldLoadNotifications: !isMobile || headersList.get('x-notifications') === 'true',
+    shouldLoadFullUI: !isMobile,
+  };
+}
+
+/**
+ * STAGE 3: Determine if specific lazy module should be loaded
+ */
+function shouldLoadLazyModule(
+  moduleName: string,
+  conditions: ReturnType<typeof getLazyConditions>
+): boolean {
+  switch (moduleName) {
+    case LAZY_MODULES.DASHBOARD_NAV:
+      return conditions.hasAdminMode;
+    case LAZY_MODULES.SERVER_ERRORS:
+      return conditions.hasDebugMode;
+    case LAZY_MODULES.NOTIFICATIONS:
+      return conditions.shouldLoadNotifications;
+    case LAZY_MODULES.COMMON_UI:
+      return conditions.shouldLoadFullUI;
+    default:
+      return true; // Load other lazy modules by default
+  }
+}
+
+/**
+ * Determine which modules to load based on current route with lazy loading
+ * STAGE 3: Enhanced with lazy loading conditions and smart fallbacks
+ */
+function getRequiredModules(pathname: string, headersList: Headers): string[] {
   // Remove locale prefix (e.g., /en/exchange -> /exchange)
   const cleanPath = pathname.replace(/^\/[a-z]{2}/, '') || '/';
 
   // Find exact route match or fallback to all modules
   const routeConfig = ROUTE_MODULE_MAP[cleanPath as keyof typeof ROUTE_MODULE_MAP];
 
-  if (routeConfig) {
-    return routeConfig.modules;
+  if (!routeConfig) {
+    return Object.keys(MODULE_NAMESPACE_MAP);
   }
 
-  // Fallback: load all modules for unknown routes
-  return Object.keys(MODULE_NAMESPACE_MAP);
+  // Start with critical modules (always loaded)
+  const modules = [...routeConfig.critical];
+  const conditions = getLazyConditions(headersList);
+
+  // Add lazy modules based on conditions
+  for (const lazyModule of routeConfig.lazy) {
+    if (shouldLoadLazyModule(lazyModule, conditions) && !modules.includes(lazyModule)) {
+      modules.push(lazyModule);
+    }
+  }
+
+  return modules;
 }
 
 /**
@@ -160,8 +259,8 @@ export default getRequestConfig(async ({ requestLocale }) => {
   const headersList = await headers();
   const pathname = headersList.get('x-pathname') || '/';
 
-  // ✅ OPTIMIZED LOADING: Load only required modules based on route
-  const requiredModules = getRequiredModules(pathname);
+  // ✅ OPTIMIZED LOADING: Load only required modules based on route and lazy conditions
+  const requiredModules = getRequiredModules(pathname, headersList);
   const loadedModules = await loadTranslationModules(locale, requiredModules);
   const messages = buildMessages(loadedModules);
 
