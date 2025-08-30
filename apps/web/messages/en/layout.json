@@ -1,0 +1,110 @@
+{
+  "Layout": {
+    "navigation": {
+      "exchange": "Exchange",
+      "orders": "Orders",
+      "contact": "Contact"
+    },
+    "auth": {
+      "signIn": "Sign In",
+      "signUp": "Sign Up",
+      "signOut": "Sign Out",
+      "close": "Close",
+      "loginTitle": "Sign In to Your Account",
+      "registerTitle": "Create Account",
+      "loginSubtitle": "Enter your credentials to continue",
+      "registerSubtitle": "Create a new account to get started",
+      "loginButton": "Sign In",
+      "registerButton": "Sign Up",
+      "messages": {
+        "loginSuccess": "Welcome!",
+        "loginSuccessDescription": "You have successfully signed in",
+        "loginError": "Sign in error",
+        "logoutSuccess": "Signed out",
+        "logoutSuccessDescription": "Goodbye!",
+        "logoutError": "Sign out error",
+        "registerSuccess": "Registration successful",
+        "registerSuccessDescription": "Check your email to confirm your account",
+        "registerError": "Registration error",
+        "passwordResetSent": "Instructions sent",
+        "passwordResetSentDescription": "Check your email",
+        "passwordChanged": "Password changed",
+        "passwordChangedDescription": "You can sign in with your new password",
+        "emailVerified": "Email verified",
+        "emailVerifiedDescription": "Your account is now active"
+      }
+    },
+    "captcha": {
+      "question": "Solve the example:",
+      "placeholder": "Enter answer",
+      "refresh": "Refresh example",
+      "verification": "Verification passed ✓",
+      "error": "Incorrect answer. Please try again."
+    },
+    "forms": {
+      "login": {
+        "password": {
+          "label": "Password",
+          "placeholder": "Enter password"
+        },
+        "submit": "Sign In",
+        "submitting": "Signing in...",
+        "switchToRegister": "Don't have an account? Sign up"
+      },
+      "register": {
+        "password": {
+          "label": "Password",
+          "placeholder": "Enter password"
+        },
+        "confirmPassword": {
+          "label": "Confirm Password",
+          "placeholder": "Repeat password"
+        },
+        "submit": "Sign Up",
+        "submitting": "Creating account...",
+        "switchToLogin": "Already have an account? Sign in",
+        "successTitle": "Registration successful",
+        "successMessage": "Check your email to confirm your account",
+        "errorTitle": "Registration error",
+        "errorMessage": "Please try again"
+      }
+    },
+    "footer": {
+      "company": {
+        "title": "About Service",
+        "description": "Fast and secure cryptocurrency to fiat exchange without registration",
+        "workingHours": "Working 24/7",
+        "serviceType": "Automatic exchanger",
+        "responseTime": "Processing time: 5-15 minutes"
+      },
+      "exchange": {
+        "title": "Currency Exchange",
+        "calculator": "Exchange Calculator",
+        "rates": "Exchange Rates",
+        "reserves": "Reserves",
+        "limits": "Exchange Limits"
+      },
+      "support": {
+        "title": "Support & Help",
+        "telegram": "Telegram Support",
+        "faq": "FAQ",
+        "howItWorks": "How It Works",
+        "contacts": "Contacts"
+      },
+      "legal": {
+        "title": "Legal Information",
+        "rules": "Site Rules",
+        "aml": "AML Policy",
+        "returns": "Return Policy",
+        "privacy": "Privacy Policy"
+      },
+      "contacts": {
+        "title": "Contact Us",
+        "telegram": "Telegram: @exchangego_support",
+        "email": "Email: support@exchangego.com",
+        "workingHours": "Working 24/7",
+        "socialDescription": "Follow for news and rates"
+      }
+    }
+  }
+}

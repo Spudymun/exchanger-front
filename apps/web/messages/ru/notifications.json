@@ -1,0 +1,29 @@
+{
+  "notifications": {
+    "api": {
+      "success": "Успешно",
+      "error": "Ошибка API",
+      "loading": "Загрузка...",
+      "unknownError": "Произошла неизвестная ошибка"
+    },
+    "theme": {
+      "changed": "Тема изменена",
+      "changedDescription": "Переключено на {themeName} тему",
+      "light": "светлую",
+      "dark": "темную",
+      "system": "системную"
+    },
+    "exchange": {
+      "success": "Заявка на обмен создана успешно",
+      "error": "Ошибка обмена",
+      "orderCreated": "Заявка {orderId} создана",
+      "orderCompleted": "Заявка {orderId} завершена",
+      "calculationError": "Ошибка расчета"
+    },
+    "validation": {
+      "error": "Ошибка валидации",
+      "multipleErrors": "{count} ошибок валидации",
+      "formError": "Ошибка отправки формы"
+    }
+  }
+}

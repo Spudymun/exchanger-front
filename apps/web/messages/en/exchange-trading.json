@@ -1,0 +1,57 @@
+{
+  "trading": {
+    "title": "Trading",
+    "pair": "Trading Pair",
+    "amount": "Amount",
+    "price": "Price",
+    "buy": "Buy",
+    "sell": "Sell",
+    "placeOrder": "Place Order",
+    "orderBook": "Order Book",
+    "tradeHistory": "Trade History"
+  },
+  "portfolio": {
+    "title": "Portfolio",
+    "totalValue": "Total Value",
+    "assets": "Assets",
+    "balance": "Balance",
+    "value": "Value",
+    "change": "24h Change"
+  },
+  "exchange": {
+    "validation": {
+      "selectCurrency": "Select currency to exchange",
+      "enterAmount": "Enter correct amount",
+      "enterCardNumber": "Enter card number",
+      "acceptAgreement": "Agreement must be accepted",
+      "enterEmail": "Enter email",
+      "invalidCalculation": "Invalid exchange calculation"
+    },
+    "steps": {
+      "form": {
+        "title": "Exchange Data",
+        "description": "Enter data for currency exchange"
+      },
+      "review": {
+        "title": "Data Review",
+        "description": "Check the correctness of entered data"
+      },
+      "payment": {
+        "title": "Payment",
+        "description": "Send cryptocurrency to the specified address"
+      },
+      "completed": {
+        "title": "Done",
+        "description": "Exchange completed successfully"
+      }
+    },
+    "orderStatus": {
+      "pending": "Order awaiting payment",
+      "paid": "Order paid",
+      "processing": "Order is being processed",
+      "completed": "Order successfully completed!",
+      "cancelled": "Order was cancelled",
+      "failed": "Order failed"
+    }
+  }
+}

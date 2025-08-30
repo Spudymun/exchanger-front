@@ -1,0 +1,60 @@
+{
+  "HomePage": {
+    "title": "ExchangeGO",
+    "description": "Cryptocurrency Exchange",
+    "getStarted": "Get Started",
+    "learnMore": "Learn More",
+    "exchangeCalculator": {
+      "title": "Exchange Calculator",
+      "fromAmount": "From Amount",
+      "toAmount": "To Amount",
+      "exchange": "Exchange",
+      "loading": "Loading...",
+      "commission": "Commission"
+    },
+    "floatingExchangeButton": "Exchange",
+    "features": {
+      "title": "Why Choose Us",
+      "subtitle": "We provide the best cryptocurrency exchange service with guaranteed security and favorable conditions",
+      "speed": {
+        "title": "Lightning Speed",
+        "description": "Cryptocurrency exchange happens in 5-15 minutes thanks to our automated processing system"
+      },
+      "rates": {
+        "title": "Best Exchange Rates",
+        "description": "Best exchange rates in the market with minimal fees and no hidden charges"
+      },
+      "security": {
+        "title": "Maximum Security",
+        "description": "SSL encryption, cold storage and multi-level protection of your funds"
+      },
+      "availability": {
+        "title": "24/7 Availability",
+        "description": "Our service operates around the clock, exchange is available at any time of day or night"
+      },
+      "support": {
+        "title": "Expert Support",
+        "description": "Professional technical support ready to help you solve any issues"
+      },
+      "reliability": {
+        "title": "Reliability & Trust",
+        "description": "Over 50,000 satisfied customers and years of experience in the market"
+      }
+    },
+    "howItWorks": {
+      "title": "How It Works",
+      "step1": {
+        "title": "Calculate Exchange",
+        "description": "Enter amount and select currencies to calculate rate and fees"
+      },
+      "step2": {
+        "title": "Send Cryptocurrency",
+        "description": "Transfer cryptocurrency to the specified address for exchange"
+      },
+      "step3": {
+        "title": "Receive Hryvnias",
+        "description": "Get UAH directly to your bank card instantly"
+      }
+    }
+  }
+}

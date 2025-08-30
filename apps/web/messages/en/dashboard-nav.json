@@ -1,0 +1,31 @@
+{
+  "navigation": {
+    "overview": "Overview",
+    "trading": "Trading",
+    "portfolio": "Portfolio",
+    "transactions": "Transactions",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome to your trading dashboard. Here's your overview.",
+    "stats": {
+      "totalBalance": "Total Balance",
+      "activeTrades": "Active Trades",
+      "portfolioValue": "Portfolio Value",
+      "dailyVolume": "24h Volume"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "newTrade": "Start New Trade",
+      "viewPortfolio": "View Portfolio",
+      "openSettings": "Open Settings Modal"
+    },
+    "recentTransactions": {
+      "title": "Recent Transactions",
+      "btcPurchase": "BTC Purchase",
+      "ethSale": "ETH Sale",
+      "usdDeposit": "USD Deposit"
+    }
+  }
+}

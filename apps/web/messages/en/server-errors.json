@@ -1,0 +1,75 @@
+{
+  "server": {
+    "errors": {
+      "rateLimit": {
+        "CREATE_ORDER": "Order creation limit exceeded. Try again in an hour.",
+        "REGISTER": "Registration limit exceeded. Try again tomorrow.",
+        "LOGIN": "Too many login attempts. Try again in 15 minutes.",
+        "RESET_PASSWORD": "Password reset limit exceeded. Try again in an hour.",
+        "general": "Rate limit exceeded: {limit}",
+        "exceeded": "Rate limit exceeded: {limit}"
+      },
+      "validation": {
+        "field": "Validation error for field \"{field}\": {issue}",
+        "fieldError": "Validation error for field \"{field}\": {issue}",
+        "invalidAmount": "Invalid amount",
+        "invalidPassword": "Invalid current password",
+        "verification": "Verification error",
+        "passwordValidation": "Password validation error"
+      },
+      "auth": {
+        "required": "Authentication required",
+        "forbidden": "Insufficient permissions for action: {action}",
+        "insufficientPermissions": "Insufficient permissions for action: {action}",
+        "invalidCredentials": "Invalid credentials"
+      },
+      "notFound": {
+        "resource": "{resource} not found",
+        "resourceWithId": "{resource} with identifier \"{identifier}\" not found",
+        "session": "Session not found",
+        "user": "User not found",
+        "order": "Order not found",
+        "ticket": "Support ticket not found"
+      },
+      "internal": {
+        "operation": "Error executing operation: {operation}",
+        "general": "Internal server error"
+      },
+      "conflict": {
+        "resource": "Conflict working with {resource}: {reason}",
+        "resourceConflict": "Conflict working with {resource}: {reason}",
+        "userExists": "User with this email already exists"
+      },
+      "business": {
+        "order": "Order",
+        "user": "User",
+        "session": "Session",
+        "supportTicket": "Support ticket",
+        "userExists": "user with this email already exists",
+        "orderCannotCancel": "Order cannot be cancelled in current status",
+        "orderUpdate": "order update",
+        "orderAccess": "order access",
+        "invalidPassword": "Invalid current password",
+        "verificationFailed": "Verification failed",
+        "security": "security operation",
+        "ticketAccess": "support ticket view",
+        "invalidTicketStatus": "Invalid ticket status",
+        "statusTransition": "Cannot change status from {currentStatus} to {newStatus}",
+        "txHashRequired": "Transaction hash required to complete order",
+        "orderUpdateFailed": "Order update failed",
+        "orderAccessDenied": "Access to order denied",
+        "unsupportedCurrency": "Unsupported cryptocurrency: {currency}",
+        "exchangeCalculationError": "Exchange calculation error",
+        "exchangeValidationError": "Exchange validation error",
+        "amountTooLow": "Amount too low. Minimum: {min}",
+        "amountTooHigh": "Amount too high. Maximum: {max}",
+        "currencyNotSupported": "Unsupported cryptocurrency: {currency}",
+        "cardNumberInvalid": "Invalid card number",
+        "orderProcessing": "Order is already being processed or completed",
+        "bankNotFound": "Bank not found: {bankId}",
+        "parameterRequired": "Parameter {parameter} is required",
+        "unknownAction": "Unknown action"
+      }
+    }
+  }
+}

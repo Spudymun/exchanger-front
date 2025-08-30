@@ -1,0 +1,29 @@
+{
+  "notifications": {
+    "api": {
+      "success": "Success",
+      "error": "API Error",
+      "loading": "Loading...",
+      "unknownError": "An unknown error occurred"
+    },
+    "theme": {
+      "changed": "Theme changed",
+      "changedDescription": "Switched to {themeName} theme",
+      "light": "light",
+      "dark": "dark",
+      "system": "system"
+    },
+    "exchange": {
+      "success": "Exchange created successfully",
+      "error": "Exchange error",
+      "orderCreated": "Order {orderId} created",
+      "orderCompleted": "Order {orderId} completed",
+      "calculationError": "Calculation error"
+    },
+    "validation": {
+      "error": "Validation error",
+      "multipleErrors": "{count} validation errors",
+      "formError": "Form submission error"
+    }
+  }
+}

@@ -1,0 +1,150 @@
+{
+  "AdvancedExchangeForm": {
+    "benefits": {
+      "fast": "Fast • Secure • No registration • Best rates • Instant transfers",
+      "items": {
+        "exchange5min": "Exchange in 5 minutes",
+        "noRegistration": "No registration",
+        "bestRate": "Best rate"
+      }
+    },
+    "sending": {
+      "title": "You send",
+      "subtitle": "Select cryptocurrency and enter amount",
+      "currency": "Currency",
+      "cryptocurrency": "Cryptocurrency",
+      "selectCurrency": "Select currency",
+      "tokenStandard": "Token standard",
+      "selectStandard": "Select standard",
+      "amount": "Amount",
+      "placeholder": "0.00",
+      "min": "min",
+      "rate": "Rate"
+    },
+    "receiving": {
+      "title": "You receive",
+      "subtitle": "Select bank for receiving",
+      "fiatCurrency": "Fiat currency",
+      "bank": "Bank",
+      "cardNumber": "Card number",
+      "selectBank": "Select bank",
+      "amount": "Amount",
+      "min": "min",
+      "reserve": "Reserve",
+      "processing": "Processing time: 15-30 minutes"
+    },
+    "exchange": "Exchange",
+    "submit": "Submit",
+    "submitting": "Submitting...",
+    "email": {
+      "label": "Email",
+      "placeholder": "your@email.com"
+    },
+    "password": {
+      "label": "Password",
+      "placeholder": "Enter password"
+    },
+    "confirmPassword": {
+      "label": "Confirm Password",
+      "placeholder": "Confirm password"
+    },
+    "validation": {
+      "required": "This field is required",
+      "invalid": "Invalid value",
+      "xss": {
+        "detected": "Potentially dangerous content detected"
+      },
+      "enterAmount": "Enter amount",
+      "selectBank": "Select bank",
+      "email": {
+        "invalid": "Invalid email address",
+        "required": "Email is required"
+      },
+      "password": {
+        "minLength": "Password must contain at least {min} characters",
+        "minLengthTemplate": "Password must contain at least",
+        "minLengthSuffix": "characters",
+        "required": "Password is required",
+        "mismatch": "Passwords do not match",
+        "weak": "Password must contain uppercase and lowercase letters, digits",
+        "invalid": "Invalid password"
+      },
+      "confirmPassword": {
+        "noMatch": "Passwords do not match",
+        "required": "Password confirmation is required"
+      },
+      "username": {
+        "minLength": "Username must contain at least {min} characters",
+        "maxLength": "Username must not exceed {max} characters",
+        "required": "Username is required"
+      },
+      "firstName": {
+        "minLength": "First name must contain at least {min} character",
+        "maxLength": "First name must not exceed {max} characters",
+        "required": "First name is required"
+      },
+      "lastName": {
+        "minLength": "Last name must contain at least {min} character",
+        "maxLength": "Last name must not exceed {max} characters",
+        "required": "Last name is required"
+      },
+      "phone": {
+        "invalid": "Invalid phone number",
+        "required": "Phone number is required"
+      },
+      "captcha": {
+        "required": "Please fill CAPTCHA",
+        "notVerified": "Please verify that you are not a robot"
+      },
+      "amount": {
+        "minValue": "Minimum amount: {min}",
+        "maxValue": "Maximum amount: {max}",
+        "required": "Amount is required",
+        "format": "Invalid amount format"
+      },
+      "crypto": {
+        "format": "Invalid cryptocurrency amount format",
+        "minAmount": "Minimum amount: {min}",
+        "maxAmount": "Maximum amount: {max}"
+      },
+      "cardNumber": {
+        "required": "Card number is required",
+        "invalid": "Invalid card number"
+      },
+      "terms": {
+        "required": "You must agree to the terms"
+      }
+    },
+    "fiatNames": {
+      "UAH": "Ukrainian hryvnia",
+      "USD": "US Dollar",
+      "EUR": "Euro"
+    },
+    "title": "Cryptocurrency Exchange",
+    "subtitle": "Fast • Secure • No registration",
+    "personalData": {
+      "title": "Recipient Information"
+    },
+    "security": {
+      "title": "Security and Verification",
+      "terms": {
+        "agreement": "I agree to the terms of use and privacy policy"
+      }
+    },
+    "exchangeTerms": {
+      "title": "Exchange Terms and Procedures",
+      "processingTime": {
+        "title": "Operation Processing Time",
+        "description": "Operations are usually processed within 5-15 minutes. In rare cases, the time may be extended to 30 minutes during high network load."
+      },
+      "confirmations": {
+        "title": "Number of Confirmations",
+        "description": "USDT TRC20 requires 1 TRON network confirmation. For other cryptocurrencies, the number of confirmations may vary depending on the network type."
+      },
+      "operationalDetails": {
+        "title": "Operational Details",
+        "description": "Minimum exchange amount: 10 USDT. Maximum amount: 50,000 USDT. The rate is fixed at the time of order creation and is valid for 30 minutes."
+      }
+    }
+  }
+}

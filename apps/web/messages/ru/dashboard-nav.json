@@ -1,0 +1,31 @@
+{
+  "navigation": {
+    "overview": "Обзор",
+    "trading": "Торговля",
+    "portfolio": "Портфель",
+    "transactions": "Транзакции",
+    "settings": "Настройки"
+  },
+  "dashboard": {
+    "title": "Панель управления",
+    "welcome": "Добро пожаловать в торговую панель. Вот ваш обзор.",
+    "stats": {
+      "totalBalance": "Общий баланс",
+      "activeTrades": "Активные сделки",
+      "portfolioValue": "Стоимость портфеля",
+      "dailyVolume": "Объем за 24ч"
+    },
+    "quickActions": {
+      "title": "Быстрые действия",
+      "newTrade": "Начать новую сделку",
+      "viewPortfolio": "Посмотреть портфель",
+      "openSettings": "Открыть настройки"
+    },
+    "recentTransactions": {
+      "title": "Последние транзакции",
+      "btcPurchase": "Покупка BTC",
+      "ethSale": "Продажа ETH",
+      "usdDeposit": "Депозит USD"
+    }
+  }
+}

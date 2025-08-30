@@ -1,0 +1,110 @@
+{
+  "Layout": {
+    "navigation": {
+      "exchange": "Обмен",
+      "orders": "Заказы",
+      "contact": "Контакты"
+    },
+    "auth": {
+      "signIn": "Вход",
+      "signUp": "Регистрация",
+      "signOut": "Выход",
+      "close": "Закрыть",
+      "loginTitle": "Вход в систему",
+      "registerTitle": "Регистрация",
+      "loginSubtitle": "Войдите в свой аккаунт для продолжения",
+      "registerSubtitle": "Создайте новый аккаунт для начала работы",
+      "loginButton": "Вход",
+      "registerButton": "Регистрация",
+      "messages": {
+        "loginSuccess": "Добро пожаловать!",
+        "loginSuccessDescription": "Вы успешно вошли в систему",
+        "loginError": "Ошибка входа",
+        "logoutSuccess": "Выход выполнен",
+        "logoutSuccessDescription": "До свидания!",
+        "logoutError": "Ошибка выхода",
+        "registerSuccess": "Регистрация успешна",
+        "registerSuccessDescription": "Проверьте email для подтверждения аккаунта",
+        "registerError": "Ошибка регистрации",
+        "passwordResetSent": "Инструкции отправлены",
+        "passwordResetSentDescription": "Проверьте email",
+        "passwordChanged": "Пароль изменен",
+        "passwordChangedDescription": "Вы можете войти с новым паролем",
+        "emailVerified": "Email подтвержден",
+        "emailVerifiedDescription": "Ваш аккаунт активирован"
+      }
+    },
+    "captcha": {
+      "question": "Решите пример:",
+      "placeholder": "Введите ответ",
+      "refresh": "Обновить пример",
+      "verification": "Проверка пройдена ✓",
+      "error": "Неправильный ответ. Попробуйте еще раз."
+    },
+    "forms": {
+      "login": {
+        "password": {
+          "label": "Пароль",
+          "placeholder": "Введите пароль"
+        },
+        "submit": "Войти",
+        "submitting": "Вход...",
+        "switchToRegister": "Нет аккаунта? Зарегистрироваться"
+      },
+      "register": {
+        "password": {
+          "label": "Пароль",
+          "placeholder": "Введите пароль"
+        },
+        "confirmPassword": {
+          "label": "Подтвердите пароль",
+          "placeholder": "Повторите пароль"
+        },
+        "submit": "Зарегистрироваться",
+        "submitting": "Регистрация...",
+        "switchToLogin": "Уже есть аккаунт? Войти",
+        "successTitle": "Регистрация успешна",
+        "successMessage": "Проверьте email для подтверждения аккаунта",
+        "errorTitle": "Ошибка регистрации",
+        "errorMessage": "Попробуйте снова"
+      }
+    },
+    "footer": {
+      "company": {
+        "title": "О сервисе",
+        "description": "Быстрый и безопасный обмен криптовалют на фиатные деньги без регистрации",
+        "workingHours": "Работаем круглосуточно",
+        "serviceType": "Автоматический обменник",
+        "responseTime": "Время обработки: 5-15 минут"
+      },
+      "exchange": {
+        "title": "Обмен валют",
+        "calculator": "Калькулятор обмена",
+        "rates": "Курсы валют",
+        "reserves": "Резервы",
+        "limits": "Лимиты обмена"
+      },
+      "support": {
+        "title": "Поддержка и помощь",
+        "telegram": "Telegram поддержка",
+        "faq": "Частые вопросы",
+        "howItWorks": "Как это работает",
+        "contacts": "Контакты"
+      },
+      "legal": {
+        "title": "Правовая информация",
+        "rules": "Правила сайта",
+        "aml": "Политика AML",
+        "returns": "Политика возвратов",
+        "privacy": "Политика конфиденциальности"
+      },
+      "contacts": {
+        "title": "Связаться с нами",
+        "telegram": "Telegram: @exchangego_support",
+        "email": "Email: support@exchangego.com",
+        "workingHours": "Работаем 24/7",
+        "socialDescription": "Следите за новостями и курсами"
+      }
+    }
+  }
+}

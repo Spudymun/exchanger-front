@@ -1,0 +1,75 @@
+{
+  "server": {
+    "errors": {
+      "rateLimit": {
+        "CREATE_ORDER": "Превышен лимит создания заявок. Попробуйте через час.",
+        "REGISTER": "Превышен лимит регистрации. Попробуйте завтра.",
+        "LOGIN": "Слишком много попыток входа. Попробуйте через 15 минут.",
+        "RESET_PASSWORD": "Превышен лимит сброса пароля. Попробуйте через час.",
+        "general": "Превышен лимит: {limit}",
+        "exceeded": "Превышен лимит: {limit}"
+      },
+      "validation": {
+        "field": "Ошибка валидации поля \"{field}\": {issue}",
+        "fieldError": "Ошибка валидации поля \"{field}\": {issue}",
+        "invalidAmount": "Некорректная сумма",
+        "invalidPassword": "Неверный текущий пароль",
+        "verification": "Ошибка проверки",
+        "passwordValidation": "Ошибка валидации пароля"
+      },
+      "auth": {
+        "required": "Требуется аутентификация",
+        "forbidden": "Недостаточно прав для действия: {action}",
+        "insufficientPermissions": "Недостаточно прав для действия: {action}",
+        "invalidCredentials": "Неверные учетные данные"
+      },
+      "notFound": {
+        "resource": "{resource} не найден",
+        "resourceWithId": "{resource} с идентификатором \"{identifier}\" не найден",
+        "session": "Сессия не найдена",
+        "user": "Пользователь не найден",
+        "order": "Заявка не найдена",
+        "ticket": "Тикет поддержки не найден"
+      },
+      "internal": {
+        "operation": "Ошибка выполнения операции: {operation}",
+        "general": "Внутренняя ошибка сервера"
+      },
+      "conflict": {
+        "resource": "Конфликт при работе с {resource}: {reason}",
+        "resourceConflict": "Конфликт при работе с {resource}: {reason}",
+        "userExists": "Пользователь с таким email уже существует"
+      },
+      "business": {
+        "order": "Заявка",
+        "user": "Пользователь",
+        "session": "Сессия",
+        "supportTicket": "Тикет поддержки",
+        "userExists": "пользователь с таким email уже существует",
+        "orderCannotCancel": "Заявку нельзя отменить в текущем статусе",
+        "orderUpdate": "обновление заявки",
+        "orderAccess": "доступ к заявке",
+        "invalidPassword": "Неверный текущий пароль",
+        "verificationFailed": "Проверка не пройдена",
+        "security": "операция безопасности",
+        "ticketAccess": "просмотр тикета поддержки",
+        "invalidTicketStatus": "Неверный статус тикета",
+        "statusTransition": "Нельзя изменить статус с {currentStatus} на {newStatus}",
+        "txHashRequired": "Требуется хеш транзакции для завершения заявки",
+        "orderUpdateFailed": "Обновление заявки не удалось",
+        "orderAccessDenied": "Доступ к заявке запрещен",
+        "unsupportedCurrency": "Неподдерживаемая криптовалюта: {currency}",
+        "exchangeCalculationError": "Ошибка расчета обмена",
+        "exchangeValidationError": "Ошибка валидации обмена",
+        "amountTooLow": "Сумма слишком мала. Минимум: {min}",
+        "amountTooHigh": "Сумма слишком велика. Максимум: {max}",
+        "currencyNotSupported": "Неподдерживаемая криптовалюта: {currency}",
+        "cardNumberInvalid": "Неверный номер карты",
+        "orderProcessing": "Заявка уже обрабатывается или завершена",
+        "bankNotFound": "Банк не найден: {bankId}",
+        "parameterRequired": "Параметр {parameter} обязателен",
+        "unknownAction": "Неизвестное действие"
+      }
+    }
+  }
+}
