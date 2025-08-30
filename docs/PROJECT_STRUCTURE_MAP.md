@@ -1,6 +1,6 @@
 # File Tree: exchanger-front
 
-Generated on: 8/23/2025, 2:25:00 PM
+Generated on: 8/30/2025, 2:25:00 PM
 Root path: `e:\project\kiro\exchanger-front`
 
 ## 📝 Описание структуры проекта
@@ -38,6 +38,7 @@ Root path: `e:\project\kiro\exchanger-front`
 │       │   ├── 📁 components/ - React компоненты | UI components, business logic | Переиспользуемые компоненты интерфейса
 │       │   │   ├── 📁 exchange/ - Компоненты страницы обмена | Exchange page logic | Компоненты для /exchange страницы
 │       │   │   ├── 📁 forms/ - Компоненты форм | Form components | Переиспользуемые формы приложения
+│       │   │   ├── 📁 hero-exchange/ - Компоненты главной формы обмена | Hero exchange components | UI элементы основной формы обмена на главной странице
 │       │   ├── 📁 hooks/ - Custom React hooks | State management | Логика состояния и бизнес-правил приложения
 │       │   ├── 📁 i18n/ - Интернационализация | next-intl конфигурация | Настройка мультиязычности приложения
 │       │   └── 📁 server/ - Серверная логика | tRPC API, middleware | Backend функциональность приложения
@@ -103,6 +104,8 @@ Root path: `e:\project\kiro\exchanger-front`
 │   │   │   │   ├── 📁 auth/ - Компоненты авторизации | Auth components | UI элементы для форм входа и регистрации
 │   │   │   │   ├── 📁 error-boundaries/ - Обработчики ошибок | Error handling | Компоненты для обработки ошибок React
 │   │   │   │   ├── 📁 exchange/ - Компоненты обмена | Exchange components | UI элементы для форм обмена валют
+│   │   │   │   ├── 📁 form-fields/ - Универсальные поля форм | Form field components | Переиспользуемые поля для всех форм системы
+│   │   │   │   ├── 📁 forms/ - Компоненты форм | Form components | Общие элементы форм и кнопки
 │   │   │   │   ├── 📁 tree-view/ - Компоненты дерева | Tree components | UI для отображения древовидных структур
 │   │   │   │   ├── 📁 ui/ - Базовые UI компоненты | shadcn/ui primitives | Основные переиспользуемые UI элементы
 │   │   │   ├── 📁 lib/ - Библиотеки UI | UI utilities | Вспомогательные функции и утилиты для UI
