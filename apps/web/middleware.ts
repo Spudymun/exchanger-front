@@ -21,9 +21,11 @@ export default function middleware(request: NextRequest) {
     detectedLocale = segments[1];
   }
 
-  // Add locale header for root layout
+  // Add headers for i18n optimization and locale detection
   if (response instanceof NextResponse) {
     response.headers.set('x-locale', detectedLocale);
+    // Add pathname header for route-based translation optimization
+    response.headers.set('x-pathname', pathname);
   }
 
   return response;
