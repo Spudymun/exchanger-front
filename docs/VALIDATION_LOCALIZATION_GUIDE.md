@@ -527,8 +527,8 @@ import { passwordSchema } from '@repo/utils/validation-schemas';
 - `packages/utils/src/validation/hooks.ts` - useFormWithNextIntl
 - `packages/utils/src/validation/handlers.ts` - обработчики ошибок
 - `packages/utils/src/validation/constants.ts` - константы валидации
-- `apps/web/messages/ru.json` - русские переводы
-- `apps/web/messages/en.json` - английские переводы
+- `apps/web/messages/ru/` - русские переводы (модульная структура)
+- `apps/web/messages/en/` - английские переводы (модульная структура)
 
 ### Примеры рабочих форм:
 

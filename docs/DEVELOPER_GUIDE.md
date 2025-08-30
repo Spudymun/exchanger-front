@@ -1438,9 +1438,24 @@ apps/web/
 │       ├── navigation.ts     # Навигационные API
 │       └── request.ts        # Конфигурация запросов
 ├── messages/
-│   ├── en.json
-│   ├── ru.json
-│   └── [locale].json
+│   ├── en/
+│   │   ├── home-page.json
+│   │   ├── layout.json
+│   │   ├── advanced-exchange.json
+│   │   ├── server-errors.json
+│   │   ├── notifications.json
+│   │   ├── exchange-trading.json
+│   │   ├── common-ui.json
+│   │   └── dashboard-nav.json
+│   └── ru/
+│       ├── home-page.json
+│       ├── layout.json
+│       ├── advanced-exchange.json
+│       ├── server-errors.json
+│       ├── notifications.json
+│       ├── exchange-trading.json
+│       ├── common-ui.json
+│       └── dashboard-nav.json
 ├── middleware.ts            # Использует createMiddleware
 ├── next.config.js           # Указывает путь к request.ts
 └── app/
@@ -1495,7 +1510,9 @@ export default getRequestConfig(async ({ requestLocale }) => {
 
   return {
     locale,
-    messages: (await import(`../../messages/${locale}.json`)).default,
+    // ОБНОВЛЕНО: Используется модульная загрузка переводов
+    // Загружаются все необходимые модули и объединяются
+    messages: await loadTranslationModules(locale, pathname, searchParams),
   };
 });
 ```
@@ -1619,10 +1636,10 @@ export default async function HomePage({ params }: HomePageProps) {
 }
 ```
 
-#### 8. Файлы переводов:
+#### 8. Файлы переводов (Модульная структура):
 
 ```json
-// messages/en.json
+// messages/en/home-page.json
 {
   "HomePage": {
     "title": "Exchanger",
@@ -1650,7 +1667,7 @@ export default async function HomePage({ params }: HomePageProps) {
 ```
 
 ```json
-// messages/ru.json
+// messages/ru/home-page.json
 {
   "HomePage": {
     "title": "Exchanger",
@@ -1715,7 +1732,7 @@ export function LoadingButton() {
 **В next-intl используются ОДИНАРНЫЕ фигурные скобки `{parameter}`, НЕ двойные `{{parameter}}`!**
 
 ```json
-// ✅ ПРАВИЛЬНО в messages/en.json:
+// ✅ ПРАВИЛЬНО в messages/en/server-errors.json:
 {
   "validation": {
     "password": {
@@ -1770,7 +1787,7 @@ export function Navigation() {
 
 ### 📋 Чек-лист для добавления новых переводов:
 
-1. **Создать ключи в JSON файлах** (en.json, ru.json)
+1. **Создать ключи в модульных JSON файлах** (соответствующие файлы в en/ и ru/)
 2. **Добавить типизацию** (если используется TypeScript augmentation)
 3. **Использовать в компонентах** через `useTranslations`
 4. **Тестировать на обеих локалях** (/en и /ru)

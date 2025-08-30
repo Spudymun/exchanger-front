@@ -29,7 +29,7 @@ Root path: `e:\project\kiro\exchanger-front`
 │       │   │   ├── 📁 not-found-page/ - Кастомная 404 страница | Error handling | Обработка несуществующих
 │       │   ├── 📁 fonts/ - Веб-шрифты приложения | Geist шрифты | Типографика основного приложения
 │       ├── 📁 lib/ - Библиотеки и провайдеры | React providers | Конфигурация клиентских библиотек
-│       ├── 📁 messages/ - Файлы локализации | next-intl словари | Переводы интерфейса на разные языки
+│       ├── 📁 messages/ - Модульные файлы локализации | next-intl домен-структуры | Переводы по модулям: home-page, layout, advanced-exchange и др.
 │       ├── 📁 pages/ - Pages Router (совместимость) | Legacy API routes | API endpoints для совместимости
 │       │   └── 📁 api/ - API маршруты | Server-side endpoints | Серверные точки подключения
 │       │       └── 📁 trpc/ - tRPC API handler | Type-safe API | Обработчик tRPC запросов
