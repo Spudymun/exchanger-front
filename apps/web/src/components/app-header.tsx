@@ -3,12 +3,11 @@
 import { APP_ROUTES, ANCHOR_ROUTES } from '@repo/constants';
 import { Header } from '@repo/ui';
 
-import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import * as React from 'react';
 
 import { trpc } from '../../lib/trpc-provider';
-import { Link } from '../../src/i18n/navigation';
+import { Link, usePathname, useRouter } from '../i18n/navigation';
 
 import { AuthDialogs } from './auth-dialogs';
 import { ThemeToggleI18n } from './theme-toggle-i18n';
@@ -148,8 +147,7 @@ export function AppHeader({ className }: AppHeaderProps) {
   } = useAuthDialogs();
 
   const handleLocaleChange = (newLocale: string) => {
-    const currentPath = pathname?.replace(`/${locale}`, '') || '/';
-    router.replace(`/${newLocale}${currentPath}`);
+    router.replace(pathname, { locale: newLocale });
   };
 
   return (
