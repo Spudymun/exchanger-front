@@ -416,8 +416,8 @@ import { MOCK_CRYPTO_ADDRESSES } from '@repo/constants';
 
 ### 🛡️ Security & Validation
 
-- **[🛡️ Security-Enhanced Validation Guide](../../docs/SECURITY_ENHANCED_VALIDATION_GUIDE.md)** - **ОБЯЗАТЕЛЬНО** для всех разработчиков
-- **[Validation Architecture Guide](../../docs/VALIDATION_ARCHITECTURE_GUIDE.md)** - архитектурные принципы валидации
+- **[🛡️ Security-Enhanced Validation Guide](../../docs/core/SECURITY_ENHANCED_VALIDATION_GUIDE.md)** - **ОБЯЗАТЕЛЬНО** для всех разработчиков
+- **[Validation Architecture Guide](../../docs/core/VALIDATION_ARCHITECTURE_GUIDE.md)** - архитектурные принципы валидации
 
 ### 📦 Packages
 
@@ -426,9 +426,9 @@ import { MOCK_CRYPTO_ADDRESSES } from '@repo/constants';
 
 ### 🏗️ Architecture
 
-- **[Developer Guide](../../docs/DEVELOPER_GUIDE.md)** - Общее руководство разработчика
-- **[Architecture Guide](../../docs/ARCHITECTURE.md)** - Архитектура проекта
-- **[CODE_STYLE_GUIDE.md](../../docs/CODE_STYLE_GUIDE.md)** - Стандарты кода
+- **[Developer Guide](../../docs/core/DEVELOPER_GUIDE.md)** - Общее руководство разработчика
+- **[Architecture Guide](../../docs/core/ARCHITECTURE.md)** - Архитектура проекта
+- **[CODE_STYLE_GUIDE.md](../../docs/core/CODE_STYLE_GUIDE.md)** - Стандарты кода
 
 ## 📄 License
 

@@ -347,9 +347,8 @@ npm run storybook
 ## 📚 Связанная документация
 
 - **[Tailwind Preset](../tailwind-preset/README.md)** - интеграция с Tailwind CSS
-- **[SEMANTIC_DESIGN_SYSTEM.md](../../docs/SEMANTIC_DESIGN_SYSTEM.md)** - CSS архитектура
-- **[FORM_DESIGN_PATTERNS.md](../../docs/FORM_DESIGN_PATTERNS.md)** - паттерны форм
-- **[DEVELOPER_GUIDE.md](../../docs/DEVELOPER_GUIDE.md)** - общее руководство разработчика
+- **[SEMANTIC_DESIGN_SYSTEM.md](../../docs/core/SEMANTIC_DESIGN_SYSTEM.md)** - CSS архитектура
+- **[DEVELOPER_GUIDE.md](../../docs/core/DEVELOPER_GUIDE.md)** - общее руководство разработчика
 
 ## 🎯 Best Practices
 

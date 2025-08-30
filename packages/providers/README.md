@@ -575,7 +575,7 @@ export default function ServerPage() {
 
 ## 📚 Связанная документация
 
-- **[DEVELOPER_GUIDE.md](../../docs/DEVELOPER_GUIDE.md)** - React Query и State Management
+- **[DEVELOPER_GUIDE.md](../../docs/core/DEVELOPER_GUIDE.md)** - React Query и State Management
 - **[Constants Package](../constants/README.md)** - THEME_MODES константы
 - **[Hooks Package](../hooks/README.md)** - useUIStore интеграция
 - **[UI Package](../ui/README.md)** - Theme Toggle компонент

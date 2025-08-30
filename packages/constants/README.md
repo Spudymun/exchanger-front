@@ -415,4 +415,4 @@ if (precision === DECIMAL_PRECISION.CRYPTO_DECIMAL_PLACES) {
 
 - **[Design Tokens](../design-tokens/README.md)** - интеграция с дизайн-системой
 - **[Utils Package](../utils/README.md)** - валидационные схемы и утилиты
-- **[DEVELOPER_GUIDE.md](../../docs/DEVELOPER_GUIDE.md)** - общее руководство разработчика
+- **[DEVELOPER_GUIDE.md](../../docs/core/DEVELOPER_GUIDE.md)** - общее руководство разработчика

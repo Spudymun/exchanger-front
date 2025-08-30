@@ -135,6 +135,5 @@ npm run dev
 
 ## 📖 Связанная документация
 
-- [SEMANTIC_DESIGN_SYSTEM.md](../../docs/SEMANTIC_DESIGN_SYSTEM.md)
-- [FORM_DESIGN_PATTERNS.md](../../docs/FORM_DESIGN_PATTERNS.md)
-- [DEVELOPER_GUIDE.md](../../docs/DEVELOPER_GUIDE.md)
+- [SEMANTIC_DESIGN_SYSTEM.md](../../docs/core/SEMANTIC_DESIGN_SYSTEM.md)
+- [DEVELOPER_GUIDE.md](../../docs/core/DEVELOPER_GUIDE.md)

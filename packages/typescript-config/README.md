@@ -264,8 +264,8 @@ npx tsc --declaration --emitDeclarationOnly
 
 ## 📚 Связанная документация
 
-- **[DEVELOPER_GUIDE.md](../../docs/DEVELOPER_GUIDE.md)** - Общее руководство разработчика
-- **[CODE_STYLE_GUIDE.md](../../docs/CODE_STYLE_GUIDE.md)** - Стандарты кода и архитектуры
+- **[DEVELOPER_GUIDE.md](../../docs/core/DEVELOPER_GUIDE.md)** - Общее руководство разработчика
+- **[CODE_STYLE_GUIDE.md](../../docs/core/CODE_STYLE_GUIDE.md)** - Стандарты кода и архитектуры
 - **[TypeScript Handbook](https://www.typescriptlang.org/docs/)** - Официальная документация
 
 ## 📄 License

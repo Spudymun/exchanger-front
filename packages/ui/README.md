@@ -755,9 +755,8 @@ import { Button } from '@repo/ui/src/components/ui/button';
 ## 📞 Support
 
 - **Documentation**: [Storybook](http://localhost:6006) (when running)
-- **Architecture Guide**: `docs/ARCHITECTURE.md`
-- **Migration Guide**: `docs/COMPOUND_COMPONENTS_MIGRATION_GUIDE.md`
-- **Style Guide**: `docs/CODE_STYLE_GUIDE.md`
+- **Architecture Guide**: `docs/core/ARCHITECTURE.md`
+- **Style Guide**: `docs/core/CODE_STYLE_GUIDE.md`
 
 ## 📄 License
 

@@ -509,14 +509,14 @@ export { validateNumericInput } from './input-validation';
 
 ### 🛡️ Security & Validation
 
-- **[Security-Enhanced Validation Guide](../../docs/SECURITY_ENHANCED_VALIDATION_GUIDE.md)** - **ОБЯЗАТЕЛЬНО** Руководство по security-enhanced schemas
-- **[Validation & Localization Guide](../../docs/VALIDATION_LOCALIZATION_GUIDE.md)** - интеграция с next-intl
-- **[Validation Architecture Guide](../../docs/VALIDATION_ARCHITECTURE_GUIDE.md)** - архитектурные принципы
+- **[Security-Enhanced Validation Guide](../../docs/core/SECURITY_ENHANCED_VALIDATION_GUIDE.md)** - **ОБЯЗАТЕЛЬНО** Руководство по security-enhanced schemas
+- **[Validation & Localization Guide](../../docs/core/VALIDATION_LOCALIZATION_GUIDE.md)** - интеграция с next-intl
+- **[Validation Architecture Guide](../../docs/core/VALIDATION_ARCHITECTURE_GUIDE.md)** - архитектурные принципы
 
 ### 🏗️ Architecture
 
-- **[Architecture Guide](../../docs/ARCHITECTURE.md)** - общая архитектура проекта
-- **[Developer Guide](../../docs/DEVELOPER_GUIDE.md)** - руководство разработчика
+- **[Architecture Guide](../../docs/core/ARCHITECTURE.md)** - общая архитектура проекта
+- **[Developer Guide](../../docs/core/DEVELOPER_GUIDE.md)** - руководство разработчика
 
 **💡 Начни с Security-Enhanced Validation Guide - это обязательно для всех разработчиков!**
 

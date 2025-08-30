@@ -324,7 +324,7 @@ const handleLogin = async () => {
 
 ## 📚 Связанная документация
 
-- **[DEVELOPER_GUIDE.md](../../docs/DEVELOPER_GUIDE.md)** - State Management архитектура
+- **[DEVELOPER_GUIDE.md](../../docs/core/DEVELOPER_GUIDE.md)** - State Management архитектура
 - **[MODULE_RESOLUTION_TROUBLESHOOTING.md](../../docs/troubleshooting/MODULE_RESOLUTION_TROUBLESHOOTING.md)** - Решение проблем с импортами
 - **[Constants Package](../constants/README.md)** - Бизнес-константы и лимиты
 - **[Utils Package](../utils/README.md)** - Валидационные схемы
@@ -362,8 +362,8 @@ const handleLogin = async () => {
 
 ### 🛡️ Security & Validation
 
-- **[🛡️ Security-Enhanced Validation Guide](../../docs/SECURITY_ENHANCED_VALIDATION_GUIDE.md)** - **ОБЯЗАТЕЛЬНО** для работы с формами
-- **[Validation & Localization Guide](../../docs/VALIDATION_LOCALIZATION_GUIDE.md)** - интеграция с next-intl
+- **[🛡️ Security-Enhanced Validation Guide](../../docs/core/SECURITY_ENHANCED_VALIDATION_GUIDE.md)** - **ОБЯЗАТЕЛЬНО** для работы с формами
+- **[Validation & Localization Guide](../../docs/core/VALIDATION_LOCALIZATION_GUIDE.md)** - интеграция с next-intl
 
 ### 📦 Related Packages
 

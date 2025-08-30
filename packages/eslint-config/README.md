@@ -121,9 +121,9 @@ await runPerformanceBenchmark();
 
 ## 📚 Связанная документация
 
-- **[CENTRALIZED_ESLINT_ARCHITECTURE.md](../../docs/CENTRALIZED_ESLINT_ARCHITECTURE.md)** - Детальная архитектура
-- **[DEVELOPER_GUIDE.md](../../docs/DEVELOPER_GUIDE.md)** - Руководство разработчика
-- **[PRE_COMMIT_GUIDE.md](../../docs/PRE_COMMIT_GUIDE.md)** - Pre-commit хуки
+- **[CENTRALIZED_ESLINT_ARCHITECTURE.md](../../docs/core/CENTRALIZED_ESLINT_ARCHITECTURE.md)** - Детальная архитектура
+- **[DEVELOPER_GUIDE.md](../../docs/core/DEVELOPER_GUIDE.md)** - Руководство разработчика
+- **[PRE_COMMIT_GUIDE.md](../../docs/process/PRE_COMMIT_GUIDE.md)** - Pre-commit хуки
 
 ## 🎯 Best Practices
 
