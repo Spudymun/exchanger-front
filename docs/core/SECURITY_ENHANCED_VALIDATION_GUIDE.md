@@ -349,7 +349,6 @@ type OrderData = z.infer<typeof securityEnhancedCreateExchangeOrderSchema>;
 
 - **[Validation & Localization Guide](VALIDATION_LOCALIZATION_GUIDE.md)** - интеграция с next-intl
 - **[Validation Architecture Guide](VALIDATION_ARCHITECTURE_GUIDE.md)** - архитектурные принципы
-- **[Phase 1 Completion Plan](PHASE_1_COMPLETION_PLAN.md)** - план внедрения security-enhanced schemas
 
 ---
 

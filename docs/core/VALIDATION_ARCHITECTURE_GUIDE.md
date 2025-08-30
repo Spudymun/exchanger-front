@@ -387,7 +387,6 @@ apps/web/src/components/forms/                       # UI формы с вали
 ### 🏗️ Architecture
 
 - **[Architecture Guide](ARCHITECTURE.md)** - Общая архитектура проекта
-- **[Phase 1 Completion Plan](PHASE_1_COMPLETION_PLAN.md)** - План внедрения security-enhanced validation
 
 ---
 

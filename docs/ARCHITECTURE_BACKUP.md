@@ -77,7 +77,7 @@ apps/web/src/server/trpc/
 
 **Принципы:** Namespace composition, роле-основанный доступ, rate limiting
 
-**Детали:** См. [API_DOCS.md](API_DOCS.md)
+**Детали:** См. [API_DOCS.md](core/API_DOCS.md)
 register: createRateLimitProcedure(RATE_LIMITS.REGISTER),
 login: createRateLimitProcedure(RATE_LIMITS.LOGIN),
 resetPassword: createRateLimitProcedure(RATE_LIMITS.RESET_PASSWORD),
@@ -93,7 +93,7 @@ resetPassword: createRateLimitProcedure(RATE_LIMITS.RESET_PASSWORD),
 **Принцип:** Все пользовательские данные проходят санитизацию
 **Интеграция:** Автоматическое использование в tRPC роутерах
 
-**Детали:** См. [SECURITY_ENHANCED_VALIDATION_GUIDE.md](SECURITY_ENHANCED_VALIDATION_GUIDE.md)
+**Детали:** См. [SECURITY_ENHANCED_VALIDATION_GUIDE.md](core/SECURITY_ENHANCED_VALIDATION_GUIDE.md)
 
 ### Centralized Validation Architecture
 
@@ -967,7 +967,7 @@ export const loginSchema = z.object({
 4. **Тестирование**: Убедись, что все формы работают с единой схемой
 5. **Удаление**: Удали все дублированные и legacy схемы
 
-**Детальное руководство**: См. [VALIDATION_LOCALIZATION_GUIDE.md](VALIDATION_LOCALIZATION_GUIDE.md)
+**Детальное руководство**: См. [VALIDATION_LOCALIZATION_GUIDE.md](core/VALIDATION_LOCALIZATION_GUIDE.md)
 
 ---
 
@@ -978,25 +978,25 @@ export const loginSchema = z.object({
 ### 🔧 **Implementation Guides**
 
 - **[DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)** - Полное руководство разработчика (2,281 строк) с примерами всех технологий
-- **[TASK_IMPLEMENTATION_GUIDE.md](TASK_IMPLEMENTATION_GUIDE.md)** - Универсальные чек-листы и шаблоны для реализации задач
-- **[API_DOCS.md](API_DOCS.md)** - Полная tRPC API документация с примерами и middleware
+- **[TASK_IMPLEMENTATION_GUIDE.md](core/TASK_IMPLEMENTATION_GUIDE.md)** - Универсальные чек-листы и шаблоны для реализации задач
+- **[API_DOCS.md](core/API_DOCS.md)** - Полная tRPC API документация с примерами и middleware
 
 ### 🔒 **Security & Validation**
 
-- **[SECURITY_ENHANCED_VALIDATION_GUIDE.md](SECURITY_ENHANCED_VALIDATION_GUIDE.md)** - Руководство по security-enhanced схемам валидации
-- **[VALIDATION_ARCHITECTURE_GUIDE.md](VALIDATION_ARCHITECTURE_GUIDE.md)** - Архитектурные принципы системы валидации
-- **[ROLES_ARCHITECTURE.md](ROLES_ARCHITECTURE.md)** - Permission-based access control и роли
+- **[SECURITY_ENHANCED_VALIDATION_GUIDE.md](core/SECURITY_ENHANCED_VALIDATION_GUIDE.md)** - Руководство по security-enhanced схемам валидации
+- **[VALIDATION_ARCHITECTURE_GUIDE.md](core/VALIDATION_ARCHITECTURE_GUIDE.md)** - Архитектурные принципы системы валидации
+- **[ROLES_ARCHITECTURE.md](core/ROLES_ARCHITECTURE.md)** - Permission-based access control и роли
 
 ### 🎨 **Design System**
 
-- **[SEMANTIC_DESIGN_SYSTEM.md](SEMANTIC_DESIGN_SYSTEM.md)** - CSS Architecture v3.0 с semantic design tokens
+- **[SEMANTIC_DESIGN_SYSTEM.md](core/SEMANTIC_DESIGN_SYSTEM.md)** - CSS Architecture v3.0 с semantic design tokens
 - **[packages/design-tokens/README.md](../packages/design-tokens/README.md)** - Детальная документация Design Tokens (398 строк)
 - **[packages/style-scanner/README.md](../packages/style-scanner/README.md)** - CLI инструмент стилизации (611 строк)
 
 ### 🔧 **Code Quality**
 
-- **[CENTRALIZED_ESLINT_ARCHITECTURE.md](CENTRALIZED_ESLINT_ARCHITECTURE.md)** - Централизованная ESLint архитектура с lazy loading
-- **[CODE_STYLE_GUIDE.md](CODE_STYLE_GUIDE.md)** - Правила стиля кода и архитектурные паттерны
+- **[CENTRALIZED_ESLINT_ARCHITECTURE.md](core/CENTRALIZED_ESLINT_ARCHITECTURE.md)** - Централизованная ESLint архитектура с lazy loading
+- **[CODE_STYLE_GUIDE.md](core/CODE_STYLE_GUIDE.md)** - Правила стиля кода и архитектурные паттерны
 
 ### 🏗️ **Package Documentation**
 

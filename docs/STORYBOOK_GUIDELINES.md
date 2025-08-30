@@ -774,10 +774,10 @@ export const AllColors: Story = {
 
 ## 🔗 Связанные документы
 
-- [CODE_STYLE_GUIDE.md](./CODE_STYLE_GUIDE.md) - Архитектурные принципы проекта
-- [CODE_REVIEW_PROTOCOLS.md](./CODE_REVIEW_PROTOCOLS.md) - Протоколы проверки по уровням
-- [DEVELOPER_GUIDE.md](./DEVELOPER_GUIDE.md) - Общие принципы разработки
-- [ai-agent-rules.yml](./ai-agent-rules.yml) - Правила качества и архитектуры
+- [CODE_STYLE_GUIDE.md](./core/CODE_STYLE_GUIDE.md) - Архитектурные принципы проекта
+- [CODE_REVIEW_PROTOCOLS.md](./core/CODE_REVIEW_PROTOCOLS.md) - Протоколы проверки по уровням
+- [DEVELOPER_GUIDE.md](./core/DEVELOPER_GUIDE.md) - Общие принципы разработки
+- [ai-agent-rules.yml](./ai-agent/ai-agent-rules.yml) - Правила качества и архитектуры
 
 **Версия документа:** 1.0  
 **Последнее обновление:** 10 июля 2025  

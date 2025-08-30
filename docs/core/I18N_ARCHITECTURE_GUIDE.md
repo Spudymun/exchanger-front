@@ -684,7 +684,7 @@ const requiredModules = getRequiredModules(pathname, headersList);
 ## 🔗 Related Documentation
 
 - **[VALIDATION_LOCALIZATION_GUIDE.md](VALIDATION_LOCALIZATION_GUIDE.md)** - Локализация валидации форм
-- **[I18N_TROUBLESHOOTING.md](troubleshooting/I18N_TROUBLESHOOTING.md)** - Решение проблем i18n
+- **[I18N_TROUBLESHOOTING.md](../troubleshooting/I18N_TROUBLESHOOTING.md)** - Решение проблем i18n
 - **[DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)** - Общие принципы разработки
 
 ## 📝 Changelog

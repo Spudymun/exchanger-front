@@ -458,7 +458,7 @@ const FormWrapper = ({ children, ...props }: WrapperProps) => {
 
 **Результат**: ✅ Устранение всех React DOM warnings в production.
 
-**📖 Полная документация**: См. [`packages/ui/README.md`](../packages/ui/README.md#authform-compound-component) для примеров использования compound components.
+**📖 Полная документация**: См. [`packages/ui/README.md`](../../packages/ui/README.md#authform-compound-component) для примеров использования compound components.
 
 ---
 
@@ -1758,7 +1758,7 @@ const message = t('minLength', { min: 8 });
 // Результат: "Password must contain at least 8 characters"
 ```
 
-**См. также**: [I18N Troubleshooting Guide](./troubleshooting/I18N_TROUBLESHOOTING.md#проблема-6-malformed_argument---ошибка-интерполяции)
+**См. также**: [I18N Troubleshooting Guide](../troubleshooting/I18N_TROUBLESHOOTING.md#проблема-6-malformed_argument---ошибка-интерполяции)
 
 #### 10. Навигация между страницами:
 

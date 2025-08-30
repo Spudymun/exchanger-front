@@ -850,9 +850,9 @@ rules:
       step_3_documentation:
         action: 'Читать соответствующую документацию'
         sources:
-          - 'docs/DEVELOPER_GUIDE.md'
-          - 'docs/ARCHITECTURE.md'
-          - 'docs/CODE_STYLE_GUIDE.md'
+          - 'docs/core/DEVELOPER_GUIDE.md'
+          - 'docs/core/ARCHITECTURE.md'
+          - 'docs/core/CODE_STYLE_GUIDE.md'
           - 'Специфичные guides для задачи'
       
       step_4_verification:

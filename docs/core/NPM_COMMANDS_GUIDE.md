@@ -323,7 +323,7 @@ npm run test:cov                    # Покрытие
 - **[DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)** - общее руководство разработчика
 - **[TASK_IMPLEMENTATION_GUIDE.md](TASK_IMPLEMENTATION_GUIDE.md)** - реализация задач
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - архитектура проекта
-- **[PRE_COMMIT_GUIDE.md](PRE_COMMIT_GUIDE.md)** - работа с pre-commit хуками
+- **[PRE_COMMIT_GUIDE.md](../process/PRE_COMMIT_GUIDE.md)** - работа с pre-commit хуками
 
 ---
 

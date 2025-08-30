@@ -538,7 +538,7 @@ Test-Path "messages/ru/layout.json"
 
 ## 📚 Полезные ресурсы
 
-- **[I18N_ARCHITECTURE_GUIDE.md](../I18N_ARCHITECTURE_GUIDE.md)** - Полная архитектура модульной системы переводов
+- **[I18N_ARCHITECTURE_GUIDE.md](../core/I18N_ARCHITECTURE_GUIDE.md)** - Полная архитектура модульной системы переводов
 - [next-intl Official Docs](https://next-intl-docs.vercel.app/)
 - [App Router Setup Guide](https://next-intl-docs.vercel.app/docs/getting-started/app-router/with-i18n-routing)
 - [Static Rendering Guide](https://next-intl-docs.vercel.app/docs/getting-started/app-router/with-i18n-routing#static-rendering)

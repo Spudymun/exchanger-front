@@ -169,8 +169,8 @@ apps/web/src/server/trpc/
 ### 🎨 **Design System**
 
 - **[SEMANTIC_DESIGN_SYSTEM.md](SEMANTIC_DESIGN_SYSTEM.md)** - CSS Architecture v3.0 с semantic design tokens
-- **[packages/design-tokens/README.md](../packages/design-tokens/README.md)** - Детальная документация Design Tokens (398 строк)
-- **[packages/style-scanner/README.md](../packages/style-scanner/README.md)** - CLI инструмент стилизации (611 строк)
+- **[packages/design-tokens/README.md](../../packages/design-tokens/README.md)** - Детальная документация Design Tokens (398 строк)
+- **[packages/style-scanner/README.md](../../packages/style-scanner/README.md)** - CLI инструмент стилизации (611 строк)
 
 ### 🔧 **Code Quality**
 
@@ -179,9 +179,9 @@ apps/web/src/server/trpc/
 
 ### 🏗️ **Package Documentation**
 
-- **[packages/exchange-core/README.md](../packages/exchange-core/README.md)** - Бизнес-логика обменника (440 строк)
-- **[packages/utils/README.md](../packages/utils/README.md)** - Утилиты и валидация (526 строк)
+- **[packages/exchange-core/README.md](../../packages/exchange-core/README.md)** - Бизнес-логика обменника (440 строк)
+- **[packages/utils/README.md](../../packages/utils/README.md)** - Утилиты и валидация (526 строк)
 
 ### 📋 **Complete Documentation Catalog**
 
-См. **[docs/README.md](README.md)** для навигации по всем 35+ специализированным руководствам проекта.
+См. **[docs/README.md](../README.md)** для навигации по всем 35+ специализированным руководствам проекта.
