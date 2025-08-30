@@ -238,7 +238,197 @@ t('validation.password.minLength', { min: '8' }); // Может не работ�
 
 **Документация**: [next-intl Interpolation Guide](https://next-intl-docs.vercel.app/docs/usage/messages#interpolation-of-dynamic-values)
 
-## 🔧 Диагностические команды
+### � Проблема 7: Модульные переводы не загружаются
+
+**Симптомы:**
+
+- Ошибки "Translation key not found" в консоли
+- Отображаются placeholder ключи вместо переводов
+- Некоторые переводы работают, другие нет
+- Ошибки загрузки модулей в Network tab
+
+**Причины:**
+
+1. Неправильная настройка ROUTE_MODULE_MAP в request.ts
+2. Модуль не добавлен в MODULE_NAMESPACE_MAP
+3. Неправильные условия lazy loading
+4. Ошибки в структуре JSON файлов переводов
+5. Кеширование устаревших модулей
+
+**Диагностика:**
+
+```powershell
+# 1. Проверить структуру модульных файлов:
+Test-Path "apps/web/messages/en/home-page.json"
+Test-Path "apps/web/messages/en/layout.json"
+Test-Path "apps/web/messages/en/advanced-exchange.json"
+Test-Path "apps/web/messages/en/server-errors.json"
+Test-Path "apps/web/messages/en/notifications.json"
+Test-Path "apps/web/messages/en/exchange-trading.json"
+Test-Path "apps/web/messages/en/common-ui.json"
+Test-Path "apps/web/messages/en/dashboard-nav.json"
+
+# 2. Проверить синтаксис JSON:
+Get-Content "apps/web/messages/en/home-page.json" | ConvertFrom-Json
+Get-Content "apps/web/messages/ru/home-page.json" | ConvertFrom-Json
+
+# 3. Проверить наличие namespace'ов:
+Select-String '"HomePage"' -Path "apps/web/messages/*/home-page.json"
+Select-String '"Layout"' -Path "apps/web/messages/*/layout.json"
+Select-String '"AdvancedExchangeForm"' -Path "apps/web/messages/*/advanced-exchange.json"
+```
+
+**Решение:**
+
+1. **Проверить MODULE_NAMESPACE_MAP в request.ts:**
+
+```typescript
+// apps/web/src/i18n/request.ts
+const MODULE_NAMESPACE_MAP = {
+  'home-page': ['HomePage'],
+  layout: ['Layout'],
+  'advanced-exchange': ['AdvancedExchangeForm'],
+  'server-errors': ['server'],
+  notifications: ['notifications'],
+  'exchange-trading': ['exchange', 'trading', 'portfolio'],
+  'common-ui': ['common', 'theme', 'NotFound', 'Error'],
+  'dashboard-nav': ['dashboard', 'navigation'],
+} as const;
+```
+
+2. **Проверить ROUTE_MODULE_MAP:**
+
+```typescript
+const ROUTE_MODULE_MAP: Record<string, RouteModuleConfig> = {
+  '/': {
+    critical: ['home-page', 'layout'],
+    lazy: ['common-ui', 'notifications'],
+    description: 'Home page with hero, features, layout',
+  },
+  '/exchange': {
+    critical: ['advanced-exchange', 'layout'],
+    lazy: ['notifications'],
+    description: 'Exchange page with forms and trading',
+  },
+  // Добавить недостающие routes
+};
+```
+
+3. **Проверить структуру JSON файлов:**
+
+```json
+// messages/en/home-page.json
+{
+  "HomePage": {
+    "title": "ExchangeGO",
+    "description": "Cryptocurrency Exchange"
+    // Вся структура должна быть под "HomePage"
+  }
+}
+```
+
+4. **Очистить cache переводов:**
+
+```powershell
+# В development mode перезапустить сервер:
+taskkill /f /im node.exe
+cd apps/web && npm run dev
+
+# В production перезапустить приложение
+```
+
+5. **Проверить lazy loading conditions:**
+
+```typescript
+// Убедиться что условия не блокируют загрузку нужных модулей
+function shouldLoadLazyModule(
+  moduleName: string,
+  conditions: ReturnType<typeof getLazyConditions>
+) {
+  switch (moduleName) {
+    case 'notifications':
+      return conditions.shouldLoadNotifications;
+    case 'dashboard-nav':
+      return conditions.hasAdminMode;
+    case 'server-errors':
+      return conditions.hasDebugMode;
+    default:
+      return true; // Загружать по умолчанию
+  }
+}
+```
+
+### 🚨 Проблема 8: Namespace ошибки в компонентах
+
+**Симптомы:**
+
+- "Namespace not found" ошибки
+- useTranslations возвращает undefined
+- Переводы не отображаются в компонентах
+
+**Причины:**
+
+1. Неправильный namespace в useTranslations()
+2. Модуль с namespace'ом не загружен для текущего route
+3. Опечатки в названиях namespace'ов
+4. Namespace не соответствует структуре JSON
+
+**Решение:**
+
+```typescript
+// ✅ Правильное использование namespace'ов:
+
+// Для главной страницы
+const t = useTranslations('HomePage'); // из home-page.json
+
+// Для форм обмена
+const t = useTranslations('AdvancedExchangeForm'); // из advanced-exchange.json
+
+// Для навигации и layout
+const t = useTranslations('Layout'); // из layout.json
+
+// Для серверных ошибок
+const t = useTranslations('server.errors'); // из server-errors.json
+
+// Для общих UI элементов
+const t = useTranslations('common'); // из common-ui.json
+
+// ❌ Неправильно - несуществующие namespace'ы:
+const t = useTranslations('Form'); // НЕТ такого namespace'а
+const t = useTranslations('Exchange'); // НЕТ такого namespace'а
+const t = useTranslations('Page'); // НЕТ такого namespace'а
+```
+
+## �🔧 Диагностические команды
+
+### Проверка модульной структуры:
+
+```powershell
+# Проверить все модульные файлы переводов:
+Get-ChildItem "apps/web/messages/en" -Name
+Get-ChildItem "apps/web/messages/ru" -Name
+
+# Проверить соответствие структуры:
+$en_files = Get-ChildItem "apps/web/messages/en" -Name
+$ru_files = Get-ChildItem "apps/web/messages/ru" -Name
+Compare-Object $en_files $ru_files
+
+# Проверить наличие основных namespace'ов:
+Select-String '"HomePage"' -Path "apps/web/messages/en/home-page.json"
+Select-String '"Layout"' -Path "apps/web/messages/en/layout.json"
+Select-String '"AdvancedExchangeForm"' -Path "apps/web/messages/en/advanced-exchange.json"
+```
+
+### Проверка конфигурации модульной системы:
+
+```powershell
+# Проверить request.ts configuration:
+Select-String "MODULE_NAMESPACE_MAP" "apps/web/src/i18n/request.ts"
+Select-String "ROUTE_MODULE_MAP" "apps/web/src/i18n/request.ts"
+
+# Проверить импорты модулей:
+Select-String "import.*messages.*json" "apps/web/src/i18n/request.ts"
+```
 
 ### Проверка структуры файлов:
 
@@ -308,6 +498,16 @@ Test-Path "messages/ru/layout.json"
 - [ ] Параметры передаются как числа или строки: `{ min: 8 }`
 - [ ] Проверены все модульные файлы переводов: messages/en/_, messages/ru/_
 
+### При проблемах с модульными переводами:
+
+- [ ] Все модульные файлы существуют для обеих локалей (en/ru)
+- [ ] MODULE_NAMESPACE_MAP содержит все используемые модули
+- [ ] ROUTE_MODULE_MAP настроен для всех routes приложения
+- [ ] JSON файлы имеют правильную структуру namespace'ов
+- [ ] Lazy loading conditions не блокируют нужные модули
+- [ ] useTranslations() использует правильные namespace'ы
+- [ ] Cache переводов очищен после изменений
+
 ## 🎯 Финальная проверка
 
 После исправления всех проблем:
@@ -320,7 +520,7 @@ Test-Path "messages/ru/layout.json"
    ```
 
 2. **Проверить маршруты**:
-   - http://localhost:3000 → должен редиректить на /en
+   - http://localhost:3000 → должен редиректить на /ru (default locale)
    - http://localhost:3000/en → должен работать (200)
    - http://localhost:3000/ru → должен работать (200)
 
@@ -328,9 +528,17 @@ Test-Path "messages/ru/layout.json"
    - Нет 404 ошибок
    - Нет redirect loops
    - Middleware компилируется без ошибок
+   - Модули переводов загружаются успешно
+
+4. **Проверить модульные переводы**:
+   - Все namespace'ы загружаются корректно
+   - Нет ошибок "Translation key not found"
+   - Lazy loading работает по условиям
+   - Cache переводов функционирует правильно
 
 ## 📚 Полезные ресурсы
 
+- **[I18N_ARCHITECTURE_GUIDE.md](../I18N_ARCHITECTURE_GUIDE.md)** - Полная архитектура модульной системы переводов
 - [next-intl Official Docs](https://next-intl-docs.vercel.app/)
 - [App Router Setup Guide](https://next-intl-docs.vercel.app/docs/getting-started/app-router/with-i18n-routing)
 - [Static Rendering Guide](https://next-intl-docs.vercel.app/docs/getting-started/app-router/with-i18n-routing#static-rendering)
@@ -338,4 +546,4 @@ Test-Path "messages/ru/layout.json"
 
 ---
 
-**Помните**: Всегда следуйте официальной документации next-intl, а не собственным предположениям!
+**Помните**: Всегда следуйте официальной документации next-intl и модульной архитектуре проекта, а не собственным предположениям!
