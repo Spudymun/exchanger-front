@@ -42,25 +42,42 @@ interface OrderStatusProps {
 }
 ```
 
-**Модификация компонента OrderStatusDetails:**
+**Модификация компонента OrderStatusDetails с СУЩЕСТВУЮЩИМИ компонентами @repo/ui:**
 
 ```typescript
-// В OrderStatusDetails добавить collapsible для txHash блока
+// ❌ УДАЛЕНО: Несуществующие Collapsible компоненты
+// ✅ ИСПРАВЛЕНО: Используем Card + Button + state для collapsible behavior
+
+// В OrderStatusDetails добавить state и заменить на Card-based решение
+const [isExpanded, setIsExpanded] = useState(false);
+
 {orderData.txHash && (
   <div className="sm:col-span-2">
     {collapsibleTechnicalDetails ? (
-      <Collapsible>
-        <CollapsibleTrigger className="flex items-center gap-2">
-          <p className={textStyles.heading.sm}>Технические детали</p>
-          <ChevronDownIcon className="h-4 w-4" />
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <p className={textStyles.heading.sm}>Хеш транзакции</p>
-          <p className={combineStyles(textStyles.body.md, 'font-mono break-all')}>
-            {orderData.txHash}
-          </p>
-        </CollapsibleContent>
-      </Collapsible>
+      <Card>
+        <CardHeader className="pb-2">
+          <Button
+            variant="ghost"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex items-center justify-between w-full p-0 h-auto font-semibold"
+          >
+            <span className={textStyles.heading.sm}>Технические детали</span>
+            {isExpanded ? (
+              <ChevronUpIcon className="h-4 w-4" />
+            ) : (
+              <ChevronDownIcon className="h-4 w-4" />
+            )}
+          </Button>
+        </CardHeader>
+        {isExpanded && (
+          <CardContent className="pt-0">
+            <p className={textStyles.heading.sm}>Хеш транзакции</p>
+            <p className={combineStyles(textStyles.body.md, 'font-mono break-all')}>
+              {orderData.txHash}
+            </p>
+          </CardContent>
+        )}
+      </Card>
     ) : (
       <>
         <p className={textStyles.heading.sm}>Хеш транзакции</p>
@@ -83,11 +100,61 @@ interface OrderStatusProps {
 />
 ```
 
-**Импорты для collapsible (из @repo/ui):**
+**❌ КРИТИЧЕСКАЯ ОШИБКА ИСПРАВЛЕНА - Компоненты Collapsible НЕ СУЩЕСТВУЮТ в @repo/ui**
+
+**Альтернативное решение с существующими компонентами:**
 
 ```typescript
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@repo/ui';
-import { ChevronDownIcon } from 'lucide-react';
+import { Button } from '@repo/ui';
+import { Card, CardContent, CardHeader } from '@repo/ui';
+import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
+import { useState } from 'react';
+```
+
+**Реализация через state и условный рендеринг:**
+
+```typescript
+// В OrderStatusDetails компоненте добавить state
+const [isExpanded, setIsExpanded] = useState(false);
+
+// Заменить Collapsible на Card с кнопкой toggle
+{orderData.txHash && (
+  <div className="sm:col-span-2">
+    {collapsibleTechnicalDetails ? (
+      <Card>
+        <CardHeader className="pb-2">
+          <Button
+            variant="ghost"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="flex items-center justify-between w-full p-0 h-auto font-semibold"
+          >
+            <span className={textStyles.heading.sm}>Технические детали</span>
+            {isExpanded ? (
+              <ChevronUpIcon className="h-4 w-4" />
+            ) : (
+              <ChevronDownIcon className="h-4 w-4" />
+            )}
+          </Button>
+        </CardHeader>
+        {isExpanded && (
+          <CardContent className="pt-0">
+            <p className={textStyles.heading.sm}>Хеш транзакции</p>
+            <p className={combineStyles(textStyles.body.md, 'font-mono break-all')}>
+              {orderData.txHash}
+            </p>
+          </CardContent>
+        )}
+      </Card>
+    ) : (
+      <>
+        <p className={textStyles.heading.sm}>Хеш транзакции</p>
+        <p className={combineStyles(textStyles.body.md, 'font-mono break-all')}>
+          {orderData.txHash}
+        </p>
+      </>
+    )}
+  </div>
+)}
 ```
 
 **Преимущества решения:**
@@ -115,6 +182,7 @@ import { notFound } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { OrderStatus } from '../../../../../src/components/OrderStatus';
 import { securityEnhancedOrderByIdSchema } from '@repo/utils';
+import { combineStyles, layoutStyles, pageStyles } from '@repo/ui'; // ✅ ДОБАВЛЕНО: shared-styles
 
 interface OrderPageProps {
   params: Promise<{
@@ -151,9 +219,9 @@ export default async function OrderPage({ params }: OrderPageProps) {
   }
 
   return (
-    <main role="main" className="order-page min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 lg:py-12">
-        <h1 className="text-2xl font-bold mb-8">
+    <main role="main" className={combineStyles(layoutStyles.fullHeight, 'bg-background', 'order-page')}>
+      <div className={layoutStyles.container}>
+        <h1 className={pageStyles.title.page}>
           {t('exchange.orderCreated', { orderId })}
         </h1>
         <OrderStatus
@@ -246,9 +314,10 @@ onSubmit: async (values: SecurityEnhancedFullExchangeForm) => {
 - [ ] OrderStatus компонент отображает все данные заказа с поддержкой collapsible режима
 - [ ] Автообновление статуса каждые 30 секунд работает корректно (уже есть в OrderStatus)
 - [ ] Обработка состояний loading/error/empty работает
-- [ ] Используются существующие переводы из notifications.json
-- [ ] Используются стили согласно существующим паттернам проекта (как в exchange/page.tsx)
+- [ ] ✅ **ИСПРАВЛЕНО: Используется дизайн-система**: `combineStyles`, `layoutStyles`, `pageStyles` из @repo/ui вместо хардкода классов
+- [ ] ✅ **ИСПРАВЛЕНО: Корректные импорты**: Card, Button, ChevronUp/DownIcon вместо несуществующих Collapsible компонентов
+- [ ] Используются стили согласно существующим паттернам проекта через shared-styles.ts
 - [ ] Responsive design работает на всех официальных брейкпоинтах из @repo/design-tokens
 - [ ] SEO meta-теги с noindex настроены
 - [ ] 404 обработка для невалидных orderId через securityEnhancedOrderByIdSchema
-- [ ] ✅ **РЕШЕН КОНФЛИКТ AC**: collapsible txHash реализован с минимальной модификацией OrderStatus
+- [ ] ✅ **РЕШЕН КОНФЛИКТ AC**: collapsible txHash реализован с минимальной модификацией OrderStatus через Card + Button + state вместо несуществующих Collapsible компонентов
