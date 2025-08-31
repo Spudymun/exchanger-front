@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { OrderDevTools } from '../../../../src/components/OrderDevTools';
 import { OrderStatus } from '../../../../src/components/OrderStatus';
+import { redirect } from '../../../../src/i18n/navigation';
 
 interface OrderPageProps {
   params: Promise<{
@@ -35,9 +36,10 @@ export default async function OrderPage({ params }: OrderPageProps) {
   // Validate orderId using security-enhanced schema
   const validation = securityEnhancedOrderByIdSchema.safeParse({ orderId });
   if (!validation.success) {
-    throw new Error(
-      `Invalid order ID format: ${orderId}. ${validation.error.issues.map(issue => issue.message).join(', ')}`
-    );
+    // Redirect to localized 404 page to maintain consistency with project architecture
+    // This follows the same pattern as app/not-found.tsx and ensures single source of truth
+    // for 404 UI without duplicating not-found components across route segments
+    redirect({ href: '/not-found-page', locale });
   }
 
   return (
