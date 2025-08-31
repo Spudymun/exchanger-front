@@ -13,6 +13,18 @@ import { SECURITY_VALIDATION_LIMITS, containsPotentialXSS } from './security-uti
 export const securityEnhancedIdSchema = z.string().uuid('INVALID_ID_FORMAT');
 
 /**
+ * Order ID schema - validates the specific format: order_TIMESTAMP_RANDOMSTRING
+ */
+const ORDER_ID_MIN_LENGTH = 20;
+const ORDER_ID_MAX_LENGTH = 50;
+
+export const orderIdSchema = z
+  .string()
+  .regex(/^order_\d{13,}_[a-z0-9]{8,}$/, 'INVALID_ORDER_ID_FORMAT')
+  .min(ORDER_ID_MIN_LENGTH, 'ORDER_ID_TOO_SHORT')
+  .max(ORDER_ID_MAX_LENGTH, 'ORDER_ID_TOO_LONG');
+
+/**
  * Security-enhanced getById schema
  */
 export const securityEnhancedGetByIdSchema = z.object({
@@ -23,7 +35,7 @@ export const securityEnhancedGetByIdSchema = z.object({
  * Security-enhanced orderById schema
  */
 export const securityEnhancedOrderByIdSchema = z.object({
-  orderId: securityEnhancedIdSchema,
+  orderId: orderIdSchema,
 });
 
 /**

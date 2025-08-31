@@ -1,0 +1,10 @@
+{
+  "order-page": {
+    "metadata": {
+      "title": "Order {orderId} - Exchange Status | KiroEx",
+      "description": "Track the status of your order {orderId} for cryptocurrency exchange in real time",
+      "ogTitle": "Order {orderId} - Exchange Status",
+      "ogDescription": "Track the status of your cryptocurrency exchange order in real time"
+    }
+  }
+}

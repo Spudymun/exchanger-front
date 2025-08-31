@@ -1,5 +1,11 @@
 {
   "AdvancedExchangeForm": {
+    "metadata": {
+      "title": "Exchange {from} to {to} | KiroEx",
+      "description": "Fast and secure exchange of {from} to {to} via {bank}. Best rates, no registration, instant transfers.",
+      "ogTitle": "Exchange {from} to {to} | KiroEx",
+      "ogDescription": "Fast and secure cryptocurrency exchange. Best rates, no registration, instant transfers."
+    },
     "benefits": {
       "fast": "Fast • Secure • No registration • Best rates • Instant transfers",
       "items": {

@@ -62,6 +62,7 @@ const LAZY_MODULES = {
   SERVER_ERRORS: 'server-errors',
   COMMON_UI: 'common-ui',
   LAYOUT: 'layout',
+  ORDER_PAGE: 'order-page',
 } as const;
 
 const ROUTE_MODULE_MAP: Record<string, RouteModuleConfig> = {
@@ -91,6 +92,13 @@ const ROUTE_MODULE_MAP: Record<string, RouteModuleConfig> = {
     description: 'Error pages',
   },
 
+  // Order pages - order status and tracking
+  '/order': {
+    critical: [LAZY_MODULES.ORDER_PAGE, LAZY_MODULES.LAYOUT, LAZY_MODULES.COMMON_UI],
+    lazy: [LAZY_MODULES.NOTIFICATIONS],
+    description: 'Order status pages',
+  },
+
   // Admin routes - special handling
   '/admin': {
     critical: [LAZY_MODULES.LAYOUT, LAZY_MODULES.COMMON_UI],
@@ -111,6 +119,7 @@ const MODULE_NAMESPACE_MAP = {
   'exchange-trading': ['exchange', 'trading', 'portfolio'],
   'common-ui': ['common', 'theme', 'NotFound', 'Error'],
   'dashboard-nav': ['dashboard', 'navigation'],
+  'order-page': ['order-page'],
 } as const;
 
 /**
@@ -158,8 +167,17 @@ function getRequiredModules(pathname: string, headersList: Headers): string[] {
   // Remove locale prefix (e.g., /en/exchange -> /exchange)
   const cleanPath = pathname.replace(/^\/[a-z]{2}/, '') || '/';
 
-  // Find exact route match or fallback to all modules
-  const routeConfig = ROUTE_MODULE_MAP[cleanPath as keyof typeof ROUTE_MODULE_MAP];
+  // Find exact route match or pattern match for dynamic routes
+  let routeConfig = ROUTE_MODULE_MAP[cleanPath as keyof typeof ROUTE_MODULE_MAP];
+
+  // If no exact match, try pattern matching for dynamic routes
+  if (!routeConfig) {
+    if (cleanPath.startsWith('/order/')) {
+      routeConfig = ROUTE_MODULE_MAP['/order'];
+    } else {
+      // Add more dynamic route patterns here as needed
+    }
+  }
 
   if (!routeConfig) {
     return Object.keys(MODULE_NAMESPACE_MAP);

@@ -12,6 +12,9 @@ import {
 import { useTranslations } from 'next-intl';
 import { useMemo } from 'react';
 
+import { useExchangeMutation } from '../../hooks/useExchangeMutation';
+import { useRouter } from '../../i18n/navigation';
+
 import { ExchangeLayout } from './ExchangeLayout';
 
 interface ExchangeContainerProps {
@@ -66,8 +69,38 @@ function useExchangeCalculations(fromAmount: string, fromCurrency: string) {
   }, [fromAmount, fromCurrency]);
 }
 
+// Create order submission function
+function createOrderSubmission(
+  exchangeMutation: ReturnType<typeof useExchangeMutation>,
+  router: ReturnType<typeof useRouter>
+) {
+  return async (values: SecurityEnhancedFullExchangeForm) => {
+    // Calculate amount at submit time to get the most up-to-date value
+    const submitTimeAmount = calculateUahAmount(
+      Number(values.fromAmount),
+      values.fromCurrency as CryptoCurrency
+    );
+
+    const orderRequest = {
+      email: values.email,
+      cryptoAmount: Number(values.fromAmount),
+      currency: values.fromCurrency as CryptoCurrency,
+      uahAmount: submitTimeAmount,
+      recipientData: {
+        cardNumber: values.cardNumber,
+        bankId: values.selectedBankId || 'privatbank',
+      },
+    };
+
+    const orderData = await exchangeMutation.createOrder.mutateAsync(orderRequest);
+    router.push(`/order/${orderData.orderId}`);
+  };
+}
+
 export function ExchangeContainer({ locale: _locale, initialParams }: ExchangeContainerProps) {
   const t = useTranslations('AdvancedExchangeForm');
+  const router = useRouter();
+  const exchangeMutation = useExchangeMutation();
 
   const initialFormData = useExchangeFormData(initialParams);
 
@@ -75,10 +108,7 @@ export function ExchangeContainer({ locale: _locale, initialParams }: ExchangeCo
     initialValues: initialFormData,
     validationSchema: securityEnhancedFullExchangeFormSchema,
     t,
-    onSubmit: async (_values: SecurityEnhancedFullExchangeForm) => {
-      // Form submission logic будет в task 2.4
-      throw new Error('Form submission not yet implemented');
-    },
+    onSubmit: createOrderSubmission(exchangeMutation, router),
   });
 
   const calculatedAmount = useExchangeCalculations(

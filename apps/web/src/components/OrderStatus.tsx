@@ -2,16 +2,27 @@
 
 import { ORDER_STATUS_CONFIG, ORDER_STATUSES, UI_REFRESH_INTERVALS } from '@repo/constants';
 import type { Order } from '@repo/exchange-core';
-import { statusStyles, textStyles, cardStyles, combineStyles, BaseErrorBoundary } from '@repo/ui';
-import { CheckCircle, Clock, Loader2, XCircle } from 'lucide-react';
+import {
+  statusStyles,
+  textStyles,
+  cardStyles,
+  combineStyles,
+  BaseErrorBoundary,
+  Card,
+  CardHeader,
+  CardContent,
+  Button,
+} from '@repo/ui';
+import { CheckCircle, Clock, Loader2, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { useLocale } from 'next-intl';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useOrderStatus } from '../hooks/useExchangeMutation';
 
 interface OrderStatusProps {
   orderId: string;
   showDetails?: boolean;
+  collapsibleTechnicalDetails?: boolean;
 }
 
 interface StatusConfig {
@@ -65,64 +76,131 @@ function OrderStatusHeader({
   );
 }
 
-function OrderStatusDetails({
+const MONO_FONT_CLASS = 'font-mono break-all';
+
+function TechnicalDetailsCollapsible({
+  orderData,
+  isTechnicalExpanded,
+  setIsTechnicalExpanded,
+}: {
+  orderData: Order;
+  isTechnicalExpanded: boolean;
+  setIsTechnicalExpanded: (expanded: boolean) => void;
+}) {
+  return (
+    <div className="sm:col-span-2">
+      <Card>
+        <CardHeader className="pb-2">
+          <Button
+            variant="ghost"
+            onClick={() => setIsTechnicalExpanded(!isTechnicalExpanded)}
+            className="flex items-center justify-between w-full h-auto p-0 text-left"
+          >
+            <span className={textStyles.heading.sm}>Технические детали</span>
+            {isTechnicalExpanded ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </Button>
+        </CardHeader>
+        {isTechnicalExpanded && (
+          <CardContent className="pt-0">
+            <div>
+              <p className={textStyles.heading.sm}>Хеш транзакции</p>
+              <p className={combineStyles(textStyles.body.md, MONO_FONT_CLASS)}>
+                {orderData.txHash}
+              </p>
+            </div>
+          </CardContent>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+function OrderBasicInfo({
   orderData,
   statusConfig,
+  locale,
 }: {
   orderData: Order;
   statusConfig: StatusConfig;
+  locale: string;
+}) {
+  return (
+    <>
+      <div>
+        <p className={textStyles.heading.sm}>ID заказа</p>
+        <p className={textStyles.body.md}>{orderData.id}</p>
+      </div>
+      <div>
+        <p className={textStyles.heading.sm}>Статус</p>
+        <span
+          className={combineStyles(
+            'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
+            statusStyles[statusConfig.color as keyof typeof statusStyles] || statusStyles.neutral
+          )}
+        >
+          {statusConfig.label}
+        </span>
+      </div>
+      <div>
+        <p className={textStyles.heading.sm}>Сумма</p>
+        <p className={textStyles.body.md}>
+          {orderData.cryptoAmount} {orderData.currency} →{' '}
+          {orderData.uahAmount.toLocaleString(locale)} ₴
+        </p>
+      </div>
+      <div>
+        <p className={textStyles.heading.sm}>Адрес депозита</p>
+        <p className={combineStyles(textStyles.body.md, MONO_FONT_CLASS)}>
+          {orderData.depositAddress}
+        </p>
+      </div>
+      <div>
+        <p className={textStyles.heading.sm}>Создано</p>
+        <p className={textStyles.body.md}>{new Date(orderData.createdAt).toLocaleString(locale)}</p>
+      </div>
+      <div>
+        <p className={textStyles.heading.sm}>Обновлено</p>
+        <p className={textStyles.body.md}>{new Date(orderData.updatedAt).toLocaleString(locale)}</p>
+      </div>
+    </>
+  );
+}
+
+function OrderStatusDetails({
+  orderData,
+  statusConfig,
+  collapsibleTechnicalDetails = false,
+}: {
+  orderData: Order;
+  statusConfig: StatusConfig;
+  collapsibleTechnicalDetails?: boolean;
 }) {
   const locale = useLocale(); // ✅ Локаль для форматирования дат и чисел
+  const [isTechnicalExpanded, setIsTechnicalExpanded] = useState(false);
 
   return (
     <div className={cardStyles.base}>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <p className={textStyles.heading.sm}>ID заказа</p>
-          <p className={textStyles.body.md}>{orderData.id}</p>
-        </div>
-        <div>
-          <p className={textStyles.heading.sm}>Статус</p>
-          <span
-            className={combineStyles(
-              'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
-              statusStyles[statusConfig.color as keyof typeof statusStyles] || statusStyles.neutral
-            )}
-          >
-            {statusConfig.label}
-          </span>
-        </div>
-        <div>
-          <p className={textStyles.heading.sm}>Сумма</p>
-          <p className={textStyles.body.md}>
-            {orderData.cryptoAmount} {orderData.currency} →{' '}
-            {orderData.uahAmount.toLocaleString(locale)} ₴
-          </p>
-        </div>
-        <div>
-          <p className={textStyles.heading.sm}>Адрес депозита</p>
-          <p className={combineStyles(textStyles.body.md, 'font-mono break-all')}>
-            {orderData.depositAddress}
-          </p>
-        </div>
-        <div>
-          <p className={textStyles.heading.sm}>Создано</p>
-          <p className={textStyles.body.md}>
-            {new Date(orderData.createdAt).toLocaleString(locale)}
-          </p>
-        </div>
-        <div>
-          <p className={textStyles.heading.sm}>Обновлено</p>
-          <p className={textStyles.body.md}>
-            {new Date(orderData.updatedAt).toLocaleString(locale)}
-          </p>
-        </div>
-        {orderData.txHash && (
+        <OrderBasicInfo orderData={orderData} statusConfig={statusConfig} locale={locale} />
+
+        {/* Technical details with collapsible functionality */}
+        {orderData.txHash && collapsibleTechnicalDetails && (
+          <TechnicalDetailsCollapsible
+            orderData={orderData}
+            isTechnicalExpanded={isTechnicalExpanded}
+            setIsTechnicalExpanded={setIsTechnicalExpanded}
+          />
+        )}
+
+        {/* Fallback for non-collapsible mode */}
+        {orderData.txHash && !collapsibleTechnicalDetails && (
           <div className="sm:col-span-2">
             <p className={textStyles.heading.sm}>Хеш транзакции</p>
-            <p className={combineStyles(textStyles.body.md, 'font-mono break-all')}>
-              {orderData.txHash}
-            </p>
+            <p className={combineStyles(textStyles.body.md, MONO_FONT_CLASS)}>{orderData.txHash}</p>
           </div>
         )}
       </div>
@@ -130,7 +208,11 @@ function OrderStatusDetails({
   );
 }
 
-export function OrderStatus({ orderId, showDetails = false }: OrderStatusProps) {
+export function OrderStatus({
+  orderId,
+  showDetails = false,
+  collapsibleTechnicalDetails = false,
+}: OrderStatusProps) {
   const {
     data: orderData,
     isLoading,
@@ -177,7 +259,11 @@ export function OrderStatus({ orderId, showDetails = false }: OrderStatusProps) 
       <div className="space-y-4">
         <OrderStatusHeader orderData={typedOrderData} statusConfig={statusConfig} />
         {showDetails && (
-          <OrderStatusDetails orderData={typedOrderData} statusConfig={statusConfig} />
+          <OrderStatusDetails
+            orderData={typedOrderData}
+            statusConfig={statusConfig}
+            collapsibleTechnicalDetails={collapsibleTechnicalDetails}
+          />
         )}
       </div>
     </BaseErrorBoundary>

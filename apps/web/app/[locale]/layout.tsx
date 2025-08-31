@@ -40,6 +40,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
     exchangeTradingMessages,
     commonUiMessages,
     dashboardNavMessages,
+    orderPageMessages,
   ] = await Promise.all([
     import(`../../messages/${locale}/home-page.json`).then(m => m.default),
     import(`../../messages/${locale}/layout.json`).then(m => m.default),
@@ -49,6 +50,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
     import(`../../messages/${locale}/exchange-trading.json`).then(m => m.default),
     import(`../../messages/${locale}/common-ui.json`).then(m => m.default),
     import(`../../messages/${locale}/dashboard-nav.json`).then(m => m.default),
+    import(`../../messages/${locale}/order-page.json`).then(m => m.default),
   ]);
 
   // Merge all messages into single object
@@ -60,7 +62,9 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
     ...notificationsMessages,
     ...exchangeTradingMessages,
     ...commonUiMessages,
+    'common-ui': commonUiMessages,
     ...dashboardNavMessages,
+    ...orderPageMessages,
   };
 
   return (
