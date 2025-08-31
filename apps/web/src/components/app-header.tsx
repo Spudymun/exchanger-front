@@ -1,6 +1,6 @@
 'use client';
 
-import { APP_ROUTES, ANCHOR_ROUTES } from '@repo/constants';
+import { APP_ROUTES } from '@repo/constants';
 import { Header } from '@repo/ui';
 
 import { useTranslations, useLocale } from 'next-intl';
@@ -205,25 +205,9 @@ function AppHeaderNavigationLinks({
   pathname: string | null;
   t: (key: string) => string;
 }) {
-  const handleExchangeClick = (e: React.MouseEvent) => {
-    if (pathname === '/') {
-      e.preventDefault();
-      const exchangeSection = document.getElementById('exchange-section');
-      if (exchangeSection) {
-        exchangeSection.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
-  };
-
   return (
     <nav className="hidden md:flex space-x-6">
-      <Link
-        href={
-          pathname === '/' ? ANCHOR_ROUTES.EXCHANGE_SECTION : `/${ANCHOR_ROUTES.EXCHANGE_SECTION}`
-        }
-        className={getNavLinkClass(pathname, '/exchange')}
-        onClick={handleExchangeClick}
-      >
+      <Link href={APP_ROUTES.EXCHANGE} className={getNavLinkClass(pathname, APP_ROUTES.EXCHANGE)}>
         {t('navigation.exchange')}
       </Link>
       <Link href={APP_ROUTES.ORDERS} className={getNavLinkClass(pathname, APP_ROUTES.ORDERS)}>
