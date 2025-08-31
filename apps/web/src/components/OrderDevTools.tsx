@@ -51,7 +51,7 @@ export function OrderDevTools({ orderId }: OrderDevToolsProps) {
 
   const handleStatusChange = async (newStatus: OrderStatus) => {
     try {
-      // Update through orderManager
+      // Prepare update data
       const updateData: Parameters<typeof orderManager.update>[1] = { status: newStatus };
 
       // Add additional data for completed orders
@@ -60,11 +60,23 @@ export function OrderDevTools({ orderId }: OrderDevToolsProps) {
         updateData.processedAt = new Date();
       }
 
-      // Update order
+      // Update local mock data (for development testing)
       orderManager.update(orderId, updateData);
 
-      // Invalidate React Query cache to refresh UI
-      await utils.exchange.getOrderStatus.invalidate({ orderId });
+      // Force update React Query cache with new data (modern dev tools pattern)
+      utils.exchange.getOrderStatus.setData({ orderId }, oldData => {
+        if (!oldData) return oldData;
+
+        return {
+          ...oldData,
+          status: newStatus,
+          updatedAt: new Date(),
+          ...(newStatus === ORDER_STATUSES.COMPLETED && {
+            txHash: updateData.txHash,
+            processedAt: updateData.processedAt,
+          }),
+        };
+      });
     } catch {
       // Silent fail in development
     }

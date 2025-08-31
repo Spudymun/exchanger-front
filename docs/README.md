@@ -24,6 +24,7 @@
 - **[CENTRALIZED_ESLINT_ARCHITECTURE.md](core/CENTRALIZED_ESLINT_ARCHITECTURE.md)** - **НОВОЕ** Детальное описание новой централизованной архитектуры ESLint с lazy loading и performance tuning
 - **[CODE_STYLE_GUIDE.md](core/CODE_STYLE_GUIDE.md)** - Руководство по стилю кода, централизованные ESLint правила и архитектурные паттерны
 - **[CODE_REVIEW_PROTOCOLS.md](core/CODE_REVIEW_PROTOCOLS.md)** - Протоколы code review с централизованной архитектурой линтинга
+- **[DEVELOPMENT_TOOLS_ARCHITECTURE.md](core/DEVELOPMENT_TOOLS_ARCHITECTURE.md)** - **НОВОЕ** Архитектурные паттерны для Development Tools с React Query setData() и modern optimistic updates
 - **[PRE_COMMIT_GUIDE.md](process/PRE_COMMIT_GUIDE.md)** - Настройка pre-commit хуков с новой ESLint архитектурой
 
 ## 🎨 UI/UX и стилизация

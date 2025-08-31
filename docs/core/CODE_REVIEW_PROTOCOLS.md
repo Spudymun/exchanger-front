@@ -1791,3 +1791,79 @@ async function analyzeAndPlanTask(taskDescription: string): Promise<TaskAnalysis
 ---
 
 **Заключение:** Интеграция архитектурного анализа с алгоритмом принятия решений обеспечивает качественное и архитектурно обоснованное решение любых задач разработки с максимальным переиспользованием кода и минимизацией технического долга.
+
+---
+
+## 🛠️ Специальные протоколы: Development Tools
+
+### Архитектурные требования для Dev Tools
+
+На основе **[DEVELOPMENT_TOOLS_ARCHITECTURE.md](DEVELOPMENT_TOOLS_ARCHITECTURE.md)**:
+
+**Environment Safety:**
+
+- [ ] Dev tools полностью скрыты в production (`process.env.NODE_ENV !== 'development'`)
+- [ ] Нет импортов dev-зависимостей в production коде
+- [ ] Environment check на уровне компонента, не на уровне модуля
+
+**React Query Integration:**
+
+- [ ] Использование `setData()` для optimistic updates, не `invalidate()`
+- [ ] Query keys соответствуют production queries
+- [ ] Fallback через `invalidate()` для сброса к серверному состоянию
+- [ ] Type safety: dev mock данные соответствуют production типам
+
+**Client State Management:**
+
+- [ ] Zustand DevTools подключены с именованными actions
+- [ ] Memory leak prevention: cleanup всех dev subscriptions
+- [ ] Stale closures prevention: функциональные обновления состояния
+
+**UI/UX Requirements:**
+
+- [ ] Визуальное разделение от production UI (border, background)
+- [ ] Accessibility: правильные aria-labels для dev controls
+- [ ] Error isolation: ErrorBoundary вокруг dev tools
+- [ ] TestId attributes для E2E тестирования dev features
+
+### Code Review Checklist - Dev Tools
+
+```typescript
+// ✅ ОБРАЗЕЦ правильной реализации
+const DevToolsComponent = ({ orderId }: { orderId: string }) => {
+  // Environment check
+  if (process.env.NODE_ENV !== 'development') {
+    return null;
+  }
+
+  const utils = trpc.useUtils();
+
+  const handleStatusChange = (newStatus: OrderStatus) => {
+    // 1. Server update для консистентности
+    orderManager.update(orderId, { status: newStatus });
+
+    // 2. Optimistic client update через setData()
+    utils.exchange.getOrderStatus.setData(orderId, newStatus);
+  };
+
+  return (
+    <ErrorBoundary fallback={<div>Dev Tools Error</div>}>
+      <div className="border-2 border-dashed border-orange-400 bg-orange-50 p-4">
+        <div className="text-orange-800 font-mono text-xs mb-2">
+          🛠️ DEVELOPMENT TOOLS
+        </div>
+        {/* Controls */}
+      </div>
+    </ErrorBoundary>
+  );
+};
+```
+
+**Архитектурные anti-patterns:**
+
+- ❌ Изменение production кода для dev tools
+- ❌ Использование `invalidate()` вместо `setData()` для мгновенных изменений
+- ❌ Dev tools влияют на production bundle size
+- ❌ Отсутствие error boundaries вокруг dev functionality
+
+---

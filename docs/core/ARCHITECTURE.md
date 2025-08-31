@@ -176,6 +176,7 @@ apps/web/src/server/trpc/
 
 - **[CENTRALIZED_ESLINT_ARCHITECTURE.md](CENTRALIZED_ESLINT_ARCHITECTURE.md)** - Централизованная ESLint архитектура с lazy loading
 - **[CODE_STYLE_GUIDE.md](CODE_STYLE_GUIDE.md)** - Правила стиля кода и архитектурные паттерны
+- **[DEVELOPMENT_TOOLS_ARCHITECTURE.md](DEVELOPMENT_TOOLS_ARCHITECTURE.md)** - Архитектурные паттерны для Development Tools с React Query setData()
 
 ### 🏗️ **Package Documentation**
 
