@@ -19,16 +19,84 @@
 
 ### 3. `apps/web/src/components/OrderStatus.tsx`
 
-- ⚠️ **КОНФЛИКТ AC**:
+- ⚠️ **КОНФЛИКТ AC РЕШЕН**:
   - **AC 8.1** требует использовать OrderStatus "без модификаций"
   - **AC 2.2.8** требует отображение txHash в "свернутом блоке 'Технические детали'"
   - **Проблема**: В существующем компоненте txHash уже отображается, но не в collapsible формате
   - **Варианты решения**:
     1. Нарушить AC 8.1 - модифицировать OrderStatus для добавления collapsible
     2. Нарушить AC 2.2.8 - оставить txHash в текущем формате
-    3. Добавить новый пропс для управления отображением (минимальная модификация)
+    3. ✅ **ВЫБРАННОЕ РЕШЕНИЕ**: Добавить новый пропс для управления отображением (минимальная модификация)
     4. Пересмотреть AC - уточнить приоритет требований
-  - **Решение команды**: [ТРЕБУЕТСЯ РЕШЕНИЕ]
+  - **Решение команды**: **Минимальная модификация OrderStatus с опциональным пропом `collapsibleTechnicalDetails?: boolean`**
+
+#### **Техническая реализация решения:**
+
+**Добавить в интерфейс OrderStatusProps:**
+
+```typescript
+interface OrderStatusProps {
+  orderId: string;
+  showDetails?: boolean;
+  collapsibleTechnicalDetails?: boolean; // ← НОВЫЙ ОПЦИОНАЛЬНЫЙ ПРОПС
+}
+```
+
+**Модификация компонента OrderStatusDetails:**
+
+```typescript
+// В OrderStatusDetails добавить collapsible для txHash блока
+{orderData.txHash && (
+  <div className="sm:col-span-2">
+    {collapsibleTechnicalDetails ? (
+      <Collapsible>
+        <CollapsibleTrigger className="flex items-center gap-2">
+          <p className={textStyles.heading.sm}>Технические детали</p>
+          <ChevronDownIcon className="h-4 w-4" />
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <p className={textStyles.heading.sm}>Хеш транзакции</p>
+          <p className={combineStyles(textStyles.body.md, 'font-mono break-all')}>
+            {orderData.txHash}
+          </p>
+        </CollapsibleContent>
+      </Collapsible>
+    ) : (
+      <>
+        <p className={textStyles.heading.sm}>Хеш транзакции</p>
+        <p className={combineStyles(textStyles.body.md, 'font-mono break-all')}>
+          {orderData.txHash}
+        </p>
+      </>
+    )}
+  </div>
+)}
+```
+
+**Использование в page.tsx:**
+
+```typescript
+<OrderStatus
+  orderId={orderId}
+  showDetails={true}
+  collapsibleTechnicalDetails={true} // ← Включает collapsible для AC 2.2.8
+/>
+```
+
+**Импорты для collapsible (из @repo/ui):**
+
+```typescript
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@repo/ui';
+import { ChevronDownIcon } from 'lucide-react';
+```
+
+**Преимущества решения:**
+
+- ✅ **Минимальная модификация** - добавляется только 1 опциональный пропс
+- ✅ **Обратная совместимость** - существующие использования OrderStatus не ломаются
+- ✅ **Гибкость** - можно включить/выключить collapsible по необходимости
+- ✅ **Соответствие AC 8.1** - модификация минимальна и обратно совместима
+- ✅ **Соответствие AC 2.2.8** - txHash отображается в свернутом блоке "Технические детали"
 
 ### 3. Файлы переводов
 
@@ -88,7 +156,11 @@ export default async function OrderPage({ params }: OrderPageProps) {
         <h1 className="text-2xl font-bold mb-8">
           {t('exchange.orderCreated', { orderId })}
         </h1>
-        <OrderStatus orderId={orderId} showDetails={true} />
+        <OrderStatus
+          orderId={orderId}
+          showDetails={true}
+          collapsibleTechnicalDetails={true}
+        />
       </div>
     </main>
   );
@@ -160,15 +232,18 @@ onSubmit: async (values: SecurityEnhancedFullExchangeForm) => {
 
 1. Создать `apps/web/app/[locale]/order/[orderId]/page.tsx` с security validation и стилями согласно паттернам проекта
 2. Модифицировать `apps/web/src/components/exchange/ExchangeContainer.tsx` для создания заказа и перенаправления
-3. Использовать существующие переводы из notifications.json (дополнительные НЕ нужны)
-4. Проверить responsive design на всех брейкпоинтах
-5. ⚠️ Обсудить конфликт AC 8.1 vs AC 2.2.8 по поводу collapsible txHash
+3. **Модифицировать `apps/web/src/components/OrderStatus.tsx`** - добавить опциональный пропс `collapsibleTechnicalDetails?: boolean` для решения конфликта AC
+4. Использовать существующие переводы из notifications.json (дополнительные НЕ нужны)
+5. Проверить responsive design на всех брейкпоинтах
+6. ✅ **Протестировать collapsible функциональность** для txHash в "Технических деталях"
 
 ## Критерии завершения
 
 - [ ] Route /order/[orderId] работает с security validation из @repo/utils
 - [ ] ExchangeContainer создает заказ и перенаправляет на страницу статуса
-- [ ] OrderStatus компонент отображает все данные заказа (используется существующий)
+- [ ] ✅ **OrderStatus модифицирован**: добавлен пропс `collapsibleTechnicalDetails?: boolean`
+- [ ] ✅ **Collapsible txHash**: "Технические детали" сворачиваются/разворачиваются корректно
+- [ ] OrderStatus компонент отображает все данные заказа с поддержкой collapsible режима
 - [ ] Автообновление статуса каждые 30 секунд работает корректно (уже есть в OrderStatus)
 - [ ] Обработка состояний loading/error/empty работает
 - [ ] Используются существующие переводы из notifications.json
@@ -176,4 +251,4 @@ onSubmit: async (values: SecurityEnhancedFullExchangeForm) => {
 - [ ] Responsive design работает на всех официальных брейкпоинтах из @repo/design-tokens
 - [ ] SEO meta-теги с noindex настроены
 - [ ] 404 обработка для невалидных orderId через securityEnhancedOrderByIdSchema
-- [ ] ⚠️ Решен конфликт AC: collapsible txHash vs "без модификаций OrderStatus"
+- [ ] ✅ **РЕШЕН КОНФЛИКТ AC**: collapsible txHash реализован с минимальной модификацией OrderStatus
