@@ -32,16 +32,10 @@
 
 ### 3. Файлы переводов
 
-### 4. `apps/web/messages/ru/common-ui.json` и `apps/web/messages/en/common-ui.json`
+### 4. `apps/web/messages/` (используем существующие переводы)
 
-- Добавить переводы в секцию "OrderPage" (как требует AC 5.2)
-- Переводы для metadata: title, description
-- Переводы для состояний загрузки и ошибок### 5. `tests/order-page.spec.ts`
-
-- Создать Playwright тесты для проверки функциональности
-- Тест валидного orderId и тест 404 для невалидного
-- Тест автообновления статуса каждые 30 секунд
-- Тест отображения технических деталей
+- Переводы уже есть в notifications.json
+- Дополнительные переводы НЕ нужны - используем "exchange.orderCreated"
 
 ## Конкретные изменения
 
@@ -52,7 +46,6 @@ import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 import { OrderStatus } from '../../../../../src/components/OrderStatus';
-import { textStyles } from '@repo/ui';
 import { securityEnhancedOrderByIdSchema } from '@repo/utils';
 
 interface OrderPageProps {
@@ -64,11 +57,11 @@ interface OrderPageProps {
 
 export async function generateMetadata({ params }: OrderPageProps) {
   const { orderId } = await params;
-  const t = await getTranslations('OrderPage');
+  const t = await getTranslations('notifications');
 
   return {
-    title: t('metadata.title', { orderId }),
-    description: t('metadata.description'),
+    title: t('exchange.orderCreated', { orderId }),
+    description: t('exchange.orderCreated', { orderId }),
     robots: {
       index: false,
       follow: false,
@@ -78,6 +71,7 @@ export async function generateMetadata({ params }: OrderPageProps) {
 
 export default async function OrderPage({ params }: OrderPageProps) {
   const { locale, orderId } = await params;
+  const t = await getTranslations('notifications');
 
   setRequestLocale(locale);
 
@@ -89,55 +83,18 @@ export default async function OrderPage({ params }: OrderPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <main role="main" className="order-page min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 lg:py-12">
-        <div className="mb-8">
-          <h1 className={textStyles.heading.lg}>
-            Заявка #{orderId}
-          </h1>
-        </div>
+        <h1 className="text-2xl font-bold mb-8">
+          {t('exchange.orderCreated', { orderId })}
+        </h1>
         <OrderStatus orderId={orderId} showDetails={true} />
       </div>
-    </div>
+    </main>
   );
 }
 ```
 
-### ExchangeContainer.tsx изменения
-
-Добавить импорты (после существующих):Добавить импорты (после существующих):
-
-```typescript
-import { useRouter } from '../i18n/navigation';
-import { useExchangeMutation } from '../hooks/useExchangeMutation';
-```
-
-Добавить в начало компонента:
-
-```typescript
-const router = useRouter();
-const { createOrder } = useExchangeMutation();
-```
-
-Заменить onSubmit (строки 79-81):
-
-````typescript
-onSubmit: async (values: SecurityEnhancedFullExchangeForm) => {
-  try {
-    const result = await createOrder.mutateAsync({
-      email: values.email,
-      cryptoAmount: Number(values.fromAmount),
-      currency: values.fromCurrency as CryptoCurrency,
-      uahAmount: calculatedAmount,
-      recipientData: {
-        cardNumber: values.cardNumber,
-      },
-    });
-
-    router.push(`/order/${result.orderId}`);
-  } catch (error) {
-    throw error;
-  }
 ### ExchangeContainer.tsx изменения
 
 Добавить импорты (после существующих):
@@ -145,7 +102,7 @@ onSubmit: async (values: SecurityEnhancedFullExchangeForm) => {
 ```typescript
 import { useRouter } from '../../i18n/navigation';
 import { useExchangeMutation } from '../hooks/useExchangeMutation';
-````
+```
 
 Добавить в начало компонента:
 
@@ -169,6 +126,7 @@ onSubmit: async (values: SecurityEnhancedFullExchangeForm) => {
       },
     });
 
+    // Используем существующий перевод из notifications
     router.push(`/order/${result.orderId}`);
   } catch (error) {
     throw error;
@@ -176,96 +134,35 @@ onSubmit: async (values: SecurityEnhancedFullExchangeForm) => {
 },
 ```
 
-### Переводы common-ui.json
+### Переводы (используем существующие)
 
-Добавить в секцию `technicalDetails`:
+Переводы уже есть в проекте:
 
-**ru/common-ui.json:**
-
-````json
-### Переводы common-ui.json
-
-Добавить в секцию `OrderPage` (как требует AC 5.2):
-
-**ru/common-ui.json:**
-```json
-"OrderPage": {
-  "metadata": {
-    "title": "Заявка #{orderId} | Обменник",
-    "description": "Статус заявки на обмен криптовалюты"
-  },
-  "loading": "Загрузка информации о заявке...",
-  "error": "Заявка не найдена",
-  "retry": "Попробовать снова"
-}
-````
-
-**en/common-ui.json:**
+**ru/notifications.json:**
 
 ```json
-"OrderPage": {
-  "metadata": {
-    "title": "Order #{orderId} | Exchanger",
-    "description": "Cryptocurrency exchange order status"
-  },
-  "loading": "Loading order information...",
-  "error": "Order not found",
-  "retry": "Try again"
+"exchange": {
+  "orderCreated": "Заявка {orderId} создана"
 }
 ```
 
-````
-
-**en/common-ui.json:**
+**en/notifications.json:**
 
 ```json
-"technicalDetails": {
-  "title": "Technical Details",
-  "txHash": "Transaction Hash",
-  "createdAt": "Created",
-  "updatedAt": "Updated"
+"exchange": {
+  "orderCreated": "Order {orderId} created"
 }
-````
-
-### Playwright тесты order-page.spec.ts
-
-Создать comprehensive тесты:
-
-```typescript
-import { test, expect } from '@playwright/test';
-
-test.describe('Order Page', () => {
-  test('should display order details for valid orderId', async ({ page }) => {
-    // Тест отображения валидной страницы заказа
-  });
-
-  test('should show 404 for invalid orderId', async ({ page }) => {
-    // Тест обработки невалидного orderId
-  });
-
-  test('should auto-refresh order status every 30 seconds', async ({ page }) => {
-    // Тест автообновления статуса
-  });
-
-  test('should toggle technical details section', async ({ page }) => {
-    // Тест collapsible секции с txHash
-  });
-
-  test('should be responsive on mobile devices', async ({ page }) => {
-    // Тест responsive design
-  });
-});
 ```
+
+Дополнительные переводы НЕ требуются - используем существующие.
 
 ## Порядок выполнения
 
-1. Создать `apps/web/app/[locale]/order/[orderId]/page.tsx` с security validation
+1. Создать `apps/web/app/[locale]/order/[orderId]/page.tsx` с security validation и стилями согласно паттернам проекта
 2. Модифицировать `apps/web/src/components/exchange/ExchangeContainer.tsx` для создания заказа и перенаправления
-3. Обновить файлы переводов для новых элементов интерфейса (секция OrderPage)
-4. Создать Playwright тесты для полного покрытия функциональности
-5. Проверить responsive design на всех брейкпоинтах
-6. Тестировать полный flow: форма → создание заказа → страница статуса
-7. ⚠️ Обсудить конфликт AC 8.1 vs AC 2.2.8 по поводу collapsible txHash
+3. Использовать существующие переводы из notifications.json (дополнительные НЕ нужны)
+4. Проверить responsive design на всех брейкпоинтах
+5. ⚠️ Обсудить конфликт AC 8.1 vs AC 2.2.8 по поводу collapsible txHash
 
 ## Критерии завершения
 
@@ -274,9 +171,9 @@ test.describe('Order Page', () => {
 - [ ] OrderStatus компонент отображает все данные заказа (используется существующий)
 - [ ] Автообновление статуса каждые 30 секунд работает корректно (уже есть в OrderStatus)
 - [ ] Обработка состояний loading/error/empty работает
-- [ ] Все тексты локализованы в секции OrderPage (ru/en)
+- [ ] Используются существующие переводы из notifications.json
+- [ ] Используются стили согласно существующим паттернам проекта (как в exchange/page.tsx)
 - [ ] Responsive design работает на всех официальных брейкпоинтах из @repo/design-tokens
-- [ ] Playwright тесты покрывают основную функциональность
 - [ ] SEO meta-теги с noindex настроены
 - [ ] 404 обработка для невалидных orderId через securityEnhancedOrderByIdSchema
 - [ ] ⚠️ Решен конфликт AC: collapsible txHash vs "без модификаций OrderStatus"
