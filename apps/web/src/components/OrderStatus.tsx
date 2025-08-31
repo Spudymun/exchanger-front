@@ -13,8 +13,9 @@ import {
   CardContent,
   Button,
 } from '@repo/ui';
+import { getLocalizedStatusLabel, getLocalizedStatusDescription } from '@repo/utils';
 import { CheckCircle, Clock, Loader2, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 
 import { useOrderStatus } from '../hooks/useExchangeMutation';
@@ -82,10 +83,12 @@ function TechnicalDetailsCollapsible({
   orderData,
   isTechnicalExpanded,
   setIsTechnicalExpanded,
+  t,
 }: {
   orderData: Order;
   isTechnicalExpanded: boolean;
   setIsTechnicalExpanded: (expanded: boolean) => void;
+  t: ReturnType<typeof useTranslations>;
 }) {
   return (
     <div className="sm:col-span-2">
@@ -96,7 +99,7 @@ function TechnicalDetailsCollapsible({
             onClick={() => setIsTechnicalExpanded(!isTechnicalExpanded)}
             className="flex items-center justify-between w-full h-auto p-0 text-left"
           >
-            <span className={textStyles.heading.sm}>Технические детали</span>
+            <span className={textStyles.heading.sm}>{t('technicalDetails')}</span>
             {isTechnicalExpanded ? (
               <ChevronUp className="h-4 w-4" />
             ) : (
@@ -107,7 +110,7 @@ function TechnicalDetailsCollapsible({
         {isTechnicalExpanded && (
           <CardContent className="pt-0">
             <div>
-              <p className={textStyles.heading.sm}>Хеш транзакции</p>
+              <p className={textStyles.heading.sm}>{t('txHash')}</p>
               <p className={combineStyles(textStyles.body.md, MONO_FONT_CLASS)}>
                 {orderData.txHash}
               </p>
@@ -123,19 +126,21 @@ function OrderBasicInfo({
   orderData,
   statusConfig,
   locale,
+  t,
 }: {
   orderData: Order;
   statusConfig: StatusConfig;
   locale: string;
+  t: ReturnType<typeof useTranslations>;
 }) {
   return (
     <>
       <div>
-        <p className={textStyles.heading.sm}>ID заказа</p>
+        <p className={textStyles.heading.sm}>{t('orderId')}</p>
         <p className={textStyles.body.md}>{orderData.id}</p>
       </div>
       <div>
-        <p className={textStyles.heading.sm}>Статус</p>
+        <p className={textStyles.heading.sm}>{t('status')}</p>
         <span
           className={combineStyles(
             'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
@@ -146,24 +151,24 @@ function OrderBasicInfo({
         </span>
       </div>
       <div>
-        <p className={textStyles.heading.sm}>Сумма</p>
+        <p className={textStyles.heading.sm}>{t('amount')}</p>
         <p className={textStyles.body.md}>
           {orderData.cryptoAmount} {orderData.currency} →{' '}
           {orderData.uahAmount.toLocaleString(locale)} ₴
         </p>
       </div>
       <div>
-        <p className={textStyles.heading.sm}>Адрес депозита</p>
+        <p className={textStyles.heading.sm}>{t('depositAddress')}</p>
         <p className={combineStyles(textStyles.body.md, MONO_FONT_CLASS)}>
           {orderData.depositAddress}
         </p>
       </div>
       <div>
-        <p className={textStyles.heading.sm}>Создано</p>
+        <p className={textStyles.heading.sm}>{t('created')}</p>
         <p className={textStyles.body.md}>{new Date(orderData.createdAt).toLocaleString(locale)}</p>
       </div>
       <div>
-        <p className={textStyles.heading.sm}>Обновлено</p>
+        <p className={textStyles.heading.sm}>{t('updated')}</p>
         <p className={textStyles.body.md}>{new Date(orderData.updatedAt).toLocaleString(locale)}</p>
       </div>
     </>
@@ -174,10 +179,12 @@ function OrderStatusDetails({
   orderData,
   statusConfig,
   collapsibleTechnicalDetails = false,
+  t,
 }: {
   orderData: Order;
   statusConfig: StatusConfig;
   collapsibleTechnicalDetails?: boolean;
+  t: ReturnType<typeof useTranslations>;
 }) {
   const locale = useLocale(); // ✅ Локаль для форматирования дат и чисел
   const [isTechnicalExpanded, setIsTechnicalExpanded] = useState(false);
@@ -185,7 +192,7 @@ function OrderStatusDetails({
   return (
     <div className={cardStyles.base}>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <OrderBasicInfo orderData={orderData} statusConfig={statusConfig} locale={locale} />
+        <OrderBasicInfo orderData={orderData} statusConfig={statusConfig} locale={locale} t={t} />
 
         {/* Technical details with collapsible functionality */}
         {orderData.txHash && collapsibleTechnicalDetails && (
@@ -193,13 +200,14 @@ function OrderStatusDetails({
             orderData={orderData}
             isTechnicalExpanded={isTechnicalExpanded}
             setIsTechnicalExpanded={setIsTechnicalExpanded}
+            t={t}
           />
         )}
 
         {/* Fallback for non-collapsible mode */}
         {orderData.txHash && !collapsibleTechnicalDetails && (
           <div className="sm:col-span-2">
-            <p className={textStyles.heading.sm}>Хеш транзакции</p>
+            <p className={textStyles.heading.sm}>{t('txHash')}</p>
             <p className={combineStyles(textStyles.body.md, MONO_FONT_CLASS)}>{orderData.txHash}</p>
           </div>
         )}
@@ -208,11 +216,7 @@ function OrderStatusDetails({
   );
 }
 
-export function OrderStatus({
-  orderId,
-  showDetails = false,
-  collapsibleTechnicalDetails = false,
-}: OrderStatusProps) {
+function useOrderStatusData(orderId: string, t: ReturnType<typeof useTranslations>) {
   const {
     data: orderData,
     isLoading,
@@ -226,14 +230,35 @@ export function OrderStatus({
 
   const statusConfig = useMemo(() => {
     if (!typedOrderData?.status) return null;
-    return ORDER_STATUS_CONFIG[typedOrderData.status as keyof typeof ORDER_STATUS_CONFIG];
-  }, [typedOrderData?.status]);
+
+    const originalConfig =
+      ORDER_STATUS_CONFIG[typedOrderData.status as keyof typeof ORDER_STATUS_CONFIG];
+    if (!originalConfig) return null;
+
+    // Интегрируем локализацию с существующей структурой
+    return {
+      ...originalConfig,
+      label: getLocalizedStatusLabel(typedOrderData.status, t),
+      description: getLocalizedStatusDescription(typedOrderData.status, t),
+    };
+  }, [typedOrderData?.status, t]);
+
+  return { orderData: typedOrderData, isLoading, error, statusConfig };
+}
+
+export function OrderStatus({
+  orderId,
+  showDetails = false,
+  collapsibleTechnicalDetails = false,
+}: OrderStatusProps) {
+  const t = useTranslations('OrderStatus');
+  const { orderData, isLoading, error, statusConfig } = useOrderStatusData(orderId, t);
 
   if (isLoading) {
     return (
       <div className={combineStyles(cardStyles.base, 'flex items-center justify-center')}>
         <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        <span className={combineStyles(textStyles.body.md, 'ml-2')}>Загрузка статуса...</span>
+        <span className={combineStyles(textStyles.body.md, 'ml-2')}>{t('loading')}</span>
       </div>
     );
   }
@@ -241,15 +266,15 @@ export function OrderStatus({
   if (error) {
     return (
       <div className={combineStyles(cardStyles.base, statusStyles.error)}>
-        <p className={textStyles.body.md}>Ошибка загрузки статуса: {error.message}</p>
+        <p className={textStyles.body.md}>{t('error', { error: error.message })}</p>
       </div>
     );
   }
 
-  if (!typedOrderData || !statusConfig) {
+  if (!orderData || !statusConfig) {
     return (
       <div className={combineStyles(cardStyles.base, statusStyles.neutral)}>
-        <p className={textStyles.body.md}>Заказ не найден</p>
+        <p className={textStyles.body.md}>{t('notFound')}</p>
       </div>
     );
   }
@@ -257,12 +282,13 @@ export function OrderStatus({
   return (
     <BaseErrorBoundary componentName="OrderStatus">
       <div className="space-y-4">
-        <OrderStatusHeader orderData={typedOrderData} statusConfig={statusConfig} />
+        <OrderStatusHeader orderData={orderData} statusConfig={statusConfig} />
         {showDetails && (
           <OrderStatusDetails
-            orderData={typedOrderData}
+            orderData={orderData}
             statusConfig={statusConfig}
             collapsibleTechnicalDetails={collapsibleTechnicalDetails}
+            t={t}
           />
         )}
       </div>

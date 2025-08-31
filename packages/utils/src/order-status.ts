@@ -1,8 +1,11 @@
 import type { OrderStatus } from '@repo/constants';
 import { ORDER_STATUSES, ORDER_STATUS_GROUPS, ORDER_STATUS_CONFIG } from '@repo/constants';
 import type { Order } from '@repo/exchange-core';
+import type { useTranslations } from 'next-intl';
 
 // server-i18n-errors.ts removed - use getTranslations from next-intl/server in apps/web
+
+type TFunction = ReturnType<typeof useTranslations>;
 
 /**
  * Хелперы для работы со статусами заказов
@@ -263,4 +266,22 @@ export function isSuccessfulOrderStatus(status: OrderStatus): boolean {
  */
 export function isFailedOrderStatus(status: OrderStatus): boolean {
   return (ORDER_STATUS_GROUPS.FAILED as readonly OrderStatus[]).includes(status);
+}
+
+/**
+ * Получить локализованное название статуса
+ * Интегрируется с существующей системой next-intl
+ */
+export function getLocalizedStatusLabel(status: OrderStatus, t: TFunction): string {
+  const statusKey = `statuses.${status}` as const;
+  return t(statusKey);
+}
+
+/**
+ * Получить локализованное описание статуса
+ * Интегрируется с существующей системой next-intl
+ */
+export function getLocalizedStatusDescription(status: OrderStatus, t: TFunction): string {
+  const descriptionKey = `descriptions.${status}` as const;
+  return t(descriptionKey);
 }

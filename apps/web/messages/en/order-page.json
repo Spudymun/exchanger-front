@@ -6,5 +6,34 @@
       "ogTitle": "Order {orderId} - Exchange Status",
       "ogDescription": "Track the status of your cryptocurrency exchange order in real time"
     }
+  },
+  "OrderStatus": {
+    "loading": "Loading status...",
+    "error": "Status loading error: {error}",
+    "notFound": "Order not found",
+    "technicalDetails": "Technical details",
+    "txHash": "Transaction hash",
+    "orderId": "Order ID",
+    "status": "Status",
+    "amount": "Amount",
+    "depositAddress": "Deposit address",
+    "created": "Created",
+    "updated": "Updated",
+    "statuses": {
+      "pending": "Awaiting payment",
+      "paid": "Paid",
+      "processing": "Processing",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "failed": "Failed"
+    },
+    "descriptions": {
+      "pending": "Transfer cryptocurrency to the specified address",
+      "paid": "Payment received, order being processed",
+      "processing": "Being processed by operator",
+      "completed": "Funds transferred to your account",
+      "cancelled": "Order cancelled",
+      "failed": "Order processing failed"
+    }
   }
 }

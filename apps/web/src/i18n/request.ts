@@ -119,7 +119,7 @@ const MODULE_NAMESPACE_MAP = {
   'exchange-trading': ['exchange', 'trading', 'portfolio'],
   'common-ui': ['common', 'theme', 'NotFound', 'Error'],
   'dashboard-nav': ['dashboard', 'navigation'],
-  'order-page': ['order-page'],
+  'order-page': ['order-page', 'OrderStatus'],
 } as const;
 
 /**
