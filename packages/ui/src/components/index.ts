@@ -141,9 +141,10 @@ export {
 } from './admin-panel-compound';
 
 // Layout Components - PageLayout
-export { PageLayout, type PageLayoutProps } from './page-layout';
-export { StandardPageLayout, type StandardPageLayoutProps } from './standard-page-layout';
-export { CenteredPageLayout, type CenteredPageLayoutProps } from './centered-page-layout';
+export * from './page-layout';
+export * from './standard-page-layout';
+export * from './centered-page-layout';
+export * from './section-layout';
 
 // Layout Components - Main Header (compound pattern)
 export {

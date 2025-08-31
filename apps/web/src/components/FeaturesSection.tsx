@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui';
+import { Card, CardContent, CardHeader, CardTitle, SectionLayout } from '@repo/ui';
 import { Zap, DollarSign, Shield, Clock, Users, CheckCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import React from 'react';
@@ -65,24 +65,22 @@ export function FeaturesSection() {
   const features = createFeatures(t);
 
   return (
-    <section className="relative py-24 bg-muted/30">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">{t('title')}</h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">{t('subtitle')}</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature, index) => (
-            <FeatureCard
-              key={index}
-              icon={feature.icon}
-              title={feature.title}
-              description={feature.description}
-            />
-          ))}
-        </div>
+    <SectionLayout spacing="xl" background="muted" maxWidth="7xl">
+      <div className="text-center mb-16">
+        <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">{t('title')}</h2>
+        <p className="text-xl text-muted-foreground max-w-3xl mx-auto">{t('subtitle')}</p>
       </div>
-    </section>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {features.map((feature, index) => (
+          <FeatureCard
+            key={index}
+            icon={feature.icon}
+            title={feature.title}
+            description={feature.description}
+          />
+        ))}
+      </div>
+    </SectionLayout>
   );
 }

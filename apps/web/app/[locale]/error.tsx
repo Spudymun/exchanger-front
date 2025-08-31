@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@repo/ui';
+import { Button, CenteredPageLayout } from '@repo/ui';
 import { useTranslations } from 'next-intl';
 
 import { useRouter } from '../../src/i18n/navigation';
@@ -65,11 +65,9 @@ export default function Error({ error, reset }: ErrorProps) {
   const t = useTranslations('Error');
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="max-w-2xl mx-auto p-8 text-center">
-        <ErrorContent error={error} t={t} />
-        <ErrorActions reset={reset} t={t} />
-      </div>
-    </div>
+    <CenteredPageLayout maxWidth="lg">
+      <ErrorContent error={error} t={t} />
+      <ErrorActions reset={reset} t={t} />
+    </CenteredPageLayout>
   );
 }
