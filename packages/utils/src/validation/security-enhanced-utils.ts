@@ -15,14 +15,9 @@ export const securityEnhancedIdSchema = z.string().uuid('INVALID_ID_FORMAT');
 /**
  * Order ID schema - validates the specific format: order_TIMESTAMP_RANDOMSTRING
  */
-const ORDER_ID_MIN_LENGTH = 20;
-const ORDER_ID_MAX_LENGTH = 50;
-
 export const orderIdSchema = z
   .string()
-  .regex(/^order_\d{13,}_[a-z0-9]{8,}$/, 'INVALID_ORDER_ID_FORMAT')
-  .min(ORDER_ID_MIN_LENGTH, 'ORDER_ID_TOO_SHORT')
-  .max(ORDER_ID_MAX_LENGTH, 'ORDER_ID_TOO_LONG');
+  .regex(/^order_\d{13,}_[a-zA-Z0-9]{8,}$/, 'INVALID_ORDER_ID_FORMAT');
 
 /**
  * Security-enhanced getById schema

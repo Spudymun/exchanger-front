@@ -54,9 +54,9 @@ export const MOCK_TRANSACTION_DATA = {
  */
 export const MOCK_ORDER_IDS = {
   /** ID первой тестовой заявки */
-  ORDER_1: generateTestOrderId(MOCK_TIMESTAMPS.MOCK_ORDER_1_TIMESTAMP, 'abc123'),
+  ORDER_1: generateTestOrderId(MOCK_TIMESTAMPS.MOCK_ORDER_1_TIMESTAMP, 'abc123456'),
   /** ID второй тестовой заявки */
-  ORDER_2: generateTestOrderId(MOCK_TIMESTAMPS.MOCK_ORDER_2_TIMESTAMP, 'def456'),
+  ORDER_2: generateTestOrderId(MOCK_TIMESTAMPS.MOCK_ORDER_2_TIMESTAMP, 'def456789'),
 } as const;
 
 // === ТИПЫ ===
