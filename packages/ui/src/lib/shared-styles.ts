@@ -79,6 +79,27 @@ export const layoutStyles = {
 } as const;
 
 /**
+ * Responsive patterns для устранения hardcode значений
+ */
+export const responsiveStyles = {
+  padding: {
+    page: 'px-4 lg:px-0 py-8 lg:py-12', // Стандартный padding для страниц
+    section: 'py-6 lg:py-8', // Для секций внутри страниц
+    compact: 'px-4 py-6', // Компактный вариант
+  },
+  spacing: {
+    content: 'space-y-6 lg:space-y-8', // Между контентными блоками
+    form: 'space-y-4 lg:space-y-6', // Между элементами форм
+    section: 'mt-8 lg:mt-12', // Отступ между секциями
+  },
+  breakpoints: {
+    mobile: 'px-4', // Мобильные устройства
+    tablet: 'sm:px-6', // Планшеты
+    desktop: 'lg:px-8 xl:px-0', // Десктоп
+  },
+} as const;
+
+/**
  * Общие стили для заголовков страниц
  */
 export const pageStyles = {
@@ -147,6 +168,7 @@ export type CardStyleKeys = keyof typeof cardStyles;
 export type TextStyleCategories = keyof typeof textStyles;
 export type StatusStyleKeys = keyof typeof statusStyles;
 export type LayoutStyleKeys = keyof typeof layoutStyles;
+export type ResponsiveStyleKeys = keyof typeof responsiveStyles;
 export type PageStyleKeys = keyof typeof pageStyles;
 export type TableStyleKeys = keyof typeof tableStyles;
 export type StoryBookStyleKeys = keyof typeof storyBookStyles;

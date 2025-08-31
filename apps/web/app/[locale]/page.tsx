@@ -1,3 +1,4 @@
+import { StandardPageLayout } from '@repo/ui';
 import { setRequestLocale } from 'next-intl/server';
 
 import { FeaturesSection } from '../../src/components/FeaturesSection';
@@ -16,13 +17,17 @@ export default async function HomePage({ params }: HomePageProps) {
   setRequestLocale(locale);
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-8 sm:py-12 lg:py-16 space-y-8 sm:space-y-12 lg:space-y-16">
+    <>
+      <StandardPageLayout
+        maxWidth="7xl"
+        centerContent={false}
+        className="space-y-8 sm:space-y-12 lg:space-y-16"
+      >
         <HeroSection />
         <FeaturesSection />
         <HowItWorksSection />
-      </div>
+      </StandardPageLayout>
       <FloatingExchangeButton />
-    </div>
+    </>
   );
 }

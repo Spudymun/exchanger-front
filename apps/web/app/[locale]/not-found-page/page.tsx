@@ -1,5 +1,5 @@
 import { APP_ROUTES } from '@repo/constants';
-import { Button } from '@repo/ui';
+import { Button, CenteredPageLayout } from '@repo/ui';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { Link } from '../../../src/i18n/navigation';
@@ -15,20 +15,15 @@ export default async function NotFoundPage({ params }: NotFoundPageProps) {
   const t = await getTranslations('NotFound');
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4">
-      <div className="text-center space-y-6 max-w-md">
-        <div className="space-y-2">
-          <h1 className="text-6xl font-bold tracking-tight">404</h1>
-          <h2 className="text-2xl font-semibold">{t('title')}</h2>
-          <p className="text-lg text-muted-foreground">{t('description')}</p>
-        </div>
-
-        <div className="space-y-3">
-          <Button asChild>
-            <Link href={APP_ROUTES.HOME}>{t('goHome')}</Link>
-          </Button>
-        </div>
-      </div>
-    </div>
+    <CenteredPageLayout
+      maxWidth="md"
+      heading="404"
+      title={t('title')}
+      description={t('description')}
+    >
+      <Button asChild>
+        <Link href={APP_ROUTES.HOME}>{t('goHome')}</Link>
+      </Button>
+    </CenteredPageLayout>
   );
 }

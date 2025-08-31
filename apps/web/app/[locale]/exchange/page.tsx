@@ -1,3 +1,4 @@
+import { PageLayout } from '@repo/ui';
 import { getTranslations } from 'next-intl/server';
 
 import { ExchangeContainer } from '../../../src/components/exchange/ExchangeContainer';
@@ -41,20 +42,16 @@ export default async function ExchangePage({ params, searchParams }: ExchangePag
   const resolvedSearchParams = await searchParams;
 
   return (
-    <main role="main" className="exchange-page min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 lg:py-12">
-        <ExchangeContainer
-          locale={resolvedParams.locale}
-          initialParams={{
-            from: resolvedSearchParams.from,
-            to: resolvedSearchParams.to,
-            bank: resolvedSearchParams.bank,
-            amount: resolvedSearchParams.amount
-              ? parseFloat(resolvedSearchParams.amount)
-              : undefined,
-          }}
-        />
-      </div>
-    </main>
+    <PageLayout className="exchange-page">
+      <ExchangeContainer
+        locale={resolvedParams.locale}
+        initialParams={{
+          from: resolvedSearchParams.from,
+          to: resolvedSearchParams.to,
+          bank: resolvedSearchParams.bank,
+          amount: resolvedSearchParams.amount ? parseFloat(resolvedSearchParams.amount) : undefined,
+        }}
+      />
+    </PageLayout>
   );
 }
