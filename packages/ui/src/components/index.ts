@@ -2,6 +2,7 @@
 export { Button, buttonVariants } from './ui/button';
 export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card';
 export { Checkbox } from './ui/checkbox';
+export { CopyButton, type CopyButtonProps } from './ui/copy-button';
 export {
   Dialog,
   DialogContent,

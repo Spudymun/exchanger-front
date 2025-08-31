@@ -12,6 +12,7 @@ import {
   CardHeader,
   CardContent,
   Button,
+  CopyButton,
 } from '@repo/ui';
 import { getLocalizedStatusLabel, getLocalizedStatusDescription } from '@repo/utils';
 import { CheckCircle, Clock, Loader2, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
@@ -78,6 +79,47 @@ function OrderStatusHeader({
 }
 
 const MONO_FONT_CLASS = 'font-mono break-all';
+
+function AmountDisplayWithCopy({
+  orderData,
+  locale,
+  t,
+}: {
+  orderData: Order;
+  locale: string;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  return (
+    <div className="group">
+      <p className={textStyles.heading.sm}>{t('amount')}</p>
+      <div className="flex items-center justify-between gap-2 rounded-lg p-2 group-hover:bg-accent/5 transition-colors">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <span
+              className={combineStyles(
+                textStyles.body.md,
+                MONO_FONT_CLASS,
+                'font-semibold text-primary'
+              )}
+            >
+              {orderData.cryptoAmount} {orderData.currency}
+            </span>
+            <CopyButton
+              value={`${orderData.cryptoAmount} ${orderData.currency}`}
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+              variant="ghost"
+              size="sm"
+            />
+          </div>
+          <span className={textStyles.body.md}>→</span>
+          <span className={combineStyles(textStyles.body.md, 'font-semibold')}>
+            {orderData.uahAmount.toLocaleString(locale)} ₴
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function TechnicalDetailsCollapsible({
   orderData,
@@ -150,18 +192,26 @@ function OrderBasicInfo({
           {statusConfig.label}
         </span>
       </div>
-      <div>
-        <p className={textStyles.heading.sm}>{t('amount')}</p>
-        <p className={textStyles.body.md}>
-          {orderData.cryptoAmount} {orderData.currency} →{' '}
-          {orderData.uahAmount.toLocaleString(locale)} ₴
-        </p>
-      </div>
-      <div>
+      <AmountDisplayWithCopy orderData={orderData} locale={locale} t={t} />
+      <div className="group">
         <p className={textStyles.heading.sm}>{t('depositAddress')}</p>
-        <p className={combineStyles(textStyles.body.md, MONO_FONT_CLASS)}>
-          {orderData.depositAddress}
-        </p>
+        <div className="flex items-center justify-between gap-2 rounded-lg p-2 group-hover:bg-accent/5 transition-colors">
+          <p
+            className={combineStyles(
+              textStyles.body.md,
+              MONO_FONT_CLASS,
+              'font-semibold text-primary break-all'
+            )}
+          >
+            {orderData.depositAddress}
+          </p>
+          <CopyButton
+            value={orderData.depositAddress}
+            className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+            variant="ghost"
+            size="sm"
+          />
+        </div>
       </div>
       <div>
         <p className={textStyles.heading.sm}>{t('created')}</p>
