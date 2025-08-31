@@ -2,6 +2,7 @@ import { PageLayout } from '@repo/ui';
 import { securityEnhancedOrderByIdSchema } from '@repo/utils';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
+import { OrderDevTools } from '../../../../src/components/OrderDevTools';
 import { OrderStatus } from '../../../../src/components/OrderStatus';
 
 interface OrderPageProps {
@@ -42,6 +43,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
   return (
     <PageLayout className="order-page">
       <OrderStatus orderId={orderId} showDetails={true} collapsibleTechnicalDetails={true} />
+      <OrderDevTools orderId={orderId} />
     </PageLayout>
   );
 }
