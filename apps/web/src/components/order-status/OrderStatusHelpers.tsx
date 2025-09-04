@@ -125,14 +125,34 @@ export function OrderAdditionalInfo({
         <p className={textStyles.body.md}>{orderData.email}</p>
       </div>
 
-      {/* Blockchain Network */}
-      {orderData.tokenStandard && (
+      {/* Blockchain Network - для multi-network токенов (USDT) */}
+      {orderData.currency === 'USDT' && (
         <div>
           <p className={textStyles.heading.sm}>{t('blockchainNetwork')}</p>
-          <p className={textStyles.body.md}>
-            {TOKEN_STANDARD_DETAILS[orderData.tokenStandard as keyof typeof TOKEN_STANDARD_DETAILS]
-              ?.network || orderData.tokenStandard}
-          </p>
+          <div className="group flex items-center gap-2">
+            <p className={textStyles.body.md}>
+              {
+                orderData.tokenStandard
+                  ? TOKEN_STANDARD_DETAILS[
+                      orderData.tokenStandard as keyof typeof TOKEN_STANDARD_DETAILS
+                    ]?.network || orderData.tokenStandard
+                  : 'TRC-20 (Tron)' // дефолтное значение если tokenStandard не задан
+              }
+            </p>
+            <CopyButton
+              value={
+                orderData.tokenStandard
+                  ? TOKEN_STANDARD_DETAILS[
+                      orderData.tokenStandard as keyof typeof TOKEN_STANDARD_DETAILS
+                    ]?.network || orderData.tokenStandard
+                  : 'Tron'
+              }
+              variant="ghost"
+              size="sm"
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+              aria-label={`Copy network info`}
+            />
+          </div>
         </div>
       )}
 

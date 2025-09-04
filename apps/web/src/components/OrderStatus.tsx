@@ -82,6 +82,31 @@ function OrderStatusHeader({
 
 const MONO_FONT_CLASS = 'font-mono break-all';
 
+// Компонент для отображения Order ID с копированием
+function OrderIdDisplay({
+  orderData,
+  t,
+}: {
+  orderData: Order;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  return (
+    <div>
+      <p className={textStyles.heading.sm}>{t('orderId')}</p>
+      <div className="group flex items-center gap-2">
+        <p className={textStyles.body.md}>{orderData.id}</p>
+        <CopyButton
+          value={orderData.id}
+          variant="ghost"
+          size="sm"
+          className="opacity-0 group-hover:opacity-100 transition-opacity"
+          aria-label={`Copy order ID ${orderData.id}`}
+        />
+      </div>
+    </div>
+  );
+}
+
 function OrderBasicInfo({
   orderData,
   statusConfig,
@@ -95,10 +120,7 @@ function OrderBasicInfo({
 }) {
   return (
     <>
-      <div>
-        <p className={textStyles.heading.sm}>{t('orderId')}</p>
-        <p className={textStyles.body.md}>{orderData.id}</p>
-      </div>
+      <OrderIdDisplay orderData={orderData} t={t} />
       <div>
         <p className={textStyles.heading.sm}>{t('status')}</p>
         <span
