@@ -3,9 +3,10 @@
 ## Статус документа
 
 - **Создан**: 11 июля 2025
-- **Обновлен**: 11 июля 2025
-- **Версия**: 1.0
+- **Обновлен**: 4 сентября 2025
+- **Версия**: 1.1
 - **Основан на**: реальном опыте решения проблем с next-intl + Next.js 15
+- **Последнее обновление**: Добавлена критическая проблема client-side navigation race condition
 
 ## 🚨 Критические проблемы и решения
 
@@ -398,6 +399,74 @@ const t = useTranslations('Form'); // НЕТ такого namespace'а
 const t = useTranslations('Exchange'); // НЕТ такого namespace'а
 const t = useTranslations('Page'); // НЕТ такого namespace'а
 ```
+
+### 🚨 Проблема 9: Translation keys отображаются вместо переводов при client-side navigation
+
+**Симптомы:**
+
+- После `router.push('/order/123')` показываются ключи переводов (`OrderStatus.loading` вместо "Загрузка...")
+- Проблема возникает только при client-side navigation (router.push)
+- Manual refresh или direct page access работает корректно
+- Hot reload исправляет проблему
+- Проблема специфична для компонентов, которые используют переводы на целевой странице
+
+**Причина:**
+
+**Race condition** между Next.js client-side navigation и next-intl translation loading:
+
+```typescript
+// Сценарий race condition:
+// 1. Пользователь на /exchange (модули: advanced-exchange, layout)
+// 2. ExchangeContainer вызывает router.push('/order/123')
+// 3. Next.js немедленно рендерит /order страницу
+// 4. OrderStatus компонент вызывает useTranslations('OrderStatus')
+// 5. Но модуль order-page с OrderStatus namespace еще не загружен!
+// 6. next-intl возвращает ключи вместо переводов
+```
+
+**Timeline диаграмма:**
+
+```
+T0: /exchange page (modules: advanced-exchange, layout)
+T1: router.push('/order/123')
+T2: Next.js client-side navigation starts
+T3: /order page renders ← ПРОБЛЕМА: рендер ДО загрузки переводов
+T4: useTranslations('OrderStatus') → keys (not translations)
+T5: order-page module loads ← СЛИШКОМ ПОЗДНО
+```
+
+**Решение:**
+
+```typescript
+// ✅ РЕШЕНИЕ 1: Preload dependencies в source page
+// В apps/web/src/i18n/request.ts
+const ROUTE_MODULE_MAP = {
+  '/exchange': {
+    critical: ['advanced-exchange', 'layout'],
+    lazy: ['order-page'], // ← Предзагружаем переводы для order
+    description: 'Exchange page with forms and trading',
+  },
+};
+
+// ✅ РЕШЕНИЕ 2: Navigation prefetching
+// В ExchangeContainer перед навигацией
+await router.prefetch(`/order/${orderId}`);
+router.push(`/order/${orderId}`);
+
+// ✅ РЕШЕНИЕ 3: Loading state в компоненте
+// В OrderStatus.tsx
+const t = useTranslations('OrderStatus');
+if (!t.has('loading')) {
+  return <div>Loading translations...</div>;
+}
+```
+
+**Как предотвратить:**
+
+1. **Анализируйте navigation flow** - какие компоненты используют переводы после навигации
+2. **Добавляйте lazy dependencies** - включайте нужные модули в исходную страницу
+3. **Тестируйте client-side navigation** - всегда проверяйте `router.push()` переходы
+4. **Используйте prefetching** для критических navigation paths
 
 ## �🔧 Диагностические команды
 

@@ -654,7 +654,112 @@ return Object.keys(MODULE_NAMESPACE_MAP); // Все модули!
 const requiredModules = getRequiredModules(pathname, headersList);
 ```
 
-### 4. Cache Invalidation
+### 4. Client-Side Navigation Race Condition
+
+**Проблема**: Translation keys отображаются вместо переводов при навигации
+
+**Симптомы**:
+
+- После `router.push()` на новую страницу показываются ключи переводов (например, `OrderStatus.loading`)
+- Перерендер (hot reload, manual refresh) исправляет проблему
+- Проблема возникает только при client-side navigation, не при direct page access
+
+**Анализ причины**:
+
+```typescript
+// Сценарий проблемы:
+// 1. Пользователь на странице /exchange (загружены модули: advanced-exchange, layout)
+// 2. ExchangeContainer вызывает router.push('/order/123')
+// 3. Next.js выполняет client-side navigation к /order/123
+// 4. Страница /order рендерится НЕМЕДЛЕННО
+// 5. OrderStatus компонент использует useTranslations('OrderStatus')
+// 6. Но модуль order-page с OrderStatus namespace еще НЕ ЗАГРУЖЕН
+// 7. next-intl возвращает ключи вместо переводов
+```
+
+**Race Condition Диаграмма**:
+
+```
+Timeline: Client-Side Navigation Race Condition
+
+T0: /exchange page (modules: advanced-exchange, layout)
+    |
+    v
+T1: router.push('/order/123') called
+    |
+    v
+T2: Next.js starts client-side navigation
+    |
+    v
+T3: /order page renders IMMEDIATELY ← ПРОБЛЕМА: рендер до загрузки переводов
+    |
+    v
+T4: OrderStatus component calls useTranslations('OrderStatus')
+    |
+    v
+T5: next-intl returns keys (not translations) ← СИМПТОМ
+    |
+    v
+T6: order-page module loads (with OrderStatus namespace) ← СЛИШКОМ ПОЗДНО
+    |
+    v
+T7: Provider updates, but component already rendered
+```
+
+**Решение: Preload Dependencies**
+
+```typescript
+// ✅ В apps/web/src/i18n/request.ts
+const ROUTE_MODULE_MAP: Record<string, RouteModuleConfig> = {
+  // Exchange page - добавляем ORDER_PAGE как lazy dependency
+  '/exchange': {
+    critical: ['advanced-exchange', 'layout'],
+    lazy: ['ORDER_PAGE'], // ← РЕШЕНИЕ: предзагрузка order переводов
+    description: 'Exchange page with forms and trading',
+  },
+
+  '/order': {
+    critical: ['order-page', 'layout', 'common-ui'],
+    lazy: ['notifications'],
+    description: 'Order status pages',
+  },
+};
+```
+
+**Альтернативные решения**:
+
+1. **Critical Module Promotion**: Переместить часто используемые namespace'ы в critical modules
+
+```typescript
+// Если OrderStatus используется на многих страницах
+'/': { critical: ['home-page', 'layout', 'order-page'] }
+```
+
+2. **Loading State Management**: Добавить loading состояние в компонент
+
+```typescript
+// В OrderStatus.tsx
+if (!t.has('loading')) {
+  return <div>Loading translations...</div>;
+}
+```
+
+3. **Navigation Prefetching**: Использовать next-intl prefetch API
+
+```typescript
+// В ExchangeContainer перед навигацией
+await router.prefetch(`/order/${orderId}`);
+router.push(`/order/${orderId}`);
+```
+
+**Best Practices для предотвращения**:
+
+1. **Анализируйте navigation flow**: Какие компоненты используют переводы после навигации
+2. **Добавляйте lazy dependencies**: Включайте нужные модули в исходную страницу
+3. **Тестируйте client-side navigation**: Всегда тестируйте переходы через `router.push()`
+4. **Мониторьте translation loading**: Логируйте загрузку модулей в development
+
+### 5. Cache Invalidation
 
 **Проблема**: Устаревшие переводы в cache
 
@@ -688,6 +793,14 @@ const requiredModules = getRequiredModules(pathname, headersList);
 - **[DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)** - Общие принципы разработки
 
 ## 📝 Changelog
+
+### v1.1 (4 сентября 2025)
+
+- ✅ **[CRITICAL FIX]** Документирована и исправлена race condition при client-side navigation
+- ✅ Добавлен детальный анализ проблемы translation keys вместо переводов
+- ✅ Описаны решения для предотвращения navigation race condition
+- ✅ Добавлены best practices для тестирования client-side navigation
+- ✅ Создана timeline диаграмма для понимания проблемы
 
 ### v1.0 (30 августа 2025)
 

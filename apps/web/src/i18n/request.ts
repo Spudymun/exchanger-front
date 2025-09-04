@@ -76,7 +76,7 @@ const ROUTE_MODULE_MAP: Record<string, RouteModuleConfig> = {
   // Exchange page - 2 critical + 1 lazy modules
   '/exchange': {
     critical: ['advanced-exchange', LAZY_MODULES.LAYOUT],
-    lazy: [LAZY_MODULES.NOTIFICATIONS],
+    lazy: [LAZY_MODULES.ORDER_PAGE],
     description: 'Exchange page with forms and trading',
   },
 
