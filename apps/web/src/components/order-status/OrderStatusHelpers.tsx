@@ -233,7 +233,7 @@ export function AmountDisplayWithCopy({
               {orderData.cryptoAmount} {orderData.currency}
             </span>
             <CopyButton
-              value={`${orderData.cryptoAmount} ${orderData.currency}`}
+              value={orderData.cryptoAmount.toString()}
               className="opacity-0 group-hover:opacity-100 transition-opacity"
               variant="ghost"
               size="sm"
