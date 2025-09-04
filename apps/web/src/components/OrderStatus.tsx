@@ -2,14 +2,7 @@
 
 import { ORDER_STATUS_CONFIG, ORDER_STATUSES, UI_REFRESH_INTERVALS } from '@repo/constants';
 import type { Order } from '@repo/exchange-core';
-import {
-  statusStyles,
-  textStyles,
-  cardStyles,
-  combineStyles,
-  BaseErrorBoundary,
-  CopyButton,
-} from '@repo/ui';
+import { statusStyles, textStyles, cardStyles, combineStyles, BaseErrorBoundary } from '@repo/ui';
 import { getLocalizedStatusLabel, getLocalizedStatusDescription } from '@repo/utils';
 import { CheckCircle, Clock, Loader2, XCircle } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
@@ -18,9 +11,11 @@ import { useMemo, useState } from 'react';
 import { useOrderStatus } from '../hooks/useExchangeMutation';
 
 import {
-  AmountDisplayWithCopy,
   TechnicalDetailsCollapsible,
-  OrderAdditionalInfo,
+  OrderPriorityInfo,
+  OrderMetadataInfo,
+  OrderCryptoInfo,
+  OrderFinancialInfo,
 } from './order-status/OrderStatusHelpers';
 
 interface OrderStatusProps {
@@ -66,7 +61,7 @@ function OrderStatusHeader({
   const isProcessing = orderData.status === ORDER_STATUSES.PROCESSING;
 
   return (
-    <div className="flex items-center space-x-3">
+    <div className="flex items-center gap-4">
       <StatusIcon
         className={`h-6 w-6 ${getIconColorClass(statusConfig.color)} ${
           isProcessing ? 'animate-spin' : ''
@@ -82,97 +77,6 @@ function OrderStatusHeader({
 
 const MONO_FONT_CLASS = 'font-mono break-all';
 
-// Компонент для отображения Order ID с копированием
-function OrderIdDisplay({
-  orderData,
-  t,
-}: {
-  orderData: Order;
-  t: ReturnType<typeof useTranslations>;
-}) {
-  return (
-    <div>
-      <p className={textStyles.heading.sm}>{t('orderId')}</p>
-      <div className="group flex items-center gap-2">
-        <p className={textStyles.body.md}>{orderData.id}</p>
-        <CopyButton
-          value={orderData.id}
-          variant="ghost"
-          size="sm"
-          className="opacity-0 group-hover:opacity-100 transition-opacity"
-          aria-label={`Copy order ID ${orderData.id}`}
-        />
-      </div>
-    </div>
-  );
-}
-
-function OrderBasicInfo({
-  orderData,
-  statusConfig,
-  locale,
-  t,
-}: {
-  orderData: Order;
-  statusConfig: StatusConfig;
-  locale: string;
-  t: ReturnType<typeof useTranslations>;
-}) {
-  return (
-    <>
-      <OrderIdDisplay orderData={orderData} t={t} />
-      <div>
-        <p className={textStyles.heading.sm}>{t('status')}</p>
-        <span
-          className={combineStyles(
-            'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
-            statusStyles[statusConfig.color as keyof typeof statusStyles] || statusStyles.neutral
-          )}
-        >
-          {statusConfig.label}
-        </span>
-      </div>
-      <AmountDisplayWithCopy orderData={orderData} locale={locale} t={t} />
-      <div className="group">
-        <p className={combineStyles(textStyles.heading.sm, 'text-warning')}>
-          ⚠️ {t('depositAddress')}
-        </p>
-        <div className="rounded-lg border border-warning/20 bg-warning/5 p-3 group-hover:bg-warning/10 transition-colors">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <p
-                className={combineStyles(
-                  textStyles.body.md,
-                  MONO_FONT_CLASS,
-                  'font-semibold text-primary break-all'
-                )}
-              >
-                {orderData.depositAddress}
-              </p>
-            </div>
-            <CopyButton
-              value={orderData.depositAddress}
-              className="opacity-70 group-hover:opacity-100 transition-opacity flex-shrink-0"
-              variant="outline"
-              size="sm"
-            />
-          </div>
-        </div>
-      </div>
-      <div>
-        <p className={textStyles.heading.sm}>{t('created')}</p>
-        <p className={textStyles.body.md}>{new Date(orderData.createdAt).toLocaleString(locale)}</p>
-      </div>
-      <div>
-        <p className={textStyles.heading.sm}>{t('updated')}</p>
-        <p className={textStyles.body.md}>{new Date(orderData.updatedAt).toLocaleString(locale)}</p>
-      </div>
-
-      <OrderAdditionalInfo orderData={orderData} t={t} />
-    </>
-  );
-}
-
 function OrderStatusDetails({
   orderData,
   statusConfig,
@@ -184,29 +88,58 @@ function OrderStatusDetails({
   collapsibleTechnicalDetails?: boolean;
   t: ReturnType<typeof useTranslations>;
 }) {
-  const locale = useLocale(); // ✅ Локаль для форматирования дат и чисел
+  const locale = useLocale();
   const [isTechnicalExpanded, setIsTechnicalExpanded] = useState(false);
 
   return (
     <div className={cardStyles.base}>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <OrderBasicInfo orderData={orderData} statusConfig={statusConfig} locale={locale} t={t} />
+      <div className="space-y-6">
+        {/* Priority Information Group */}
+        <OrderPriorityInfo orderData={orderData} statusConfig={statusConfig} t={t} />
+
+        {/* Crypto & Financial Information Groups - на одном уровне */}
+        <div className="border-t pt-6">
+          <div className="flex flex-col lg:flex-row lg:gap-8 gap-6">
+            {/* Crypto Information Group - адрес + сеть + email */}
+            <div className="flex-1">
+              <OrderCryptoInfo orderData={orderData} t={t} />
+            </div>
+
+            {/* Financial Information Group - сумма + карта получателя */}
+            <div className="flex-1 border-t lg:border-t-0 lg:border-l lg:pl-8 pt-6 lg:pt-0">
+              <OrderFinancialInfo orderData={orderData} locale={locale} t={t} />
+            </div>
+          </div>
+        </div>
+
+        {/* Metadata Information Group - только даты */}
+        <div
+          className={`${!collapsibleTechnicalDetails && !orderData.txHash ? 'pt-6' : 'border-t pt-6'}`}
+        >
+          <OrderMetadataInfo orderData={orderData} locale={locale} t={t} />
+        </div>
 
         {/* Technical details with collapsible functionality */}
         {collapsibleTechnicalDetails && (
-          <TechnicalDetailsCollapsible
-            orderData={orderData}
-            isTechnicalExpanded={isTechnicalExpanded}
-            setIsTechnicalExpanded={setIsTechnicalExpanded}
-            t={t}
-          />
+          <div className="pt-6">
+            <TechnicalDetailsCollapsible
+              orderData={orderData}
+              isTechnicalExpanded={isTechnicalExpanded}
+              setIsTechnicalExpanded={setIsTechnicalExpanded}
+              t={t}
+            />
+          </div>
         )}
 
         {/* Fallback for non-collapsible mode */}
         {orderData.txHash && !collapsibleTechnicalDetails && (
-          <div className="sm:col-span-2">
-            <p className={textStyles.heading.sm}>{t('txHash')}</p>
-            <p className={combineStyles(textStyles.body.md, MONO_FONT_CLASS)}>{orderData.txHash}</p>
+          <div className="pt-6">
+            <div>
+              <p className={textStyles.heading.sm}>{t('txHash')}</p>
+              <p className={combineStyles(textStyles.body.md, MONO_FONT_CLASS)}>
+                {orderData.txHash}
+              </p>
+            </div>
           </div>
         )}
       </div>
