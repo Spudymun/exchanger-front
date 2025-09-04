@@ -134,23 +134,29 @@ function OrderBasicInfo({
       </div>
       <AmountDisplayWithCopy orderData={orderData} locale={locale} t={t} />
       <div className="group">
-        <p className={textStyles.heading.sm}>{t('depositAddress')}</p>
-        <div className="flex items-center justify-between gap-2 rounded-lg p-2 group-hover:bg-accent/5 transition-colors">
-          <p
-            className={combineStyles(
-              textStyles.body.md,
-              MONO_FONT_CLASS,
-              'font-semibold text-primary break-all'
-            )}
-          >
-            {orderData.depositAddress}
-          </p>
-          <CopyButton
-            value={orderData.depositAddress}
-            className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-            variant="ghost"
-            size="sm"
-          />
+        <p className={combineStyles(textStyles.heading.sm, 'text-warning')}>
+          ⚠️ {t('depositAddress')}
+        </p>
+        <div className="rounded-lg border border-warning/20 bg-warning/5 p-3 group-hover:bg-warning/10 transition-colors">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <p
+                className={combineStyles(
+                  textStyles.body.md,
+                  MONO_FONT_CLASS,
+                  'font-semibold text-primary break-all'
+                )}
+              >
+                {orderData.depositAddress}
+              </p>
+            </div>
+            <CopyButton
+              value={orderData.depositAddress}
+              className="opacity-70 group-hover:opacity-100 transition-opacity flex-shrink-0"
+              variant="outline"
+              size="sm"
+            />
+          </div>
         </div>
       </div>
       <div>

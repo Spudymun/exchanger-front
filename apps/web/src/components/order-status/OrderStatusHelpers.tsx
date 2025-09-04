@@ -3,7 +3,6 @@
  * Extracted from OrderStatus.tsx for better maintainability
  */
 
-import { TOKEN_STANDARD_DETAILS } from '@repo/constants';
 import type { Order } from '@repo/exchange-core';
 import {
   textStyles,
@@ -17,6 +16,8 @@ import {
 import { maskCardNumber } from '@repo/utils';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+
+import { NetworkDisplay } from '../order/NetworkDisplay';
 
 const MONO_FONT_CLASS = 'font-mono break-all';
 
@@ -32,16 +33,10 @@ export function AmountDisplayWithCopy({
   return (
     <div className="group">
       <p className={textStyles.heading.sm}>{t('amount')}</p>
-      <div className="flex items-center justify-between gap-2 rounded-lg p-2 group-hover:bg-accent/5 transition-colors">
-        <div className="flex items-center gap-3">
+      <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 group-hover:bg-primary/10 transition-colors">
+        <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span
-              className={combineStyles(
-                textStyles.body.md,
-                MONO_FONT_CLASS,
-                'font-semibold text-primary'
-              )}
-            >
+            <span className={combineStyles(textStyles.heading.md, MONO_FONT_CLASS, 'text-primary')}>
               {orderData.cryptoAmount} {orderData.currency}
             </span>
             <CopyButton
@@ -51,10 +46,20 @@ export function AmountDisplayWithCopy({
               size="sm"
             />
           </div>
-          <span className={textStyles.body.md}>→</span>
-          <span className={combineStyles(textStyles.body.md, 'font-semibold')}>
-            {orderData.uahAmount.toLocaleString(locale)} ₴
-          </span>
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10">
+            <span className="text-primary font-bold">→</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={combineStyles(textStyles.heading.md, 'text-success font-bold')}>
+              {orderData.uahAmount.toLocaleString(locale)} ₴
+            </span>
+            <CopyButton
+              value={orderData.uahAmount.toString()}
+              className="opacity-0 group-hover:opacity-100 transition-opacity"
+              variant="ghost"
+              size="sm"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -127,32 +132,13 @@ export function OrderAdditionalInfo({
 
       {/* Blockchain Network - для multi-network токенов (USDT) */}
       {orderData.currency === 'USDT' && (
-        <div>
-          <p className={textStyles.heading.sm}>{t('blockchainNetwork')}</p>
-          <div className="group flex items-center gap-2">
-            <p className={textStyles.body.md}>
-              {
-                orderData.tokenStandard
-                  ? TOKEN_STANDARD_DETAILS[
-                      orderData.tokenStandard as keyof typeof TOKEN_STANDARD_DETAILS
-                    ]?.network || orderData.tokenStandard
-                  : 'TRC-20 (Tron)' // дефолтное значение если tokenStandard не задан
-              }
-            </p>
-            <CopyButton
-              value={
-                orderData.tokenStandard
-                  ? TOKEN_STANDARD_DETAILS[
-                      orderData.tokenStandard as keyof typeof TOKEN_STANDARD_DETAILS
-                    ]?.network || orderData.tokenStandard
-                  : 'Tron'
-              }
-              variant="ghost"
-              size="sm"
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-              aria-label={`Copy network info`}
-            />
-          </div>
+        <div className="bg-accent/5 rounded-lg p-3 border border-accent/10">
+          <NetworkDisplay
+            tokenStandard={(orderData.tokenStandard || 'TRC-20') as 'ERC-20' | 'TRC-20' | 'BEP-20'}
+            showCopy={true}
+            showDetails={true}
+            t={t}
+          />
         </div>
       )}
 

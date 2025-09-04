@@ -23,7 +23,6 @@
     "email": "Email",
     "blockchainNetwork": "Блокчейн сеть",
     "copyNetworkInfo": "Копировать информацию о сети",
-    "confirmationsRequired": "Необходимо подтверждений: {{count}}",
     "recipientCard": "Карта получателя",
     "statuses": {
       "pending": "Ожидание оплаты",

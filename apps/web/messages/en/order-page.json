@@ -23,7 +23,6 @@
     "email": "Email",
     "blockchainNetwork": "Blockchain Network",
     "copyNetworkInfo": "Copy network information",
-    "confirmationsRequired": "Confirmations required: {{count}}",
     "recipientCard": "Recipient Card",
     "statuses": {
       "pending": "Awaiting payment",
