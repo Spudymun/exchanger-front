@@ -17,6 +17,7 @@ export interface Order {
   cryptoAmount: number;
   currency: CryptoCurrency;
   uahAmount: number;
+  tokenStandard?: string;
   status: OrderStatus;
   depositAddress: string;
   recipientData?: RecipientData;

@@ -8,18 +8,20 @@ import {
   cardStyles,
   combineStyles,
   BaseErrorBoundary,
-  Card,
-  CardHeader,
-  CardContent,
-  Button,
   CopyButton,
 } from '@repo/ui';
 import { getLocalizedStatusLabel, getLocalizedStatusDescription } from '@repo/utils';
-import { CheckCircle, Clock, Loader2, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { CheckCircle, Clock, Loader2, XCircle } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 
 import { useOrderStatus } from '../hooks/useExchangeMutation';
+
+import {
+  AmountDisplayWithCopy,
+  TechnicalDetailsCollapsible,
+  OrderAdditionalInfo,
+} from './order-status/OrderStatusHelpers';
 
 interface OrderStatusProps {
   orderId: string;
@@ -80,90 +82,6 @@ function OrderStatusHeader({
 
 const MONO_FONT_CLASS = 'font-mono break-all';
 
-function AmountDisplayWithCopy({
-  orderData,
-  locale,
-  t,
-}: {
-  orderData: Order;
-  locale: string;
-  t: ReturnType<typeof useTranslations>;
-}) {
-  return (
-    <div className="group">
-      <p className={textStyles.heading.sm}>{t('amount')}</p>
-      <div className="flex items-center justify-between gap-2 rounded-lg p-2 group-hover:bg-accent/5 transition-colors">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <span
-              className={combineStyles(
-                textStyles.body.md,
-                MONO_FONT_CLASS,
-                'font-semibold text-primary'
-              )}
-            >
-              {orderData.cryptoAmount} {orderData.currency}
-            </span>
-            <CopyButton
-              value={`${orderData.cryptoAmount} ${orderData.currency}`}
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-              variant="ghost"
-              size="sm"
-            />
-          </div>
-          <span className={textStyles.body.md}>→</span>
-          <span className={combineStyles(textStyles.body.md, 'font-semibold')}>
-            {orderData.uahAmount.toLocaleString(locale)} ₴
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function TechnicalDetailsCollapsible({
-  orderData,
-  isTechnicalExpanded,
-  setIsTechnicalExpanded,
-  t,
-}: {
-  orderData: Order;
-  isTechnicalExpanded: boolean;
-  setIsTechnicalExpanded: (expanded: boolean) => void;
-  t: ReturnType<typeof useTranslations>;
-}) {
-  return (
-    <div className="sm:col-span-2">
-      <Card>
-        <CardHeader className="pb-2">
-          <Button
-            variant="ghost"
-            onClick={() => setIsTechnicalExpanded(!isTechnicalExpanded)}
-            className="flex items-center justify-between w-full h-auto p-0 text-left"
-          >
-            <span className={textStyles.heading.sm}>{t('technicalDetails')}</span>
-            {isTechnicalExpanded ? (
-              <ChevronUp className="h-4 w-4" />
-            ) : (
-              <ChevronDown className="h-4 w-4" />
-            )}
-          </Button>
-        </CardHeader>
-        {isTechnicalExpanded && (
-          <CardContent className="pt-0">
-            <div>
-              <p className={textStyles.heading.sm}>{t('txHash')}</p>
-              <p className={combineStyles(textStyles.body.md, MONO_FONT_CLASS)}>
-                {orderData.txHash}
-              </p>
-            </div>
-          </CardContent>
-        )}
-      </Card>
-    </div>
-  );
-}
-
 function OrderBasicInfo({
   orderData,
   statusConfig,
@@ -221,6 +139,8 @@ function OrderBasicInfo({
         <p className={textStyles.heading.sm}>{t('updated')}</p>
         <p className={textStyles.body.md}>{new Date(orderData.updatedAt).toLocaleString(locale)}</p>
       </div>
+
+      <OrderAdditionalInfo orderData={orderData} t={t} />
     </>
   );
 }
@@ -245,7 +165,7 @@ function OrderStatusDetails({
         <OrderBasicInfo orderData={orderData} statusConfig={statusConfig} locale={locale} t={t} />
 
         {/* Technical details with collapsible functionality */}
-        {orderData.txHash && collapsibleTechnicalDetails && (
+        {collapsibleTechnicalDetails && (
           <TechnicalDetailsCollapsible
             orderData={orderData}
             isTechnicalExpanded={isTechnicalExpanded}

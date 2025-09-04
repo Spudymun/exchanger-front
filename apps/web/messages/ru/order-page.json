@@ -12,6 +12,7 @@
     "error": "Ошибка загрузки статуса: {error}",
     "notFound": "Заказ не найден",
     "technicalDetails": "Технические детали",
+    "noTechnicalDetails": "Технические детали пока недоступны",
     "txHash": "Хеш транзакции",
     "orderId": "ID заказа",
     "status": "Статус",
@@ -19,6 +20,9 @@
     "depositAddress": "Адрес депозита",
     "created": "Создано",
     "updated": "Обновлено",
+    "email": "Email",
+    "blockchainNetwork": "Блокчейн сеть",
+    "recipientCard": "Карта получателя",
     "statuses": {
       "pending": "Ожидание оплаты",
       "paid": "Оплачено",

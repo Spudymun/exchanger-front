@@ -12,6 +12,7 @@
     "error": "Status loading error: {error}",
     "notFound": "Order not found",
     "technicalDetails": "Technical details",
+    "noTechnicalDetails": "Technical details are not yet available",
     "txHash": "Transaction hash",
     "orderId": "Order ID",
     "status": "Status",
@@ -19,6 +20,9 @@
     "depositAddress": "Deposit address",
     "created": "Created",
     "updated": "Updated",
+    "email": "Email",
+    "blockchainNetwork": "Blockchain Network",
+    "recipientCard": "Recipient Card",
     "statuses": {
       "pending": "Awaiting payment",
       "paid": "Paid",
