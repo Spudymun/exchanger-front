@@ -14,9 +14,8 @@ import {
 import { RotateCcw } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { trpc } from '../../lib/trpc-provider';
-
-interface PublicOrderData {
+// ИСПРАВЛЕНО: OrderDevTools теперь получает trpc utils как проп для избежания coupling
+export interface PublicOrderData {
   id: string;
   status: OrderStatus;
   cryptoAmount: number;
@@ -31,19 +30,20 @@ interface PublicOrderData {
 
 interface OrderDevToolsProps {
   orderId: string;
+  // ДОБАВЛЕНО: Внешние зависимости передаются как пропы
+  orderData?: PublicOrderData;
+  trpcUtils?: {
+    setData: (key: { orderId: string }, updater: (oldData: unknown) => unknown) => void;
+  };
 }
 
-export function OrderDevTools({ orderId }: OrderDevToolsProps) {
+export function OrderDevTools({ orderId, orderData, trpcUtils }: OrderDevToolsProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const utils = trpc.useUtils();
 
   // Only show in development
   if (process.env.NODE_ENV !== 'development') {
     return null;
   }
-
-  // Get current order
-  const { data: orderData } = trpc.exchange.getOrderStatus.useQuery({ orderId });
 
   if (!orderData) {
     return null;
@@ -64,19 +64,21 @@ export function OrderDevTools({ orderId }: OrderDevToolsProps) {
       orderManager.update(orderId, updateData);
 
       // Force update React Query cache with new data (modern dev tools pattern)
-      utils.exchange.getOrderStatus.setData({ orderId }, oldData => {
-        if (!oldData) return oldData;
+      if (trpcUtils) {
+        trpcUtils.setData({ orderId }, oldData => {
+          if (!oldData) return oldData;
 
-        return {
-          ...oldData,
-          status: newStatus,
-          updatedAt: new Date(),
-          ...(newStatus === ORDER_STATUSES.COMPLETED && {
-            txHash: updateData.txHash,
-            processedAt: updateData.processedAt,
-          }),
-        };
-      });
+          return {
+            ...oldData,
+            status: newStatus,
+            updatedAt: new Date(),
+            ...(newStatus === ORDER_STATUSES.COMPLETED && {
+              txHash: updateData.txHash,
+              processedAt: updateData.processedAt,
+            }),
+          };
+        });
+      }
     } catch {
       // Silent fail in development
     }

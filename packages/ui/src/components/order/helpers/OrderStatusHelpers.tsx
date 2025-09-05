@@ -1,6 +1,7 @@
 /**
  * OrderStatus helper components
  * Extracted from OrderStatus.tsx for better maintainability
+ * ИСПРАВЛЕНО: Перемещено в packages/ui согласно архитектуре PROJECT_STRUCTURE_MAP.md
  */
 
 import type { Order } from '@repo/exchange-core';
@@ -18,7 +19,8 @@ import { maskCardNumber } from '@repo/utils';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
-import { NetworkDisplay } from '../order/NetworkDisplay';
+// ИСПРАВЛЕНО: Импорт NetworkDisplay из правильного места в packages/ui
+import { NetworkDisplay } from '../NetworkDisplay';
 
 const MONO_FONT_CLASS = 'font-mono break-all';
 

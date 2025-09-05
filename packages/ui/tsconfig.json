@@ -2,20 +2,10 @@
   "extends": "@repo/typescript-config/react-library.json",
   "compilerOptions": {
     "outDir": "dist",
+    "rootDir": "src",
     "target": "ES2018",
-    "types": [
-      "jest",
-      "@testing-library/jest-dom",
-      "node"
-    ]
+    "types": ["jest", "@testing-library/jest-dom", "node"]
   },
-  "include": [
-    "src",
-    "jest.setup.js"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "turbo"
-  ]
+  "include": ["src", "jest.setup.js"],
+  "exclude": ["node_modules", "dist", "turbo"]
 }

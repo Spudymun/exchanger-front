@@ -249,6 +249,23 @@ export {
 export { FormEmailField, FormCaptchaField } from './form-fields';
 export type { EmailFormFields, CaptchaFormFields } from './form-fields';
 
+// Order Components - ДОБАВЛЕНО: Новые компоненты для работы с заявками
+export { OrderStatus } from './order/OrderStatus';
+export { NetworkDisplay } from './order/NetworkDisplay';
+export {
+  OrderPriorityInfo,
+  OrderMetadataInfo,
+  OrderCryptoInfo,
+  OrderFinancialInfo,
+  OrderBasicInfo,
+  AmountDisplayWithCopy,
+  TechnicalDetailsCollapsible,
+  OrderAdditionalInfo,
+} from './order/helpers/OrderStatusHelpers';
+
+// Dev Tools - ДОБАВЛЕНО: Инструменты разработки
+export { OrderDevTools, type PublicOrderData } from './dev/OrderDevTools';
+
 // === LEGACY EXPORTS REMOVED ===
 // Legacy components have been successfully removed and migrated to compound versions
 // All legacy exports have been cleaned up

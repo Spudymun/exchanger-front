@@ -8,7 +8,14 @@ import { CheckCircle, Clock, Loader2, XCircle } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 
-import { useOrderStatus } from '../hooks/useExchangeMutation';
+// ИСПРАВЛЕНО: Импорт хука из правильного места согласно структуре проекта
+// Хук остается в apps/web так как он специфичен для веб-приложения
+// Компонент в packages/ui может использовать хуки из apps через пропы
+interface UseOrderStatusHook {
+  data: Order | undefined;
+  isLoading: boolean;
+  error: Error | null;
+}
 
 import {
   TechnicalDetailsCollapsible,
@@ -16,12 +23,17 @@ import {
   OrderMetadataInfo,
   OrderCryptoInfo,
   OrderFinancialInfo,
-} from './order-status/OrderStatusHelpers';
+} from './helpers/OrderStatusHelpers';
 
 interface OrderStatusProps {
   orderId: string;
   showDetails?: boolean;
   collapsibleTechnicalDetails?: boolean;
+  // ДОБАВЛЕНО: Хук передается как проп для избежания coupling
+  useOrderStatusHook: (
+    orderId: string,
+    options?: { refetchInterval?: number }
+  ) => UseOrderStatusHook;
 }
 
 interface StatusConfig {
@@ -147,12 +159,16 @@ function OrderStatusDetails({
   );
 }
 
-function useOrderStatusData(orderId: string, t: ReturnType<typeof useTranslations>) {
+function useOrderStatusData(
+  orderId: string,
+  t: ReturnType<typeof useTranslations>,
+  useOrderStatusHook: OrderStatusProps['useOrderStatusHook']
+) {
   const {
     data: orderData,
     isLoading,
     error,
-  } = useOrderStatus(orderId, {
+  } = useOrderStatusHook(orderId, {
     refetchInterval: UI_REFRESH_INTERVALS.ORDER_STATUS_REFRESH,
   });
 
@@ -181,9 +197,14 @@ export function OrderStatus({
   orderId,
   showDetails = false,
   collapsibleTechnicalDetails = false,
+  useOrderStatusHook,
 }: OrderStatusProps) {
   const t = useTranslations('OrderStatus');
-  const { orderData, isLoading, error, statusConfig } = useOrderStatusData(orderId, t);
+  const { orderData, isLoading, error, statusConfig } = useOrderStatusData(
+    orderId,
+    t,
+    useOrderStatusHook
+  );
 
   if (isLoading) {
     return (
