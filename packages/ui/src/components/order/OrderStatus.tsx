@@ -1,11 +1,17 @@
 'use client';
 
-import { ORDER_STATUSES } from '@repo/constants';
+import { ORDER_STATUSES, ORDER_STATUS_CONFIG } from '@repo/constants';
 import type { Order } from '@repo/exchange-core';
 import type { UseOrderStatusHook, StatusConfig } from '@repo/hooks';
 import { useOrderData, useOrderStatusConfig } from '@repo/hooks';
-import { statusStyles, textStyles, cardStyles, combineStyles, BaseErrorBoundary } from '@repo/ui';
-import { CheckCircle, Clock, Loader2, XCircle } from 'lucide-react';
+import {
+  statusStyles,
+  textStyles,
+  cardStyles,
+  combineStyles,
+  BaseErrorBoundary,
+  getIconComponent,
+} from '@repo/ui';
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 
@@ -25,14 +31,6 @@ interface OrderStatusProps {
   useOrderStatusHook: UseOrderStatusHook;
 }
 
-const STATUS_ICONS = {
-  PENDING: Clock,
-  PAID: CheckCircle,
-  PROCESSING: Loader2,
-  COMPLETED: CheckCircle,
-  CANCELLED: XCircle,
-} as const;
-
 const getIconColorClass = (color: string): string => {
   const colorMap = {
     success: textStyles.accent.success.split(' ')[0], // Extract color class
@@ -51,7 +49,9 @@ function OrderStatusHeader({
   orderData: Order;
   statusConfig: StatusConfig;
 }) {
-  const StatusIcon = STATUS_ICONS[orderData.status as keyof typeof STATUS_ICONS] || Clock;
+  // ✅ ИСПРАВЛЕНО: Используем централизованную конфигурацию вместо дублированного STATUS_ICONS
+  const config = ORDER_STATUS_CONFIG[orderData.status as keyof typeof ORDER_STATUS_CONFIG];
+  const StatusIcon = getIconComponent(config?.icon || 'clock');
   const isProcessing = orderData.status === ORDER_STATUSES.PROCESSING;
 
   return (
@@ -154,9 +154,10 @@ export function OrderStatus({
   const { statusConfig } = useOrderStatusConfig(orderData, t);
 
   if (isLoading) {
+    const LoaderIcon = getIconComponent('loader');
     return (
       <div className={combineStyles(cardStyles.base, 'flex items-center justify-center')}>
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        <LoaderIcon className="h-6 w-6 animate-spin text-primary" />
         <span className={combineStyles(textStyles.body.md, 'ml-2')}>{t('loading')}</span>
       </div>
     );
