@@ -259,7 +259,6 @@ export {
   OrderFinancialInfo,
   AmountDisplayWithCopy,
   TechnicalDetailsCollapsible,
-  OrderAdditionalInfo,
 } from './order/helpers/OrderStatusHelpers';
 
 // Dev Tools - ДОБАВЛЕНО: Инструменты разработки
