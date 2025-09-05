@@ -1,21 +1,13 @@
 'use client';
 
-import { ORDER_STATUS_CONFIG, ORDER_STATUSES, UI_REFRESH_INTERVALS } from '@repo/constants';
+import { ORDER_STATUSES } from '@repo/constants';
 import type { Order } from '@repo/exchange-core';
+import type { UseOrderStatusHook, StatusConfig } from '@repo/hooks';
+import { useOrderData, useOrderStatusConfig } from '@repo/hooks';
 import { statusStyles, textStyles, cardStyles, combineStyles, BaseErrorBoundary } from '@repo/ui';
-import { getLocalizedStatusLabel, getLocalizedStatusDescription } from '@repo/utils';
 import { CheckCircle, Clock, Loader2, XCircle } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { useMemo, useState } from 'react';
-
-// ИСПРАВЛЕНО: Импорт хука из правильного места согласно структуре проекта
-// Хук остается в apps/web так как он специфичен для веб-приложения
-// Компонент в packages/ui может использовать хуки из apps через пропы
-interface UseOrderStatusHook {
-  data: Order | undefined;
-  isLoading: boolean;
-  error: Error | null;
-}
+import { useState } from 'react';
 
 import {
   TechnicalDetailsCollapsible,
@@ -30,17 +22,7 @@ interface OrderStatusProps {
   showDetails?: boolean;
   collapsibleTechnicalDetails?: boolean;
   // ДОБАВЛЕНО: Хук передается как проп для избежания coupling
-  useOrderStatusHook: (
-    orderId: string,
-    options?: { refetchInterval?: number }
-  ) => UseOrderStatusHook;
-}
-
-interface StatusConfig {
-  label: string;
-  color: 'success' | 'warning' | 'info' | 'destructive';
-  icon: string;
-  description: string;
+  useOrderStatusHook: UseOrderStatusHook;
 }
 
 const STATUS_ICONS = {
@@ -159,40 +141,6 @@ function OrderStatusDetails({
   );
 }
 
-function useOrderStatusData(
-  orderId: string,
-  t: ReturnType<typeof useTranslations>,
-  useOrderStatusHook: OrderStatusProps['useOrderStatusHook']
-) {
-  const {
-    data: orderData,
-    isLoading,
-    error,
-  } = useOrderStatusHook(orderId, {
-    refetchInterval: UI_REFRESH_INTERVALS.ORDER_STATUS_REFRESH,
-  });
-
-  // Type assertion для правильной типизации данных
-  const typedOrderData = orderData as Order | undefined;
-
-  const statusConfig = useMemo(() => {
-    if (!typedOrderData?.status) return null;
-
-    const originalConfig =
-      ORDER_STATUS_CONFIG[typedOrderData.status as keyof typeof ORDER_STATUS_CONFIG];
-    if (!originalConfig) return null;
-
-    // Интегрируем локализацию с существующей структурой
-    return {
-      ...originalConfig,
-      label: getLocalizedStatusLabel(typedOrderData.status, t),
-      description: getLocalizedStatusDescription(typedOrderData.status, t),
-    };
-  }, [typedOrderData?.status, t]);
-
-  return { orderData: typedOrderData, isLoading, error, statusConfig };
-}
-
 export function OrderStatus({
   orderId,
   showDetails = false,
@@ -200,11 +148,10 @@ export function OrderStatus({
   useOrderStatusHook,
 }: OrderStatusProps) {
   const t = useTranslations('OrderStatus');
-  const { orderData, isLoading, error, statusConfig } = useOrderStatusData(
-    orderId,
-    t,
-    useOrderStatusHook
-  );
+
+  // Используем новые разделенные хуки
+  const { orderData, isLoading, error } = useOrderData(orderId, useOrderStatusHook);
+  const { statusConfig } = useOrderStatusConfig(orderData, t);
 
   if (isLoading) {
     return (

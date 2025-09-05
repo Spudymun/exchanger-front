@@ -5,6 +5,7 @@
  */
 
 import type { Order } from '@repo/exchange-core';
+import type { StatusConfig } from '@repo/hooks';
 import {
   textStyles,
   combineStyles,
@@ -30,7 +31,7 @@ export function OrderPriorityInfo({
   t,
 }: {
   orderData: Order;
-  statusConfig: { label: string; color: 'success' | 'warning' | 'info' | 'destructive' };
+  statusConfig: StatusConfig;
   t: ReturnType<typeof useTranslations>;
 }) {
   return (

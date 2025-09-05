@@ -4,3 +4,8 @@ export {
   type UseCopyToClipboardOptions,
   type UseCopyToClipboardReturn,
 } from './useCopyToClipboard';
+export {
+  useOrderStatusConfig,
+  type StatusConfig,
+  type UseOrderStatusConfigResult,
+} from './useOrderStatusConfig';

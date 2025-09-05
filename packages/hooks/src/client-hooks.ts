@@ -20,6 +20,18 @@ export * from './business/useOrderTracking';
 export { useMathCaptcha, CAPTCHA_CONFIGS } from './business/useMathCaptcha';
 export type { AuthMessages } from './business/authMessages';
 
+// NEW: Order data hooks (client-side)
+export { useOrderData } from './business/useOrderData';
+export type {
+  UseOrderDataParams,
+  UseOrderDataResult,
+  UseOrderStatusHook,
+} from './business/useOrderData';
+
+// NEW: Order status UI hooks (client-side)
+export { useOrderStatusConfig } from './ui/useOrderStatusConfig';
+export type { StatusConfig, UseOrderStatusConfigResult } from './ui/useOrderStatusConfig';
+
 // Enhanced UI Store (client-side only) - with notifications integration
 export { useUIStore } from './useUIStore';
 

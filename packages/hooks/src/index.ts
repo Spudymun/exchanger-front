@@ -8,6 +8,14 @@ export type {
   UseFormWithNextIntlReturn,
 } from './business/useFormWithNextIntl';
 
+// NEW: Order data management hooks
+export { useOrderData } from './business/useOrderData';
+export type {
+  UseOrderDataParams,
+  UseOrderDataResult,
+  UseOrderStatusHook,
+} from './business/useOrderData';
+
 // Селекторы (pure functions, SSR-safe)
 export * from './state/exchange-selectors';
 
