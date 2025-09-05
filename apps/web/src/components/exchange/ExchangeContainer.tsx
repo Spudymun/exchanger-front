@@ -2,7 +2,8 @@
 
 import { EXCHANGE_DEFAULTS, getDefaultTokenStandard, type CryptoCurrency } from '@repo/constants';
 import { calculateUahAmount, getCurrencyLimits } from '@repo/exchange-core';
-import { useFormWithNextIntl } from '@repo/hooks/src/client-hooks';
+import { useFormWithNextIntl } from '@repo/hooks';
+import { useAutoMinAmount } from '@repo/hooks/src/client-hooks';
 import { ExchangeForm } from '@repo/ui';
 import {
   securityEnhancedFullExchangeFormSchema,
@@ -10,7 +11,7 @@ import {
 } from '@repo/utils';
 
 import { useTranslations } from 'next-intl';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 
 import { useExchangeMutation } from '../../hooks/useExchangeMutation';
 import { useRouter } from '../../i18n/navigation';
@@ -120,6 +121,19 @@ export function ExchangeContainer({ locale: _locale, initialParams }: ExchangeCo
   const limits = useMemo(() => {
     return getCurrencyLimits(form.values.fromCurrency as CryptoCurrency);
   }, [form.values.fromCurrency]);
+
+  // Auto-fill логика для прямых переходов на страницу (когда amount не передан в URL)
+  const { shouldAutoFill, getMinAmount } = useAutoMinAmount(
+    form.values.fromCurrency as CryptoCurrency,
+    form.values.fromAmount as string
+  );
+
+  useEffect(() => {
+    if (shouldAutoFill) {
+      const minAmount = getMinAmount();
+      form.setValue('fromAmount', minAmount.toString());
+    }
+  }, [shouldAutoFill, getMinAmount, form.setValue]);
 
   const isValid =
     form.isValid &&
