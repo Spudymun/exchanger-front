@@ -28,6 +28,11 @@ interface CryptoCurrencySelectorProps {
    * Placeholder для селекта
    */
   placeholder?: string;
+  /**
+   * Дополнительный callback при смене валюты
+   * Для интеграции с business логикой (например, auto-fill минимальной суммы)
+   */
+  onCurrencyChange?: (currency: string) => void;
 }
 
 /**
@@ -41,6 +46,7 @@ export function CryptoCurrencySelector({
   t,
   autoSetTokenStandard = false,
   placeholder,
+  onCurrencyChange,
 }: CryptoCurrencySelectorProps) {
   const handleCurrencyChange = (currency: string) => {
     form.setValue('fromCurrency', currency);
@@ -53,6 +59,9 @@ export function CryptoCurrencySelector({
         form.setValue('tokenStandard', '');
       }
     }
+
+    // Вызываем дополнительную business логику если предоставлена
+    onCurrencyChange?.(currency);
   };
 
   return (

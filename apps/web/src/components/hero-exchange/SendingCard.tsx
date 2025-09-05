@@ -1,5 +1,7 @@
 'use client';
 
+import { type CryptoCurrency } from '@repo/constants';
+import { getMinCryptoAmountForUI } from '@repo/exchange-core';
 import { type UseFormReturn } from '@repo/hooks';
 import { useFormWithNextIntl } from '@repo/hooks/src/client-hooks';
 import {
@@ -23,6 +25,15 @@ interface SendingCardProps {
 }
 
 export function SendingCard({ form, t, minAmount }: SendingCardProps) {
+  // Функция для автоматического обновления суммы при смене валюты
+  const handleCurrencyChange = (newCurrency: string) => {
+    // Получаем минимальную сумму для новой валюты напрямую
+    const minAmountForCurrency = getMinCryptoAmountForUI(newCurrency as CryptoCurrency);
+
+    // Обновляем сумму до минимальной для новой валюты
+    form.setValue('fromAmount', minAmountForCurrency.toString());
+  };
+
   return (
     <Card className="bg-card text-card-foreground border-l-4 border-l-primary shadow-lg hover:shadow-xl transition-all duration-200">
       <CardHeader>
@@ -34,6 +45,7 @@ export function SendingCard({ form, t, minAmount }: SendingCardProps) {
             form={form as unknown as UseFormReturn<Record<string, unknown>>}
             t={t}
             autoSetTokenStandard={true}
+            onCurrencyChange={handleCurrencyChange}
           />
           <TokenStandardSelector
             form={form as unknown as UseFormReturn<Record<string, unknown>>}

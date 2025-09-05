@@ -1,5 +1,7 @@
 'use client';
 
+import { type CryptoCurrency } from '@repo/constants';
+import { getMinCryptoAmountForUI } from '@repo/exchange-core';
 import { UseFormReturn } from '@repo/hooks';
 import {
   ExchangeForm,
@@ -39,6 +41,15 @@ function SendingSection({
   form: UseFormReturn<SecurityEnhancedFullExchangeForm>;
   t: (key: string) => string;
 }) {
+  // Функция для автоматического обновления суммы при смене валюты
+  const handleCurrencyChange = (newCurrency: string) => {
+    // Получаем минимальную сумму для новой валюты напрямую
+    const minAmountForCurrency = getMinCryptoAmountForUI(newCurrency as CryptoCurrency);
+
+    // Обновляем сумму до минимальной для новой валюты
+    form.setValue('fromAmount', minAmountForCurrency.toString());
+  };
+
   return (
     <ExchangeForm.ExchangeCard type="sending">
       <header className="section-header mb-6">
@@ -51,6 +62,7 @@ function SendingSection({
           form={form as unknown as UseFormReturn<Record<string, unknown>>}
           t={t}
           autoSetTokenStandard={false}
+          onCurrencyChange={handleCurrencyChange}
         />
 
         {/* Token Standard */}
