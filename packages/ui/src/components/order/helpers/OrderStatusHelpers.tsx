@@ -23,8 +23,6 @@ import { useTranslations } from 'next-intl';
 // ИСПРАВЛЕНО: Импорт NetworkDisplay из правильного места в packages/ui
 import { NetworkDisplay } from '../NetworkDisplay';
 
-const MONO_FONT_CLASS = 'font-mono break-all';
-
 export function OrderPriorityInfo({
   orderData,
   statusConfig,
@@ -107,7 +105,7 @@ export function OrderCryptoInfo({
               <p
                 className={combineStyles(
                   textStyles.body.md,
-                  MONO_FONT_CLASS,
+                  textStyles.utility.monoBreakAll,
                   'font-semibold text-primary break-all text-base'
                 )}
               >
@@ -197,7 +195,7 @@ export function OrderBasicInfo({
               <p
                 className={combineStyles(
                   textStyles.body.md,
-                  MONO_FONT_CLASS,
+                  textStyles.utility.monoBreakAll,
                   'font-semibold text-primary break-all text-base'
                 )}
               >
@@ -232,7 +230,13 @@ export function AmountDisplayWithCopy({
       <div className="rounded-lg border-2 border-primary/30 bg-primary/10 p-4 group-hover:bg-primary/15 transition-colors shadow-sm">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className={combineStyles(textStyles.heading.md, MONO_FONT_CLASS, 'text-primary')}>
+            <span
+              className={combineStyles(
+                textStyles.heading.md,
+                textStyles.utility.monoBreakAll,
+                'text-primary'
+              )}
+            >
               {orderData.cryptoAmount} {orderData.currency}
             </span>
             <CopyButton
@@ -295,7 +299,7 @@ export function TechnicalDetailsCollapsible({
             {orderData.txHash ? (
               <div>
                 <p className={textStyles.heading.sm}>{t('txHash')}</p>
-                <p className={combineStyles(textStyles.body.md, MONO_FONT_CLASS)}>
+                <p className={combineStyles(textStyles.body.md, textStyles.utility.monoBreakAll)}>
                   {orderData.txHash}
                 </p>
               </div>

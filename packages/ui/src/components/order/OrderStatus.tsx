@@ -69,8 +69,6 @@ function OrderStatusHeader({
   );
 }
 
-const MONO_FONT_CLASS = 'font-mono break-all';
-
 function OrderStatusDetails({
   orderData,
   statusConfig,
@@ -130,7 +128,7 @@ function OrderStatusDetails({
           <div className="pt-6">
             <div>
               <p className={textStyles.heading.sm}>{t('txHash')}</p>
-              <p className={combineStyles(textStyles.body.md, MONO_FONT_CLASS)}>
+              <p className={combineStyles(textStyles.body.md, textStyles.utility.monoBreakAll)}>
                 {orderData.txHash}
               </p>
             </div>

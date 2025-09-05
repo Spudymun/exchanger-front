@@ -34,6 +34,11 @@ export const textStyles = {
     warning: 'text-warning',
     error: 'text-destructive',
   },
+  utility: {
+    mono: 'font-mono',
+    breakAll: 'break-all',
+    monoBreakAll: 'font-mono break-all',
+  },
 } as const;
 
 /**
