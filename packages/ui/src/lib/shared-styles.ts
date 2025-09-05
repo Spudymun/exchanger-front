@@ -59,6 +59,8 @@ export const loadingStyles = {
   container: 'flex items-center justify-center p-8',
   spinner: 'h-8 w-8 animate-spin',
   text: 'ml-2 text-sm text-muted-foreground',
+  inline: 'flex items-center justify-center', // для inline loading в карточках
+  textSpacing: 'ml-2', // Отступ текста от спиннера
 } as const;
 
 /**
@@ -96,6 +98,12 @@ export const responsiveStyles = {
     content: 'space-y-6 lg:space-y-8', // Между контентными блоками
     form: 'space-y-4 lg:space-y-6', // Между элементами форм
     section: 'mt-8 lg:mt-12', // Отступ между секциями
+    groupDivider: 'border-t pt-6', // Разделитель групп контента
+    columnGap: 'flex flex-col lg:flex-row lg:gap-8 gap-6', // Отступы между колонками
+    sideSection: 'flex-1 border-t lg:border-t-0 lg:border-l lg:pl-8 pt-6 lg:pt-0', // Боковая секция
+    sectionTop: 'pt-6', // Отступ сверху для секций
+    itemsGap: 'flex items-center gap-4', // Отступы между элементами в строке
+    compact: 'space-y-4', // Компактные отступы между блоками
   },
   breakpoints: {
     mobile: 'px-4', // Мобильные устройства

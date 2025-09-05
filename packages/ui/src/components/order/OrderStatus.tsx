@@ -9,6 +9,8 @@ import {
   textStyles,
   cardStyles,
   combineStyles,
+  responsiveStyles,
+  loadingStyles,
   BaseErrorBoundary,
   getIconComponent,
 } from '@repo/ui';
@@ -54,7 +56,7 @@ function OrderStatusHeader({
   const isProcessing = orderData.status === ORDER_STATUSES.PROCESSING;
 
   return (
-    <div className="flex items-center gap-4">
+    <div className={responsiveStyles.spacing.itemsGap}>
       <StatusIcon
         className={`h-6 w-6 ${getIconTextColorFromStatus(orderData.status)} ${
           isProcessing ? 'animate-spin' : ''
@@ -84,20 +86,20 @@ function OrderStatusDetails({
 
   return (
     <div className={cardStyles.base}>
-      <div className="space-y-6">
+      <div className={responsiveStyles.spacing.content}>
         {/* Priority Information Group */}
         <OrderPriorityInfo orderData={orderData} statusConfig={statusConfig} t={t} />
 
         {/* Crypto & Financial Information Groups - на одном уровне */}
-        <div className="border-t pt-6">
-          <div className="flex flex-col lg:flex-row lg:gap-8 gap-6">
+        <div className={responsiveStyles.spacing.groupDivider}>
+          <div className={responsiveStyles.spacing.columnGap}>
             {/* Crypto Information Group - адрес + сеть + email */}
             <div className="flex-1">
               <OrderCryptoInfo orderData={orderData} t={t} />
             </div>
 
             {/* Financial Information Group - сумма + карта получателя */}
-            <div className="flex-1 border-t lg:border-t-0 lg:border-l lg:pl-8 pt-6 lg:pt-0">
+            <div className={responsiveStyles.spacing.sideSection}>
               <OrderFinancialInfo orderData={orderData} locale={locale} t={t} />
             </div>
           </div>
@@ -105,14 +107,14 @@ function OrderStatusDetails({
 
         {/* Metadata Information Group - только даты */}
         <div
-          className={`${!collapsibleTechnicalDetails && !orderData.txHash ? 'pt-6' : 'border-t pt-6'}`}
+          className={`${!collapsibleTechnicalDetails && !orderData.txHash ? responsiveStyles.spacing.sectionTop : `border-t ${responsiveStyles.spacing.sectionTop}`}`}
         >
           <OrderMetadataInfo orderData={orderData} locale={locale} t={t} />
         </div>
 
         {/* Technical details with collapsible functionality */}
         {collapsibleTechnicalDetails && (
-          <div className="pt-6">
+          <div className={responsiveStyles.spacing.sectionTop}>
             <TechnicalDetailsCollapsible
               orderData={orderData}
               isTechnicalExpanded={isTechnicalExpanded}
@@ -124,7 +126,7 @@ function OrderStatusDetails({
 
         {/* Fallback for non-collapsible mode */}
         {orderData.txHash && !collapsibleTechnicalDetails && (
-          <div className="pt-6">
+          <div className={responsiveStyles.spacing.sectionTop}>
             <div>
               <p className={textStyles.heading.sm}>{t('txHash')}</p>
               <p className={combineStyles(textStyles.body.md, textStyles.utility.monoBreakAll)}>
@@ -153,9 +155,11 @@ export function OrderStatus({
   if (isLoading) {
     const LoaderIcon = getIconComponent('loader');
     return (
-      <div className={combineStyles(cardStyles.base, 'flex items-center justify-center')}>
+      <div className={combineStyles(cardStyles.base, loadingStyles.inline)}>
         <LoaderIcon className="h-6 w-6 animate-spin text-primary" />
-        <span className={combineStyles(textStyles.body.md, 'ml-2')}>{t('loading')}</span>
+        <span className={combineStyles(textStyles.body.md, loadingStyles.textSpacing)}>
+          {t('loading')}
+        </span>
       </div>
     );
   }
@@ -178,7 +182,7 @@ export function OrderStatus({
 
   return (
     <BaseErrorBoundary componentName="OrderStatus">
-      <div className="space-y-4">
+      <div className={responsiveStyles.spacing.compact}>
         <OrderStatusHeader orderData={orderData} statusConfig={statusConfig} />
         {showDetails && (
           <OrderStatusDetails

@@ -636,22 +636,45 @@ export const ORDER_STATUS_CONFIG = {
 import { statusStyles, textStyles, cardStyles, combineStyles, BaseErrorBoundary } from '@repo/ui';
 ```
 
-#### ⚠️ НАРУШЕНИЕ 14.1: Inconsistent spacing patterns
+#### ✅ НАРУШЕНИЕ 14.1: Inconsistent spacing patterns - **ИСПРАВЛЕНО**
 
-**Файл**: `apps/web/src/components/OrderStatus.tsx:99-113`
+**Файл**: `packages/ui/src/components/order/OrderStatus.tsx` (было: `apps/web/src/components/OrderStatus.tsx`)
 
-```tsx
+~~```tsx
+
 <div className="space-y-6">
   {/* Priority Information Group */}
   <OrderPriorityInfo orderData={orderData} statusConfig={statusConfig} t={t} />
 
-  {/* Crypto & Financial Information Groups - на одном уровне */}
+{/_ Crypto & Financial Information Groups - на одном уровне _/}
+
   <div className="border-t pt-6">
     <div className="flex flex-col lg:flex-row lg:gap-8 gap-6">
+```~~
+
+**✅ Исправлено**: Заменены все hardcoded spacing классы на централизованные паттерны из `@repo/ui/responsiveStyles`
+
+```tsx
+// После исправления:
+<div className={responsiveStyles.spacing.content}>
+  <OrderPriorityInfo orderData={orderData} statusConfig={statusConfig} t={t} />
+  <div className={responsiveStyles.spacing.groupDivider}>
+    <div className={responsiveStyles.spacing.columnGap}>
 ```
 
-**Проблема**: Смешивание `space-y-6`, `pt-6`, `gap-6`, `gap-8` без системного подхода  
-**Должно использовать**: Spacing tokens из дизайн-системы
+**Централизованная система spacing**:
+
+- `responsiveStyles.spacing.content` = "space-y-6 lg:space-y-8"
+- `responsiveStyles.spacing.groupDivider` = "border-t pt-6"
+- `responsiveStyles.spacing.columnGap` = "flex flex-col lg:flex-row lg:gap-8 gap-6"
+- `responsiveStyles.spacing.sideSection` = "flex-1 border-t lg:border-t-0 lg:border-l lg:pl-8 pt-6 lg:pt-0"
+- `responsiveStyles.spacing.sectionTop` = "pt-6"
+- `responsiveStyles.spacing.itemsGap` = "flex items-center gap-4"
+- `responsiveStyles.spacing.compact` = "space-y-4"
+- `loadingStyles.textSpacing` = "ml-2"
+
+**Статус**: ✅ **ИСПРАВЛЕНО** - Все spacing значения используют централизованную систему  
+**Дата исправления**: 5 сентября 2025
 
 ---
 
@@ -1094,7 +1117,7 @@ npm run test:architecture-compliance
 
 ## 📊 СТАТУС ИСПРАВЛЕНИЙ
 
-### ✅ ИСПРАВЛЕННЫЕ НАРУШЕНИЯ (11 из 21)
+### ✅ ИСПРАВЛЕННЫЕ НАРУШЕНИЯ (12 из 21)
 
 | ID   | Описание                                  | Статус            | Дата исправления |
 | ---- | ----------------------------------------- | ----------------- | ---------------- |
@@ -1105,12 +1128,13 @@ npm run test:architecture-compliance
 | 3.2  | Дублирование цветовой логики              | ✅ **ИСПРАВЛЕНО** | 5 сентября 2025  |
 | 5.1  | Неоптимальное время обновления            | ✅ **ИСПРАВЛЕНО** | 5 сентября 2025  |
 | 11.1 | Потенциальная утечка в production         | ✅ **ИСПРАВЛЕНО** | 5 сентября 2025  |
+| 14.1 | Inconsistent spacing patterns             | ✅ **ИСПРАВЛЕНО** | 5 сентября 2025  |
 | 17.1 | Дублирование константы MONO_FONT_CLASS    | ✅ **ИСПРАВЛЕНО** | 5 сентября 2025  |
 | 17.2 | Множественное дублирование UI логики      | ✅ **ИСПРАВЛЕНО** | 5 сентября 2025  |
 | 17.3 | Неоптимальная структура компонентов       | ✅ **ИСПРАВЛЕНО** | 5 сентября 2025  |
 | 18.1 | Прямой импорт из локальных компонентов    | ✅ **ИСПРАВЛЕНО** | 5 сентября 2025  |
 
-**Прогресс**: 52.4% (11/21)  
+**Прогресс**: 57.1% (12/21)  
 **Критические исправления**: 91.7% (11/12)
 
 ### 🔄 В РАБОТЕ
