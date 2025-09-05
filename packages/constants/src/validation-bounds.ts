@@ -15,14 +15,13 @@ export const VALIDATION_BOUNDS = {
   /** Максимальная сумма в UAH */
   MAX_UAH_AMOUNT: 100000000,
 
-  // Order amount limits (централизованные для устранения дубликатов)
-  /** Минимальная сумма заказа/обмена */
-  MIN_ORDER_AMOUNT: 0.01,
-  /** Максимальная сумма заказа/обмена (используется во всех местах) */
-  MAX_ORDER_AMOUNT: 1000000,
+  // Order amount limits (УДАЛЕНЫ - используйте getCurrencyLimits() для per-currency лимитов)
+  // ❌ MIN_ORDER_AMOUNT и MAX_ORDER_AMOUNT перенесены в exchange-core
+  // ✅ Используйте AMOUNT_LIMITS в exchange.ts + getCurrencyLimits()
 } as const;
 
 // Derived constants для обратной совместимости
-export const MAX_CRYPTO_AMOUNT = VALIDATION_BOUNDS.MAX_ORDER_AMOUNT;
+// ❌ DEPRECATED: Используйте getCurrencyLimits() для per-currency validation
+// export const MAX_CRYPTO_AMOUNT = VALIDATION_BOUNDS.MAX_ORDER_AMOUNT;
 
 export type ValidationBounds = typeof VALIDATION_BOUNDS;

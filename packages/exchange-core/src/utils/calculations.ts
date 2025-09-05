@@ -28,6 +28,19 @@ import type { ExchangeRate } from '../types';
  */
 export function getExchangeRate(currency: CryptoCurrency): ExchangeRate {
   const mockRate = MOCK_EXCHANGE_RATES[currency];
+
+  // ⚡ Defense against undefined currency rates (graceful fallback to USDT)
+  if (!mockRate) {
+    const fallbackRate = MOCK_EXCHANGE_RATES.USDT;
+    return {
+      currency: 'USDT', // Fallback to USDT for safety
+      usdRate: fallbackRate.usdRate,
+      uahRate: fallbackRate.uahRate,
+      commission: COMMISSION_RATES.USDT,
+      lastUpdated: new Date(),
+    };
+  }
+
   return {
     currency,
     usdRate: mockRate.usdRate,

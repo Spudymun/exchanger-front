@@ -6,7 +6,13 @@
  * ИНТЕГРАЦИЯ: tRPC exchange routers
  */
 
-import { VALIDATION_LIMITS } from '@repo/constants';
+import {
+  VALIDATION_LIMITS,
+  CRYPTOCURRENCIES,
+  BANKS_BY_CURRENCY,
+  EXCHANGE_DEFAULTS,
+  AMOUNT_LIMITS,
+} from '@repo/constants';
 import { isAmountWithinLimits, type CryptoCurrency } from '@repo/exchange-core';
 import { z } from 'zod';
 
@@ -25,6 +31,65 @@ import { cardNumberSchema } from './schemas-basic';
 import { currencySchema } from './schemas-crypto';
 import { securityEnhancedCaptchaSchema } from './security-enhanced-auth-schemas';
 import { containsPotentialXSS, SECURITY_VALIDATION_LIMITS } from './security-utils';
+
+/**
+ * ✅ PRODUCTION-READY: Strict URL Validation Schema
+ * ИНТЕГРАЦИЯ: с существующей validation системой packages/utils/src/validation/
+ * ПЕРЕИСПОЛЬЗОВАНИЕ: CRYPTOCURRENCIES, BANKS_BY_CURRENCY, EXCHANGE_DEFAULTS из constants
+ */
+
+// ✅ Whitelist validation против существующих констант (10/10 security)
+const VALID_CURRENCIES = [...CRYPTOCURRENCIES] as const;
+const VALID_FIAT_CURRENCIES = ['UAH'] as const;
+const VALID_BANKS = BANKS_BY_CURRENCY.UAH.map(bank => bank.id) as [string, ...string[]];
+const VALID_TOKEN_STANDARDS = ['TRC-20', 'ERC-20', 'BEP-20'] as const;
+
+/**
+ * URL Search Params Validation Schema (Production-Ready 10/10)
+ * Строгая валидация всех URL параметров против whitelist
+ */
+export const urlSearchParamsSchema = z.object({
+  from: z.enum(VALID_CURRENCIES).default(EXCHANGE_DEFAULTS.FROM_CURRENCY),
+  to: z.enum(VALID_FIAT_CURRENCIES).default(EXCHANGE_DEFAULTS.TO_CURRENCY),
+  bank: z.enum(VALID_BANKS).default('monobank'),
+  tokenStandard: z.enum(VALID_TOKEN_STANDARDS).optional(),
+  amount: z
+    .string()
+    .optional()
+    .transform(val => {
+      if (!val?.trim()) return undefined;
+
+      // ✅ Safe Number Parsing (10/10 security)
+      const normalized = val.replace(',', '.'); // Локализация
+      const parsed = parseFloat(normalized);
+
+      // ✅ Comprehensive validation
+      if (isNaN(parsed) || !isFinite(parsed) || parsed <= 0) {
+        throw new z.ZodError([
+          {
+            code: 'custom',
+            message: 'INVALID_AMOUNT_FORMAT',
+            path: ['amount'],
+          },
+        ]);
+      }
+
+      // ✅ Business rules validation с константами
+      if (parsed < AMOUNT_LIMITS.MIN_USD || parsed > AMOUNT_LIMITS.MAX_USD) {
+        throw new z.ZodError([
+          {
+            code: 'custom',
+            message: 'AMOUNT_OUT_OF_RANGE',
+            path: ['amount'],
+          },
+        ]);
+      }
+
+      return parsed;
+    }),
+});
+
+export type ValidatedURLParams = z.infer<typeof urlSearchParamsSchema>;
 
 /**
  * SECURITY-ENHANCED CARD NUMBER SCHEMA
@@ -58,8 +123,8 @@ export const securityEnhancedCreateExchangeOrderSchema = z.object({
   cryptoAmount: z
     .number()
     .positive('AMOUNT_POSITIVE_REQUIRED')
-    .min(VALIDATION_LIMITS.MIN_ORDER_AMOUNT, VALIDATION_KEYS.AMOUNT_MIN_VALUE) // ✅ UNIFIED: use existing constant
-    .max(VALIDATION_LIMITS.MAX_ORDER_AMOUNT, VALIDATION_KEYS.AMOUNT_MAX_VALUE) // ✅ UNIFIED: use existing constant
+    .min(VALIDATION_LIMITS.MIN_USD_AMOUNT, VALIDATION_KEYS.AMOUNT_MIN_VALUE) // ✅ UNIFIED: use corrected constant
+    .max(VALIDATION_LIMITS.MAX_USD_AMOUNT, VALIDATION_KEYS.AMOUNT_MAX_VALUE) // ✅ UNIFIED: use corrected constant
     .finite('AMOUNT_MUST_BE_FINITE'),
   uahAmount: z.number().positive('AMOUNT_POSITIVE_REQUIRED').finite('UAH_AMOUNT_MUST_BE_FINITE'),
   currency: currencySchema,

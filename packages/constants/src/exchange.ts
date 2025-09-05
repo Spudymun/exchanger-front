@@ -1,6 +1,5 @@
 import { DECIMAL_PRECISION } from './decimal-precision';
 import { REQUEST_TIMEOUT_CONSTANTS } from './time-constants';
-import { VALIDATION_LIMITS } from './validation';
 
 /**
  * ExchangeGO specific constants
@@ -42,9 +41,10 @@ export const EXCHANGE_REQUEST_TIMEOUT_MS = REQUEST_TIMEOUT_CONSTANTS.EXCHANGE_RE
 export const EXCHANGE_RETRY_ATTEMPTS = 3;
 export const EXCHANGE_RETRY_DELAY_MS = 1000;
 
-// Exchange validation
-export const MIN_EXCHANGE_AMOUNT = VALIDATION_LIMITS.MIN_ORDER_AMOUNT;
-export const MAX_EXCHANGE_AMOUNT = VALIDATION_LIMITS.MAX_ORDER_AMOUNT;
+// Exchange validation - ✅ Используем правильные USD-based лимиты
+// ❌ MIN/MAX_EXCHANGE_AMOUNT УДАЛЕНЫ - используйте getCurrencyLimits() для per-currency validation
+// export const MIN_EXCHANGE_AMOUNT = VALIDATION_LIMITS.MIN_ORDER_AMOUNT;
+// export const MAX_EXCHANGE_AMOUNT = VALIDATION_LIMITS.MAX_ORDER_AMOUNT;
 export const EXCHANGE_AMOUNT_PRECISION = DECIMAL_PRECISION.CRYPTO_DECIMAL_PLACES;
 
 // API delays for exchange operations

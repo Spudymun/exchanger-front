@@ -4,6 +4,7 @@
  * ИСПРАВЛЕНО: Перемещено в packages/ui согласно архитектуре PROJECT_STRUCTURE_MAP.md
  */
 
+import { DEFAULT_TOKEN_STANDARDS } from '@repo/constants';
 import type { Order } from '@repo/exchange-core';
 import type { StatusConfig } from '@repo/hooks';
 import {
@@ -149,7 +150,10 @@ export function OrderCryptoInfo({
           <div className="flex-1">
             <NetworkDisplay
               tokenStandard={
-                (orderData.tokenStandard || 'TRC-20') as 'ERC-20' | 'TRC-20' | 'BEP-20'
+                (orderData.tokenStandard || DEFAULT_TOKEN_STANDARDS.USDT) as
+                  | 'ERC-20'
+                  | 'TRC-20'
+                  | 'BEP-20'
               }
               showCopy={true}
               showDetails={true}

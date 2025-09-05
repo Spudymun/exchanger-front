@@ -1,5 +1,5 @@
+import { AMOUNT_LIMITS } from './exchange'; // ✅ Используем правильные лимиты из exchange.ts
 import { REQUEST_TIMEOUT_CONSTANTS } from './time-constants';
-import { VALIDATION_BOUNDS } from './validation-bounds';
 
 /**
  * Validation rules and limits - ОБЩИЕ для всех приложений
@@ -23,9 +23,10 @@ export const VALIDATION_LIMITS = {
   LAST_NAME_MIN_LENGTH: 1,
   LAST_NAME_MAX_LENGTH: 50,
 
-  // Financial
-  MIN_ORDER_AMOUNT: VALIDATION_BOUNDS.MIN_ORDER_AMOUNT,
-  MAX_ORDER_AMOUNT: VALIDATION_BOUNDS.MAX_ORDER_AMOUNT,
+  // Financial - ✅ Используем правильные exchange-specific лимиты
+  // ❌ MIN_ORDER_AMOUNT/MAX_ORDER_AMOUNT УДАЛЕНЫ - используйте getCurrencyLimits()
+  MIN_USD_AMOUNT: AMOUNT_LIMITS.MIN_USD, // $10 в USD эквиваленте
+  MAX_USD_AMOUNT: AMOUNT_LIMITS.MAX_USD, // $5000 в USD эквиваленте
   MIN_WITHDRAWAL_AMOUNT: 10,
   MAX_WITHDRAWAL_AMOUNT: 100000,
 
