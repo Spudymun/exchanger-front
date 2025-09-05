@@ -12,9 +12,57 @@ import {
   combineStyles,
 } from '@repo/ui';
 import { RotateCcw } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 
-// ИСПРАВЛЕНО: OrderDevTools теперь получает trpc utils как проп для избежания coupling
+/**
+ * Хук многоуровневой защиты DevTools от утечки в production
+ * ИСПРАВЛЕНО: Несколько слоев защиты вместо одной проверки NODE_ENV
+ */
+function useDevToolsProtection(): boolean {
+  return useMemo(() => {
+    // Уровень 1: Проверка NODE_ENV (основная защита)
+    if (process.env.NODE_ENV !== 'development') {
+      return false;
+    }
+
+    // Уровень 2: Runtime проверка на клиенте
+    if (typeof window === 'undefined') {
+      return true; // SSR - разрешить для development
+    }
+
+    // Проверка на production домены
+    const hostname = window.location.hostname;
+    const productionDomains = ['exchangego.io', 'app.exchangego.io', 'www.exchangego.io'];
+
+    const isProductionDomain = productionDomains.some(domain => hostname.includes(domain));
+    if (isProductionDomain) {
+      return false;
+    }
+
+    // Уровень 3: Проверка localStorage для отключения DevTools
+    try {
+      const devModeDisabled = localStorage.getItem('disable-dev-tools') === 'true';
+      if (devModeDisabled) return false;
+    } catch {
+      // Ignore localStorage errors
+    }
+
+    // Уровень 4: Compile-time проверка (если доступна)
+    // @ts-ignore - опциональная проверка
+    if (typeof __DEV__ !== 'undefined' && !__DEV__) {
+      return false;
+    }
+
+    // Все проверки пройдены - разрешить DevTools
+    return true;
+  }, []);
+}
+
+/**
+ * Публичный интерфейс данных заказа для DevTools
+ * БЕЗОПАСНОСТЬ: Содержит только необходимые поля для разработки
+ * ИСПРАВЛЕНО: OrderDevTools теперь получает trpc utils как проп для избежания coupling
+ */
 export interface PublicOrderData {
   id: string;
   status: OrderStatus;
@@ -28,20 +76,46 @@ export interface PublicOrderData {
   txHash?: string;
 }
 
+/**
+ * Пропсы компонента OrderDevTools
+ * БЕЗОПАСНОСТЬ: Компонент автоматически скрывается в production через многоуровневую защиту
+ * ИСПРАВЛЕНО: Внешние зависимости передаются как пропы для избежания coupling
+ */
 interface OrderDevToolsProps {
   orderId: string;
-  // ДОБАВЛЕНО: Внешние зависимости передаются как пропы
+  /** Данные заказа (только публичные поля) */
   orderData?: PublicOrderData;
+  /** tRPC утилиты для обновления кеша (опционально) */
   trpcUtils?: {
     setData: (key: { orderId: string }, updater: (oldData: unknown) => unknown) => void;
   };
 }
 
+/**
+ * Компонент инструментов разработки для заказов
+ *
+ * ⚠️ ВАЖНО: ТОЛЬКО ДЛЯ РАЗРАБОТКИ!
+ *
+ * БЕЗОПАСНОСТЬ:
+ * - Автоматически скрывается в production через многоуровневую защиту
+ * - Проверяет NODE_ENV, домены, localStorage и compile-time флаги
+ * - НЕ включается в production bundle при правильной настройке
+ *
+ * ИСПОЛЬЗОВАНИЕ:
+ * - Позволяет изменять статус заказа для тестирования
+ * - Обновляет как локальные моки, так и React Query кеш
+ * - Безопасно обрабатывает ошибки
+ *
+ * @param props - Параметры компонента с данными заказа и tRPC утилитами
+ * @returns JSX компонент или null если DevTools отключены
+ */
 export function OrderDevTools({ orderId, orderData, trpcUtils }: OrderDevToolsProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Only show in development
-  if (process.env.NODE_ENV !== 'development') {
+  // ИСПРАВЛЕНО: Многоуровневая защита от утечки в production
+  const isDevToolsEnabled = useDevToolsProtection();
+
+  if (!isDevToolsEnabled) {
     return null;
   }
 
