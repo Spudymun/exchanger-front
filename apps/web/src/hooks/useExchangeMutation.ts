@@ -93,7 +93,10 @@ export function useExchangeRates(): ReturnType<typeof trpc.exchange.getRates.use
 // Centralized hook for getting order status
 export function useOrderStatus(
   orderId: string,
-  options?: { enabled?: boolean; refetchInterval?: number }
+  options?: {
+    enabled?: boolean;
+    refetchInterval?: number | ((data: unknown) => number | false);
+  }
 ): ReturnType<typeof trpc.exchange.getOrderStatus.useQuery> {
   return trpc.exchange.getOrderStatus.useQuery(
     { orderId },

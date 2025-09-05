@@ -19,7 +19,10 @@ export function OrderPageClient({ orderId }: OrderPageClientProps) {
   });
 
   // Создаем обертку для хука с правильным типом
-  const orderStatusHook = (id: string, options?: { refetchInterval?: number }) => {
+  const orderStatusHook = (
+    id: string,
+    options?: { refetchInterval?: number | ((data: unknown) => number | false) }
+  ) => {
     const result = useOrderStatus(id, options);
     return {
       data: result.data as Order | undefined,

@@ -1,12 +1,13 @@
 import { UI_REFRESH_INTERVALS } from '@repo/constants';
 import type { Order } from '@repo/exchange-core';
+import { isFinalStatus } from '@repo/utils';
 import React from 'react';
 
 /**
  * Hook параметры для получения данных заказа
  */
 export interface UseOrderDataParams {
-  refetchInterval?: number;
+  refetchInterval?: number | ((data: unknown) => number | false);
 }
 
 /**
@@ -48,7 +49,18 @@ export function useOrderData(
     isLoading,
     error,
   } = useOrderStatusHook(orderId, {
-    refetchInterval: UI_REFRESH_INTERVALS.ORDER_STATUS_REFRESH,
+    refetchInterval: (data: unknown) => {
+      // Проверяем статус заказа для условного polling
+      const order = isValidOrder(data) ? data : undefined;
+
+      // Если заказ в финальном статусе - останавливаем polling
+      if (order && isFinalStatus(order)) {
+        return false;
+      }
+
+      // Для активных заказов - продолжаем обновления
+      return UI_REFRESH_INTERVALS.ORDER_STATUS_REFRESH;
+    },
   });
 
   // Безопасная типизация данных через type guard
