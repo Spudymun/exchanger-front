@@ -12,6 +12,7 @@ import {
   BaseErrorBoundary,
   getIconComponent,
 } from '@repo/ui';
+import { getStatusColorClass } from '@repo/utils';
 import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 
@@ -31,15 +32,13 @@ interface OrderStatusProps {
   useOrderStatusHook: UseOrderStatusHook;
 }
 
-const getIconColorClass = (color: string): string => {
-  const colorMap = {
-    success: textStyles.accent.success.split(' ')[0], // Extract color class
-    warning: textStyles.accent.warning.split(' ')[0],
-    info: textStyles.accent.primary.split(' ')[0],
-    destructive: textStyles.accent.error.split(' ')[0],
-  } as const;
-
-  return colorMap[color as keyof typeof colorMap] || 'text-muted-foreground';
+// ✅ ИСПРАВЛЕНО: Используем централизованную функцию getStatusColorClass
+// Извлекаем только цвет текста для иконки (убираем background классы)
+const getIconTextColorFromStatus = (status: string): string => {
+  const fullClass = getStatusColorClass(status as keyof typeof ORDER_STATUS_CONFIG);
+  // Извлекаем только text-* класс из "text-success bg-success/10"
+  const textColorMatch = fullClass.match(/text-[\w-]+/);
+  return textColorMatch ? textColorMatch[0] : 'text-muted-foreground';
 };
 
 function OrderStatusHeader({
@@ -57,7 +56,7 @@ function OrderStatusHeader({
   return (
     <div className="flex items-center gap-4">
       <StatusIcon
-        className={`h-6 w-6 ${getIconColorClass(statusConfig.color)} ${
+        className={`h-6 w-6 ${getIconTextColorFromStatus(orderData.status)} ${
           isProcessing ? 'animate-spin' : ''
         }`}
       />
