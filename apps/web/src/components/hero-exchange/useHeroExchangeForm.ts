@@ -10,10 +10,28 @@ import {
 } from '@repo/constants';
 import { calculateUahAmount, getCurrencyLimits } from '@repo/exchange-core';
 import { useFormWithNextIntl } from '@repo/hooks';
+import { useAutoMinAmount } from '@repo/hooks/src/client-hooks';
 import { securityEnhancedHeroExchangeFormSchema } from '@repo/utils';
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 
 import type { HeroExchangeFormData } from '../HeroExchangeForm';
+
+/**
+ * Логика автозаполнения минимального количества
+ */
+function useAutoFillLogic(form: ReturnType<typeof useFormWithNextIntl<HeroExchangeFormData>>) {
+  const { shouldAutoFill, getMinAmount } = useAutoMinAmount(
+    form.values.fromCurrency as CryptoCurrency,
+    form.values.fromAmount
+  );
+
+  useEffect(() => {
+    if (shouldAutoFill) {
+      const minAmount = getMinAmount();
+      form.setValue('fromAmount', minAmount.toString());
+    }
+  }, [shouldAutoFill, getMinAmount, form.setValue]);
+}
 
 export function useHeroExchangeForm(
   t: (key: string) => string,
@@ -31,6 +49,9 @@ export function useHeroExchangeForm(
     t,
     onSubmit: async values => onExchange?.(values),
   });
+
+  // Автозаполнение минимального количества
+  useAutoFillLogic(form);
 
   const calculatedAmount = useMemo(() => {
     const amount = Number(form.values.fromAmount);

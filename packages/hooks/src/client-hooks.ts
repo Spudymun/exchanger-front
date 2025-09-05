@@ -28,6 +28,9 @@ export type {
   UseOrderStatusHook,
 } from './business/useOrderData';
 
+// NEW: Auto minimum amount hook (client-side)
+export { useAutoMinAmount } from './business/useAutoMinAmount';
+
 // NEW: Order status UI hooks (client-side)
 export { useOrderStatusConfig } from './ui/useOrderStatusConfig';
 export type { StatusConfig, UseOrderStatusConfigResult } from './ui/useOrderStatusConfig';
