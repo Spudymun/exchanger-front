@@ -23,6 +23,47 @@ import { useTranslations } from 'next-intl';
 // ИСПРАВЛЕНО: Импорт NetworkDisplay из правильного места в packages/ui
 import { NetworkDisplay } from '../NetworkDisplay';
 
+/**
+ * Переиспользуемый компонент для отображения deposit address
+ * ИСПРАВЛЕНО: Устраняет дублирование кода через выделение в отдельный компонент
+ */
+function DepositAddressBlock({
+  depositAddress,
+  t,
+}: {
+  depositAddress: string;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  return (
+    <div className="group">
+      <p className={combineStyles(textStyles.heading.sm, 'text-warning mb-3')}>
+        ⚠️ {t('depositAddress')}
+      </p>
+      <div className="rounded-lg border-2 border-warning/30 bg-warning/10 p-4 group-hover:bg-warning/15 transition-colors shadow-sm">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <p
+              className={combineStyles(
+                textStyles.body.md,
+                textStyles.utility.monoBreakAll,
+                'font-semibold text-primary break-all text-base'
+              )}
+            >
+              {depositAddress}
+            </p>
+          </div>
+          <CopyButton
+            value={depositAddress}
+            className="opacity-70 group-hover:opacity-100 transition-opacity flex-shrink-0"
+            variant="outline"
+            size="sm"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function OrderPriorityInfo({
   orderData,
   statusConfig,
@@ -94,33 +135,8 @@ export function OrderCryptoInfo({
 }) {
   return (
     <div className="space-y-4">
-      {/* Critical Information - Deposit Address (Hero Section) */}
-      <div className="group">
-        <p className={combineStyles(textStyles.heading.sm, 'text-warning mb-3')}>
-          ⚠️ {t('depositAddress')}
-        </p>
-        <div className="rounded-lg border-2 border-warning/30 bg-warning/10 p-4 group-hover:bg-warning/15 transition-colors shadow-sm">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <p
-                className={combineStyles(
-                  textStyles.body.md,
-                  textStyles.utility.monoBreakAll,
-                  'font-semibold text-primary break-all text-base'
-                )}
-              >
-                {orderData.depositAddress}
-              </p>
-            </div>
-            <CopyButton
-              value={orderData.depositAddress}
-              className="opacity-70 group-hover:opacity-100 transition-opacity flex-shrink-0"
-              variant="outline"
-              size="sm"
-            />
-          </div>
-        </div>
-      </div>
+      {/* ИСПРАВЛЕНО: Используем переиспользуемый компонент вместо дублированного кода */}
+      <DepositAddressBlock depositAddress={orderData.depositAddress} t={t} />
 
       {/* Email и Blockchain Network на одном уровне */}
       <div className="flex flex-col gap-4 sm:flex-row sm:gap-6">
@@ -172,46 +188,6 @@ export function OrderFinancialInfo({
         </div>
       )}
     </div>
-  );
-}
-
-export function OrderBasicInfo({
-  orderData,
-  t,
-}: {
-  orderData: Order;
-  t: ReturnType<typeof useTranslations>;
-}) {
-  return (
-    <>
-      {/* Critical Information - Deposit Address (Hero Section) */}
-      <div className="group">
-        <p className={combineStyles(textStyles.heading.sm, 'text-warning mb-3')}>
-          ⚠️ {t('depositAddress')}
-        </p>
-        <div className="rounded-lg border-2 border-warning/30 bg-warning/10 p-4 group-hover:bg-warning/15 transition-colors shadow-sm">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <p
-                className={combineStyles(
-                  textStyles.body.md,
-                  textStyles.utility.monoBreakAll,
-                  'font-semibold text-primary break-all text-base'
-                )}
-              >
-                {orderData.depositAddress}
-              </p>
-            </div>
-            <CopyButton
-              value={orderData.depositAddress}
-              className="opacity-70 group-hover:opacity-100 transition-opacity flex-shrink-0"
-              variant="outline"
-              size="sm"
-            />
-          </div>
-        </div>
-      </div>
-    </>
   );
 }
 

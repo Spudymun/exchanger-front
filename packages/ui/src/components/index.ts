@@ -257,7 +257,6 @@ export {
   OrderMetadataInfo,
   OrderCryptoInfo,
   OrderFinancialInfo,
-  OrderBasicInfo,
   AmountDisplayWithCopy,
   TechnicalDetailsCollapsible,
   OrderAdditionalInfo,
