@@ -15,13 +15,11 @@ import {
   Button,
   CopyButton,
   statusStyles,
+  NetworkDisplay,
 } from '@repo/ui';
 import { maskCardNumber } from '@repo/utils';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-
-// ИСПРАВЛЕНО: Импорт NetworkDisplay из правильного места в packages/ui
-import { NetworkDisplay } from '../NetworkDisplay';
 
 /**
  * Переиспользуемый компонент для отображения deposit address
