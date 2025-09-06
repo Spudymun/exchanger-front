@@ -1,10 +1,6 @@
 import { AUTH_CONSTANTS, VALIDATION_LIMITS } from '@repo/constants';
-import {
-  generateSessionId,
-  sanitizeEmail,
-  userManager,
-  isAuthenticatedUser,
-} from '@repo/exchange-core';
+import { generateSessionId, sanitizeEmail, isAuthenticatedUser } from '@repo/exchange-core';
+import { UserManagerFactory } from '@repo/session-management';
 import {
   fullySecurityEnhancedRegisterSchema, // FULLY XSS-PROTECTED REGISTER SCHEMA
   fullySecurityEnhancedLoginSchema, // FULLY XSS-PROTECTED LOGIN SCHEMA
@@ -27,6 +23,12 @@ import { createDelay } from '../../utils/delay';
 import { createTRPCRouter, publicProcedure } from '../init';
 import { rateLimitMiddleware } from '../middleware/rateLimit';
 
+// ✅ Helper function to safely get user agent
+function getUserAgent(headers: Record<string, string | string[] | undefined>): string | undefined {
+  const userAgent = headers['user-agent'];
+  return typeof userAgent === 'string' ? userAgent : undefined;
+}
+
 export const authRouter = createTRPCRouter({
   // Регистрация нового пользователя
   register: rateLimitMiddleware.register
@@ -44,8 +46,11 @@ export const authRouter = createTRPCRouter({
       // tRPC уже валидирует input через fullySecurityEnhancedRegisterSchema, дополнительная валидация избыточна
       const sanitizedEmail = sanitizeEmail(input.email);
 
+      // ✅ Get user manager instance via Factory
+      const webUserManager = await UserManagerFactory.create();
+
       // Проверяем, не существует ли уже пользователь
-      const existingUser = userManager.findByEmail(sanitizedEmail);
+      const existingUser = await webUserManager.findByEmail(sanitizedEmail);
       if (existingUser) {
         throw createUserError('already_exists');
       }
@@ -56,14 +61,23 @@ export const authRouter = createTRPCRouter({
         VALIDATION_LIMITS.BCRYPT_SALT_ROUNDS
       );
 
-      // Создаем пользователя
+      // ✅ Production session creation with metadata
       const sessionId = generateSessionId();
-      const user = userManager.create({
+      const _sessionMetadata = {
+        ip: ctx.ip,
+        userAgent: getUserAgent(ctx.req.headers),
+      };
+
+      // Создаем пользователя
+      const user = await webUserManager.create({
         email: sanitizedEmail,
         hashedPassword,
         sessionId,
         isVerified: false,
       });
+
+      // NOTE: В Phase 4 здесь будет вызов productionUserManager.createSession()
+      // await productionUserManager.createSession(user.id, _sessionMetadata, AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS);
 
       // Устанавливаем cookie с session ID
       ctx.res.setHeader(
@@ -100,8 +114,11 @@ export const authRouter = createTRPCRouter({
 
       const sanitizedEmail = sanitizeEmail(input.email);
 
+      // ✅ Get web user manager instance
+      const webUserManager = await UserManagerFactory.create();
+
       // Поиск пользователя
-      const user = userManager.findByEmail(sanitizedEmail);
+      const user = await webUserManager.findByEmail(sanitizedEmail);
       if (!user || !user.hashedPassword) {
         throw createUserError('invalid_credentials');
       }
@@ -112,12 +129,21 @@ export const authRouter = createTRPCRouter({
         throw createUserError('invalid_credentials');
       }
 
-      // Генерируем новый session ID
+      // ✅ Production session creation with metadata
       const sessionId = generateSessionId();
-      userManager.update(user.id, {
+      const _sessionMetadata = {
+        ip: ctx.ip,
+        userAgent: getUserAgent(ctx.req.headers),
+      };
+
+      // Update user with new session (mock compatibility)
+      await webUserManager.update(user.id, {
         sessionId,
         lastLoginAt: new Date(),
       });
+
+      // NOTE: В Phase 4 здесь будет вызов productionUserManager.createSession()
+      // await productionUserManager.createSession(user.id, _sessionMetadata, AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS);
 
       // Устанавливаем cookie
       ctx.res.setHeader(
@@ -139,10 +165,29 @@ export const authRouter = createTRPCRouter({
 
   // Выход из системы
   logout: publicProcedure.mutation(async ({ ctx }) => {
+    // ✅ Production session cleanup preparation
+    const sessionId =
+      ctx.req.cookies.sessionId || ctx.req.headers.authorization?.replace('Bearer ', '');
+
+    if (sessionId) {
+      // ✅ Get web user manager instance
+      const webUserManager = await UserManagerFactory.create();
+
+      // Find user by session for cleanup
+      const user = await webUserManager.findBySessionId(sessionId);
+      if (user) {
+        // Clear session from user record (mock compatibility)
+        await webUserManager.update(user.id, { sessionId: undefined });
+
+        // NOTE: В Phase 4 здесь будет вызов productionUserManager.deleteSession()
+        // await productionUserManager.deleteSession(sessionId);
+
+        console.log(`🔓 User logged out: ${user.email}`);
+      }
+    }
+
     // Очищаем cookie
     ctx.res.setHeader('Set-Cookie', `sessionId=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax`);
-
-    console.log(`🔓 User logged out`);
 
     return {
       message: 'Logout successful',
@@ -177,8 +222,11 @@ export const authRouter = createTRPCRouter({
 
       const sanitizedEmail = sanitizeEmail(input.email);
 
+      // ✅ Get web user manager instance
+      const webUserManager = await UserManagerFactory.create();
+
       // Проверяем, существует ли пользователь
-      const user = userManager.findByEmail(sanitizedEmail);
+      const user = await webUserManager.findByEmail(sanitizedEmail);
       if (!user) {
         // Не раскрываем информацию о существовании пользователя
         console.log(`🔒 Password reset attempt for non-existent email: ${sanitizedEmail}`);
@@ -218,9 +266,12 @@ export const authRouter = createTRPCRouter({
         );
       }
 
+      // ✅ Get web user manager instance
+      const webUserManager = await UserManagerFactory.create();
+
       // В реальном приложении здесь была бы проверка кода из базы/Redis
       // Для мока просто проверяем существование пользователя
-      const user = userManager.findByEmail(sanitizedEmail);
+      const user = await webUserManager.findByEmail(sanitizedEmail);
       if (!user) {
         throw createBadRequestError('Invalid recovery code');
       }
@@ -231,14 +282,21 @@ export const authRouter = createTRPCRouter({
         VALIDATION_LIMITS.BCRYPT_SALT_ROUNDS
       );
 
-      // Генерируем новый session ID
+      // ✅ Production session creation with metadata after password reset
       const sessionId = generateSessionId();
+      const _sessionMetadata = {
+        ip: ctx.ip,
+        userAgent: getUserAgent(ctx.req.headers),
+      };
 
       // Обновляем пользователя
-      userManager.update(user.id, {
+      await webUserManager.update(user.id, {
         hashedPassword,
         sessionId,
       });
+
+      // NOTE: В Phase 4 здесь будет вызов productionUserManager.createSession()
+      // await productionUserManager.createSession(user.id, _sessionMetadata, AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS);
 
       // Устанавливаем cookie
       ctx.res.setHeader(
@@ -265,7 +323,10 @@ export const authRouter = createTRPCRouter({
       // SECURITY-ENHANCED VALIDATION
       const sanitizedEmail = sanitizeEmail(input.email);
 
-      const user = userManager.findByEmail(sanitizedEmail);
+      // ✅ Get web user manager instance
+      const webUserManager = await UserManagerFactory.create();
+
+      const user = await webUserManager.findByEmail(sanitizedEmail);
       if (!user) {
         throw createUserError('not_found');
       }
@@ -279,7 +340,7 @@ export const authRouter = createTRPCRouter({
 
       // В реальном приложении здесь была бы проверка кода
       // Для мока подтверждаем всех
-      userManager.update(user.id, {
+      await webUserManager.update(user.id, {
         isVerified: true,
       });
 

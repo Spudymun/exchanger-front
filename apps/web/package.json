@@ -20,6 +20,7 @@
     "@repo/exchange-core": "*",
     "@repo/hooks": "*",
     "@repo/providers": "*",
+    "@repo/session-management": "*",
     "@repo/ui": "*",
     "@tanstack/react-query": "^5.81.5",
     "@trpc/client": "^11.4.3",

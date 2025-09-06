@@ -121,6 +121,7 @@ export const VALIDATION_PATTERNS = {
 // Authentication constants
 export const AUTH_CONSTANTS = {
   // Session durations (предвычисленные значения - no calculations in constants)
+  // ✅ Single source of truth for session TTL (was duplicated as SESSION_CONSTANTS.REDIS.DEFAULT_TTL)
   SESSION_MAX_AGE_SECONDS: 604800, // 7 дней (7 * 24 * 60 * 60)
   SESSION_COOKIE_NAME: 'sessionId',
 

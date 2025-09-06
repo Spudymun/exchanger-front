@@ -4,6 +4,7 @@ export * from './business';
 export * from './ui';
 export * from './validation';
 export * from './user';
+export * from './session';
 
 // ExchangeGO specific exports
 export * from './exchange';

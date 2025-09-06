@@ -1,0 +1,15 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Exchanger Development DB",
+      "Group": "Development",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "exchanger_db",
+      "Username": "exchanger_user",
+      "Password": "exchanger_password",
+      "SSLMode": "prefer",
+      "Comment": "Local development database for Exchanger project"
+    }
+  }
+}

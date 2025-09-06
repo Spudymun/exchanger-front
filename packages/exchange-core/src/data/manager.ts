@@ -88,6 +88,11 @@ export const userManager = {
     return users.find(u => u.id === id);
   },
 
+  // ✅ НОВЫЙ МЕТОД для совместимости с ProductionUserManager
+  findBySessionId: (sessionId: string): User | undefined => {
+    return users.find(u => u.sessionId === sessionId);
+  },
+
   create: (userData: Omit<User, 'id' | 'createdAt'>): User => {
     const user: User = {
       id: `user_${Date.now()}`,

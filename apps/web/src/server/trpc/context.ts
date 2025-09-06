@@ -48,10 +48,13 @@ export const createContext = async (opts: CreateNextContextOptions) => {
   const sessionId = req.cookies.sessionId || req.headers.authorization?.replace('Bearer ', '');
 
   if (sessionId) {
-    // Find user by session ID (mock)
-    const foundUser = userManager.getAll().find(u => u.sessionId === sessionId);
-    if (foundUser) {
-      user = foundUser;
+    try {
+      // ✅ Используем новый findBySessionId метод
+      const foundUser = userManager.findBySessionId(sessionId);
+      user = foundUser || null;
+    } catch (error) {
+      // ✅ Graceful degradation: user остается null
+      console.error('Session validation error:', error);
     }
   }
 
