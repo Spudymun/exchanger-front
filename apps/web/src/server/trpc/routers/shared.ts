@@ -5,7 +5,8 @@ import {
   DATE_FORMAT_CONSTANTS,
   UI_NUMERIC_CONSTANTS,
 } from '@repo/constants';
-import { orderManager, userManager, type Order } from '@repo/exchange-core';
+import { orderManager, type Order } from '@repo/exchange-core';
+import { UserManagerFactory } from '@repo/session-management';
 import {
   paginateOrders,
   sortOrders,
@@ -81,7 +82,11 @@ export const sharedRouter = createTRPCRouter({
       // SECURITY-ENHANCED VALIDATION
       const { query, verified, limit, offset: _offset } = input;
 
-      let users = userManager.getAll().filter(user => {
+      // ✅ Use async UserManagerFactory pattern
+      const userManager = await UserManagerFactory.create();
+      const allUsers = await userManager.getAll();
+
+      let users = allUsers.filter(user => {
         const matchesQuery =
           !query ||
           user.email.toLowerCase().includes(query.toLowerCase()) ||
@@ -109,7 +114,9 @@ export const sharedRouter = createTRPCRouter({
   // Общая статистика (доступна operator и support)
   getGeneralStats: operatorAndSupport.query(async () => {
     const orders = orderManager.getAll();
-    const users = userManager.getAll();
+    // ✅ Use async UserManagerFactory pattern
+    const userManager = await UserManagerFactory.create();
+    const users = await userManager.getAll();
 
     // Используем централизованную утилиту для статистики заказов
     const orderStats = getOrdersStatistics(orders);

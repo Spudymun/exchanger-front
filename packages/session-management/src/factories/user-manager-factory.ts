@@ -4,6 +4,17 @@ import { userManager as mockUserManager } from '@repo/exchange-core';
 import { PostgreSQLUserAdapter } from '../adapters/postgres-user-adapter';
 import { RedisSessionAdapter } from '../adapters/redis-session-adapter';
 import { ProductionUserManager } from '../managers/production-user-manager';
+
+// 🔧 Constants to avoid duplication and magic numbers
+const DEBUG_CONSTANTS = {
+  ENV_VAR_SET: 'установлен',
+  ENV_VAR_NOT_SET: 'не установлен',
+  ENV_VAR_MISSING: 'отсутствует',
+  CONFIG_PRESENT: 'есть в config',
+  CONFIG_MISSING: 'нет в config',
+  DATABASE_URL_LENGTH: 30,
+  REDIS_URL_LENGTH: 20,
+} as const;
 import type {
   UserManagerInterface,
   ManagerEnvironment,
@@ -42,10 +53,58 @@ export interface ManagerConfiguration {
   };
 }
 
+/**
+ * 🏭 Factory for creating UserManager instances based on environment configuration
+ */
 export class UserManagerFactory {
   static async create(config: ManagerConfiguration = {}): Promise<UserManagerInterface> {
     const environment = config.environment || getEnvironment();
+    this.logEnvironmentDebug(environment, config);
     return await this.createManagerByEnvironment(environment, config);
+  }
+
+  /**
+   * 🔍 Debug logging helper to reduce complexity
+   */
+  private static logEnvironmentDebug(
+    environment: ManagerEnvironment,
+    config: ManagerConfiguration
+  ): void {
+    if (process.env.NODE_ENV !== 'production') {
+      // eslint-disable-next-line no-console
+      console.log('🔍 UserManagerFactory DEBUG:', {
+        NODE_ENV: process.env.NODE_ENV,
+        detected_environment: environment,
+        DATABASE_URL: process.env.DATABASE_URL
+          ? DEBUG_CONSTANTS.ENV_VAR_SET
+          : DEBUG_CONSTANTS.ENV_VAR_NOT_SET,
+        DATABASE_URL_value: this.formatEnvValue(
+          process.env.DATABASE_URL,
+          DEBUG_CONSTANTS.DATABASE_URL_LENGTH
+        ),
+        REDIS_URL: process.env.REDIS_URL
+          ? DEBUG_CONSTANTS.ENV_VAR_SET
+          : DEBUG_CONSTANTS.ENV_VAR_NOT_SET,
+        REDIS_URL_value: this.formatEnvValue(
+          process.env.REDIS_URL,
+          DEBUG_CONSTANTS.REDIS_URL_LENGTH
+        ),
+        FORCE_MOCK_MODE: process.env.FORCE_MOCK_MODE || DEBUG_CONSTANTS.ENV_VAR_NOT_SET,
+        config_database: config.database?.url
+          ? DEBUG_CONSTANTS.CONFIG_PRESENT
+          : DEBUG_CONSTANTS.CONFIG_MISSING,
+        config_redis: config.redis?.url
+          ? DEBUG_CONSTANTS.CONFIG_PRESENT
+          : DEBUG_CONSTANTS.CONFIG_MISSING,
+      });
+    }
+  }
+
+  /**
+   * 🔧 Helper to format environment variable values
+   */
+  private static formatEnvValue(value: string | undefined, maxLength: number): string {
+    return value ? value.substring(0, maxLength) + '...' : DEBUG_CONSTANTS.ENV_VAR_MISSING;
   }
 
   private static async createManagerByEnvironment(
@@ -70,11 +129,81 @@ export class UserManagerFactory {
   private static async createDevelopmentManager(
     config: ManagerConfiguration
   ): Promise<UserManagerInterface> {
-    if (config.database?.url && config.redis?.url) {
-      return await this.createProductionManager(config);
+    // Check for forced mock mode first
+    if (this.shouldUseForcedMockMode()) {
+      this.logDevelopmentMode('Принудительный Mock режим активирован');
+      return new MockUserManagerWrapper(mockUserManager);
     }
-    // Fallback to mock если нет конфигурации
+
+    const urls = this.extractEnvironmentUrls(config);
+    this.logDevelopmentMode('Development Manager', urls);
+
+    return urls.hasValidUrls
+      ? await this.createProductionManagerWithUrls(config, urls)
+      : this.createFallbackMockManager();
+  }
+
+  /**
+   * 🎯 Check if forced mock mode is enabled
+   */
+  private static shouldUseForcedMockMode(): boolean {
+    return process.env.FORCE_MOCK_MODE === 'true';
+  }
+
+  /**
+   * 🔧 Extract database and redis URLs from config or environment
+   */
+  private static extractEnvironmentUrls(config: ManagerConfiguration) {
+    const databaseUrl = config.database?.url || process.env.DATABASE_URL;
+    const redisUrl = config.redis?.url || process.env.REDIS_URL;
+
+    return {
+      databaseUrl,
+      redisUrl,
+      hasValidUrls: Boolean(databaseUrl && redisUrl),
+      debugInfo: {
+        databaseUrl: databaseUrl ? DEBUG_CONSTANTS.ENV_VAR_SET : DEBUG_CONSTANTS.ENV_VAR_NOT_SET,
+        redisUrl: redisUrl ? DEBUG_CONSTANTS.ENV_VAR_SET : DEBUG_CONSTANTS.ENV_VAR_NOT_SET,
+        forceMock: process.env.FORCE_MOCK_MODE || DEBUG_CONSTANTS.ENV_VAR_NOT_SET,
+      },
+    };
+  }
+
+  /**
+   * 🚀 Create production manager with validated URLs
+   */
+  private static async createProductionManagerWithUrls(
+    config: ManagerConfiguration,
+    urls: ReturnType<typeof UserManagerFactory.extractEnvironmentUrls>
+  ): Promise<ProductionUserManager> {
+    if (!urls.databaseUrl || !urls.redisUrl) {
+      throw new Error('Database and Redis URLs are required for production manager');
+    }
+
+    this.logDevelopmentMode('Используем PostgreSQL + Redis');
+    return await this.createProductionManager({
+      ...config,
+      database: { url: urls.databaseUrl },
+      redis: { url: urls.redisUrl },
+    });
+  }
+
+  /**
+   * 🔧 Create fallback mock manager
+   */
+  private static createFallbackMockManager(): MockUserManagerWrapper {
+    this.logDevelopmentMode('Fallback to MockUserManagerWrapper (нет DATABASE_URL или REDIS_URL)');
     return new MockUserManagerWrapper(mockUserManager);
+  }
+
+  /**
+   * 📝 Development logging helper
+   */
+  private static logDevelopmentMode(message: string, data?: unknown): void {
+    if (process.env.NODE_ENV !== 'production') {
+      // eslint-disable-next-line no-console
+      console.log(`🔍 ${message}`, data || '');
+    }
   }
 
   private static async createProductionManager(

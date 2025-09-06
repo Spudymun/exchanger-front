@@ -1,12 +1,24 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "tui",
+  "envMode": "loose",
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**", "dist/**"],
-      "env": ["VERCEL_URL", "PORT", "NODE_ENV", "ANALYZE"]
+      "env": [
+        "VERCEL_URL",
+        "PORT",
+        "NODE_ENV",
+        "ANALYZE",
+        "DATABASE_URL",
+        "REDIS_URL",
+        "FORCE_MOCK_MODE",
+        "SESSION_ENVIRONMENT",
+        "NEXTAUTH_URL",
+        "NEXTAUTH_SECRET"
+      ]
     },
     "lint": {
       "dependsOn": ["^lint"]
@@ -58,7 +70,17 @@
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "env": [
+        "NODE_ENV",
+        "DATABASE_URL",
+        "REDIS_URL",
+        "FORCE_MOCK_MODE",
+        "SESSION_ENVIRONMENT",
+        "NEXTAUTH_URL",
+        "NEXTAUTH_SECRET",
+        "PORT"
+      ]
     },
     "scan-styles": {
       "dependsOn": ["^build"],

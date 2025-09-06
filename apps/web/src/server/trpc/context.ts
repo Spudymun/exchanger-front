@@ -1,5 +1,6 @@
 import { type SupportedLocale, SUPPORTED_LOCALES, I18N_CONFIG } from '@repo/constants';
-import { type User, userManager } from '@repo/exchange-core';
+import { type User } from '@repo/exchange-core';
+import { UserManagerFactory } from '@repo/session-management';
 import { type inferAsyncReturnType } from '@trpc/server';
 import { type CreateNextContextOptions } from '@trpc/server/adapters/next';
 
@@ -49,11 +50,12 @@ export const createContext = async (opts: CreateNextContextOptions) => {
 
   if (sessionId) {
     try {
-      // ✅ Используем новый findBySessionId метод
-      const foundUser = userManager.findBySessionId(sessionId);
+      // ✅ Use async UserManagerFactory pattern like auth.ts
+      const userManager = await UserManagerFactory.create();
+      const foundUser = await userManager.findBySessionId(sessionId);
       user = foundUser || null;
     } catch (error) {
-      // ✅ Graceful degradation: user остается null
+      // ✅ Graceful degradation: user remains null
       console.error('Session validation error:', error);
     }
   }
