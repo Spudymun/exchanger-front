@@ -57,10 +57,26 @@ export interface ManagerConfiguration {
  * 🏭 Factory for creating UserManager instances based on environment configuration
  */
 export class UserManagerFactory {
+  // ✅ Singleton instance для production optimization
+  private static cachedUserManager: UserManagerInterface | null = null;
+  private static cachedConfig: string | null = null;
+
   static async create(config: ManagerConfiguration = {}): Promise<UserManagerInterface> {
+    // ✅ Production optimization: use cached instance if config matches
+    const configKey = JSON.stringify(config);
+    if (this.cachedUserManager && this.cachedConfig === configKey) {
+      return this.cachedUserManager;
+    }
+
     const environment = config.environment || getEnvironment();
     this.logEnvironmentDebug(environment, config);
-    return await this.createManagerByEnvironment(environment, config);
+    const userManager = await this.createManagerByEnvironment(environment, config);
+
+    // ✅ Cache the instance for production performance
+    this.cachedUserManager = userManager;
+    this.cachedConfig = configKey;
+
+    return userManager;
   }
 
   /**
@@ -245,6 +261,27 @@ export class UserManagerFactory {
     });
 
     return new RedisSessionAdapter(redis);
+  }
+
+  // ✅ Utility methods для singleton management
+  static clearCache(): void {
+    this.cachedUserManager = null;
+    this.cachedConfig = null;
+  }
+
+  static getCachedInstance(): UserManagerInterface | null {
+    return this.cachedUserManager;
+  }
+
+  // ✅ Optimized method for context.ts - uses cached instance for production performance
+  static async createForContext(): Promise<UserManagerInterface> {
+    // В production режиме всегда используем cached instance если возможно
+    if (process.env.NODE_ENV === 'production' && this.cachedUserManager) {
+      return this.cachedUserManager;
+    }
+
+    // Для development и первого создания используем обычный create
+    return await this.create();
   }
 }
 

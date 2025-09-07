@@ -27,19 +27,28 @@ export class ProductionUserManager implements UserManagerInterface {
     return user || undefined;
   }
 
-  // ✅ НОВЫЙ метод для session validation
+  // ✅ НОВЫЙ метод для session validation с fallback на PostgreSQL
   async findBySessionId(sessionId: string): Promise<User | undefined> {
+    // Сначала ищем в Redis (production way)
     const sessionData = await this.sessions.get(sessionId);
 
-    if (!sessionData || sessionData.expires_at < Date.now()) {
-      if (sessionData) {
-        await this.sessions.delete(sessionId);
-      }
-      return undefined;
+    if (sessionData && sessionData.expires_at > Date.now()) {
+      const user = await this.db.users.findById(sessionData.user_id);
+      return user || undefined;
     }
 
-    const user = await this.db.users.findById(sessionData.user_id);
-    return user || undefined;
+    // Очищаем expired session из Redis
+    if (sessionData) {
+      await this.sessions.delete(sessionId);
+    }
+
+    // ✅ FALLBACK: ищем в PostgreSQL Users.sessionId (development/hybrid compatibility)
+    try {
+      const user = await this.db.users.findBySessionId?.(sessionId);
+      return user || undefined;
+    } catch {
+      return undefined;
+    }
   }
 
   async create(userData: CreateUserData): Promise<User> {

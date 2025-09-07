@@ -20,8 +20,7 @@ const PROJECT_TO_PRISMA_ROLE_MAP = {
 } as const;
 
 /**
- * Строго типизированный интерфейс Prisma User
- * ✅ ИСПРАВЛЕНО: Используем правильные типы для role mapping
+ * Prisma user object with project-specific role mapping
  */
 interface PrismaUser {
   id: string;
@@ -31,11 +30,13 @@ interface PrismaUser {
   role: keyof typeof PRISMA_TO_PROJECT_ROLE_MAP;
   createdAt: Date;
   lastLoginAt: Date | null;
+  sessionId?: string | null;
 }
 
 interface UserRepository {
   findByEmail(email: string): Promise<User | null>;
   findById(id: string): Promise<User | null>;
+  findBySessionId?(sessionId: string): Promise<User | null>;
   create(userData: CreateUserData): Promise<User>;
   update(id: string, data: Partial<User>): Promise<User | null>;
 }
@@ -60,6 +61,18 @@ export class PostgreSQLUserAdapter implements UserRepository {
     try {
       const user = await this.prisma.user.findUnique({
         where: { id },
+      });
+
+      return user ? this.mapPrismaToUser(user as PrismaUser) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async findBySessionId(sessionId: string): Promise<User | null> {
+    try {
+      const user = await this.prisma.user.findFirst({
+        where: { sessionId: sessionId },
       });
 
       return user ? this.mapPrismaToUser(user as PrismaUser) : null;
@@ -94,18 +107,20 @@ export class PostgreSQLUserAdapter implements UserRepository {
 
   async update(id: string, data: Partial<User>): Promise<User | null> {
     try {
-      // ✅ ИСПРАВЛЕНО: Типизированный объект для update
+      // ✅ ИСПРАВЛЕНО: Типизированный объект для update с sessionId поддержкой
       const updateData: {
         email?: string;
         hashedPassword?: string | null;
         isVerified?: boolean;
         lastLoginAt?: Date | null;
+        sessionId?: string | null;
         role?: keyof typeof PRISMA_TO_PROJECT_ROLE_MAP;
       } = {
         email: data.email,
         hashedPassword: data.hashedPassword,
         isVerified: data.isVerified,
         lastLoginAt: data.lastLoginAt,
+        sessionId: data.sessionId,
       };
 
       if (data.role) {
@@ -134,6 +149,7 @@ export class PostgreSQLUserAdapter implements UserRepository {
       role: PRISMA_TO_PROJECT_ROLE_MAP[prismaUser.role],
       createdAt: prismaUser.createdAt,
       lastLoginAt: prismaUser.lastLoginAt ?? undefined,
+      sessionId: prismaUser.sessionId ?? undefined,
     };
   }
 }

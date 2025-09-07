@@ -35,6 +35,7 @@ export interface DatabaseAdapter {
   users: {
     findByEmail(email: string): Promise<User | null>;
     findById(id: string): Promise<User | null>;
+    findBySessionId?(sessionId: string): Promise<User | null>;
     create(userData: CreateUserData): Promise<User>;
     update(id: string, data: Partial<User>): Promise<User | null>;
   };

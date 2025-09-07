@@ -50,8 +50,8 @@ export const createContext = async (opts: CreateNextContextOptions) => {
 
   if (sessionId) {
     try {
-      // ✅ Use async UserManagerFactory pattern like auth.ts
-      const userManager = await UserManagerFactory.create();
+      // ✅ Production optimization: Use cached UserManager instance for better performance
+      const userManager = await UserManagerFactory.createForContext();
       const foundUser = await userManager.findBySessionId(sessionId);
       user = foundUser || null;
     } catch (error) {
