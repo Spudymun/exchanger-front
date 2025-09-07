@@ -2,11 +2,11 @@
 -- This script sets up the database schema for session management
 
 -- Create development database if not exists
-SELECT 'CREATE DATABASE exchanger_dev'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'exchanger_dev')\gexec
+SELECT 'CREATE DATABASE exchanger_db'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'exchanger_db')\gexec
 
 -- Connect to the target database
-\c exchanger_dev;
+\c exchanger_db;
 
 -- Create users table for session management
 CREATE TABLE IF NOT EXISTS users (

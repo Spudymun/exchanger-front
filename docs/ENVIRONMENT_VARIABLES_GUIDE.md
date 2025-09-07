@@ -96,7 +96,7 @@ exchanger-front/
 
 ```properties
 # ===== DATABASE CONFIGURATION =====
-DATABASE_URL="postgresql://exchanger_user:exchanger_password@localhost:5432/exchanger_dev?schema=public"
+DATABASE_URL="postgresql://exchanger_user:exchanger_password@localhost:5432/exchanger_db?schema=public"
 
 # ===== REDIS CONFIGURATION =====
 REDIS_URL="redis://localhost:6379"

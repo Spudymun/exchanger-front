@@ -7,7 +7,7 @@ services:
     container_name: exchanger-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-exchanger_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-exchanger_db}
       POSTGRES_USER: ${POSTGRES_USER:-exchanger_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-exchanger_password}
       POSTGRES_HOST_AUTH_METHOD: trust
@@ -19,7 +19,7 @@ services:
     networks:
       - exchanger-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-exchanger_user} -d ${POSTGRES_DB:-exchanger_dev}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-exchanger_user} -d ${POSTGRES_DB:-exchanger_db}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -68,7 +68,7 @@ services:
     container_name: exchanger-pgadmin
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@exchanger.local}
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
