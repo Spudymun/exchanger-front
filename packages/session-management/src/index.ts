@@ -14,6 +14,10 @@ export type {
 
 export { UserManagerFactory } from './factories/user-manager-factory';
 
+// ✅ ProductionUserManager export for type checking and instanceof validation in auth routes
+// Note: Primary creation should still use UserManagerFactory.create() for proper configuration
+export { ProductionUserManager } from './managers/production-user-manager';
+
 export { SESSION_CONSTANTS } from '@repo/constants';
 
 // ✅ Environment helpers

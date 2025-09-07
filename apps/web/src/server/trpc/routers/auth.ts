@@ -1,6 +1,10 @@
 import { AUTH_CONSTANTS, VALIDATION_LIMITS } from '@repo/constants';
 import { generateSessionId, sanitizeEmail, isAuthenticatedUser } from '@repo/exchange-core';
-import { UserManagerFactory } from '@repo/session-management';
+import {
+  UserManagerFactory,
+  ProductionUserManager,
+  type UserManagerInterface,
+} from '@repo/session-management';
 import {
   fullySecurityEnhancedRegisterSchema, // FULLY XSS-PROTECTED REGISTER SCHEMA
   fullySecurityEnhancedLoginSchema, // FULLY XSS-PROTECTED LOGIN SCHEMA
@@ -27,6 +31,25 @@ import { rateLimitMiddleware } from '../middleware/rateLimit';
 function getUserAgent(headers: Record<string, string | string[] | undefined>): string | undefined {
   const userAgent = headers['user-agent'];
   return typeof userAgent === 'string' ? userAgent : undefined;
+}
+
+// ✅ Helper function to handle session cleanup
+async function handleSessionCleanup(
+  webUserManager: UserManagerInterface,
+  sessionId: string
+): Promise<void> {
+  const user = await webUserManager.findBySessionId(sessionId);
+  if (!user) return;
+
+  // Clear session from user record (mock compatibility)
+  await webUserManager.update(user.id, { sessionId: undefined });
+
+  // Phase 4: Production session deletion
+  if (webUserManager instanceof ProductionUserManager) {
+    await webUserManager.deleteSession(sessionId);
+  }
+
+  console.log(`🔓 User logged out: ${user.email}`);
 }
 
 export const authRouter = createTRPCRouter({
@@ -62,9 +85,9 @@ export const authRouter = createTRPCRouter({
       );
 
       // ✅ Production session creation with metadata
-      const sessionId = generateSessionId();
+      let finalSessionId = generateSessionId();
       const _sessionMetadata = {
-        ip: ctx.ip,
+        ip: ctx.ip || '0.0.0.0', // Ensure ip is never undefined
         userAgent: getUserAgent(ctx.req.headers),
       };
 
@@ -72,17 +95,23 @@ export const authRouter = createTRPCRouter({
       const user = await webUserManager.create({
         email: sanitizedEmail,
         hashedPassword,
-        sessionId,
+        sessionId: finalSessionId,
         isVerified: false,
       });
 
-      // NOTE: В Phase 4 здесь будет вызов productionUserManager.createSession()
-      // await productionUserManager.createSession(user.id, _sessionMetadata, AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS);
+      // Phase 4: Production session creation with metadata
+      if (webUserManager instanceof ProductionUserManager) {
+        finalSessionId = await webUserManager.createSession(
+          user.id,
+          _sessionMetadata,
+          AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS
+        );
+      }
 
       // Устанавливаем cookie с session ID
       ctx.res.setHeader(
         AUTH_CONSTANTS.SET_COOKIE_HEADER,
-        `sessionId=${sessionId}; HttpOnly; Path=/; Max-Age=${AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS}; SameSite=Lax`
+        `sessionId=${finalSessionId}; HttpOnly; Path=/; Max-Age=${AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS}; SameSite=Lax`
       );
 
       console.log(`👤 New user registered: ${sanitizedEmail}`);
@@ -96,7 +125,7 @@ export const authRouter = createTRPCRouter({
           email: user.email,
           isVerified: user.isVerified,
         },
-        sessionId,
+        sessionId: finalSessionId,
       };
     }),
 
@@ -130,25 +159,31 @@ export const authRouter = createTRPCRouter({
       }
 
       // ✅ Production session creation with metadata
-      const sessionId = generateSessionId();
+      let finalSessionId = generateSessionId();
       const _sessionMetadata = {
-        ip: ctx.ip,
+        ip: ctx.ip || '0.0.0.0', // Ensure ip is never undefined
         userAgent: getUserAgent(ctx.req.headers),
       };
 
       // Update user with new session (mock compatibility)
       await webUserManager.update(user.id, {
-        sessionId,
+        sessionId: finalSessionId,
         lastLoginAt: new Date(),
       });
 
-      // NOTE: В Phase 4 здесь будет вызов productionUserManager.createSession()
-      // await productionUserManager.createSession(user.id, _sessionMetadata, AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS);
+      // Phase 4: Production session creation with metadata
+      if (webUserManager instanceof ProductionUserManager) {
+        finalSessionId = await webUserManager.createSession(
+          user.id,
+          _sessionMetadata,
+          AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS
+        );
+      }
 
       // Устанавливаем cookie
       ctx.res.setHeader(
         AUTH_CONSTANTS.SET_COOKIE_HEADER,
-        `sessionId=${sessionId}; HttpOnly; Path=/; Max-Age=${AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS}; SameSite=Lax`
+        `sessionId=${finalSessionId}; HttpOnly; Path=/; Max-Age=${AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS}; SameSite=Lax`
       );
 
       console.log(`🔐 User logged in: ${sanitizedEmail}`);
@@ -159,7 +194,7 @@ export const authRouter = createTRPCRouter({
           email: user.email,
           isVerified: user.isVerified,
         },
-        sessionId,
+        sessionId: finalSessionId,
       };
     }),
 
@@ -174,16 +209,7 @@ export const authRouter = createTRPCRouter({
       const webUserManager = await UserManagerFactory.create();
 
       // Find user by session for cleanup
-      const user = await webUserManager.findBySessionId(sessionId);
-      if (user) {
-        // Clear session from user record (mock compatibility)
-        await webUserManager.update(user.id, { sessionId: undefined });
-
-        // NOTE: В Phase 4 здесь будет вызов productionUserManager.deleteSession()
-        // await productionUserManager.deleteSession(sessionId);
-
-        console.log(`🔓 User logged out: ${user.email}`);
-      }
+      await handleSessionCleanup(webUserManager, sessionId);
     }
 
     // Очищаем cookie
@@ -283,25 +309,31 @@ export const authRouter = createTRPCRouter({
       );
 
       // ✅ Production session creation with metadata after password reset
-      const sessionId = generateSessionId();
+      let finalSessionId = generateSessionId();
       const _sessionMetadata = {
-        ip: ctx.ip,
+        ip: ctx.ip || '0.0.0.0', // Ensure ip is never undefined
         userAgent: getUserAgent(ctx.req.headers),
       };
 
       // Обновляем пользователя
       await webUserManager.update(user.id, {
         hashedPassword,
-        sessionId,
+        sessionId: finalSessionId,
       });
 
-      // NOTE: В Phase 4 здесь будет вызов productionUserManager.createSession()
-      // await productionUserManager.createSession(user.id, _sessionMetadata, AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS);
+      // Phase 4: Production session creation with metadata
+      if (webUserManager instanceof ProductionUserManager) {
+        finalSessionId = await webUserManager.createSession(
+          user.id,
+          _sessionMetadata,
+          AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS
+        );
+      }
 
       // Устанавливаем cookie
       ctx.res.setHeader(
         AUTH_CONSTANTS.SET_COOKIE_HEADER,
-        `sessionId=${sessionId}; HttpOnly; Path=/; Max-Age=${AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS}; SameSite=Lax`
+        `sessionId=${finalSessionId}; HttpOnly; Path=/; Max-Age=${AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS}; SameSite=Lax`
       );
 
       console.log(`🔓 Password changed for user: ${sanitizedEmail}`);
@@ -312,7 +344,7 @@ export const authRouter = createTRPCRouter({
           email: user.email,
           isVerified: user.isVerified,
         },
-        sessionId,
+        sessionId: finalSessionId,
       };
     }),
 
