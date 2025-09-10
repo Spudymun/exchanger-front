@@ -88,7 +88,7 @@ class UserManagerFactory {
   // Primary creation method with caching
   static async create(config?: ManagerConfiguration): Promise<UserManagerInterface>;
 
-  // Optimized for context.ts - prioritizes cached instances in production
+  // Alias for create() - provides identical functionality (no additional optimization)
   static async createForContext(): Promise<UserManagerInterface>;
 
   // Cache management utilities
@@ -343,24 +343,53 @@ ctx.res.setHeader('Set-Cookie', `sessionId=; HttpOnly; Path=/; Max-Age=0; SameSi
 
 ## Database Schema
 
-### PostgreSQL User Table
+### PostgreSQL Database Schema
+
+**User Table**:
 
 ```sql
-CREATE TABLE "User" (
-  "id" TEXT NOT NULL,
-  "email" TEXT NOT NULL,
-  "hashedPassword" TEXT,
-  "isVerified" BOOLEAN NOT NULL DEFAULT false,
+CREATE TABLE "users" (
+  "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+  "email" VARCHAR(255) NOT NULL,
+  "hashed_password" TEXT,
+  "is_verified" BOOLEAN NOT NULL DEFAULT false,
   "role" "UserRole" NOT NULL DEFAULT 'USER',
-  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  "lastLoginAt" TIMESTAMP(3),
-  "sessionId" TEXT,  -- ✅ Session support for hybrid compatibility
+  "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT now(),
+  "last_login_at" TIMESTAMPTZ(6),
+  "session_id" VARCHAR(255),  -- ✅ Session support for hybrid compatibility
 
-  CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+  CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
 
-CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
-CREATE INDEX "User_sessionId_idx" ON "User"("sessionId");  -- ✅ Session index
+CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+CREATE INDEX "users_session_id_idx" ON "users"("session_id");
+CREATE INDEX "users_role_idx" ON "users"("role");
+CREATE INDEX "users_created_at_idx" ON "users"("created_at");
+```
+
+**Sessions Table** (Enhanced architecture):
+
+```sql
+CREATE TABLE "sessions" (
+  "id" VARCHAR(255) NOT NULL,
+  "user_id" UUID NOT NULL,
+  "data" JSONB,
+  "expires_at" TIMESTAMPTZ(6) NOT NULL,
+  "created_at" TIMESTAMPTZ(6) NOT NULL DEFAULT now(),
+  "last_activity" TIMESTAMPTZ(6) NOT NULL DEFAULT now(),
+  "ip_address" INET,
+  "user_agent" TEXT,
+  "revoked" BOOLEAN NOT NULL DEFAULT false,
+  "revoked_at" TIMESTAMPTZ(6),
+
+  CONSTRAINT "sessions_pkey" PRIMARY KEY ("id"),
+  CONSTRAINT "sessions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE
+);
+
+CREATE INDEX "sessions_user_id_idx" ON "sessions"("user_id");
+CREATE INDEX "sessions_expires_at_idx" ON "sessions"("expires_at");
+CREATE INDEX "sessions_created_at_idx" ON "sessions"("created_at");
+CREATE INDEX "sessions_revoked_idx" ON "sessions"("revoked");
 ```
 
 ### Redis Session Storage
@@ -478,20 +507,20 @@ class UserManagerFactory {
 
 ### 2. Context Optimization Status
 
-**Current Implementation**: `createForContext()` provides no additional optimization over `create()`
+**Current Implementation**: `createForContext()` is an alias for `create()` with identical functionality
 
 ```typescript
-// ⚠️ ARCHITECTURAL ISSUE: Redundant method
+// ⚠️ ARCHITECTURAL NOTE: Redundant method
 static async createForContext(): Promise<UserManagerInterface> {
-  // Checks for cached instance but then delegates to create() anyway
+  // Provides same cached instance check as create()
   if (process.env.NODE_ENV === 'production' && this.cachedUserManager) {
     return this.cachedUserManager;
   }
-  return await this.create(); // ← create() already has caching!
+  return await this.create(); // ← Delegates to create() which has identical caching
 }
 ```
 
-**Reality**: Both methods provide identical singleton caching. The `createForContext()` method was intended as an optimization but `create()` already implements the same caching mechanism, making the "optimization" redundant.
+**Reality**: Both methods provide identical singleton caching. The `createForContext()` method exists for semantic clarity in context usage but provides no performance benefit over `create()`.
 
 ### 3. Prisma Singleton
 
@@ -663,23 +692,29 @@ The architecture is designed for **zero-assumption operation** - all components 
 
 #### 1. **Redundant createForContext() Method**
 
-**Status**: Functional but unnecessary  
-**Issue**: `createForContext()` was designed as a performance optimization, but `create()` already implements singleton caching  
-**Impact**: No performance impact, but creates confusion in API  
-**Current Behavior**: `createForContext()` simply delegates to `create()`
+**Status**: Functional alias with identical behavior  
+**Issue**: `createForContext()` provides no performance advantage over `create()`  
+**Impact**: No performance impact, both methods use identical singleton caching  
+**Current Behavior**: `createForContext()` delegates to `create()` after checking same cache
 
 ```typescript
-// Both methods provide identical functionality
-UserManagerFactory.create(); // ← Use this
-UserManagerFactory.createForContext(); // ← Redundant, delegates to create()
+// Both methods provide identical functionality and performance
+UserManagerFactory.create(); // ← Preferred for new code
+UserManagerFactory.createForContext(); // ← Semantic alias, identical performance
 ```
 
-#### 2. **Constants Structure Mismatch**
+#### 2. **Enhanced Database Schema**
 
-**Status**: Working but inconsistent  
-**Issue**: Session timeout constant location differs from documentation  
-**Actual Location**: `AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS` (not `SESSION_CONSTANTS`)  
-**Impact**: Minor - affects import statements in new code
+**Status**: Production implementation exceeds documentation  
+**Enhancement**: Full Sessions table implemented beyond basic sessionId in Users  
+**Actual Schema**: Complete session management with metadata, expiration, revocation  
+**Impact**: Positive - more robust session handling than documented
+
+#### 3. **Constants Structure** ✅
+
+**Status**: Correctly located as documented  
+**Verified**: `AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS` in validation.ts  
+**Impact**: Documentation is accurate for constant locations
 
 ### 🗂️ **File Structure Differences**
 
@@ -712,16 +747,18 @@ UserManagerFactory.createForContext(); // ← Redundant, delegates to create()
 
 ### 💡 **Development Recommendations**
 
-1. **For New Code**: Use `UserManagerFactory.create()` (not `createForContext()`)
-2. **For Constants**: Import from `AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS`
-3. **For Types**: Import from main package index (structure abstracted)
+1. **For New Code**: Use `UserManagerFactory.create()` (preferred) or `createForContext()` (identical functionality)
+2. **For Constants**: Import from `AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS` (correct location in validation.ts)
+3. **For Types**: Import from main package index (structure abstracted across multiple type files)
 4. **For Sessions**: Use `UserManagerInterface` methods (no separate session manager needed)
+5. **For Database**: Full session management with both User and Sessions tables available
 
 ### 🔮 **Future Architecture Considerations**
 
-- **Potential Cleanup**: Remove redundant `createForContext()` method
-- **Constant Consolidation**: Consider moving session timeout to `SESSION_CONSTANTS`
-- **Type Organization**: Current file split works well, no changes needed
+- **API Cleanup**: Consider removing redundant `createForContext()` method (identical to `create()`)
+- **Enhanced Sessions**: Full Sessions table is already implemented (beyond basic documentation)
+- **Type Organization**: Current multi-file type split works well, no changes needed
+- **Database Schema**: Production schema already enhanced beyond documentation requirements
 
 ---
 
