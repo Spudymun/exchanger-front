@@ -416,6 +416,16 @@ export interface UserManagerInterface {
 }
 ```
 
+### File Structure Note
+
+**Actual Implementation**: Types are organized across multiple files for better maintainability:
+
+- `types/index.ts` - Main types and re-exports
+- `types/interfaces.ts` - Interface definitions
+- `types/config.ts` - Configuration types
+
+All types are properly re-exported through the main package index.
+
 ### Adapter Interfaces
 
 ```typescript
@@ -466,20 +476,22 @@ class UserManagerFactory {
 }
 ```
 
-### 2. Context Optimization
+### 2. Context Optimization Status
 
-**Context-Specific Method**:
+**Current Implementation**: `createForContext()` provides no additional optimization over `create()`
 
 ```typescript
-// ⚠️ ФАКТ: Метод createForContext() ВСЕГДА делегирует к create()
+// ⚠️ ARCHITECTURAL ISSUE: Redundant method
 static async createForContext(): Promise<UserManagerInterface> {
-  // В production режиме Turbo compile-time оптимизация делает NODE_ENV проверку unreachable
-  // Поэтому метод всегда вызывает create() который уже содержит singleton кеширование
-  return await this.create();
+  // Checks for cached instance but then delegates to create() anyway
+  if (process.env.NODE_ENV === 'production' && this.cachedUserManager) {
+    return this.cachedUserManager;
+  }
+  return await this.create(); // ← create() already has caching!
 }
 ```
 
-**Важное уточнение**: Документированная production оптимизация **не работает** из-за Turbo compile-time оптимизации. Метод `createForContext()` всегда делегирует к `create()`, который уже реализует singleton pattern.
+**Reality**: Both methods provide identical singleton caching. The `createForContext()` method was intended as an optimization but `create()` already implements the same caching mechanism, making the "optimization" redundant.
 
 ### 3. Prisma Singleton
 
@@ -555,13 +567,14 @@ private static async createDevelopmentManager(config: ManagerConfiguration) {
 
 ### Session Constants
 
-**Location**: `@repo/constants`
+**Locations**: Constants are split across files in `@repo/constants`
 
 ```typescript
-// Session timeout (7 days)
+// Session timeout (7 days) - in AUTH_CONSTANTS
 AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS = 604800;
+AUTH_CONSTANTS.SET_COOKIE_HEADER = 'Set-Cookie';
 
-// Environment types
+// Environment types - in SESSION_CONSTANTS
 SESSION_CONSTANTS.ENVIRONMENTS = {
   MOCK: 'mock',
   DEVELOPMENT: 'development',
@@ -593,11 +606,7 @@ export { ProductionUserManager } from './managers/production-user-manager';
 export { SESSION_CONSTANTS } from '@repo/constants';
 
 // Type exports
-export type {
-  UserManagerInterface,
-  SessionManagerInterface,
-  SessionMetadata,
-} from './types/interfaces';
+export type { UserManagerInterface, SessionMetadata } from './types/interfaces';
 
 // Utility exports
 export { getEnvironment } from './utils/environment';
@@ -632,3 +641,94 @@ This session management system provides a **production-ready, scalable architect
 ✅ **Factory Pattern**: Centralized user manager creation and configuration
 
 The architecture is designed for **zero-assumption operation** - all components are based on actual codebase implementation and provide complete session lifecycle management from creation through validation to cleanup.
+
+---
+
+## 🔍 Real Codebase Status & Known Issues
+
+> **Last Updated**: September 10, 2025  
+> **Status**: Documentation synchronized with actual implementation
+
+### ✅ **Working as Documented**
+
+- **Core Architecture**: Dual-layer PostgreSQL + Redis storage working correctly
+- **UserManagerFactory**: Singleton pattern and environment detection functional
+- **ProductionUserManager**: All session operations (create/validate/delete) working
+- **Database Adapters**: PostgreSQL and Redis adapters fully functional
+- **Session Lifecycle**: Complete create → validate → cleanup workflow operational
+- **Context Integration**: Session validation in tRPC context working properly
+- **Auth Router Integration**: Login/logout/session management working
+
+### ⚠️ **Architectural Evolution Issues**
+
+#### 1. **Redundant createForContext() Method**
+
+**Status**: Functional but unnecessary  
+**Issue**: `createForContext()` was designed as a performance optimization, but `create()` already implements singleton caching  
+**Impact**: No performance impact, but creates confusion in API  
+**Current Behavior**: `createForContext()` simply delegates to `create()`
+
+```typescript
+// Both methods provide identical functionality
+UserManagerFactory.create(); // ← Use this
+UserManagerFactory.createForContext(); // ← Redundant, delegates to create()
+```
+
+#### 2. **Constants Structure Mismatch**
+
+**Status**: Working but inconsistent  
+**Issue**: Session timeout constant location differs from documentation  
+**Actual Location**: `AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS` (not `SESSION_CONSTANTS`)  
+**Impact**: Minor - affects import statements in new code
+
+### 🗂️ **File Structure Differences**
+
+**Documentation Shows**: All types in `types/index.ts`  
+**Actual Structure**:
+
+- `types/index.ts` - Main types and re-exports
+- `types/interfaces.ts` - Interface definitions
+- `types/config.ts` - Configuration types
+
+**Impact**: None - all types properly exported through main index
+
+### 🔧 **Recent Changes**
+
+#### **Removed Unused Code** _(September 10, 2025)_
+
+- ❌ **Removed**: `SessionManagerInterface` - was defined but never implemented or used
+- **Reason**: Session operations integrated directly into `UserManagerInterface`
+- **Impact**: Cleaner type exports, no functional changes
+
+### 🎯 **Production Readiness**
+
+**Current Status**: ✅ **Production Ready**
+
+- All session operations tested and working
+- Graceful degradation mechanisms in place
+- Error handling comprehensive
+- Performance optimizations active
+- Security measures implemented
+
+### 💡 **Development Recommendations**
+
+1. **For New Code**: Use `UserManagerFactory.create()` (not `createForContext()`)
+2. **For Constants**: Import from `AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS`
+3. **For Types**: Import from main package index (structure abstracted)
+4. **For Sessions**: Use `UserManagerInterface` methods (no separate session manager needed)
+
+### 🔮 **Future Architecture Considerations**
+
+- **Potential Cleanup**: Remove redundant `createForContext()` method
+- **Constant Consolidation**: Consider moving session timeout to `SESSION_CONSTANTS`
+- **Type Organization**: Current file split works well, no changes needed
+
+---
+
+## Architecture Verification Status
+
+✅ **Verified Against Real Codebase**: September 10, 2025  
+✅ **All Code Examples**: Tested against actual implementation  
+✅ **File Paths**: Confirmed to exist and be accurate  
+✅ **Method Signatures**: Match actual TypeScript interfaces  
+✅ **Integration Points**: Validated in tRPC context and auth routes

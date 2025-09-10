@@ -1,9 +1,5 @@
 // ✅ Main exports for session management package
-export type {
-  UserManagerInterface,
-  SessionManagerInterface,
-  SessionMetadata,
-} from './types/interfaces';
+export type { UserManagerInterface, SessionMetadata } from './types/interfaces';
 
 export type {
   DatabaseConfiguration,

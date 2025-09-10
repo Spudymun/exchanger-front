@@ -49,16 +49,6 @@ export interface SessionAdapter {
 }
 
 /**
- * Session manager interface for session operations
- */
-export interface SessionManagerInterface {
-  create(userId: string, metadata: SessionMetadata, ttl: number): Promise<string>;
-  get(sessionId: string): Promise<SessionData | null>;
-  delete(sessionId: string): Promise<void>;
-  extend(sessionId: string, ttl: number): Promise<void>;
-}
-
-/**
  * Unified user manager interface supporting both mock and production modes
  */
 export interface UserManagerInterface {
