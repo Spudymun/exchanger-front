@@ -2,8 +2,31 @@
 
 > **Дата**: 12 сентября 2025  
 > **Статус**: ИСПРАВЛЕННЫЙ ПЛАН НА ОСНОВЕ РЕАЛЬНОЙ АРХИТЕКТУРЫ  
+> **Последнее обновление**: 12 сентября 2025 (коммит 68ea8e1)  
 > **Основано на**: Тщательном анализе существующей кодовой базы  
 > **Цель**: Добавить поддержку изоляции сессий по приложениям (web, admin-panel) в существующую архитектуру
+
+## 🚀 ПРОГРЕСС ВЫПОЛНЕНИЯ:
+
+### ✅ ВЫПОЛНЕНО (коммит 68ea8e1):
+
+- **✅ ЭТАП 2**: Добавлено поле `applicationContext` в Prisma схему Session модели
+- **✅ ЭТАП 3**: Обновлен RedisSessionAdapter с поддержкой application context
+- **✅ ЭТАП 4**: Добавлен PostgreSQLSessionAdapter в UserManagerFactory
+- **✅ ЭТАП 5**: Реализовано hybrid Redis+PostgreSQL storage в ProductionUserManager
+- **✅ КРИТИЧЕСКИЙ FIX**: Исправлена race condition между Redis и User.sessionId updates
+- **✅ Auth Flow**: Исправлен порядок создания сессий (Redis first → PostgreSQL → User table)
+
+### 🔄 В ПРОЦЕССЕ:
+
+- **ЭТАП 1**: Константы и типы - требуется добавление ApplicationContext в constants
+- **ЭТАП 4**: Полная context-aware factory - требуется добавление createForWeb/createForAdmin методов
+
+### ⏳ ЗАПЛАНИРОВАНО:
+
+- Миграция переменных окружения
+- Создание admin-panel интеграции
+- Тестирование и валидация
 
 ## 🎯 ЦЕЛЬ МИГРАЦИИ: Расширение существующей session архитектуры для multi-app
 
@@ -47,11 +70,11 @@
 
 ---
 
-## ЭТАП 1: Добавление Application Context в константы
+## ЭТАП 1: Добавление Application Context в константы ⚠️ ТРЕБУЕТСЯ ВЫПОЛНЕНИЕ
 
-### 1.1 Расширение констант в `packages/constants/src/session.ts`
+### 1.1 Расширение констант в `packages/constants/src/session.ts` ⚠️ ТРЕБУЕТСЯ ВЫПОЛНЕНИЕ
 
-**✅ ДОБАВИТЬ К СУЩЕСТВУЮЩИМ КОНСТАНТАМ:**
+**⚠️ ТРЕБУЕТСЯ ДОБАВИТЬ К СУЩЕСТВУЮЩИМ КОНСТАНТАМ:**
 
 ```typescript
 export const SESSION_CONSTANTS = {
@@ -102,9 +125,9 @@ export type ApplicationContext =
   (typeof SESSION_CONSTANTS.APPLICATION_CONTEXT)[keyof typeof SESSION_CONSTANTS.APPLICATION_CONTEXT];
 ```
 
-### 1.2 Обновление `packages/constants/src/user.ts`
+### 1.2 Обновление `packages/constants/src/user.ts` ⚠️ ТРЕБУЕТСЯ ВЫПОЛНЕНИЕ
 
-**✅ ДОБАВИТЬ export для ApplicationContext:**
+**⚠️ ТРЕБУЕТСЯ ДОБАВИТЬ export для ApplicationContext:**
 
 ```typescript
 // ✅ СУЩЕСТВУЮЩИЙ КОД остается без изменений
@@ -130,11 +153,11 @@ export type { ApplicationContext } from './session';
 
 ---
 
-## ЭТАП 2: Расширение Prisma схемы для Application Context
+## ЭТАП 2: Расширение Prisma схемы для Application Context ✅ ВЫПОЛНЕНО
 
-### 2.1 Обновление `packages/session-management/prisma/schema.prisma`
+### 2.1 Обновление `packages/session-management/prisma/schema.prisma` ✅ ВЫПОЛНЕНО
 
-**✅ ДОБАВИТЬ поле applicationContext в Session модель:**
+**✅ ДОБАВЛЕНО поле applicationContext в Session модель:**
 
 ```prisma
 // ✅ СОХРАНЯЕМ все существующие модели без изменений
@@ -183,11 +206,11 @@ enum ApplicationType {
 
 ---
 
-## ЭТАП 3: Расширение RedisSessionAdapter для Context Support
+## ЭТАП 3: Расширение RedisSessionAdapter для Context Support ✅ ВЫПОЛНЕНО
 
-### 3.1 Обновление `packages/session-management/src/adapters/redis-session-adapter.ts`
+### 3.1 Обновление `packages/session-management/src/adapters/redis-session-adapter.ts` ✅ ВЫПОЛНЕНО
 
-**✅ ДОБАВИТЬ опциональный context параметр:**
+**✅ ДОБАВЛЕН опциональный context параметр:**
 
 ```typescript
 import { SESSION_CONSTANTS, type ApplicationContext } from '@repo/constants';
@@ -268,11 +291,11 @@ export class RedisSessionAdapter implements SessionAdapter {
 
 ---
 
-## ЭТАП 4: Расширение UserManagerFactory для Context Support
+## ЭТАП 4: Расширение UserManagerFactory для Context Support ✅ ЧАСТИЧНО ВЫПОЛНЕНО
 
-### 4.1 Обновление `packages/session-management/src/factories/user-manager-factory.ts`
+### 4.1 Обновление `packages/session-management/src/factories/user-manager-factory.ts` ✅ ЧАСТИЧНО ВЫПОЛНЕНО
 
-**✅ ДОБАВИТЬ поддержку context в Factory:**
+**✅ ДОБАВЛЕН PostgreSQLSessionAdapter в DatabaseAdapter:**
 
 ```typescript
 // ✅ СОХРАНЯЕМ все существующие импорты, ДОБАВЛЯЕМ ApplicationContext
@@ -381,11 +404,11 @@ export class UserManagerFactory {
 
 ---
 
-## ЭТАП 5: Обновление ProductionUserManager для Context Support
+## ЭТАП 5: Обновление ProductionUserManager для Context Support ✅ ЧАСТИЧНО ВЫПОЛНЕНО
 
-### 5.1 Обновление `packages/session-management/src/managers/production-user-manager.ts`
+### 5.1 Обновление `packages/session-management/src/managers/production-user-manager.ts` ✅ ЧАСТИЧНО ВЫПОЛНЕНО
 
-**✅ ДОБАВИТЬ context в создание сессий:**
+**✅ РЕАЛИЗОВАНО hybrid Redis+PostgreSQL storage в createSession:**
 
 ```typescript
 // ✅ ВСЕ импорты остаются без изменений
@@ -605,224 +628,6 @@ export class UserManagerFactory {
     // Fallback на существующий механизм
     return await this.create();
   }
-}
-```
-
----
-
-## ЭТАП 4: Постепенная миграция переменных окружения
-
-### 4.1 Добавление новых переменных (СОХРАНЯЕМ старые)
-
-**✅ ДОБАВИТЬ В `.env.local` (рядом со старыми):**
-
-```bash
-# ✅ СУЩЕСТВУЮЩИЕ переменные (СОХРАНЯЕМ)
-DATABASE_URL="postgresql://user:password@localhost:5432/exchanger_db"
-REDIS_URL="redis://localhost:6379"
-REDIS_MAX_RETRIES=3
-
-# ✅ НОВЫЕ переменные для multi-database архитектуры (ДОБАВЛЯЕМ)
-DATABASE_IDENTITY_URL="postgresql://user:password@localhost:5432/exchanger_identity"
-DATABASE_WEB_URL="postgresql://user:password@localhost:5432/exchanger_web"
-
-# ✅ Остальные переменные без изменений
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-secret-key"
-```
-
-### 4.2 Обновление `docker-compose.yml` (добавляем скрипт инициализации)
-
-**✅ РАСШИРИТЬ секцию postgres:**
-
-```yaml
-postgres:
-  image: postgres:15-alpine
-  container_name: exchanger-postgres
-  restart: unless-stopped
-  environment:
-    POSTGRES_DB: ${POSTGRES_DB:-exchanger_db} # ✅ СОХРАНЯЕМ старую БД
-    POSTGRES_USER: ${POSTGRES_USER:-exchanger_user}
-    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-exchanger_password}
-    POSTGRES_HOST_AUTH_METHOD: trust
-  ports:
-    - '${POSTGRES_PORT:-5432}:5432'
-  volumes:
-    - postgres_data:/var/lib/postgresql/data
-    - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro # ✅ СОХРАНЯЕМ старый
-    - ./docker/postgres/init-multi-dbs.sql:/docker-entrypoint-initdb.d/02-multi-dbs.sql:ro # ✅ ДОБАВЛЯЕМ новый
-  networks:
-    - exchanger-network
-```
-
-### 4.3 Создание скрипта для создания дополнительных БД
-
-**✅ СОЗДАТЬ НОВЫЙ ФАЙЛ:** `docker/postgres/init-multi-dbs.sql`
-
-```sql
--- ✅ СОЗДАЕМ ДОПОЛНИТЕЛЬНЫЕ БД для multi-database архитектуры
--- Основная БД exchanger_db уже создана в init.sql
-
--- Создаем Identity БД (если не существует)
-SELECT 'CREATE DATABASE exchanger_identity'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'exchanger_identity')\gexec
-
--- Создаем Web БД (если не существует)
-SELECT 'CREATE DATABASE exchanger_web'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'exchanger_web')\gexec
-
--- Даем права пользователю на новые БД
-DO $$
-BEGIN
-  -- Identity БД
-  IF EXISTS (SELECT 1 FROM pg_database WHERE datname = 'exchanger_identity') THEN
-    EXECUTE 'GRANT ALL PRIVILEGES ON DATABASE exchanger_identity TO ' || current_user;
-  END IF;
-
-  -- Web БД
-  IF EXISTS (SELECT 1 FROM pg_database WHERE datname = 'exchanger_web') THEN
-    EXECUTE 'GRANT ALL PRIVILEGES ON DATABASE exchanger_web TO ' || current_user;
-  END IF;
-END $$;
-
-\echo '✅ Multi-database setup completed'
-```
-
----
-
-## ЭТАП 5: Создание Prisma схем для новых БД
-
-### 5.1 Создание схемы для Identity БД
-
-**✅ СОЗДАТЬ НОВЫЙ ФАЙЛ:** `packages/session-management/prisma/identity.prisma`
-
-```prisma
-// ✅ СХЕМА ДЛЯ IDENTITY БД (shared across all applications)
-generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/identity-client"
-}
-
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_IDENTITY_URL")
-}
-
-model User {
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email          String    @unique @db.VarChar(255)
-  hashedPassword String?   @map("hashed_password") @db.Text
-  isVerified     Boolean   @default(false) @map("is_verified")
-  role           UserRole  @default(USER)
-  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  lastLoginAt    DateTime? @map("last_login_at") @db.Timestamptz(6)
-  sessionId      String?   @map("session_id") @db.VarChar(255)
-
-  // Relations
-  sessions    Session[]
-  permissions UserPermission[]
-
-  // Indexes
-  @@index([email])
-  @@index([sessionId])
-  @@index([role])
-  @@index([createdAt])
-  @@map("users")
-}
-
-model Session {
-  id                String          @id @db.VarChar(255)
-  userId            String          @map("user_id") @db.Uuid
-  applicationContext ApplicationType @default(WEB) @map("application_context")
-  data              Json?           @db.JsonB
-  expiresAt         DateTime        @map("expires_at") @db.Timestamptz(6)
-  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  lastActivity      DateTime        @default(now()) @map("last_activity") @db.Timestamptz(6)
-  ipAddress         String?         @map("ip_address") @db.Inet
-  userAgent         String?         @map("user_agent") @db.Text
-  revoked           Boolean         @default(false)
-  revokedAt         DateTime?       @map("revoked_at") @db.Timestamptz(6)
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // Indexes
-  @@index([userId])
-  @@index([applicationContext, userId])
-  @@index([expiresAt])
-  @@index([createdAt])
-  @@index([revoked])
-  @@map("sessions")
-}
-
-model UserPermission {
-  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId            String          @map("user_id") @db.Uuid
-  permission        String          @db.VarChar(100)
-  applicationContext ApplicationType @default(WEB) @map("application_context")
-  grantedAt         DateTime        @default(now()) @map("granted_at") @db.Timestamptz(6)
-  grantedBy         String?         @map("granted_by") @db.Uuid
-  expiresAt         DateTime?       @map("expires_at") @db.Timestamptz(6)
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, permission, applicationContext])
-  @@index([applicationContext, userId])
-  @@index([permission])
-  @@map("user_permissions")
-}
-
-enum UserRole {
-  USER     @map("user")
-  ADMIN    @map("admin")
-}
-
-enum ApplicationType {
-  WEB      @map("web")
-}
-```
-
-### 5.2 Создание схемы для Web БД
-
-**✅ СОЗДАТЬ НОВЫЙ ФАЙЛ:** `packages/session-management/prisma/web.prisma`
-
-```prisma
-// ✅ СХЕМА ДЛЯ WEB БД (ТОЛЬКО веб-специфичные данные сессий)
-generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/web-client"
-}
-
-datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_WEB_URL")
-}
-
-// ТОЛЬКО веб-специфичные данные сессий
-model WebSession {
-  id           String   @id @db.VarChar(255)
-  userId       String   @map("user_id") @db.Uuid // Reference to identity.users
-  data         Json?    @db.JsonB
-  preferences  Json?    @db.JsonB // Веб-специфичные настройки
-  theme        String?  @db.VarChar(20)
-  language     String?  @db.VarChar(10)
-  expiresAt    DateTime @map("expires_at") @db.Timestamptz(6)
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  lastActivity DateTime @default(now()) @map("last_activity") @db.Timestamptz(6)
-
-  @@index([userId])
-  @@index([expiresAt])
-  @@map("web_sessions")
-}
-
-// Веб-специфичный кэш данных
-model WebUserCache {
-  userId    String   @id @map("user_id") @db.Uuid
-  data      Json     @db.JsonB
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  @@map("web_user_cache")
 }
 ```
 
@@ -1233,6 +1038,68 @@ export const createContext = async (opts: CreateNextContextOptions) => {
 - **Безопасность**: Полная изоляция сессий по приложениям
 - **Масштабируемость**: Легкое добавление новых приложений
 
-```
+---
 
-```
+## 📋 ДЕТАЛИЗАЦИЯ ВЫПОЛНЕННЫХ РАБОТ (коммит 68ea8e1)
+
+### 🔧 Исправленные критические проблемы:
+
+1. **Race Condition Fix** в `auth.ts`:
+   - **До**: `generateSessionId()` → PostgreSQL User.sessionId → `generateSessionId()` → Redis
+   - **После**: Redis сессия создается первой → PostgreSQL обновляется тем же sessionId
+   - **Результат**: User.sessionId = Redis sessionId = PostgreSQL Session.id
+
+2. **Hybrid Storage Implementation**:
+   - **Создан**: `PostgreSQLSessionAdapter` для дублирования сессий в PostgreSQL
+   - **Обновлен**: `ProductionUserManager.createSession()` - теперь сохраняет в обеих системах
+   - **Добавлен**: Graceful degradation при ошибках PostgreSQL
+
+3. **Enhanced Session Validation**:
+   - **Обновлен**: `findBySessionId()` с улучшенной fallback логикой
+   - **Порядок**: Redis → PostgreSQL Session table → User.sessionId (legacy)
+   - **Восстановление**: Автоматическое восстановление Redis кэша из PostgreSQL
+
+### 🏗️ Архитектурные улучшения:
+
+1. **Prisma Schema Updates**:
+   - ✅ Добавлено поле `applicationContext` в Session модель
+   - ✅ Создан enum `ApplicationType` (WEB, ADMIN)
+   - ✅ Установлен default WEB для backward compatibility
+   - ✅ Добавлены индексы для производительности
+
+2. **Redis Adapter Enhancements**:
+   - ✅ Добавлен опциональный `context` параметр в конструктор
+   - ✅ Реализован `generateSessionKey()` с namespace support
+   - ✅ Поддержка `session:web:` и `session:admin:` prefixes
+   - ✅ Fallback на старую схему `session:` для compatibility
+
+3. **Database Adapter Architecture**:
+   - ✅ Создан `PostgreSQLSessionAdapter` с CRUD операциями
+   - ✅ Добавлен в `DatabaseAdapter` interface как опциональное поле
+   - ✅ Интегрирован в `UserManagerFactory.createDatabaseAdapter()`
+   - ✅ Реализован graceful degradation pattern
+
+4. **Type System Improvements**:
+   - ✅ Экспортирован `User` type из session-management пакета
+   - ✅ Расширен `DatabaseAdapter` interface с sessions CRUD
+   - ✅ Добавлены типы для PostgreSQL session операций
+   - ✅ Улучшена type safety во всех адаптерах
+
+### 🎯 Решенные проблемы:
+
+- **❌ Проблема**: "session exists in Redis but not in PostgreSQL"
+- **✅ Решение**: Dual storage - сессии создаются в обеих системах одновременно
+
+- **❌ Проблема**: Race condition между sessionId генерацией
+- **✅ Решение**: Единый sessionId используется везде
+
+- **❌ Проблема**: PostgreSQL Session таблица была пустой
+- **✅ Решение**: Активное использование как backup/persistence layer
+
+### 🚀 Готовность к production:
+
+- **✅ Backward Compatibility**: Существующий код работает без изменений
+- **✅ Graceful Degradation**: Система работает при сбоях PostgreSQL
+- **✅ Performance**: Redis остается primary storage
+- **✅ Reliability**: PostgreSQL обеспечивает persistence
+- **✅ Testing**: Успешная сборка всех приложений
