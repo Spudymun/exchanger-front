@@ -8,9 +8,7 @@ import { publicProcedure } from '../init';
 
 export const authMiddleware = publicProcedure.use(async ({ ctx, next }) => {
   if (!isAuthenticatedUser(ctx.user)) {
-    throw createUnauthorizedError(
-      await ctx.getErrorMessage('server.errors.auth.required')
-    );
+    throw createUnauthorizedError(await ctx.getErrorMessage('server.errors.auth.required'));
   }
 
   return next({
@@ -25,11 +23,14 @@ export const authMiddleware = publicProcedure.use(async ({ ctx, next }) => {
 
 export const roleMiddleware = (allowedRoles: string[]) => {
   return authMiddleware.use(async ({ ctx, next }) => {
-    if (!ctx.user.role) {
+    const { getUserRoleForApp } = await import('@repo/exchange-core');
+    const userRole = getUserRoleForApp(ctx.user, 'web');
+
+    if (!userRole) {
       throw createForbiddenError(await ctx.getErrorMessage('server.errors.auth.roleRequired'));
     }
 
-    if (!allowedRoles.includes(ctx.user.role)) {
+    if (!allowedRoles.includes(userRole)) {
       throw createForbiddenError(await ctx.getErrorMessage('server.errors.auth.insufficientRole'));
     }
 

@@ -1,3 +1,4 @@
+import type { ApplicationContext } from '@repo/constants';
 import { generateSessionId } from '@repo/exchange-core';
 
 import type {
@@ -13,7 +14,8 @@ import type {
 export class ProductionUserManager implements UserManagerInterface {
   constructor(
     private db: DatabaseAdapter,
-    private sessions: SessionAdapter
+    private sessions: SessionAdapter,
+    private applicationContext: ApplicationContext = 'web'
   ) {}
 
   // ✅ Сохраняем существующий API - совместимость с mock
@@ -27,29 +29,50 @@ export class ProductionUserManager implements UserManagerInterface {
     return user || undefined;
   }
 
-  // ✅ Упрощенный метод для session validation
+  // ✅ Упрощенный метод для session validation с app context
   async findBySessionId(sessionId: string): Promise<User | undefined> {
-    // 1. Проверка Redis
+    // 1. Проверка Redis - adapter сам обрабатывает namespace
     const sessionData = await this.sessions.get(sessionId);
     if (sessionData && sessionData.expires_at > Date.now()) {
       const user = await this.db.users.findById(sessionData.user_id);
       return user || undefined;
     }
 
-    // 2. Fallback на PostgreSQL Users.sessionId
-    const user = await this.db.users.findBySessionId?.(sessionId);
-    return user || undefined;
+    // 2. Fallback на PostgreSQL Sessions с application context
+    const session = await this.db.sessions?.findById(sessionId);
+    if (session && session.applicationContext === this.applicationContext && !session.revoked) {
+      const user = await this.db.users.findById(session.userId);
+      return user || undefined;
+    }
+
+    return undefined;
   }
 
   async create(userData: CreateUserData): Promise<User> {
-    return await this.db.users.create(userData);
+    const user = await this.db.users.create(userData);
+
+    // ✅ НОВОЕ: Создаем роль для приложения при регистрации
+    if (this.db.users.createAppRole) {
+      try {
+        await this.db.users.createAppRole(
+          user.id,
+          this.applicationContext,
+          'user' // Дефолтная роль для новых пользователей
+        );
+      } catch {
+        // Graceful degradation - пользователь создан, роль можно добавить позже
+        // Silent failure для избежания нарушения Rule 15 (no console usage)
+      }
+    }
+
+    return user;
   }
 
   async update(id: string, updateData: Partial<User>): Promise<User | null> {
     return await this.db.users.update(id, updateData);
   }
 
-  // ✅ ИСПРАВЛЕННЫЙ метод для session management - сохраняем в ОБЕИХ системах
+  // ✅ ИСПРАВЛЕННЫЙ метод для session management - RedisSessionAdapter обрабатывает namespace
   async createSession(userId: string, metadata: SessionMetadata, ttl: number): Promise<string> {
     const sessionId = generateSessionId();
     const sessionData: SessionData = {
@@ -60,7 +83,7 @@ export class ProductionUserManager implements UserManagerInterface {
       user_agent: metadata.userAgent,
     };
 
-    // 1. Сохраняем в Redis (быстрый доступ)
+    // 1. Сохраняем в Redis - adapter сам добавит namespace
     await this.sessions.set(sessionId, sessionData, ttl);
 
     // 2. ДУБЛИРУЕМ в PostgreSQL Session таблице (надежность)
@@ -72,7 +95,7 @@ export class ProductionUserManager implements UserManagerInterface {
         expiresAt: new Date(sessionData.expires_at),
         ipAddress: metadata.ip,
         userAgent: metadata.userAgent,
-        applicationContext: 'WEB', // default context
+        applicationContext: this.applicationContext,
       });
     } catch {
       // Graceful degradation - Redis сессия уже создана
@@ -82,7 +105,7 @@ export class ProductionUserManager implements UserManagerInterface {
   }
 
   async deleteSession(sessionId: string): Promise<void> {
-    // Удаляем из Redis
+    // Удаляем из Redis - adapter сам обрабатывает namespace
     await this.sessions.delete(sessionId);
 
     // Удаляем из PostgreSQL Session таблицы
@@ -94,6 +117,7 @@ export class ProductionUserManager implements UserManagerInterface {
   }
 
   async extendSession(sessionId: string, ttl: number): Promise<void> {
+    // Продлеваем в Redis - adapter сам обрабатывает namespace
     await this.sessions.extend(sessionId, ttl);
   }
 

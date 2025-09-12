@@ -16,18 +16,15 @@ model User {
   email          String    @unique @db.VarChar(255)
   hashedPassword String?   @map("hashed_password") @db.Text
   isVerified     Boolean   @default(false) @map("is_verified")
-  role           UserRole  @default(USER)
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   lastLoginAt    DateTime? @map("last_login_at") @db.Timestamptz(6)
-  sessionId      String?   @map("session_id") @db.VarChar(255)
 
   // Relations
   sessions Session[]
+  appRoles UserAppRole[]
 
   // Indexes
   @@index([email])
-  @@index([sessionId])
-  @@index([role])
   @@index([createdAt])
   @@map("users")
 }
@@ -57,6 +54,25 @@ model Session {
   @@index([createdAt])
   @@index([revoked])
   @@map("sessions")
+}
+
+// ✅ НОВАЯ модель: роли пользователей по приложениям
+model UserAppRole {
+  id                 String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String          @map("user_id") @db.Uuid
+  applicationContext ApplicationType @map("application_context")
+  role               UserRole
+  createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // ✅ CONSTRAINT: один пользователь = одна роль на приложение
+  @@unique([userId, applicationContext])
+  @@index([applicationContext])
+  @@index([role])
+  @@index([userId])
+  @@map("user_app_roles")
 }
 
 enum UserRole {

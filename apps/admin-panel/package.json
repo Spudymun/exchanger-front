@@ -10,7 +10,10 @@
     "lint": "next lint --max-warnings 0",
     "lint:strict": "next lint --max-warnings 0",
     "lint:styles": "stylelint \"app/**/*.{css,scss}\" --fix",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "db:reset": "npx prisma db execute --file ../../packages/session-management/scripts/reset/admin-reset.sql --schema=../../packages/session-management/prisma/schema.prisma",
+    "db:reset:shared": "npx prisma db execute --file ../../packages/session-management/scripts/reset/shared-reset.sql --schema=../../packages/session-management/prisma/schema.prisma",
+    "db:studio": "npx prisma studio --schema=../../packages/session-management/prisma/schema.prisma"
   },
   "dependencies": {
     "@repo/providers": "*",

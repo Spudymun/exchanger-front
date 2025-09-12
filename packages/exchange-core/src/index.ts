@@ -8,6 +8,7 @@ export * from './utils/data-sanitizers';
 export * from './utils/composite-validators';
 export * from './utils/type-guards';
 export * from './utils/access-validators';
+export * from './utils/user-role-helpers';
 
 // Экспорт сервисов
 export * from './services';

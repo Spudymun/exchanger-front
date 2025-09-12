@@ -14,7 +14,8 @@
     "lint:strict": "next lint --max-warnings 0",
     "lint:styles": "stylelint \"app/**/*.{css,scss}\" --fix",
     "check-types": "tsc --noEmit",
-    "db:reset": "npx prisma db execute --file scripts/db/reset-data.sql --schema=../../packages/session-management/prisma/schema.prisma",
+    "db:reset": "npx prisma db execute --file ../../packages/session-management/scripts/reset/web-reset.sql --schema=../../packages/session-management/prisma/schema.prisma",
+    "db:reset:shared": "npx prisma db execute --file ../../packages/session-management/scripts/reset/shared-reset.sql --schema=../../packages/session-management/prisma/schema.prisma",
     "db:studio": "npx prisma studio --schema=../../packages/session-management/prisma/schema.prisma",
     "db:migrate": "npx prisma migrate dev --schema=../../packages/session-management/prisma/schema.prisma"
   },

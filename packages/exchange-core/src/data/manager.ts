@@ -88,10 +88,8 @@ export const userManager = {
     return users.find(u => u.id === id);
   },
 
-  // ✅ НОВЫЙ МЕТОД для совместимости с ProductionUserManager
-  findBySessionId: (sessionId: string): User | undefined => {
-    return users.find(u => u.sessionId === sessionId);
-  },
+  // ✅ УДАЛЕН - метод больше не нужен в новой архитектуре сессий
+  // findBySessionId больше не поддерживается, используйте session store
 
   create: (userData: Omit<User, 'id' | 'createdAt'>): User => {
     const user: User = {
@@ -105,9 +103,7 @@ export const userManager = {
 
   update: (
     id: string,
-    updates: Partial<
-      Pick<User, 'email' | 'hashedPassword' | 'sessionId' | 'isVerified' | 'lastLoginAt'>
-    >
+    updates: Partial<Pick<User, 'email' | 'hashedPassword' | 'isVerified' | 'lastLoginAt'>>
   ): User | undefined => {
     const index = users.findIndex(u => u.id === id);
     if (index === VALIDATION_BOUNDS.NOT_FOUND) return undefined;
@@ -116,7 +112,6 @@ export const userManager = {
 
     if (updates.email !== undefined) originalUser.email = updates.email;
     if (updates.hashedPassword !== undefined) originalUser.hashedPassword = updates.hashedPassword;
-    if (updates.sessionId !== undefined) originalUser.sessionId = updates.sessionId;
     if (updates.isVerified !== undefined) originalUser.isVerified = updates.isVerified;
     if (updates.lastLoginAt !== undefined) originalUser.lastLoginAt = updates.lastLoginAt;
 

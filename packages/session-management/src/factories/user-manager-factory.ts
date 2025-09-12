@@ -237,7 +237,12 @@ export class UserManagerFactory {
     // ✅ ПЕРЕДАЕМ context в createSessionAdapter
     const sessionAdapter = await this.createSessionAdapter(config.redis, config.context);
 
-    return new ProductionUserManager(databaseAdapter, sessionAdapter);
+    // ✅ ПЕРЕДАЕМ applicationContext в ProductionUserManager
+    return new ProductionUserManager(
+      databaseAdapter,
+      sessionAdapter,
+      config.context || SESSION_CONSTANTS.APPLICATION_CONTEXT.WEB
+    );
   }
 
   private static async createDatabaseAdapter(
@@ -318,8 +323,9 @@ class MockUserManagerWrapper implements UserManagerInterface {
     return this.mockManager.findById(id);
   }
 
-  async findBySessionId(sessionId: string): Promise<User | undefined> {
-    return this.mockManager.findBySessionId(sessionId);
+  async findBySessionId(_sessionId: string): Promise<User | undefined> {
+    // Метод удален из новой архитектуры, используйте session store
+    return undefined;
   }
 
   async create(userData: CreateUserData): Promise<User> {
@@ -339,18 +345,14 @@ class MockUserManagerWrapper implements UserManagerInterface {
   }
 
   // ✅ Mock implementations для session methods
-  async createSession(userId: string, _metadata: SessionMetadata, _ttl: number): Promise<string> {
+  async createSession(_userId: string, _metadata: SessionMetadata, _ttl: number): Promise<string> {
     const { generateSessionId } = await import('@repo/exchange-core');
-    const sessionId = generateSessionId();
-    await this.update(userId, { sessionId });
-    return sessionId;
+    return generateSessionId();
   }
 
-  async deleteSession(sessionId: string): Promise<void> {
-    const user = await this.findBySessionId(sessionId);
-    if (user) {
-      await this.update(user.id, { sessionId: undefined });
-    }
+  async deleteSession(_sessionId: string): Promise<void> {
+    // В новой архитектуре сессии управляются через Redis/session store
+    // Mock: ничего не делаем
   }
 
   async extendSession(_sessionId: string, _ttl: number): Promise<void> {

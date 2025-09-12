@@ -39,18 +39,15 @@ async function handleSessionCleanup(
   webUserManager: UserManagerInterface,
   sessionId: string
 ): Promise<void> {
-  const user = await webUserManager.findBySessionId(sessionId);
-  if (!user) return;
-
-  // Clear session from user record (mock compatibility)
-  await webUserManager.update(user.id, { sessionId: undefined });
+  // В новой архитектуре не ищем пользователя по sessionId
+  // Сессии управляются через session store
 
   // Phase 4: Production session deletion
   if (webUserManager instanceof ProductionUserManager) {
     await webUserManager.deleteSession(sessionId);
   }
 
-  console.log(`🔓 User logged out: ${user.email}`);
+  console.log(`🔓 User logged out with session: ${sessionId}`);
 }
 
 // ✅ Helper function to create user with session
@@ -62,11 +59,8 @@ async function createUserWithSession(
   let finalSessionId = generateSessionId();
 
   if (webUserManager instanceof ProductionUserManager) {
-    // Создаем пользователя БЕЗ sessionId сначала
-    const user = await webUserManager.create({
-      ...userData,
-      sessionId: undefined, // Временно без sessionId
-    });
+    // Создаем пользователя в новой архитектуре
+    const user = await webUserManager.create(userData);
 
     // Создаем Redis сессию
     finalSessionId = await webUserManager.createSession(
@@ -75,18 +69,10 @@ async function createUserWithSession(
       AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS
     );
 
-    // Обновляем пользователя с финальным sessionId
-    await webUserManager.update(user.id, {
-      sessionId: finalSessionId,
-    });
-
     return { user, sessionId: finalSessionId };
   } else {
-    // Mock mode - создаем пользователя с sessionId сразу
-    const user = await webUserManager.create({
-      ...userData,
-      sessionId: finalSessionId,
-    });
+    // Mock mode - создаем пользователя без sessionId
+    const user = await webUserManager.create(userData);
 
     return { user, sessionId: finalSessionId };
   }
@@ -115,7 +101,14 @@ export const authRouter = createTRPCRouter({
       // Проверяем, не существует ли уже пользователь
       const existingUser = await webUserManager.findByEmail(sanitizedEmail);
       if (existingUser) {
-        throw createUserError('already_exists');
+        // ✅ НОВАЯ ЛОГИКА: Проверяем есть ли у пользователя роль в web приложении
+        const { getUserRoleForApp } = await import('@repo/exchange-core');
+        const webRole = getUserRoleForApp(existingUser, 'web');
+
+        // Throw appropriate error based on web role existence
+        throw webRole
+          ? createUserError('already_exists') // User has web access - real duplicate
+          : createUserError('user_exists_without_web_access'); // User exists but no web access
       }
 
       // Хешируем пароль
@@ -206,9 +199,8 @@ export const authRouter = createTRPCRouter({
         );
       }
 
-      // Update user with final session (mock compatibility)
+      // Update user last login (без sessionId в новой архитектуре)
       await webUserManager.update(user.id, {
-        sessionId: finalSessionId,
         lastLoginAt: new Date(),
       });
 
@@ -347,10 +339,9 @@ export const authRouter = createTRPCRouter({
         userAgent: getUserAgent(ctx.req.headers),
       };
 
-      // Обновляем пользователя
+      // Обновляем пользователя (без sessionId в новой архитектуре)
       await webUserManager.update(user.id, {
         hashedPassword,
-        sessionId: finalSessionId,
       });
 
       // Phase 4: Production session creation with metadata

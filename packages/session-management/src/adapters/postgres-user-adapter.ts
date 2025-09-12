@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import type { User, CreateUserData } from '../types/index.js';
 
 /**
- * ✅ ИСПРАВЛЕНО: Mapping между Prisma enum и project UserRole
+ * ✅ Mapping для обратной совместимости при миграции данных
  */
 const PRISMA_TO_PROJECT_ROLE_MAP = {
   USER: 'user' as const,
@@ -12,25 +12,42 @@ const PRISMA_TO_PROJECT_ROLE_MAP = {
   SUPPORT: 'support' as const,
 } as const;
 
-const PROJECT_TO_PRISMA_ROLE_MAP = {
-  user: 'USER' as const,
-  admin: 'ADMIN' as const,
-  operator: 'OPERATOR' as const,
-  support: 'SUPPORT' as const,
+const PRISMA_TO_PROJECT_APP_CONTEXT_MAP = {
+  WEB: 'web' as const,
+  ADMIN: 'admin' as const,
 } as const;
 
 /**
- * Prisma user object with project-specific role mapping
+ * Prisma user object with appRoles relation
+ */
+interface _PrismaUserWithRoles {
+  id: string;
+  email: string;
+  hashedPassword: string | null;
+  isVerified: boolean;
+  role: keyof typeof PRISMA_TO_PROJECT_ROLE_MAP; // ⚠️ DEPRECATED
+  createdAt: Date;
+  lastLoginAt: Date | null;
+  sessionId?: string | null; // ⚠️ DEPRECATED
+  appRoles?: Array<{
+    id: string;
+    userId: string;
+    applicationContext: keyof typeof PRISMA_TO_PROJECT_APP_CONTEXT_MAP;
+    role: keyof typeof PRISMA_TO_PROJECT_ROLE_MAP;
+    createdAt: Date;
+  }>;
+}
+
+/**
+ * ✅ Updated interface for new clean architecture
  */
 interface PrismaUser {
   id: string;
   email: string;
   hashedPassword: string | null;
   isVerified: boolean;
-  role: keyof typeof PRISMA_TO_PROJECT_ROLE_MAP;
   createdAt: Date;
   lastLoginAt: Date | null;
-  sessionId?: string | null;
 }
 
 interface UserRepository {
@@ -39,6 +56,11 @@ interface UserRepository {
   findBySessionId?(sessionId: string): Promise<User | null>;
   create(userData: CreateUserData): Promise<User>;
   update(id: string, data: Partial<User>): Promise<User | null>;
+  createAppRole?(
+    userId: string,
+    applicationContext: 'web' | 'admin',
+    role: 'user' | 'admin' | 'operator' | 'support'
+  ): Promise<void>;
 }
 
 export class PostgreSQLUserAdapter implements UserRepository {
@@ -46,11 +68,18 @@ export class PostgreSQLUserAdapter implements UserRepository {
 
   async findByEmail(email: string): Promise<User | null> {
     try {
+      // Получаем пользователя и его роли отдельными запросами для временной совместимости
       const user = await this.prisma.user.findUnique({
         where: { email },
       });
 
-      return user ? this.mapPrismaToUser(user as PrismaUser) : null;
+      if (!user) return null;
+
+      const appRoles = await this.prisma.userAppRole.findMany({
+        where: { userId: user.id },
+      });
+
+      return this.mapPrismaToUserWithRoles(user as PrismaUser, appRoles);
     } catch {
       // Database errors in read operations return null for graceful degradation
       return null;
@@ -63,41 +92,41 @@ export class PostgreSQLUserAdapter implements UserRepository {
         where: { id },
       });
 
-      return user ? this.mapPrismaToUser(user as PrismaUser) : null;
+      if (!user) return null;
+
+      const appRoles = await this.prisma.userAppRole.findMany({
+        where: { userId: user.id },
+      });
+
+      return this.mapPrismaToUserWithRoles(user as PrismaUser, appRoles);
     } catch {
       return null;
     }
   }
 
-  async findBySessionId(sessionId: string): Promise<User | null> {
-    try {
-      const user = await this.prisma.user.findFirst({
-        where: { sessionId: sessionId },
-      });
-
-      return user ? this.mapPrismaToUser(user as PrismaUser) : null;
-    } catch {
-      return null;
-    }
+  // ✅ УДАЛЕН: findBySessionId больше не поддерживается
+  // В новой архитектуре сессии управляются через Redis/session store
+  async findBySessionId(_sessionId: string): Promise<User | null> {
+    // Метод удален из новой архитектуры, используйте session store
+    return null;
   }
 
   async create(userData: CreateUserData): Promise<User> {
     try {
-      // ✅ ИСПРАВЛЕНО: Преобразуем role из project type в Prisma enum
-      const prismaRole = userData.role
-        ? PROJECT_TO_PRISMA_ROLE_MAP[userData.role as keyof typeof PROJECT_TO_PRISMA_ROLE_MAP]
-        : 'USER';
-
       const user = await this.prisma.user.create({
         data: {
           email: userData.email,
           hashedPassword: userData.hashedPassword,
           isVerified: userData.isVerified ?? false,
-          role: prismaRole,
         },
       });
 
-      return this.mapPrismaToUser(user as PrismaUser);
+      // После создания пользователя загружаем роли приложения (пока пустые)
+      const appRoles = await this.prisma.userAppRole.findMany({
+        where: { userId: user.id },
+      });
+
+      return this.mapPrismaToUserWithRoles(user as PrismaUser, appRoles);
     } catch (error) {
       throw new Error(
         `Failed to create user: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -107,33 +136,30 @@ export class PostgreSQLUserAdapter implements UserRepository {
 
   async update(id: string, data: Partial<User>): Promise<User | null> {
     try {
-      // ✅ ИСПРАВЛЕНО: Типизированный объект для update с sessionId поддержкой
+      // ✅ Clean update data - only valid fields
       const updateData: {
         email?: string;
         hashedPassword?: string | null;
         isVerified?: boolean;
         lastLoginAt?: Date | null;
-        sessionId?: string | null;
-        role?: keyof typeof PRISMA_TO_PROJECT_ROLE_MAP;
       } = {
         email: data.email,
         hashedPassword: data.hashedPassword,
         isVerified: data.isVerified,
         lastLoginAt: data.lastLoginAt,
-        sessionId: data.sessionId,
       };
-
-      if (data.role) {
-        updateData.role =
-          PROJECT_TO_PRISMA_ROLE_MAP[data.role as keyof typeof PROJECT_TO_PRISMA_ROLE_MAP];
-      }
 
       const user = await this.prisma.user.update({
         where: { id },
         data: updateData,
       });
 
-      return this.mapPrismaToUser(user as PrismaUser);
+      // После обновления пользователя загружаем роли приложения
+      const appRoles = await this.prisma.userAppRole.findMany({
+        where: { userId: user.id },
+      });
+
+      return this.mapPrismaToUserWithRoles(user as PrismaUser, appRoles);
     } catch {
       return null;
     }
@@ -145,11 +171,61 @@ export class PostgreSQLUserAdapter implements UserRepository {
       email: prismaUser.email,
       hashedPassword: prismaUser.hashedPassword ?? undefined,
       isVerified: prismaUser.isVerified,
-      // ✅ ИСПРАВЛЕНО: Преобразуем Prisma enum в project UserRole
-      role: PRISMA_TO_PROJECT_ROLE_MAP[prismaUser.role],
       createdAt: prismaUser.createdAt,
       lastLoginAt: prismaUser.lastLoginAt ?? undefined,
-      sessionId: prismaUser.sessionId ?? undefined,
     };
+  }
+
+  /**
+   * ✅ НОВЫЙ метод для поддержки appRoles
+   */
+  private mapPrismaToUserWithRoles(
+    prismaUser: PrismaUser,
+    appRoles: Array<{
+      id: string;
+      userId: string;
+      applicationContext: keyof typeof PRISMA_TO_PROJECT_APP_CONTEXT_MAP;
+      role: keyof typeof PRISMA_TO_PROJECT_ROLE_MAP;
+      createdAt: Date;
+    }>
+  ): User {
+    const baseUser = this.mapPrismaToUser(prismaUser);
+
+    // Преобразуем appRoles в нужный формат
+    const mappedAppRoles = appRoles.map(appRole => ({
+      id: appRole.id,
+      userId: appRole.userId,
+      applicationContext: PRISMA_TO_PROJECT_APP_CONTEXT_MAP[appRole.applicationContext],
+      role: PRISMA_TO_PROJECT_ROLE_MAP[appRole.role],
+      createdAt: appRole.createdAt,
+    }));
+
+    return {
+      ...baseUser,
+      appRoles: mappedAppRoles,
+    };
+  }
+
+  /**
+   * ✅ НОВЫЙ метод для создания роли приложения
+   */
+  async createAppRole(
+    userId: string,
+    applicationContext: 'web' | 'admin',
+    role: 'user' | 'admin' | 'operator' | 'support'
+  ): Promise<void> {
+    try {
+      await this.prisma.userAppRole.create({
+        data: {
+          userId,
+          applicationContext: applicationContext === 'web' ? 'WEB' : 'ADMIN',
+          role: role.toUpperCase() as 'USER' | 'ADMIN' | 'OPERATOR' | 'SUPPORT',
+        },
+      });
+    } catch (error) {
+      throw new Error(
+        `Failed to create app role: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+    }
   }
 }

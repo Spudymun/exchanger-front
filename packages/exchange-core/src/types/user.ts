@@ -1,14 +1,31 @@
-import { UserRole } from '@repo/constants';
+import { UserRole, type ApplicationContext } from '@repo/constants';
+
+// ✅ НОВЫЙ интерфейс для app roles
+export interface UserAppRole {
+  id: string;
+  userId: string;
+  applicationContext: ApplicationContext;
+  role: UserRole;
+  createdAt: Date;
+}
 
 export interface User {
   id: string;
   email: string;
   hashedPassword?: string;
-  sessionId?: string;
   isVerified: boolean;
-  role?: UserRole; // Роль пользователя для системы доступа
   createdAt: Date;
   lastLoginAt?: Date;
+
+  // ✅ App-specific roles - replaces deprecated global 'role' field
+  appRoles?: UserAppRole[];
+}
+
+// ✅ HELPER METHODS for User (можно добавить в utils)
+export interface UserHelpers {
+  getRoleForApp(user: User, context: ApplicationContext): UserRole | null;
+  hasAccessToApp(user: User, context: ApplicationContext): boolean;
+  addAppRole(user: User, context: ApplicationContext, role: UserRole): UserAppRole;
 }
 
 /**

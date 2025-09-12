@@ -82,8 +82,8 @@ export const sharedRouter = createTRPCRouter({
       // SECURITY-ENHANCED VALIDATION
       const { query, verified, limit, offset: _offset } = input;
 
-      // ✅ Use async UserManagerFactory pattern
-      const userManager = await UserManagerFactory.create();
+      // ✅ Use async UserManagerFactory pattern with web context
+      const userManager = await UserManagerFactory.createForWeb();
       const allUsers = await userManager.getAll();
 
       let users = allUsers.filter(user => {
@@ -114,8 +114,8 @@ export const sharedRouter = createTRPCRouter({
   // Общая статистика (доступна operator и support)
   getGeneralStats: operatorAndSupport.query(async () => {
     const orders = orderManager.getAll();
-    // ✅ Use async UserManagerFactory pattern
-    const userManager = await UserManagerFactory.create();
+    // ✅ Use async UserManagerFactory pattern with web context
+    const userManager = await UserManagerFactory.createForWeb();
     const users = await userManager.getAll();
 
     // Используем централизованную утилиту для статистики заказов
