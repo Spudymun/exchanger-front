@@ -44,11 +44,15 @@ model Session {
   revoked      Boolean   @default(false)
   revokedAt    DateTime? @map("revoked_at") @db.Timestamptz(6)
 
+  // ✅ НОВОЕ поле для application context с default 'WEB' для backward compatibility
+  applicationContext ApplicationType @default(WEB) @map("application_context")
+
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Indexes
+  // ✅ ОБНОВЛЯЕМ indexes - добавляем applicationContext
   @@index([userId])
+  @@index([applicationContext, userId]) // ✅ НОВЫЙ индекс для изоляции по приложениям
   @@index([expiresAt])
   @@index([createdAt])
   @@index([revoked])
@@ -60,4 +64,10 @@ enum UserRole {
   ADMIN    @map("admin")
   OPERATOR @map("operator") 
   SUPPORT  @map("support")
+}
+
+// ✅ НОВЫЙ enum для application context
+enum ApplicationType {
+  WEB      @map("web")
+  ADMIN    @map("admin")
 }

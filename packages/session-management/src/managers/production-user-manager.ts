@@ -27,28 +27,18 @@ export class ProductionUserManager implements UserManagerInterface {
     return user || undefined;
   }
 
-  // ✅ НОВЫЙ метод для session validation с fallback на PostgreSQL
+  // ✅ Упрощенный метод для session validation
   async findBySessionId(sessionId: string): Promise<User | undefined> {
-    // Сначала ищем в Redis (production way)
+    // 1. Проверка Redis
     const sessionData = await this.sessions.get(sessionId);
-
     if (sessionData && sessionData.expires_at > Date.now()) {
       const user = await this.db.users.findById(sessionData.user_id);
       return user || undefined;
     }
 
-    // Очищаем expired session из Redis
-    if (sessionData) {
-      await this.sessions.delete(sessionId);
-    }
-
-    // ✅ FALLBACK: ищем в PostgreSQL Users.sessionId (development/hybrid compatibility)
-    try {
-      const user = await this.db.users.findBySessionId?.(sessionId);
-      return user || undefined;
-    } catch {
-      return undefined;
-    }
+    // 2. Fallback на PostgreSQL Users.sessionId
+    const user = await this.db.users.findBySessionId?.(sessionId);
+    return user || undefined;
   }
 
   async create(userData: CreateUserData): Promise<User> {
@@ -59,7 +49,7 @@ export class ProductionUserManager implements UserManagerInterface {
     return await this.db.users.update(id, updateData);
   }
 
-  // ✅ НОВЫЙ метод для session management
+  // ✅ ИСПРАВЛЕННЫЙ метод для session management - сохраняем в ОБЕИХ системах
   async createSession(userId: string, metadata: SessionMetadata, ttl: number): Promise<string> {
     const sessionId = generateSessionId();
     const sessionData: SessionData = {
@@ -70,12 +60,37 @@ export class ProductionUserManager implements UserManagerInterface {
       user_agent: metadata.userAgent,
     };
 
+    // 1. Сохраняем в Redis (быстрый доступ)
     await this.sessions.set(sessionId, sessionData, ttl);
+
+    // 2. ДУБЛИРУЕМ в PostgreSQL Session таблице (надежность)
+    try {
+      await this.db.sessions?.create({
+        id: sessionId,
+        userId: userId,
+        data: sessionData,
+        expiresAt: new Date(sessionData.expires_at),
+        ipAddress: metadata.ip,
+        userAgent: metadata.userAgent,
+        applicationContext: 'WEB', // default context
+      });
+    } catch {
+      // Graceful degradation - Redis сессия уже создана
+    }
+
     return sessionId;
   }
 
   async deleteSession(sessionId: string): Promise<void> {
+    // Удаляем из Redis
     await this.sessions.delete(sessionId);
+
+    // Удаляем из PostgreSQL Session таблицы
+    try {
+      await this.db.sessions?.delete(sessionId);
+    } catch {
+      // Graceful degradation
+    }
   }
 
   async extendSession(sessionId: string, ttl: number): Promise<void> {

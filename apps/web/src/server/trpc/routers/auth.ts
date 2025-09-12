@@ -4,6 +4,7 @@ import {
   UserManagerFactory,
   ProductionUserManager,
   type UserManagerInterface,
+  type User,
 } from '@repo/session-management';
 import {
   fullySecurityEnhancedRegisterSchema, // FULLY XSS-PROTECTED REGISTER SCHEMA
@@ -52,6 +53,45 @@ async function handleSessionCleanup(
   console.log(`🔓 User logged out: ${user.email}`);
 }
 
+// ✅ Helper function to create user with session
+async function createUserWithSession(
+  webUserManager: UserManagerInterface,
+  userData: { email: string; hashedPassword: string; isVerified: boolean },
+  sessionMetadata: { ip: string; userAgent?: string }
+): Promise<{ user: User; sessionId: string }> {
+  let finalSessionId = generateSessionId();
+
+  if (webUserManager instanceof ProductionUserManager) {
+    // Создаем пользователя БЕЗ sessionId сначала
+    const user = await webUserManager.create({
+      ...userData,
+      sessionId: undefined, // Временно без sessionId
+    });
+
+    // Создаем Redis сессию
+    finalSessionId = await webUserManager.createSession(
+      user.id,
+      sessionMetadata,
+      AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS
+    );
+
+    // Обновляем пользователя с финальным sessionId
+    await webUserManager.update(user.id, {
+      sessionId: finalSessionId,
+    });
+
+    return { user, sessionId: finalSessionId };
+  } else {
+    // Mock mode - создаем пользователя с sessionId сразу
+    const user = await webUserManager.create({
+      ...userData,
+      sessionId: finalSessionId,
+    });
+
+    return { user, sessionId: finalSessionId };
+  }
+}
+
 export const authRouter = createTRPCRouter({
   // Регистрация нового пользователя
   register: rateLimitMiddleware.register
@@ -70,7 +110,7 @@ export const authRouter = createTRPCRouter({
       const sanitizedEmail = sanitizeEmail(input.email);
 
       // ✅ Get user manager instance via Factory
-      const webUserManager = await UserManagerFactory.create();
+      const webUserManager = await UserManagerFactory.createForWeb(); // ✅ БЫЛО: .create()
 
       // Проверяем, не существует ли уже пользователь
       const existingUser = await webUserManager.findByEmail(sanitizedEmail);
@@ -84,29 +124,21 @@ export const authRouter = createTRPCRouter({
         VALIDATION_LIMITS.BCRYPT_SALT_ROUNDS
       );
 
-      // ✅ Production session creation with metadata
-      let finalSessionId = generateSessionId();
-      const _sessionMetadata = {
+      // ✅ Создаем пользователя с корректной сессией
+      const sessionMetadata = {
         ip: ctx.ip || '0.0.0.0', // Ensure ip is never undefined
         userAgent: getUserAgent(ctx.req.headers),
       };
 
-      // Создаем пользователя
-      const user = await webUserManager.create({
-        email: sanitizedEmail,
-        hashedPassword,
-        sessionId: finalSessionId,
-        isVerified: false,
-      });
-
-      // Phase 4: Production session creation with metadata
-      if (webUserManager instanceof ProductionUserManager) {
-        finalSessionId = await webUserManager.createSession(
-          user.id,
-          _sessionMetadata,
-          AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS
-        );
-      }
+      const { user, sessionId: finalSessionId } = await createUserWithSession(
+        webUserManager,
+        {
+          email: sanitizedEmail,
+          hashedPassword,
+          isVerified: false,
+        },
+        sessionMetadata
+      );
 
       // Устанавливаем cookie с session ID
       ctx.res.setHeader(
@@ -144,7 +176,7 @@ export const authRouter = createTRPCRouter({
       const sanitizedEmail = sanitizeEmail(input.email);
 
       // ✅ Get web user manager instance
-      const webUserManager = await UserManagerFactory.create();
+      const webUserManager = await UserManagerFactory.createForWeb(); // ✅ БЫЛО: .create()
 
       // Поиск пользователя
       const user = await webUserManager.findByEmail(sanitizedEmail);
@@ -165,13 +197,7 @@ export const authRouter = createTRPCRouter({
         userAgent: getUserAgent(ctx.req.headers),
       };
 
-      // Update user with new session (mock compatibility)
-      await webUserManager.update(user.id, {
-        sessionId: finalSessionId,
-        lastLoginAt: new Date(),
-      });
-
-      // Phase 4: Production session creation with metadata
+      // Phase 4: Production session creation with metadata FIRST
       if (webUserManager instanceof ProductionUserManager) {
         finalSessionId = await webUserManager.createSession(
           user.id,
@@ -179,6 +205,12 @@ export const authRouter = createTRPCRouter({
           AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS
         );
       }
+
+      // Update user with final session (mock compatibility)
+      await webUserManager.update(user.id, {
+        sessionId: finalSessionId,
+        lastLoginAt: new Date(),
+      });
 
       // Устанавливаем cookie
       ctx.res.setHeader(
@@ -206,7 +238,7 @@ export const authRouter = createTRPCRouter({
 
     if (sessionId) {
       // ✅ Get web user manager instance
-      const webUserManager = await UserManagerFactory.create();
+      const webUserManager = await UserManagerFactory.createForWeb(); // ✅ БЫЛО: .create()
 
       // Find user by session for cleanup
       await handleSessionCleanup(webUserManager, sessionId);
@@ -249,7 +281,7 @@ export const authRouter = createTRPCRouter({
       const sanitizedEmail = sanitizeEmail(input.email);
 
       // ✅ Get web user manager instance
-      const webUserManager = await UserManagerFactory.create();
+      const webUserManager = await UserManagerFactory.createForWeb(); // ✅ БЫЛО: .create()
 
       // Проверяем, существует ли пользователь
       const user = await webUserManager.findByEmail(sanitizedEmail);
@@ -293,7 +325,7 @@ export const authRouter = createTRPCRouter({
       }
 
       // ✅ Get web user manager instance
-      const webUserManager = await UserManagerFactory.create();
+      const webUserManager = await UserManagerFactory.createForWeb(); // ✅ БЫЛО: .create()
 
       // В реальном приложении здесь была бы проверка кода из базы/Redis
       // Для мока просто проверяем существование пользователя
@@ -356,7 +388,7 @@ export const authRouter = createTRPCRouter({
       const sanitizedEmail = sanitizeEmail(input.email);
 
       // ✅ Get web user manager instance
-      const webUserManager = await UserManagerFactory.create();
+      const webUserManager = await UserManagerFactory.createForWeb(); // ✅ БЫЛО: .create()
 
       const user = await webUserManager.findByEmail(sanitizedEmail);
       if (!user) {

@@ -50,8 +50,8 @@ export const createContext = async (opts: CreateNextContextOptions) => {
 
   if (sessionId) {
     try {
-      // ✅ Production optimization: Use cached UserManager instance for better performance
-      const userManager = await UserManagerFactory.createForContext();
+      // ✅ ИЗМЕНЯЕМ: добавляем context для web приложения
+      const userManager = await UserManagerFactory.createForWeb();
       const foundUser = await userManager.findBySessionId(sessionId);
       user = foundUser || null;
     } catch (error) {

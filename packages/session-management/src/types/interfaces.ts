@@ -36,6 +36,24 @@ export interface DatabaseAdapter {
     create(userData: CreateUserData): Promise<User>;
     update(id: string, data: Partial<User>): Promise<User | null>;
   };
+  sessions?: {
+    create(sessionData: {
+      id: string;
+      userId: string;
+      data: SessionData;
+      expiresAt: Date;
+      ipAddress?: string;
+      userAgent?: string;
+      applicationContext?: string;
+    }): Promise<void>;
+    findById(sessionId: string): Promise<{
+      id: string;
+      userId: string;
+      data: SessionData;
+      expiresAt: Date;
+    } | null>;
+    delete(sessionId: string): Promise<void>;
+  };
 }
 
 /**

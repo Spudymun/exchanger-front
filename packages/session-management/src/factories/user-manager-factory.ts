@@ -1,6 +1,7 @@
-import { SESSION_CONSTANTS } from '@repo/constants';
+import { SESSION_CONSTANTS, type ApplicationContext } from '@repo/constants';
 import { userManager as mockUserManager } from '@repo/exchange-core';
 
+import { PostgreSQLSessionAdapter } from '../adapters/postgres-session-adapter';
 import { PostgreSQLUserAdapter } from '../adapters/postgres-user-adapter';
 import { RedisSessionAdapter } from '../adapters/redis-session-adapter';
 import { ProductionUserManager } from '../managers/production-user-manager';
@@ -51,6 +52,8 @@ export interface ManagerConfiguration {
     url: string;
     maxRetries?: number;
   };
+  // ✅ ДОБАВЛЯЕМ опциональный context
+  context?: ApplicationContext;
 }
 
 /**
@@ -222,6 +225,7 @@ export class UserManagerFactory {
     }
   }
 
+  // ✅ ОБНОВЛЯЕМ createProductionManager для поддержки context
   private static async createProductionManager(
     config: ManagerConfiguration
   ): Promise<ProductionUserManager> {
@@ -230,7 +234,8 @@ export class UserManagerFactory {
     }
 
     const databaseAdapter = await this.createDatabaseAdapter(config.database);
-    const sessionAdapter = await this.createSessionAdapter(config.redis);
+    // ✅ ПЕРЕДАЕМ context в createSessionAdapter
+    const sessionAdapter = await this.createSessionAdapter(config.redis, config.context);
 
     return new ProductionUserManager(databaseAdapter, sessionAdapter);
   }
@@ -249,18 +254,22 @@ export class UserManagerFactory {
 
     return {
       users: new PostgreSQLUserAdapter(prisma),
+      sessions: new PostgreSQLSessionAdapter(prisma),
     };
   }
 
+  // ✅ ОБНОВЛЯЕМ createSessionAdapter для передачи context
   private static async createSessionAdapter(
-    redisConfig: NonNullable<ManagerConfiguration['redis']>
+    redisConfig: NonNullable<ManagerConfiguration['redis']>,
+    context?: ApplicationContext // ✅ ДОБАВЛЯЕМ context параметр
   ): Promise<SessionAdapter> {
     const { Redis } = await import('ioredis');
     const redis = new Redis(redisConfig.url, {
       maxRetriesPerRequest: redisConfig.maxRetries || SESSION_CONSTANTS.REDIS.MAX_RETRIES,
     });
 
-    return new RedisSessionAdapter(redis);
+    // ✅ ПЕРЕДАЕМ context в RedisSessionAdapter
+    return new RedisSessionAdapter(redis, context);
   }
 
   // ✅ Utility methods для singleton management
@@ -273,15 +282,27 @@ export class UserManagerFactory {
     return this.cachedUserManager;
   }
 
-  // ✅ Optimized method for context.ts - uses cached instance for production performance
-  static async createForContext(): Promise<UserManagerInterface> {
-    // В production режиме всегда используем cached instance если возможно
-    if (process.env.NODE_ENV === 'production' && this.cachedUserManager) {
-      return this.cachedUserManager;
+  // ✅ РАСШИРЯЕМ createForContext для поддержки application context
+  static async createForContext(context?: ApplicationContext): Promise<UserManagerInterface> {
+    // Если context не передан - используем стандартный create (backward compatibility)
+    if (!context) {
+      return await this.create();
     }
 
-    // Для development и первого создания используем обычный create
-    return await this.create();
+    // Создаем конфигурацию с указанным context
+    return await this.create({
+      context,
+    });
+  }
+
+  // ✅ НОВЫЙ convenience метод для web приложения
+  static async createForWeb(): Promise<UserManagerInterface> {
+    return await this.createForContext(SESSION_CONSTANTS.APPLICATION_CONTEXT.WEB);
+  }
+
+  // ✅ НОВЫЙ convenience метод для admin приложения
+  static async createForAdmin(): Promise<UserManagerInterface> {
+    return await this.createForContext(SESSION_CONSTANTS.APPLICATION_CONTEXT.ADMIN);
   }
 }
 
