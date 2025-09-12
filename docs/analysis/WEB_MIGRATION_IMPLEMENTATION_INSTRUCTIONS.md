@@ -925,22 +925,22 @@ export const createContext = async (opts: CreateNextContextOptions) => {
 
 ---
 
-## ЭТАП 7: Применение Prisma миграции
+## ЭТАП 7: Обновление схемы и финальное тестирование
 
-### 7.1 Генерация и применение миграции
+### 7.1 Прямое обновление Prisma схемы (без миграции)
 
 ```powershell
 # ✅ Переход в session-management пакет
 cd packages/session-management
 
-# ✅ Создание Prisma миграции для добавления applicationContext поля
-npx prisma migrate dev --name add-application-context
-
-# ✅ Генерация обновленного Prisma клиента
+# ✅ Генерация обновленного Prisma клиента после изменения schema.prisma
 npx prisma generate
 
 # ✅ Проверка компиляции TypeScript
 npx tsc --noEmit
+
+# ✅ Сброс БД и применение новой схемы (разработка - данных нет)
+npx prisma db push --force-reset
 ```
 
 ### 7.2 Проверка работы
@@ -1045,3 +1045,194 @@ cd ../../apps/web && npx tsc --noEmit
 - **Database context**: application_context поле в Sessions таблице
 - **Backward compatibility**: 100% совместимость с существующим кодом
 - **Готовность к расширению**: Легкое добавление telegram-bot и других приложений
+
+---
+
+## ЭТАП 8: CLEANUP - Удаление Backward Compatibility (После полноценной миграции)
+
+> ⚠️ **ВНИМАНИЕ**: Этот этап выполняется ТОЛЬКО после полной миграции всех сессий на новую архитектуру и подтверждения отсутствия старых сессий в production
+
+### 🎯 ЦЕЛЬ: Удаление мусорного кода и упрощение архитектуры
+
+После того как все приложения мигрировали на новую архитектуру и все старые сессии истекли, можно убрать backward compatibility код для чистоты архитектуры.
+
+### 8.1 Очистка Redis префиксов в `packages/constants/src/session.ts`
+
+**✅ УДАЛИТЬ избыточные константы:**
+
+```typescript
+export const SESSION_CONSTANTS = {
+  // ... existing constants ...
+
+  REDIS: {
+    // ❌ УДАЛИТЬ: SESSION_PREFIX: 'session:',  // Больше не нужен
+    // ❌ УДАЛИТЬ: APP_SESSION_PREFIX: 'session:',  // Больше не нужен
+    MAX_RETRIES: 3,
+    // ✅ ОСТАВЛЯЕМ только специфичные prefixes
+    WEB_SESSION_PREFIX: 'session:web:',
+    ADMIN_SESSION_PREFIX: 'session:admin:',
+  } as const,
+
+  // ... rest stays the same ...
+} as const;
+```
+
+### 8.2 Упрощение RedisSessionAdapter
+
+**✅ УДАЛИТЬ fallback логику:**
+
+```typescript
+export class RedisSessionAdapter implements SessionAdapter {
+  // ✅ УПРОЩАЕМ: context теперь ОБЯЗАТЕЛЬНЫЙ параметр
+  constructor(
+    private redis: Redis,
+    private context: ApplicationContext // ❌ УДАЛЯЕМ: опциональность
+  ) {}
+
+  // ✅ УПРОЩАЕМ: удаляем fallback логику
+  private generateSessionKey(sessionId: string): string {
+    // ❌ УДАЛЯЕМ весь fallback код:
+    // if (this.context) {
+    //   return `${SESSION_CONSTANTS.REDIS.APP_SESSION_PREFIX}${this.context}:${sessionId}`;
+    // }
+    // return `${SESSION_CONSTANTS.REDIS.SESSION_PREFIX}${sessionId}`;
+
+    // ✅ ТОЛЬКО новая схема:
+    return `${SESSION_CONSTANTS.REDIS.WEB_SESSION_PREFIX}${sessionId}`.replace('web', this.context);
+  }
+
+  // ✅ ВСЕ остальные методы упрощаются автоматически
+}
+```
+
+### 8.3 Упрощение UserManagerFactory
+
+**✅ УДАЛИТЬ старые методы:**
+
+```typescript
+export class UserManagerFactory {
+  // ❌ УДАЛИТЬ: static async create(config: ManagerConfiguration = {})
+  // ❌ УДАЛИТЬ: static async createForContext(): Promise<UserManagerInterface>
+
+  // ✅ ОСТАВЛЯЕМ только context-aware методы:
+  static async createForContext(context: ApplicationContext): Promise<UserManagerInterface> {
+    // Упрощенная логика без fallback на старый create()
+  }
+
+  static async createForWeb(): Promise<UserManagerInterface> {
+    return await this.createForContext(SESSION_CONSTANTS.APPLICATION_CONTEXT.WEB);
+  }
+
+  static async createForAdmin(): Promise<UserManagerInterface> {
+    return await this.createForContext(SESSION_CONSTANTS.APPLICATION_CONTEXT.ADMIN);
+  }
+
+  // ❌ УДАЛИТЬ: все методы createSessionAdapter без context параметра
+  // ❌ УДАЛИТЬ: createProductionManager без context поддержки
+}
+```
+
+### 8.4 Обновление ManagerConfiguration
+
+**✅ СДЕЛАТЬ context ОБЯЗАТЕЛЬНЫМ:**
+
+```typescript
+export interface ManagerConfiguration {
+  environment?: ManagerEnvironment;
+  database?: {
+    url: string;
+    maxConnections?: number;
+  };
+  redis?: {
+    url: string;
+    maxRetries?: number;
+  };
+  // ✅ ИЗМЕНЯЕМ: context больше не опциональный
+  context: ApplicationContext; // ❌ УДАЛЯЕМ: опциональность
+}
+```
+
+### 8.5 Удаление Prisma default значения
+
+**✅ УБРАТЬ default в schema.prisma:**
+
+```prisma
+model Session {
+  // ... existing fields ...
+
+  // ✅ ИЗМЕНЯЕМ: убираем default, context теперь всегда передается явно
+  applicationContext ApplicationType @map("application_context")
+  // ❌ БЫЛО: applicationContext ApplicationType @default(WEB) @map("application_context")
+
+  // ... rest stays the same ...
+}
+```
+
+### 8.6 Очистка web приложения
+
+**✅ УПРОСТИТЬ context.ts:**
+
+```typescript
+export const createContext = async (opts: CreateNextContextOptions) => {
+  // ... existing logic ...
+
+  if (sessionId) {
+    try {
+      // ✅ УПРОЩАЕМ: всегда передаем явный context
+      const userManager = await UserManagerFactory.createForWeb();
+      // ❌ УДАЛЯЕМ: UserManagerFactory.createForContext() без параметров
+
+      const foundUser = await userManager.findBySessionId(sessionId);
+      user = foundUser || null;
+    } catch (error) {
+      console.error('Session validation error:', error);
+    }
+  }
+
+  // ... rest stays the same ...
+};
+```
+
+---
+
+## 🗑️ CLEANUP CHECKLIST
+
+### Перед выполнением cleanup:
+
+- [ ] ✅ Все приложения мигрированы на новую архитектуру
+- [ ] ✅ Все старые сессии в Redis истекли (проверить: `KEYS session:*` не содержит старых ключей)
+- [ ] ✅ PostgreSQL Sessions таблица содержит только записи с applicationContext
+- [ ] ✅ Production окружение работает стабильно минимум 2 недели
+- [ ] ✅ Создан бэкап БД перед cleanup
+
+### Этапы cleanup:
+
+1. **Константы**: Удалить избыточные SESSION_PREFIX и APP_SESSION_PREFIX
+2. **RedisSessionAdapter**: Убрать fallback логику и сделать context обязательным
+3. **UserManagerFactory**: Удалить старые методы create() и createForContext() без параметров
+4. **ManagerConfiguration**: Сделать context обязательным полем
+5. **Prisma Schema**: Убрать default значение для applicationContext
+6. **Applications**: Упростить код приложений убрав fallback логику
+
+### После cleanup:
+
+- [ ] ✅ TypeScript компиляция без ошибок
+- [ ] ✅ Все тесты проходят
+- [ ] ✅ Production deployment и проверка работоспособности
+- [ ] ✅ Мониторинг в течение 24 часов после deployment
+
+---
+
+## 🎉 ФИНАЛЬНЫЙ РЕЗУЛЬТАТ
+
+**Чистая, простая, эффективная multi-app session архитектура:**
+
+- **Строгая типизация**: ApplicationContext всегда явно задан
+- **Простая логика**: Нет fallback кода и legacy поддержки
+- **Высокая производительность**: Упрощенная логика Redis ключей
+- **Безопасность**: Полная изоляция сессий по приложениям
+- **Масштабируемость**: Легкое добавление новых приложений
+
+```
+
+```

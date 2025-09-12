@@ -16,11 +16,21 @@ export const SESSION_CONSTANTS = {
     SESSION_PREFIX: 'session:',
     // ✅ TTL moved to AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS in validation.ts (avoid duplication)
     MAX_RETRIES: 3,
+    // ✅ НОВЫЕ prefixes для multi-app namespace
+    APP_SESSION_PREFIX: 'session:',
+    WEB_SESSION_PREFIX: 'session:web:',
+    ADMIN_SESSION_PREFIX: 'session:admin:',
   } as const,
 
   DATABASE: {
     MAX_CONNECTIONS: 10,
     CONNECTION_TIMEOUT: 5000,
+  } as const,
+
+  // ✅ НОВЫЕ константы для application context
+  APPLICATION_CONTEXT: {
+    WEB: 'web',
+    ADMIN: 'admin',
   } as const,
 } as const;
 
@@ -29,3 +39,7 @@ export type SessionEnvironment =
 
 export type SessionMigrationStrategy =
   (typeof SESSION_CONSTANTS.MIGRATION_STRATEGIES)[keyof typeof SESSION_CONSTANTS.MIGRATION_STRATEGIES];
+
+// ✅ НОВЫЙ тип для application context
+export type ApplicationContext =
+  (typeof SESSION_CONSTANTS.APPLICATION_CONTEXT)[keyof typeof SESSION_CONSTANTS.APPLICATION_CONTEXT];

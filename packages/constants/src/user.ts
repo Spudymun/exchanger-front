@@ -4,6 +4,12 @@ export const APP_SCOPE = {
   WEB_APP: 'web',
 } as const;
 
+// ✅ ДОБАВЛЯЕМ связь между APP_SCOPE и SESSION APPLICATION_CONTEXT
+export const APP_SCOPE_TO_SESSION_CONTEXT = {
+  [APP_SCOPE.WEB_APP]: 'web',
+  [APP_SCOPE.ADMIN_PANEL]: 'admin',
+} as const;
+
 // Маппинг ролей к приложениям (импортируем USER_ROLES из business.ts)
 import { USER_ROLES } from './business';
 
@@ -44,6 +50,14 @@ export const USER_SUCCESS_MESSAGES = {
   VERIFICATION_SENT: 'Код подтверждения отправлен на ваш email',
   ACCOUNT_DELETED: 'Аккаунт успешно удален',
 } as const;
+
+// ✅ ДОБАВЛЯЕМ utility function для преобразования
+export function getSessionContextFromAppScope(appScope: AppScope): string {
+  return APP_SCOPE_TO_SESSION_CONTEXT[appScope as keyof typeof APP_SCOPE_TO_SESSION_CONTEXT];
+}
+
+// ✅ Re-export ApplicationContext для удобства
+export type { ApplicationContext } from './session';
 
 // Order statuses centralized in exchange.ts (Rule 20 - no redundancy)
 // Use EXCHANGE_ORDER_STATUSES instead of duplicating
