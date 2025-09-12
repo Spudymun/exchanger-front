@@ -39,6 +39,11 @@ export class PostgreSQLSessionAdapter {
     userId: string;
     data: SessionData;
     expiresAt: Date;
+    applicationContext?: string;
+    revoked?: boolean;
+    revokedAt?: Date;
+    ipAddress?: string;
+    userAgent?: string;
   } | null> {
     try {
       const session = await this.prisma.session.findUnique({
@@ -54,6 +59,11 @@ export class PostgreSQLSessionAdapter {
         userId: session.userId,
         data: session.data as unknown as SessionData,
         expiresAt: session.expiresAt,
+        applicationContext: session.applicationContext,
+        revoked: session.revoked,
+        revokedAt: session.revokedAt || undefined,
+        ipAddress: session.ipAddress || undefined,
+        userAgent: session.userAgent || undefined,
       };
     } catch {
       return null;

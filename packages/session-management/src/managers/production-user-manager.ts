@@ -39,13 +39,58 @@ export class ProductionUserManager implements UserManagerInterface {
     }
 
     // 2. Fallback на PostgreSQL Sessions с application context
+    return await this.findUserFromPostgreSQLSession(sessionId);
+  }
+
+  // ✅ НОВЫЙ метод для fallback логики (уменьшает сложность)
+  private async findUserFromPostgreSQLSession(sessionId: string): Promise<User | undefined> {
     const session = await this.db.sessions?.findById(sessionId);
-    if (session && session.applicationContext === this.applicationContext && !session.revoked) {
-      const user = await this.db.users.findById(session.userId);
-      return user || undefined;
+    if (!session || session.revoked || session.expiresAt <= new Date()) {
+      return undefined;
     }
 
-    return undefined;
+    // Проверяем application context
+    const prismaApplicationContext = this.applicationContext === 'web' ? 'WEB' : 'ADMIN';
+    if (session.applicationContext !== prismaApplicationContext) {
+      return undefined;
+    }
+
+    const user = await this.db.users.findById(session.userId);
+    if (user) {
+      // Восстанавливаем сессию в Redis
+      await this.restoreSessionToRedis(sessionId, session);
+    }
+
+    return user || undefined;
+  }
+
+  // ✅ НОВЫЙ метод для восстановления сессии в Redis
+  private async restoreSessionToRedis(
+    sessionId: string,
+    session: {
+      userId: string;
+      data?: SessionData;
+      expiresAt: Date;
+      ipAddress?: string;
+      userAgent?: string;
+    }
+  ): Promise<void> {
+    try {
+      const restoredSessionData: SessionData = {
+        user_id: session.userId,
+        created_at: session.data?.created_at || Date.now(),
+        expires_at: session.expiresAt.getTime(),
+        ip: session.data?.ip || session.ipAddress || '',
+        user_agent: session.data?.user_agent || session.userAgent,
+      };
+
+      const ttlSeconds = Math.floor((session.expiresAt.getTime() - Date.now()) / 1000);
+      if (ttlSeconds > 0) {
+        await this.sessions.set(sessionId, restoredSessionData, ttlSeconds);
+      }
+    } catch {
+      // Graceful degradation - пользователь все равно найден
+    }
   }
 
   async create(userData: CreateUserData): Promise<User> {
@@ -88,6 +133,9 @@ export class ProductionUserManager implements UserManagerInterface {
 
     // 2. ДУБЛИРУЕМ в PostgreSQL Session таблице (надежность)
     try {
+      // ✅ ИСПРАВЛЕНО: Преобразуем ApplicationContext в Prisma enum
+      const prismaApplicationContext = this.applicationContext === 'web' ? 'WEB' : 'ADMIN';
+
       await this.db.sessions?.create({
         id: sessionId,
         userId: userId,
@@ -95,7 +143,7 @@ export class ProductionUserManager implements UserManagerInterface {
         expiresAt: new Date(sessionData.expires_at),
         ipAddress: metadata.ip,
         userAgent: metadata.userAgent,
-        applicationContext: this.applicationContext,
+        applicationContext: prismaApplicationContext,
       });
     } catch {
       // Graceful degradation - Redis сессия уже создана
