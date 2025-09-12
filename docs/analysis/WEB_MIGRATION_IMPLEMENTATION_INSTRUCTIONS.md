@@ -1,59 +1,67 @@
-# ПЛАН МИГРАЦИИ К MULTI-DATABASE АРХИТЕКТУРЕ
+# ПЛАН МИГРАЦИИ К MULTI-APP АРХИТЕКТУРЕ
 
-> **Дата**: 11 сентября 2025  
-> **Статус**: ПРАВИЛЬНЫЙ ПЛАН МИГРАЦИИ (ИСПРАВЛЕННАЯ ВЕРСИЯ)  
-> **Основано на**: Реальном анализе кодовой базы  
-> **Цель**: Мигрировать к архитектуре с 4 БД (identity/web/admin/bot) + Redis namespace
+> **Дата**: 12 сентября 2025  
+> **Статус**: ИСПРАВЛЕННЫЙ ПЛАН НА ОСНОВЕ РЕАЛЬНОЙ АРХИТЕКТУРЫ  
+> **Основано на**: Тщательном анализе существующей кодовой базы  
+> **Цель**: Добавить поддержку изоляции сессий по приложениям (web, admin-panel) в существующую архитектуру
 
-## 🎯 ЦЕЛЬ МИГРАЦИИ: Расширение архитектуры без поломки
+## 🎯 ЦЕЛЬ МИГРАЦИИ: Расширение существующей session архитектуры для multi-app
 
-### Целевая архитектура:
+### Текущая архитектура (РАБОТАЕТ):
 
 ```
 ┌─────────────────────┐  ┌─────────────────────┐
-│  exchanger_identity │  │   exchanger_web     │
-│      (SHARED)       │  │    (WEB ONLY)       │
-│                     │  │                     │
+│      PostgreSQL     │  │        Redis        │
+│   (одна БД)         │  │   (глобальные       │
+│                     │  │    ключи)           │
 │ ┌─────────────────┐ │  │ ┌─────────────────┐ │
-│ │ users           │ │  │ │ web_sessions    │ │
-│ │ sessions        │ │  │ │ web_user_cache  │ │
-│ │ permissions     │ │  │ │                 │ │
+│ │ users           │ │  │ │ session:abc123  │ │
+│ │ sessions        │ │  │ │ session:def456  │ │
 │ └─────────────────┘ │  │ └─────────────────┘ │
 └─────────────────────┘  └─────────────────────┘
 ```
 
-### Redis namespace схема:
+### Целевая архитектура (ДОБАВЛЯЕМ application context):
 
 ```
-├── identity:session:web:abc123...      ← Веб-сессии
-├── identity:user:web:user_456          ← Кэш веб-пользователей
+┌─────────────────────┐  ┌─────────────────────┐
+│      PostgreSQL     │  │        Redis        │
+│   (та же БД +       │  │   (namespace по     │
+│    app context)     │  │    приложениям)     │
+│                     │  │                     │
+│ ┌─────────────────┐ │  │ ┌─────────────────┐ │
+│ │ users           │ │  │ │ session:web:123 │ │
+│ │ sessions +      │ │  │ │ session:admin:45│ │
+│ │ appContext      │ │  │ │                 │ │
+│ └─────────────────┘ │  │ └─────────────────┘ │
+└─────────────────────┘  └─────────────────────┘
 ```
 
-## 🎯 ПРИНЦИПЫ МИГРАЦИИ: БЕЗ ПОЛОМКИ
+## 🎯 ПРИНЦИПЫ МИГРАЦИИ: EXTEND, DON'T REPLACE
 
-1. ✅ **Сохранить все работающие механизмы** - MIGRATION_STRATEGIES, ENVIRONMENTS
-2. ✅ **Backward compatibility** - старый код продолжает работать
-3. ✅ **Постепенный переход** - используем существующие стратегии миграции
-4. ✅ **Расширение, не замена** - добавляем возможности, не удаляем
+1. ✅ **Сохранить ВСЕ работающие механизмы** - UserManagerFactory, RedisSessionAdapter, ProductionUserManager
+2. ✅ **100% Backward compatibility** - существующий код web приложения НЕ изменяется
+3. ✅ **Минимальные изменения** - только добавляем application context support
+4. ✅ **НЕ создавать новые БД** - расширяем существующую Prisma схему
+5. ✅ **НЕ ломать Redis** - добавляем namespace, сохраняем fallback
 
 ---
 
-## ЭТАП 1: Расширение констант (БЕЗ ПОЛОМКИ СУЩЕСТВУЮЩИХ)
+## ЭТАП 1: Добавление Application Context в константы
 
-### 1.1 Добавление новых констант в `packages/constants/src/session.ts`
+### 1.1 Расширение констант в `packages/constants/src/session.ts`
 
-**✅ РАСШИРИТЬ СУЩЕСТВУЮЩИЙ КОД:**
+**✅ ДОБАВИТЬ К СУЩЕСТВУЮЩИМ КОНСТАНТАМ:**
 
 ```typescript
 export const SESSION_CONSTANTS = {
-  // ✅ СОХРАНЯЕМ существующую структуру ENVIRONMENTS
+  // ✅ СОХРАНЯЕМ все существующие константы без изменений
   ENVIRONMENTS: {
     MOCK: 'mock',
     DEVELOPMENT: 'development',
     PRODUCTION: 'production',
   } as const,
 
-  // ✅ СОХРАНЯЕМ существующие MIGRATION_STRATEGIES
   MIGRATION_STRATEGIES: {
     MOCK_ONLY: 'mock-only',
     PRODUCTION_ONLY: 'production-only',
@@ -62,47 +70,124 @@ export const SESSION_CONSTANTS = {
   } as const,
 
   REDIS: {
-    SESSION_PREFIX: 'session:', // ✅ СОХРАНЯЕМ работающий префикс
+    SESSION_PREFIX: 'session:', // ✅ СОХРАНЯЕМ для backward compatibility
     MAX_RETRIES: 3,
-    // ✅ ДОБАВЛЯЕМ новые префиксы для multi-app архитектуры
-    IDENTITY_SESSION_PREFIX: 'identity:session:',
-    IDENTITY_USER_PREFIX: 'identity:user:',
+    // ✅ ДОБАВЛЯЕМ новые prefixes для multi-app namespace
+    APP_SESSION_PREFIX: 'session:', // Base prefix
+    WEB_SESSION_PREFIX: 'session:web:',
+    ADMIN_SESSION_PREFIX: 'session:admin:',
   } as const,
 
   DATABASE: {
     MAX_CONNECTIONS: 10,
     CONNECTION_TIMEOUT: 5000,
-    // ✅ ДОБАВЛЯЕМ новые константы БД (не заменяем старые)
-    IDENTITY_DB_NAME: 'exchanger_identity',
-    WEB_DB_NAME: 'exchanger_web',
   } as const,
 
-  // ✅ ДОБАВЛЯЕМ новые TTL константы
-  TTL: {
-    SESSION_DEFAULT: 24 * 60 * 60, // 24 часа
-    USER_CACHE: 60 * 60, // 1 час
+  // ✅ НОВЫЕ константы для application context
+  APPLICATION_CONTEXT: {
+    WEB: 'web',
+    ADMIN: 'admin',
   } as const,
 } as const;
 
-// ✅ ДОБАВЛЯЕМ новые типы (не заменяем старые)
-export type ApplicationContext = 'web';
-export type DatabaseType = 'identity' | 'web';
-
-// ✅ СОХРАНЯЕМ существующие типы
+// ✅ СОХРАНЯЕМ все существующие типы
 export type SessionEnvironment =
   (typeof SESSION_CONSTANTS.ENVIRONMENTS)[keyof typeof SESSION_CONSTANTS.ENVIRONMENTS];
 
 export type SessionMigrationStrategy =
   (typeof SESSION_CONSTANTS.MIGRATION_STRATEGIES)[keyof typeof SESSION_CONSTANTS.MIGRATION_STRATEGIES];
+
+// ✅ ДОБАВЛЯЕМ новый тип для application context
+export type ApplicationContext =
+  (typeof SESSION_CONSTANTS.APPLICATION_CONTEXT)[keyof typeof SESSION_CONSTANTS.APPLICATION_CONTEXT];
+```
+
+### 1.2 Обновление `packages/constants/src/user.ts`
+
+**✅ ДОБАВИТЬ export для ApplicationContext:**
+
+```typescript
+// ✅ СУЩЕСТВУЮЩИЙ КОД остается без изменений
+export const APP_SCOPE = {
+  ADMIN_PANEL: 'admin-panel',
+  WEB_APP: 'web',
+} as const;
+
+// ✅ ДОБАВЛЯЕМ связь между APP_SCOPE и SESSION APPLICATION_CONTEXT
+export const APP_SCOPE_TO_SESSION_CONTEXT = {
+  [APP_SCOPE.WEB_APP]: 'web',
+  [APP_SCOPE.ADMIN_PANEL]: 'admin',
+} as const;
+
+// ✅ ДОБАВЛЯЕМ utility function для преобразования
+export function getSessionContextFromAppScope(appScope: AppScope): string {
+  return APP_SCOPE_TO_SESSION_CONTEXT[appScope];
+}
+
+// ✅ Re-export ApplicationContext для удобства
+export type { ApplicationContext } from './session';
 ```
 
 ---
 
-## ЭТАП 2: Расширение RedisSessionAdapter (Backward Compatible)
+## ЭТАП 2: Расширение Prisma схемы для Application Context
 
-### 2.1 Добавление поддержки контекстов в `packages/session-management/src/adapters/redis-session-adapter.ts`
+### 2.1 Обновление `packages/session-management/prisma/schema.prisma`
 
-**✅ РАСШИРИТЬ СУЩЕСТВУЮЩИЙ КОД:**
+**✅ ДОБАВИТЬ поле applicationContext в Session модель:**
+
+```prisma
+// ✅ СОХРАНЯЕМ все существующие модели без изменений
+
+model Session {
+  id           String    @id @db.VarChar(255)
+  userId       String    @map("user_id") @db.Uuid
+  data         Json?     @db.JsonB
+  expiresAt    DateTime  @map("expires_at") @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastActivity DateTime  @default(now()) @map("last_activity") @db.Timestamptz(6)
+  ipAddress    String?   @map("ip_address") @db.Inet
+  userAgent    String?   @map("user_agent") @db.Text
+  revoked      Boolean   @default(false)
+  revokedAt    DateTime? @map("revoked_at") @db.Timestamptz(6)
+
+  // ✅ НОВОЕ поле для application context с default 'web' для backward compatibility
+  applicationContext ApplicationType @default(WEB) @map("application_context")
+
+  // Relations остаются без изменений
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // ✅ ОБНОВЛЯЕМ indexes - добавляем applicationContext
+  @@index([userId])
+  @@index([applicationContext, userId]) // ✅ НОВЫЙ индекс для изоляции по приложениям
+  @@index([expiresAt])
+  @@index([createdAt])
+  @@index([revoked])
+  @@map("sessions")
+}
+
+// ✅ СОХРАНЯЕМ все существующие enums, ДОБАВЛЯЕМ ApplicationType
+enum UserRole {
+  USER     @map("user")
+  ADMIN    @map("admin")
+  OPERATOR @map("operator")
+  SUPPORT  @map("support")
+}
+
+// ✅ НОВЫЙ enum для application context
+enum ApplicationType {
+  WEB      @map("web")
+  ADMIN    @map("admin")
+}
+```
+
+---
+
+## ЭТАП 3: Расширение RedisSessionAdapter для Context Support
+
+### 3.1 Обновление `packages/session-management/src/adapters/redis-session-adapter.ts`
+
+**✅ ДОБАВИТЬ опциональный context параметр:**
 
 ```typescript
 import { SESSION_CONSTANTS, type ApplicationContext } from '@repo/constants';
@@ -111,31 +196,24 @@ import { Redis } from 'ioredis';
 import type { SessionAdapter, SessionData } from '../types/index.js';
 
 export class RedisSessionAdapter implements SessionAdapter {
-  // ✅ ОБРАТНАЯ СОВМЕСТИМОСТЬ: context опционален
+  // ✅ РАСШИРЯЕМ конструктор - добавляем опциональный context
   constructor(
     private redis: Redis,
-    private context?: ApplicationContext
+    private context?: ApplicationContext // ✅ ОПЦИОНАЛЬНЫЙ для backward compatibility
   ) {}
 
-  // ✅ РАСШИРЯЕМ метод generateSessionKey с backward compatibility
+  // ✅ НОВЫЙ метод для генерации context-aware ключей
   private generateSessionKey(sessionId: string): string {
-    // Если контекст указан - используем новую схему
     if (this.context) {
-      return `${SESSION_CONSTANTS.REDIS.IDENTITY_SESSION_PREFIX}${this.context}:${sessionId}`;
+      // Новая схема: session:web:abc123 или session:admin:abc123
+      return `${SESSION_CONSTANTS.REDIS.APP_SESSION_PREFIX}${this.context}:${sessionId}`;
     }
-    // Иначе используем старую схему (backward compatibility)
+    // ✅ FALLBACK на старую схему для backward compatibility
     return `${SESSION_CONSTANTS.REDIS.SESSION_PREFIX}${sessionId}`;
   }
 
-  // ✅ ДОБАВЛЯЕМ новый метод для генерации cache ключей
-  private generateCacheKey(type: string, key: string): string {
-    if (this.context) {
-      return `${SESSION_CONSTANTS.REDIS.CACHE_PREFIX}${this.context}:${type}:${key}`;
-    }
-    return `cache:${type}:${key}`;
-  }
+  // ✅ ВСЕ ОСТАЛЬНЫЕ МЕТОДЫ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ - только используют новый generateSessionKey
 
-  // ✅ СОХРАНЯЕМ все существующие методы без изменений
   async get(sessionId: string): Promise<SessionData | null> {
     try {
       const key = this.generateSessionKey(sessionId);
@@ -145,7 +223,7 @@ export class RedisSessionAdapter implements SessionAdapter {
 
       const parsed = JSON.parse(data) as SessionData;
 
-      // Проверка TTL
+      // Проверка TTL остается без изменений
       if (parsed.expires_at < Date.now()) {
         await this.delete(sessionId);
         return null;
@@ -190,11 +268,224 @@ export class RedisSessionAdapter implements SessionAdapter {
 
 ---
 
-## ЭТАП 3: Расширение UserManagerFactory (Сохраняем работающий код)
+## ЭТАП 4: Расширение UserManagerFactory для Context Support
 
-### 3.1 Добавление поддержки multi-database в `packages/session-management/src/factories/user-manager-factory.ts`
+### 4.1 Обновление `packages/session-management/src/factories/user-manager-factory.ts`
 
-**✅ РАСШИРИТЬ СУЩЕСТВУЮЩИЙ ИНТЕРФЕЙС:**
+**✅ ДОБАВИТЬ поддержку context в Factory:**
+
+```typescript
+// ✅ СОХРАНЯЕМ все существующие импорты, ДОБАВЛЯЕМ ApplicationContext
+import { SESSION_CONSTANTS, type ApplicationContext } from '@repo/constants';
+import { userManager as mockUserManager } from '@repo/exchange-core';
+
+import { PostgreSQLUserAdapter } from '../adapters/postgres-user-adapter';
+import { RedisSessionAdapter } from '../adapters/redis-session-adapter';
+import { ProductionUserManager } from '../managers/production-user-manager';
+
+// ... остальные импорты остаются без изменений
+
+// ✅ РАСШИРЯЕМ существующий ManagerConfiguration
+export interface ManagerConfiguration {
+  environment?: ManagerEnvironment;
+  database?: {
+    url: string;
+    maxConnections?: number;
+  };
+  redis?: {
+    url: string;
+    maxRetries?: number;
+  };
+  // ✅ ДОБАВЛЯЕМ опциональный context
+  context?: ApplicationContext;
+}
+
+export class UserManagerFactory {
+  // ✅ ВСЕ СУЩЕСТВУЮЩИЕ МЕТОДЫ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ
+  private static cachedUserManager: UserManagerInterface | null = null;
+  private static cachedConfig: string | null = null;
+
+  // ✅ СУЩЕСТВУЮЩИЙ метод create остается ПОЛНОСТЬЮ без изменений
+  static async create(config: ManagerConfiguration = {}): Promise<UserManagerInterface> {
+    // Вся существующая логика остается идентичной
+    const configKey = JSON.stringify(config);
+    if (this.cachedUserManager && this.cachedConfig === configKey) {
+      return this.cachedUserManager;
+    }
+
+    const environment = config.environment || getEnvironment();
+    this.logEnvironmentDebug(environment, config);
+    const userManager = await this.createManagerByEnvironment(environment, config);
+
+    this.cachedUserManager = userManager;
+    this.cachedConfig = configKey;
+
+    return userManager;
+  }
+
+  // ✅ РАСШИРЯЕМ createForContext для поддержки application context
+  static async createForContext(context?: ApplicationContext): Promise<UserManagerInterface> {
+    // Если context не передан - используем стандартный create (backward compatibility)
+    if (!context) {
+      return await this.create();
+    }
+
+    // Создаем конфигурацию с указанным context
+    return await this.create({
+      context,
+    });
+  }
+
+  // ✅ НОВЫЙ convenience метод для web приложения
+  static async createForWeb(): Promise<UserManagerInterface> {
+    return await this.createForContext(SESSION_CONSTANTS.APPLICATION_CONTEXT.WEB);
+  }
+
+  // ✅ НОВЫЙ convenience метод для admin приложения
+  static async createForAdmin(): Promise<UserManagerInterface> {
+    return await this.createForContext(SESSION_CONSTANTS.APPLICATION_CONTEXT.ADMIN);
+  }
+
+  // ✅ ОБНОВЛЯЕМ createSessionAdapter для передачи context
+  private static async createSessionAdapter(
+    redisConfig: NonNullable<ManagerConfiguration['redis']>,
+    context?: ApplicationContext // ✅ ДОБАВЛЯЕМ context параметр
+  ): Promise<SessionAdapter> {
+    const { Redis } = await import('ioredis');
+    const redis = new Redis(redisConfig.url, {
+      maxRetriesPerRequest: redisConfig.maxRetries || SESSION_CONSTANTS.REDIS.MAX_RETRIES,
+    });
+
+    // ✅ ПЕРЕДАЕМ context в RedisSessionAdapter
+    return new RedisSessionAdapter(redis, context);
+  }
+
+  // ✅ ОБНОВЛЯЕМ createProductionManager для поддержки context
+  private static async createProductionManager(
+    config: ManagerConfiguration
+  ): Promise<ProductionUserManager> {
+    if (!config.database?.url || !config.redis?.url) {
+      throw new Error('Production environment requires database and redis configuration');
+    }
+
+    const databaseAdapter = await this.createDatabaseAdapter(config.database);
+    // ✅ ПЕРЕДАЕМ context в createSessionAdapter
+    const sessionAdapter = await this.createSessionAdapter(config.redis, config.context);
+
+    return new ProductionUserManager(databaseAdapter, sessionAdapter);
+  }
+
+  // ✅ ВСЕ ОСТАЛЬНЫЕ МЕТОДЫ ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ
+}
+```
+
+---
+
+## ЭТАП 5: Обновление ProductionUserManager для Context Support
+
+### 5.1 Обновление `packages/session-management/src/managers/production-user-manager.ts`
+
+**✅ ДОБАВИТЬ context в создание сессий:**
+
+```typescript
+// ✅ ВСЕ импорты остаются без изменений
+import { generateSessionId } from '@repo/exchange-core';
+import { SESSION_CONSTANTS } from '@repo/constants';
+
+import type {
+  User,
+  CreateUserData,
+  UserManagerInterface,
+  DatabaseAdapter,
+  SessionAdapter,
+  SessionMetadata,
+  SessionData,
+} from '../types/index.js';
+
+export class ProductionUserManager implements UserManagerInterface {
+  // ✅ КОНСТРУКТОР остается без изменений
+  constructor(
+    private db: DatabaseAdapter,
+    private sessions: SessionAdapter
+  ) {}
+
+  // ✅ ВСЕ СУЩЕСТВУЮЩИЕ МЕТОДЫ остаются БЕЗ ИЗМЕНЕНИЙ
+  async findByEmail(email: string): Promise<User | undefined> {
+    const user = await this.db.users.findByEmail(email);
+    return user || undefined;
+  }
+
+  async findById(id: string): Promise<User | undefined> {
+    const user = await this.db.users.findById(id);
+    return user || undefined;
+  }
+
+  // ✅ findBySessionId остается БЕЗ ИЗМЕНЕНИЙ - Redis adapter сам обрабатывает context
+  async findBySessionId(sessionId: string): Promise<User | undefined> {
+    // Существующая логика остается полностью идентичной
+    const sessionData = await this.sessions.get(sessionId);
+
+    if (sessionData && sessionData.expires_at > Date.now()) {
+      const user = await this.db.users.findById(sessionData.user_id);
+      return user || undefined;
+    }
+
+    if (sessionData) {
+      await this.sessions.delete(sessionId);
+    }
+
+    try {
+      const user = await this.db.users.findBySessionId?.(sessionId);
+      return user || undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  // ✅ ВСЕ ОСТАЛЬНЫЕ МЕТОДЫ остаются ИДЕНТИЧНЫМИ
+  async create(userData: CreateUserData): Promise<User> {
+    return await this.db.users.create(userData);
+  }
+
+  async update(id: string, updateData: Partial<User>): Promise<User | null> {
+    return await this.db.users.update(id, updateData);
+  }
+
+  // ✅ createSession остается БЕЗ ИЗМЕНЕНИЙ - Redis adapter обрабатывает context автоматически
+  async createSession(userId: string, metadata: SessionMetadata, ttl: number): Promise<string> {
+    const sessionId = generateSessionId();
+    const sessionData: SessionData = {
+      user_id: userId,
+      created_at: Date.now(),
+      expires_at: Date.now() + ttl * 1000,
+      ip: metadata.ip,
+      user_agent: metadata.userAgent,
+    };
+
+    await this.sessions.set(sessionId, sessionData, ttl);
+    return sessionId;
+  }
+
+  // ✅ deleteSession и extendSession остаются БЕЗ ИЗМЕНЕНИЙ
+  async deleteSession(sessionId: string): Promise<void> {
+    await this.sessions.delete(sessionId);
+  }
+
+  async extendSession(sessionId: string, ttl: number): Promise<void> {
+    await this.sessions.extend(sessionId, ttl);
+  }
+
+  // ✅ ВСЕ ОСТАЛЬНЫЕ МЕТОДЫ остаются идентичными
+  async getAll(): Promise<User[]> {
+    // Mock compatibility method
+    return [];
+  }
+
+  async count(): Promise<number> {
+    return 0;
+  }
+}
+```
 
 ```typescript
 // ✅ ДОБАВЛЯЕМ новый интерфейс, СОХРАНЯЕМ старый
@@ -537,207 +828,220 @@ model WebUserCache {
 
 ---
 
-## ЭТАП 6: Настройка Prisma клиентов и миграция данных
+## ЭТАП 6: Обновление приложений для использования Context
 
-### 6.1 Создание Prisma клиентов для новых БД
+### 6.1 Обновление `apps/web/src/server/trpc/context.ts`
 
-**✅ СОЗДАТЬ НОВЫЙ ФАЙЛ:** `packages/session-management/src/clients/index.ts`
+**✅ ИСПОЛЬЗОВАНИЕ CONTEXT-AWARE UserManagerFactory:**
 
 ```typescript
-// ✅ РАСШИРЯЕМ существующую систему новыми клиентами
-import { PrismaClient as IdentityClient } from '../generated/identity-client';
-import { PrismaClient as WebClient } from '../generated/web-client';
-import { PrismaClient as ExistingClient } from '@prisma/client'; // ✅ СОХРАНЯЕМ старый
+// ✅ ВСЕ импорты остаются без изменений
+import { UserManagerFactory } from '@repo/session-management';
+import { SESSION_CONSTANTS } from '@repo/constants';
 
-// ✅ НОВЫЕ клиенты для multi-database
-export const identityClient = new IdentityClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_IDENTITY_URL,
-    },
-  },
-});
+export const createContext = async (opts: CreateNextContextOptions) => {
+  // ✅ ВСЕ существующее остается без изменений
+  const { req, res } = opts;
+  const ip = req.ip || req.socket.remoteAddress || '0.0.0.0';
+  let user: User | null = null;
 
-export const webClient = new WebClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_WEB_URL,
-    },
-  },
-});
+  const sessionId = req.cookies.sessionId || req.headers.authorization?.replace('Bearer ', '');
 
-// ✅ СОХРАНЯЕМ старый клиент для backward compatibility
-export const legacyClient = new ExistingClient({
-  datasources: {
-    db: {
-      url: process.env.DATABASE_URL, // ✅ Старая переменная остается
-    },
-  },
-});
+  if (sessionId) {
+    try {
+      // ✅ ИЗМЕНЯЕМ ТОЛЬКО эту строку - добавляем context для web приложения
+      const userManager = await UserManagerFactory.createForContext(
+        SESSION_CONSTANTS.APPLICATION_CONTEXT.WEB
+      );
+      const foundUser = await userManager.findBySessionId(sessionId);
+      user = foundUser || null;
+    } catch (error) {
+      console.error('Session validation error:', error);
+    }
+  }
 
-// ✅ Типы для упрощения использования
-export type IdentityDatabase = typeof identityClient;
-export type WebDatabase = typeof webClient;
-export type LegacyDatabase = typeof legacyClient;
+  // ✅ ВСЕ остальное остается идентичным
+  const acceptLanguage = req.headers['accept-language'] || '';
+  const locale = getLocaleFromAcceptLanguage(acceptLanguage);
+  const getErrorMessage = createErrorMessageFunction(locale);
 
-// ✅ Unified interface для работы с разными БД
-export interface DatabaseClients {
-  identity: IdentityDatabase;
-  web: WebDatabase;
-  legacy?: LegacyDatabase; // ✅ Опциональный для backward compatibility
-}
+  return {
+    req,
+    res,
+    ip,
+    user,
+    sessionId,
+    locale,
+    getErrorMessage,
+  };
+};
 ```
 
-### 6.2 Обновление package.json с миграционными скриптами
+### 6.2 Обновление `apps/web/src/server/trpc/routers/auth.ts`
 
-**✅ ДОБАВИТЬ В:** `packages/session-management/package.json`
+**✅ ИСПОЛЬЗОВАНИЕ WEB CONTEXT:**
 
-```json
-{
-  "scripts": {
-    "db:generate:identity": "prisma generate --schema=./prisma/identity.prisma",
-    "db:generate:web": "prisma generate --schema=./prisma/web.prisma",
-    "db:push:identity": "prisma db push --schema=./prisma/identity.prisma",
-    "db:push:web": "prisma db push --schema=./prisma/web.prisma",
-    "db:setup:multi": "npm run db:generate:identity && npm run db:generate:web && npm run db:push:identity && npm run db:push:web"
+```typescript
+// ✅ ВСЕ импорты остаются без изменений
+// Только заменяем UserManagerFactory.create() на UserManagerFactory.createForWeb()
+
+// В register mutation:
+const webUserManager = await UserManagerFactory.createForWeb(); // ✅ БЫЛО: .create()
+
+// В login mutation:
+const webUserManager = await UserManagerFactory.createForWeb(); // ✅ БЫЛО: .create()
+
+// В logout mutation:
+const webUserManager = await UserManagerFactory.createForWeb(); // ✅ БЫЛО: .create()
+
+// ✅ ВСЕ ОСТАЛЬНОЕ остается ИДЕНТИЧНЫМ
+```
+
+### 6.3 Подготовка для admin-panel (будущее расширение)
+
+**✅ СОЗДАТЬ ФАЙЛ:** `apps/admin-panel/src/server/trpc/context.ts` (когда понадобится)
+
+```typescript
+// ✅ Аналогично web context, но с ADMIN контекстом
+export const createContext = async (opts: CreateNextContextOptions) => {
+  // ... существующая логика ...
+
+  if (sessionId) {
+    try {
+      // ✅ ADMIN контекст для изоляции админских сессий
+      const userManager = await UserManagerFactory.createForContext(
+        SESSION_CONSTANTS.APPLICATION_CONTEXT.ADMIN
+      );
+      const foundUser = await userManager.findBySessionId(sessionId);
+      user = foundUser || null;
+    } catch (error) {
+      console.error('Session validation error:', error);
+    }
   }
-}
+
+  // ... остальное идентично web context ...
+};
 ```
 
 ---
 
-## ЭТАП 7: Команды для применения миграции
+## ЭТАП 7: Применение Prisma миграции
 
-### 7.1 Подготовка окружения
-
-```powershell
-# ✅ Остановка существующих контейнеров
-docker-compose down -v
-
-# ✅ Запуск с новой конфигурацией
-docker-compose up -d postgres redis
-
-# ✅ Ожидание готовности БД
-Start-Sleep -Seconds 15
-
-# ✅ Проверка создания БД
-docker exec exchanger-postgres psql -U exchanger_user -d exchanger_identity -c "SELECT 1;"
-docker exec exchanger-postgres psql -U exchanger_user -d exchanger_web -c "SELECT 1;"
-```
-
-### 7.2 Генерация Prisma клиентов и применение схем
+### 7.1 Генерация и применение миграции
 
 ```powershell
 # ✅ Переход в session-management пакет
 cd packages/session-management
 
-# ✅ Генерация клиентов для новых БД
-npm run db:generate:identity
-npm run db:generate:web
+# ✅ Создание Prisma миграции для добавления applicationContext поля
+npx prisma migrate dev --name add-application-context
 
-# ✅ Применение схем к БД
-npm run db:push:identity
-npm run db:push:web
+# ✅ Генерация обновленного Prisma клиента
+npx prisma generate
 
-# ✅ Проверка генерации типов
+# ✅ Проверка компиляции TypeScript
 npx tsc --noEmit
 ```
 
-### 7.3 Тестирование web приложения
+### 7.2 Проверка работы
 
 ```powershell
 # ✅ Запуск web приложения
 cd ../../apps/web
 npm run dev
 
-# ✅ Открываем http://localhost:3000
-# ✅ Проверяем что аутентификация работает
-# ✅ Проверяем создание новых сессий
+# ✅ Проверка что аутентификация работает с новыми session ключами
+# Ожидаемые Redis ключи: session:web:abc123...
 
-# ✅ Проверяем в Redis новую структуру ключей
-docker exec exchanger-redis redis-cli KEYS "*identity:session:*"
+# ✅ Проверка в Redis новой структуры ключей
+docker exec exchanger-redis redis-cli KEYS "*session:web:*"
 ```
 
 ---
 
 ## 🔍 ПРОВЕРКА РЕЗУЛЬТАТА МИГРАЦИИ
 
-### Ожидаемые изменения:
+### ✅ Ожидаемые изменения:
 
-1. **✅ 2 База данных созданы**: `exchanger_identity`, `exchanger_web`
-2. **✅ Prisma клиенты работают**: Identity и Web клиенты генерируются без ошибок
-3. **✅ Новая структура Redis ключей**: `identity:session:web:sessionId` вместо `session:sessionId`
-4. **✅ UserManagerFactory поддерживает multi-database**: Автоматически выбирает архитектуру по переменным окружения
-5. **✅ Backward compatibility**: Приложение работает как с новой, так и со старой архитектурой
+1. **Session таблица**: добавлено поле `application_context` с default 'web'
+2. **Redis namespace**: новые ключи `session:web:sessionId` для web сессий
+3. **Backward compatibility**: старые сессии продолжают работать
+4. **UserManagerFactory**: поддерживает createForWeb() и createForAdmin()
+5. **Web приложение**: использует изолированные web сессии
 
-### Проверочные команды:
+### 🔍 Проверочные команды:
 
 ```powershell
-# ✅ Проверка структуры БД
-docker exec exchanger-postgres psql -U exchanger_user -l
+# ✅ Проверка структуры Sessions таблицы
+docker exec exchanger-postgres psql -U exchanger_user -d exchanger_db -c "\d sessions"
 
-# ✅ Проверка таблиц в Identity БД
-docker exec exchanger-postgres psql -U exchanger_user -d exchanger_identity -c "\dt"
-
-# ✅ Проверка таблиц в Web БД
-docker exec exchanger-postgres psql -U exchanger_user -d exchanger_web -c "\dt"
-
-# ✅ Проверка ключей в Redis
-docker exec exchanger-redis redis-cli KEYS "*"
+# ✅ Проверка новых ключей в Redis
+docker exec exchanger-redis redis-cli KEYS "*session:*"
 
 # ✅ Проверка работы TypeScript
 cd packages/session-management && npx tsc --noEmit
 cd ../../apps/web && npx tsc --noEmit
 ```
 
+### 🎯 Критерии успеха:
+
+- **Sessions таблица** содержит поле `application_context`
+- **Redis** содержит ключи формата `session:web:*`
+- **Web аутентификация** работает без ошибок
+- **TypeScript** компилируется без ошибок
+- **Backward compatibility** сохранена
+
 ---
 
 ## ⚠️ ВАЖНЫЕ ЗАМЕЧАНИЯ ПО МИГРАЦИИ
 
-### Безопасность данных:
+### 🔒 Безопасность данных:
 
-1. **📦 Обязательный бэкап**: Сделать дамп текущей БД перед миграцией
-2. **🔍 Тестирование на копии**: Сначала протестировать на dev/staging окружении
-3. **🚀 Поэтапное развертывание**: В production применять изменения поэтапно
+1. **📦 Обязательный бэкап**: Сделать дамп БД перед миграцией
+2. **🧪 Тестирование на копии**: Протестировать на dev окружении
+3. **� Постепенное развертывание**: Поэтапно в production
 
-### Мониторинг после миграции:
+### 📊 Мониторинг после миграции:
 
-1. **📊 Производительность**: Проверить время отклика аутентификации
-2. **🔐 Сессии**: Убедиться что сессии создаются и валидируются корректно
-3. **💾 Redis**: Мониторить использование памяти Redis
-4. **🗄️ Postgres**: Проверить нагрузку на новые БД
+1. **⚡ Производительность**: Время отклика аутентификации
+2. **🔐 Сессии**: Корректность создания/валидации
+3. **💾 Redis**: Использование памяти и новые patterns
+4. **🗄️ PostgreSQL**: Нагрузка и performance новых indexes
 
-### Rollback план:
+### 🔄 Rollback план:
 
-1. **🔄 Переменные окружения**: Удалить `DATABASE_IDENTITY_URL`, `DATABASE_WEB_URL`
-2. **🗂️ Fallback**: UserManagerFactory автоматически вернется к старой архитектуре
-3. **📦 Данные**: Восстановить из бэкапа при необходимости
+1. **⏪ Prisma**: Откат миграции `npx prisma migrate reset`
+2. **� Code**: Revert изменений в context.ts и auth.ts
+3. **� Data**: Восстановление из бэкапа при необходимости
 
 ---
 
 ## 📝 ИТОГОВЫЙ ПЛАН РЕАЛИЗАЦИИ
 
-**⏱️ Время выполнения**: ~1.5 часа
+**⏱️ Время выполнения**: ~45 минут
 
-### Этап 1 (30 мин): Подготовка инфраструктуры
+### 🚀 Этап 1 (15 мин): Обновление констант и адаптеров
 
-- Обновление констант и Redis адаптера
-- Настройка Docker для двух БД
+- Расширение SESSION_CONSTANTS с APPLICATION_CONTEXT
+- Обновление RedisSessionAdapter для context support
 
-### Этап 2 (45 мин): Настройка Prisma и схем
+### 🏗️ Этап 2 (15 мин): Обновление UserManagerFactory и Prisma
 
-- Создание схем для Identity и Web БД
-- Генерация клиентов и применение миграций
+- Добавление context параметров в Factory
+- Обновление Prisma схемы с applicationContext поле
 
-### Этап 3 (15 мин): Обновление Session Management
+### ✅ Этап 3 (15 мин): Применение изменений и тестирование
 
-- Расширение UserManagerFactory для multi-database
+- Prisma миграция и генерация клиента
+- Обновление web приложения для использования context
+- Проверка работоспособности
 
 ### 🎯 Результат:
 
-Working multi-database архитектура с:
+**Готовая multi-app session архитектура с:**
 
-- **Identity БД**: Централизованная аутентификация (users, sessions, permissions)
-- **Web БД**: Веб-специфичные данные сессий (web_sessions, web_user_cache)
-- **Redis namespace**: `identity:session:web:sessionId`
-- **Backward compatibility**: Плавный переход без поломки
+- **Session изоляция**: Web и Admin сессии разделены по context
+- **Redis namespace**: `session:web:*` и `session:admin:*` ключи
+- **Database context**: application_context поле в Sessions таблице
+- **Backward compatibility**: 100% совместимость с существующим кодом
+- **Готовность к расширению**: Легкое добавление telegram-bot и других приложений
