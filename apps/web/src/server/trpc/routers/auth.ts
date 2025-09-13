@@ -24,15 +24,10 @@ import {
 } from '../../../../../../packages/utils/src/validation/security-enhanced-schemas';
 
 import { createDelay } from '../../utils/delay';
+import { createSessionMetadata } from '../../utils/session-metadata';
 
 import { createTRPCRouter, publicProcedure } from '../init';
 import { rateLimitMiddleware } from '../middleware/rateLimit';
-
-// ✅ Helper function to safely get user agent
-function getUserAgent(headers: Record<string, string | string[] | undefined>): string | undefined {
-  const userAgent = headers['user-agent'];
-  return typeof userAgent === 'string' ? userAgent : undefined;
-}
 
 // ✅ Helper function to handle session cleanup
 async function handleSessionCleanup(
@@ -118,10 +113,7 @@ export const authRouter = createTRPCRouter({
       );
 
       // ✅ Создаем пользователя с корректной сессией
-      const sessionMetadata = {
-        ip: ctx.ip || '0.0.0.0', // Ensure ip is never undefined
-        userAgent: getUserAgent(ctx.req.headers),
-      };
+      const sessionMetadata = createSessionMetadata(ctx.ip, ctx.req.headers);
 
       const { user, sessionId: finalSessionId } = await createUserWithSession(
         webUserManager,
@@ -185,16 +177,13 @@ export const authRouter = createTRPCRouter({
 
       // ✅ Production session creation with metadata
       let finalSessionId = generateSessionId();
-      const _sessionMetadata = {
-        ip: ctx.ip || '0.0.0.0', // Ensure ip is never undefined
-        userAgent: getUserAgent(ctx.req.headers),
-      };
+      const sessionMetadata = createSessionMetadata(ctx.ip, ctx.req.headers);
 
       // Phase 4: Production session creation with metadata FIRST
       if (webUserManager instanceof ProductionUserManager) {
         finalSessionId = await webUserManager.createSession(
           user.id,
-          _sessionMetadata,
+          sessionMetadata,
           AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS
         );
       }
@@ -334,10 +323,7 @@ export const authRouter = createTRPCRouter({
 
       // ✅ Production session creation with metadata after password reset
       let finalSessionId = generateSessionId();
-      const _sessionMetadata = {
-        ip: ctx.ip || '0.0.0.0', // Ensure ip is never undefined
-        userAgent: getUserAgent(ctx.req.headers),
-      };
+      const sessionMetadata = createSessionMetadata(ctx.ip, ctx.req.headers);
 
       // Обновляем пользователя (без sessionId в новой архитектуре)
       await webUserManager.update(user.id, {
@@ -348,7 +334,7 @@ export const authRouter = createTRPCRouter({
       if (webUserManager instanceof ProductionUserManager) {
         finalSessionId = await webUserManager.createSession(
           user.id,
-          _sessionMetadata,
+          sessionMetadata,
           AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS
         );
       }
