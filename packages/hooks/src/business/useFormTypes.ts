@@ -1,4 +1,3 @@
-// DEPRECATED: используйте useFormWithNextIntl для новых компонентов
 import { z } from 'zod';
 
 // Form field interface
@@ -18,7 +17,6 @@ export interface UseFormOptions<T> {
   onSubmit?: (values: T) => void | Promise<void>;
   validateOnBlur?: boolean;
   locale?: string; // Добавляем поддержку локализации
-  captchaMessages?: Record<string, string>; // Deprecated: используйте useFormWithNextIntl
 }
 
 // Form hook return type

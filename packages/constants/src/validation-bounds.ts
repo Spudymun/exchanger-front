@@ -20,8 +20,4 @@ export const VALIDATION_BOUNDS = {
   // ✅ Используйте AMOUNT_LIMITS в exchange.ts + getCurrencyLimits()
 } as const;
 
-// Derived constants для обратной совместимости
-// ❌ DEPRECATED: Используйте getCurrencyLimits() для per-currency validation
-// export const MAX_CRYPTO_AMOUNT = VALIDATION_BOUNDS.MAX_ORDER_AMOUNT;
-
 export type ValidationBounds = typeof VALIDATION_BOUNDS;
