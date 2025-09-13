@@ -79,7 +79,7 @@ export class PostgreSQLUserAdapter implements UserRepository {
         where: { userId: user.id },
       });
 
-      return this.mapPrismaToUserWithRoles(user as PrismaUser, appRoles);
+      return this.mapPrismaToUser(user as PrismaUser, appRoles);
     } catch {
       // Database errors in read operations return null for graceful degradation
       return null;
@@ -98,7 +98,7 @@ export class PostgreSQLUserAdapter implements UserRepository {
         where: { userId: user.id },
       });
 
-      return this.mapPrismaToUserWithRoles(user as PrismaUser, appRoles);
+      return this.mapPrismaToUser(user as PrismaUser, appRoles);
     } catch {
       return null;
     }
@@ -126,7 +126,7 @@ export class PostgreSQLUserAdapter implements UserRepository {
         where: { userId: user.id },
       });
 
-      return this.mapPrismaToUserWithRoles(user as PrismaUser, appRoles);
+      return this.mapPrismaToUser(user as PrismaUser, appRoles);
     } catch (error) {
       throw new Error(
         `Failed to create user: ${error instanceof Error ? error.message : 'Unknown error'}`
@@ -159,29 +159,21 @@ export class PostgreSQLUserAdapter implements UserRepository {
         where: { userId: user.id },
       });
 
-      return this.mapPrismaToUserWithRoles(user as PrismaUser, appRoles);
+      return this.mapPrismaToUser(user as PrismaUser, appRoles);
     } catch {
       return null;
     }
   }
 
-  private mapPrismaToUser(prismaUser: PrismaUser): User {
-    return {
-      id: prismaUser.id,
-      email: prismaUser.email,
-      hashedPassword: prismaUser.hashedPassword ?? undefined,
-      isVerified: prismaUser.isVerified,
-      createdAt: prismaUser.createdAt,
-      lastLoginAt: prismaUser.lastLoginAt ?? undefined,
-    };
-  }
-
   /**
-   * ✅ НОВЫЙ метод для поддержки appRoles
+   * Преобразует Prisma User объект в проектный User объект
+   * @param prismaUser - пользователь из Prisma
+   * @param appRoles - опциональные роли приложений
+   * @returns User объект с базовыми данными и опциональными ролями
    */
-  private mapPrismaToUserWithRoles(
+  private mapPrismaToUser(
     prismaUser: PrismaUser,
-    appRoles: Array<{
+    appRoles?: Array<{
       id: string;
       userId: string;
       applicationContext: keyof typeof PRISMA_TO_PROJECT_APP_CONTEXT_MAP;
@@ -189,7 +181,19 @@ export class PostgreSQLUserAdapter implements UserRepository {
       createdAt: Date;
     }>
   ): User {
-    const baseUser = this.mapPrismaToUser(prismaUser);
+    const baseUser = {
+      id: prismaUser.id,
+      email: prismaUser.email,
+      hashedPassword: prismaUser.hashedPassword ?? undefined,
+      isVerified: prismaUser.isVerified,
+      createdAt: prismaUser.createdAt,
+      lastLoginAt: prismaUser.lastLoginAt ?? undefined,
+    };
+
+    // Если роли не переданы, возвращаем базового пользователя
+    if (!appRoles) {
+      return baseUser;
+    }
 
     // Преобразуем appRoles в нужный формат
     const mappedAppRoles = appRoles.map(appRole => ({
