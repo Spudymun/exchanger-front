@@ -6,6 +6,7 @@ export * from './trpc-errors';
 export * from './order-status';
 export * from './card-utils';
 export * from './logger';
+export * from './context-mappers';
 
 // Core validation functionality
 export * from './validation/core';

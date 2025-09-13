@@ -1,5 +1,6 @@
 import type { ApplicationContext } from '@repo/constants';
 import { generateSessionId } from '@repo/exchange-core';
+import { mapApplicationContextToPrisma } from '@repo/utils';
 
 import type {
   User,
@@ -50,7 +51,7 @@ export class ProductionUserManager implements UserManagerInterface {
     }
 
     // Проверяем application context
-    const prismaApplicationContext = this.applicationContext === 'web' ? 'WEB' : 'ADMIN';
+    const prismaApplicationContext = mapApplicationContextToPrisma(this.applicationContext);
     if (session.applicationContext !== prismaApplicationContext) {
       return undefined;
     }
@@ -134,7 +135,7 @@ export class ProductionUserManager implements UserManagerInterface {
     // 2. ДУБЛИРУЕМ в PostgreSQL Session таблице (надежность)
     try {
       // ✅ ИСПРАВЛЕНО: Преобразуем ApplicationContext в Prisma enum
-      const prismaApplicationContext = this.applicationContext === 'web' ? 'WEB' : 'ADMIN';
+      const prismaApplicationContext = mapApplicationContextToPrisma(this.applicationContext);
 
       await this.db.sessions?.create({
         id: sessionId,

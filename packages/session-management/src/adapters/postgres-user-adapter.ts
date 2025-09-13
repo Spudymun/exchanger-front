@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { PRISMA_TO_PROJECT_ROLE_MAP, PRISMA_TO_PROJECT_APP_CONTEXT_MAP } from '@repo/constants';
+import { mapApplicationContextToPrisma } from '@repo/utils';
 
 import type { User, CreateUserData } from '../types/index.js';
 
@@ -201,7 +202,7 @@ export class PostgreSQLUserAdapter implements UserRepository {
       await this.prisma.userAppRole.create({
         data: {
           userId,
-          applicationContext: applicationContext === 'web' ? 'WEB' : 'ADMIN',
+          applicationContext: mapApplicationContextToPrisma(applicationContext),
           role: role.toUpperCase() as 'USER' | 'ADMIN' | 'OPERATOR' | 'SUPPORT',
         },
       });
