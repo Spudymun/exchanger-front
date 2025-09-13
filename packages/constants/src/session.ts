@@ -13,11 +13,9 @@ export const SESSION_CONSTANTS = {
   } as const,
 
   REDIS: {
-    SESSION_PREFIX: 'session:',
     // ✅ TTL moved to AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS in validation.ts (avoid duplication)
     MAX_RETRIES: 3,
-    // ✅ НОВЫЕ prefixes для multi-app namespace
-    APP_SESSION_PREFIX: 'session:',
+    // ✅ Direct prefixes for multi-app namespace
     WEB_SESSION_PREFIX: 'session:web:',
     ADMIN_SESSION_PREFIX: 'session:admin:',
   } as const,

@@ -4,20 +4,20 @@ import { Redis } from 'ioredis';
 import type { SessionAdapter, SessionData } from '../types/index.js';
 
 export class RedisSessionAdapter implements SessionAdapter {
-  // ✅ РАСШИРЯЕМ конструктор - добавляем опциональный context
+  // ✅ Context теперь обязательный - session prefixes всегда контекстные
   constructor(
     private redis: Redis,
-    private context?: ApplicationContext // ✅ ОПЦИОНАЛЬНЫЙ для backward compatibility
+    private context: ApplicationContext
   ) {}
 
-  // ✅ НОВЫЙ метод для генерации context-aware ключей
+  // ✅ Context-aware key generation
   private generateSessionKey(sessionId: string): string {
-    if (this.context) {
-      // Новая схема: session:web:abc123 или session:admin:abc123
-      return `${SESSION_CONSTANTS.REDIS.APP_SESSION_PREFIX}${this.context}:${sessionId}`;
-    }
-    // ✅ FALLBACK на старую схему для backward compatibility
-    return `${SESSION_CONSTANTS.REDIS.SESSION_PREFIX}${sessionId}`;
+    // Новая схема: всегда используем контекстные префиксы
+    const contextPrefix =
+      this.context === 'web'
+        ? SESSION_CONSTANTS.REDIS.WEB_SESSION_PREFIX
+        : SESSION_CONSTANTS.REDIS.ADMIN_SESSION_PREFIX;
+    return `${contextPrefix}${sessionId}`;
   }
 
   async get(sessionId: string): Promise<SessionData | null> {

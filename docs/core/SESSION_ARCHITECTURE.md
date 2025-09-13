@@ -205,10 +205,11 @@ class RedisSessionAdapter implements SessionAdapter {
 
   // Context-aware key generation: session:web:abc123 or session:admin:xyz789
   private generateSessionKey(sessionId: string): string {
-    if (this.context) {
-      return `${SESSION_CONSTANTS.REDIS.APP_SESSION_PREFIX}${this.context}:${sessionId}`;
-    }
-    return `${SESSION_CONSTANTS.REDIS.SESSION_PREFIX}${sessionId}`; // Backward compatibility
+    const contextPrefix =
+      this.context === 'web'
+        ? SESSION_CONSTANTS.REDIS.WEB_SESSION_PREFIX
+        : SESSION_CONSTANTS.REDIS.ADMIN_SESSION_PREFIX;
+    return `${contextPrefix}${sessionId}`;
   }
 
   async get(sessionId: string): Promise<SessionData | null>;
@@ -852,8 +853,6 @@ SESSION_CONSTANTS.APPLICATION_CONTEXT = {
 
 // Redis configuration with multi-app support
 SESSION_CONSTANTS.REDIS = {
-  SESSION_PREFIX: 'session:', // Legacy prefix
-  APP_SESSION_PREFIX: 'session:', // Base prefix for new keys
   WEB_SESSION_PREFIX: 'session:web:', // Web application sessions
   ADMIN_SESSION_PREFIX: 'session:admin:', // Admin panel sessions
   MAX_RETRIES: 3,

@@ -5,6 +5,7 @@ import { PostgreSQLSessionAdapter } from '../adapters/postgres-session-adapter';
 import { PostgreSQLUserAdapter } from '../adapters/postgres-user-adapter';
 import { RedisSessionAdapter } from '../adapters/redis-session-adapter';
 import { ProductionUserManager } from '../managers/production-user-manager';
+import type { RedisConfiguration } from '../types/config';
 
 // 🔧 Constants to avoid duplication and magic numbers
 const DEBUG_CONSTANTS = {
@@ -234,8 +235,11 @@ export class UserManagerFactory {
     }
 
     const databaseAdapter = await this.createDatabaseAdapter(config.database);
-    // ✅ ПЕРЕДАЕМ context в createSessionAdapter
-    const sessionAdapter = await this.createSessionAdapter(config.redis, config.context);
+    // ✅ ПЕРЕДАЕМ context в createSessionAdapter с fallback
+    const sessionAdapter = await this.createSessionAdapter(
+      config.redis,
+      config.context || SESSION_CONSTANTS.APPLICATION_CONTEXT.WEB
+    );
 
     // ✅ ПЕРЕДАЕМ applicationContext в ProductionUserManager
     return new ProductionUserManager(
@@ -263,10 +267,10 @@ export class UserManagerFactory {
     };
   }
 
-  // ✅ ОБНОВЛЯЕМ createSessionAdapter для передачи context
+  // ✅ Context теперь обязательный параметр
   private static async createSessionAdapter(
-    redisConfig: NonNullable<ManagerConfiguration['redis']>,
-    context?: ApplicationContext // ✅ ДОБАВЛЯЕМ context параметр
+    redisConfig: RedisConfiguration,
+    context: ApplicationContext
   ): Promise<SessionAdapter> {
     const { Redis } = await import('ioredis');
     const redis = new Redis(redisConfig.url, {
