@@ -14,8 +14,6 @@ export { UserManagerFactory } from './factories/user-manager-factory';
 // Note: Primary creation should still use UserManagerFactory.create() for proper configuration
 export { ProductionUserManager } from './managers/production-user-manager';
 
-export { SESSION_CONSTANTS } from '@repo/constants';
-
 // ✅ Environment helpers
 export { getEnvironment } from './utils/environment';
 
