@@ -7,7 +7,6 @@ import { PostgreSQLUserAdapter } from '../adapters/postgres-user-adapter';
 import { RedisSessionAdapter } from '../adapters/redis-session-adapter';
 import { ProductionUserManager } from '../managers/production-user-manager';
 import type { RedisConfiguration } from '../types/config';
-
 import type {
   UserManagerInterface,
   ManagerEnvironment,
@@ -17,22 +16,8 @@ import type {
   CreateUserData,
   SessionMetadata,
 } from '../types/index';
+import { getEnvironment } from '../utils/environment';
 import { getPrismaClient, type PrismaClientConfig } from '../utils/prisma-singleton';
-
-// ✅ Используем реальный паттерн environment detection из проекта
-function getEnvironment(): ManagerEnvironment {
-  const nodeEnv = process.env.NODE_ENV;
-
-  // Fallback на NODE_ENV (убрал SESSION_ENVIRONMENT для простоты)
-  switch (nodeEnv) {
-    case 'production':
-      return SESSION_CONSTANTS.ENVIRONMENTS.PRODUCTION;
-    case 'development':
-      return SESSION_CONSTANTS.ENVIRONMENTS.DEVELOPMENT;
-    default:
-      return SESSION_CONSTANTS.ENVIRONMENTS.MOCK;
-  }
-}
 
 export interface ManagerConfiguration {
   environment?: ManagerEnvironment;
