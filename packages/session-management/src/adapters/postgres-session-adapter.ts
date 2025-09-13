@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { gracefulHandler } from '@repo/utils';
 
 import type { SessionData } from '../types/index.js';
 
@@ -71,12 +72,10 @@ export class PostgreSQLSessionAdapter {
   }
 
   async delete(sessionId: string): Promise<void> {
-    try {
+    await gracefulHandler(async () => {
       await this.prisma.session.delete({
         where: { id: sessionId },
       });
-    } catch {
-      // Graceful degradation - session might not exist
-    }
+    });
   }
 }

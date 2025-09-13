@@ -7,6 +7,7 @@ export * from './order-status';
 export * from './card-utils';
 export * from './logger';
 export * from './context-mappers';
+export * from './graceful-handler';
 
 // Core validation functionality
 export * from './validation/core';

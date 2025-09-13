@@ -1,4 +1,5 @@
 import { SESSION_CONSTANTS, type ApplicationContext } from '@repo/constants';
+import { gracefulHandler } from '@repo/utils';
 import { Redis } from 'ioredis';
 
 import type { SessionAdapter, SessionData } from '../types/index.js';
@@ -21,7 +22,7 @@ export class RedisSessionAdapter implements SessionAdapter {
   }
 
   async get(sessionId: string): Promise<SessionData | null> {
-    try {
+    return gracefulHandler(async () => {
       const key = this.generateSessionKey(sessionId);
       const data = await this.redis.get(key);
 
@@ -36,10 +37,7 @@ export class RedisSessionAdapter implements SessionAdapter {
       }
 
       return parsed;
-    } catch {
-      // Redis get errors are non-critical - return null for graceful degradation
-      return null;
-    }
+    });
   }
 
   async set(sessionId: string, data: SessionData, ttl: number): Promise<void> {
@@ -54,20 +52,16 @@ export class RedisSessionAdapter implements SessionAdapter {
   }
 
   async delete(sessionId: string): Promise<void> {
-    try {
+    await gracefulHandler(async () => {
       const key = this.generateSessionKey(sessionId);
       await this.redis.del(key);
-    } catch {
-      // Delete errors are non-critical - session will expire naturally
-    }
+    });
   }
 
   async extend(sessionId: string, ttl: number): Promise<void> {
-    try {
+    await gracefulHandler(async () => {
       const key = this.generateSessionKey(sessionId);
       await this.redis.expire(key, ttl);
-    } catch {
-      // Extension errors are non-critical - session will work with original TTL
-    }
+    });
   }
 }

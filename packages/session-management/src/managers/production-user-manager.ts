@@ -1,6 +1,6 @@
 import type { ApplicationContext } from '@repo/constants';
 import { generateSessionId } from '@repo/exchange-core';
-import { mapApplicationContextToPrisma } from '@repo/utils';
+import { mapApplicationContextToPrisma, gracefulHandler } from '@repo/utils';
 
 import type {
   User,
@@ -76,7 +76,7 @@ export class ProductionUserManager implements UserManagerInterface {
       userAgent?: string;
     }
   ): Promise<void> {
-    try {
+    await gracefulHandler(async () => {
       const restoredSessionData: SessionData = {
         user_id: session.userId,
         created_at: session.data?.created_at || Date.now(),
@@ -89,9 +89,7 @@ export class ProductionUserManager implements UserManagerInterface {
       if (ttlSeconds > 0) {
         await this.sessions.set(sessionId, restoredSessionData, ttlSeconds);
       }
-    } catch {
-      // Graceful degradation - пользователь все равно найден
-    }
+    });
   }
 
   async create(userData: CreateUserData): Promise<User> {
@@ -99,16 +97,13 @@ export class ProductionUserManager implements UserManagerInterface {
 
     // ✅ НОВОЕ: Создаем роль для приложения при регистрации
     if (this.db.users.createAppRole) {
-      try {
-        await this.db.users.createAppRole(
+      await gracefulHandler(async () => {
+        await this.db.users.createAppRole?.(
           user.id,
           this.applicationContext,
           'user' // Дефолтная роль для новых пользователей
         );
-      } catch {
-        // Graceful degradation - пользователь создан, роль можно добавить позже
-        // Silent failure для избежания нарушения Rule 15 (no console usage)
-      }
+      });
     }
 
     return user;
@@ -133,7 +128,7 @@ export class ProductionUserManager implements UserManagerInterface {
     await this.sessions.set(sessionId, sessionData, ttl);
 
     // 2. ДУБЛИРУЕМ в PostgreSQL Session таблице (надежность)
-    try {
+    await gracefulHandler(async () => {
       // ✅ ИСПРАВЛЕНО: Преобразуем ApplicationContext в Prisma enum
       const prismaApplicationContext = mapApplicationContextToPrisma(this.applicationContext);
 
@@ -146,9 +141,7 @@ export class ProductionUserManager implements UserManagerInterface {
         userAgent: metadata.userAgent,
         applicationContext: prismaApplicationContext,
       });
-    } catch {
-      // Graceful degradation - Redis сессия уже создана
-    }
+    });
 
     return sessionId;
   }
@@ -158,11 +151,9 @@ export class ProductionUserManager implements UserManagerInterface {
     await this.sessions.delete(sessionId);
 
     // Удаляем из PostgreSQL Session таблицы
-    try {
+    await gracefulHandler(async () => {
       await this.db.sessions?.delete(sessionId);
-    } catch {
-      // Graceful degradation
-    }
+    });
   }
 
   async extendSession(sessionId: string, ttl: number): Promise<void> {
