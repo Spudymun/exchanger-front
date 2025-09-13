@@ -5,6 +5,7 @@ export * from './ui';
 export * from './validation';
 export * from './user';
 export * from './session';
+export * from './prisma-mapping';
 
 // ExchangeGO specific exports
 export * from './exchange';

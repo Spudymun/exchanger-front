@@ -1,21 +1,7 @@
 import { PrismaClient } from '@prisma/client';
+import { PRISMA_TO_PROJECT_ROLE_MAP, PRISMA_TO_PROJECT_APP_CONTEXT_MAP } from '@repo/constants';
 
 import type { User, CreateUserData } from '../types/index.js';
-
-/**
- * ✅ Mapping для обратной совместимости при миграции данных
- */
-const PRISMA_TO_PROJECT_ROLE_MAP = {
-  USER: 'user' as const,
-  ADMIN: 'admin' as const,
-  OPERATOR: 'operator' as const,
-  SUPPORT: 'support' as const,
-} as const;
-
-const PRISMA_TO_PROJECT_APP_CONTEXT_MAP = {
-  WEB: 'web' as const,
-  ADMIN: 'admin' as const,
-} as const;
 
 /**
  * Prisma user object with appRoles relation
