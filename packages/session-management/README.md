@@ -1,30 +1,122 @@
 # Session Management Package
 
-Production-ready session management with Redis/PostgreSQL adapters.
+Production-ready session management system with dual Redis/PostgreSQL storage and factory pattern for scalable user management.
 
-## Recent Changes (Rule 20 Compliance)
+## Quick Start
 
-### Removed Duplications:
+### Database Commands
 
-- **TTL Constants**: Use `AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS` from `@repo/constants/validation` instead of `SESSION_CONSTANTS.REDIS.DEFAULT_TTL`
-- **CreateUserData Type**: Single definition in `./src/types/index.ts` (was duplicated in interfaces.ts)
-- **Dependencies**: Fixed syntax from `workspace:*` to `"*"` (project standard)
+Run these commands from the **root** of the monorepo:
 
-## Usage
+```bash
+# Reset specific application data
+npm run db:reset:web      # Reset only web app users/sessions
+npm run db:reset:admin    # Reset only admin app users/sessions
+npm run db:reset:all      # Full database reset (all apps)
+
+# Database management
+npm run db:studio         # Open Prisma Studio
+npm run db:generate       # Generate Prisma client
+npm run db:push          # Push schema to database
+npm run db:migrate       # Run database migrations
+```
+
+### Basic Usage
 
 ```typescript
-import { UserManagerFactory, SESSION_CONSTANTS } from '@repo/session-management';
-import { AUTH_CONSTANTS } from '@repo/constants';
+import { UserManagerFactory } from '@repo/session-management';
 
-// ✅ Use AUTH_CONSTANTS for TTL
-const ttl = AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS;
+// Create user manager for current environment
+const userManager = await UserManagerFactory.create();
 
-// ✅ Factory pattern for environment-based managers
-const userManager = UserManagerFactory.create(environment);
+// Create user with session
+const user = await userManager.create({
+  email: 'user@example.com',
+  name: 'John Doe',
+});
+
+// Create session
+const sessionId = await userManager.createSession(
+  user.id,
+  {
+    ip: '127.0.0.1',
+    userAgent: 'Mozilla/5.0...',
+  },
+  3600
+); // TTL in seconds
 ```
 
 ## Architecture
 
-- **Factory Pattern**: Environment-based user manager creation
-- **Async Wrapper**: Smooth transition from sync to async managers
-- **Centralized Constants**: No duplication across packages
+### Dual Storage System
+
+- **Redis**: Primary session storage (fast access)
+- **PostgreSQL**: Fallback storage (reliability)
+
+### Factory Pattern
+
+- **Environment Detection**: Automatically selects appropriate manager
+- **Mock/Production**: Seamless switching for testing
+- **Type Safety**: Full TypeScript support
+
+### Clean Type System
+
+```typescript
+// All types available from single import
+import type {
+  SessionData,
+  SessionMetadata,
+  UserManagerInterface,
+  CreateUserData,
+  ManagerEnvironment,
+} from '@repo/session-management';
+```
+
+## Package Structure
+
+```
+src/
+├── types/           # TypeScript definitions
+│   ├── index.ts     # Re-exports (single entry point)
+│   ├── interfaces.ts # Interface definitions
+│   ├── types.ts     # Type aliases
+│   └── config.ts    # Configuration types
+├── factories/       # Factory pattern implementation
+├── managers/        # User managers (mock/production)
+├── adapters/        # Database & Redis adapters
+└── utils/          # Utilities & helpers
+
+scripts/
+└── reset/          # Database reset scripts
+    ├── web-reset.sql    # Web app reset
+    ├── admin-reset.sql  # Admin app reset
+    └── full-reset.sql   # Complete reset
+```
+
+## Environment Variables
+
+Ensure your `.env` file contains:
+
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/database?schema=public"
+REDIS_URL="redis://localhost:6379"
+```
+
+## Testing
+
+```bash
+# Run tests for this package
+npm test -- --filter=session-management
+
+# Run with coverage
+npm run test:coverage -- --filter=session-management
+```
+
+## Development
+
+This package follows the monorepo architecture with:
+
+- ✅ **No type duplication** (Rule 20 compliance)
+- ✅ **Clean imports** from single entry point
+- ✅ **Environment-based configuration**
+- ✅ **TypeScript strict mode**

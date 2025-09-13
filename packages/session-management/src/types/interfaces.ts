@@ -1,7 +1,7 @@
 import type { User } from '@repo/exchange-core';
 
-// ✅ CreateUserData defined in ./index.ts (avoid duplication - Rule 20)
-import type { CreateUserData } from './index.js';
+// ✅ CreateUserData defined in ./types.ts (avoid duplication - Rule 20)
+import type { CreateUserData } from './types.js';
 
 // Re-export User type for convenience
 export type { User, CreateUserData };
@@ -35,6 +35,11 @@ export interface DatabaseAdapter {
     findBySessionId?(sessionId: string): Promise<User | null>;
     create(userData: CreateUserData): Promise<User>;
     update(id: string, data: Partial<User>): Promise<User | null>;
+    createAppRole?(
+      userId: string,
+      applicationContext: 'web' | 'admin',
+      role: 'user' | 'admin' | 'operator' | 'support'
+    ): Promise<void>;
   };
   sessions?: {
     create(sessionData: {
@@ -51,6 +56,11 @@ export interface DatabaseAdapter {
       userId: string;
       data: SessionData;
       expiresAt: Date;
+      applicationContext?: string;
+      revoked?: boolean;
+      revokedAt?: Date;
+      ipAddress?: string;
+      userAgent?: string;
     } | null>;
     delete(sessionId: string): Promise<void>;
   };
