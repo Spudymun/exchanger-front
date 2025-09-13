@@ -1,12 +1,6 @@
 // ✅ Main exports for session management package
-export type { UserManagerInterface, SessionMetadata, User } from './types/interfaces';
-
-export type {
-  DatabaseConfiguration,
-  RedisConfiguration,
-  ManagerConfiguration,
-  ManagerEnvironment,
-} from './types/config';
+// Export all types through centralized types/index.ts (Rule 20 compliance)
+export type * from './types';
 
 export { UserManagerFactory } from './factories/user-manager-factory';
 
