@@ -5,17 +5,16 @@ import { mapApplicationContextToPrisma } from '@repo/utils';
 import type { User, CreateUserData } from '../types/index.js';
 
 /**
- * Prisma user object with appRoles relation
+ * ✅ Clean Prisma user object with appRoles relation (deprecated fields removed)
+ * Reserved for future advanced queries with joins
  */
 interface _PrismaUserWithRoles {
   id: string;
   email: string;
   hashedPassword: string | null;
   isVerified: boolean;
-  role: keyof typeof PRISMA_TO_PROJECT_ROLE_MAP; // ⚠️ DEPRECATED
   createdAt: Date;
   lastLoginAt: Date | null;
-  sessionId?: string | null; // ⚠️ DEPRECATED
   appRoles?: Array<{
     id: string;
     userId: string;
@@ -26,7 +25,7 @@ interface _PrismaUserWithRoles {
 }
 
 /**
- * ✅ Updated interface for new clean architecture
+ * ✅ Simple interface for basic user operations
  */
 interface PrismaUser {
   id: string;
