@@ -104,13 +104,6 @@ export class PostgreSQLUserAdapter implements UserRepository {
     }
   }
 
-  // ✅ УДАЛЕН: findBySessionId больше не поддерживается
-  // В новой архитектуре сессии управляются через Redis/session store
-  async findBySessionId(_sessionId: string): Promise<User | null> {
-    // Метод удален из новой архитектуры, используйте session store
-    return null;
-  }
-
   async create(userData: CreateUserData): Promise<User> {
     try {
       const user = await this.prisma.user.create({
