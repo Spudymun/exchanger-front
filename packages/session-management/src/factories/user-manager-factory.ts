@@ -1,5 +1,6 @@
 import { SESSION_CONSTANTS, type ApplicationContext } from '@repo/constants';
 import { userManager as mockUserManager } from '@repo/exchange-core';
+import { createEnvironmentLogger } from '@repo/utils';
 
 import { PostgreSQLSessionAdapter } from '../adapters/postgres-session-adapter';
 import { PostgreSQLUserAdapter } from '../adapters/postgres-user-adapter';
@@ -7,16 +8,6 @@ import { RedisSessionAdapter } from '../adapters/redis-session-adapter';
 import { ProductionUserManager } from '../managers/production-user-manager';
 import type { RedisConfiguration } from '../types/config';
 
-// 🔧 Constants to avoid duplication and magic numbers
-const DEBUG_CONSTANTS = {
-  ENV_VAR_SET: 'установлен',
-  ENV_VAR_NOT_SET: 'не установлен',
-  ENV_VAR_MISSING: 'отсутствует',
-  CONFIG_PRESENT: 'есть в config',
-  CONFIG_MISSING: 'нет в config',
-  DATABASE_URL_LENGTH: 30,
-  REDIS_URL_LENGTH: 20,
-} as const;
 import type {
   UserManagerInterface,
   ManagerEnvironment,
@@ -64,6 +55,7 @@ export class UserManagerFactory {
   // ✅ Singleton instance для production optimization
   private static cachedUserManager: UserManagerInterface | null = null;
   private static cachedConfig: string | null = null;
+  private static logger = createEnvironmentLogger('UserManagerFactory');
 
   static async create(config: ManagerConfiguration = {}): Promise<UserManagerInterface> {
     // ✅ Production optimization: use cached instance if config matches
@@ -84,47 +76,28 @@ export class UserManagerFactory {
   }
 
   /**
-   * 🔍 Debug logging helper to reduce complexity
+   * 🔍 Debug logging helper using structured logging
    */
   private static logEnvironmentDebug(
     environment: ManagerEnvironment,
     config: ManagerConfiguration
   ): void {
-    if (process.env.NODE_ENV !== 'production') {
-      // eslint-disable-next-line no-console
-      console.log('🔍 UserManagerFactory DEBUG:', {
-        NODE_ENV: process.env.NODE_ENV,
-        detected_environment: environment,
-        DATABASE_URL: process.env.DATABASE_URL
-          ? DEBUG_CONSTANTS.ENV_VAR_SET
-          : DEBUG_CONSTANTS.ENV_VAR_NOT_SET,
-        DATABASE_URL_value: this.formatEnvValue(
-          process.env.DATABASE_URL,
-          DEBUG_CONSTANTS.DATABASE_URL_LENGTH
-        ),
-        REDIS_URL: process.env.REDIS_URL
-          ? DEBUG_CONSTANTS.ENV_VAR_SET
-          : DEBUG_CONSTANTS.ENV_VAR_NOT_SET,
-        REDIS_URL_value: this.formatEnvValue(
-          process.env.REDIS_URL,
-          DEBUG_CONSTANTS.REDIS_URL_LENGTH
-        ),
-        FORCE_MOCK_MODE: process.env.FORCE_MOCK_MODE || DEBUG_CONSTANTS.ENV_VAR_NOT_SET,
-        config_database: config.database?.url
-          ? DEBUG_CONSTANTS.CONFIG_PRESENT
-          : DEBUG_CONSTANTS.CONFIG_MISSING,
-        config_redis: config.redis?.url
-          ? DEBUG_CONSTANTS.CONFIG_PRESENT
-          : DEBUG_CONSTANTS.CONFIG_MISSING,
-      });
-    }
-  }
+    const DATABASE_URL_PREVIEW_LENGTH = 30;
+    const REDIS_URL_PREVIEW_LENGTH = 20;
 
-  /**
-   * 🔧 Helper to format environment variable values
-   */
-  private static formatEnvValue(value: string | undefined, maxLength: number): string {
-    return value ? value.substring(0, maxLength) + '...' : DEBUG_CONSTANTS.ENV_VAR_MISSING;
+    this.logger.environmentInfo({
+      NODE_ENV: process.env.NODE_ENV || 'undefined',
+      detected_environment: environment,
+      DATABASE_URL_set: Boolean(process.env.DATABASE_URL),
+      DATABASE_URL_preview:
+        process.env.DATABASE_URL?.substring(0, DATABASE_URL_PREVIEW_LENGTH) + '...' || 'missing',
+      REDIS_URL_set: Boolean(process.env.REDIS_URL),
+      REDIS_URL_preview:
+        process.env.REDIS_URL?.substring(0, REDIS_URL_PREVIEW_LENGTH) + '...' || 'missing',
+      FORCE_MOCK_MODE: process.env.FORCE_MOCK_MODE || 'not_set',
+      config_database_provided: Boolean(config.database?.url),
+      config_redis_provided: Boolean(config.redis?.url),
+    });
   }
 
   private static async createManagerByEnvironment(
@@ -182,9 +155,9 @@ export class UserManagerFactory {
       redisUrl,
       hasValidUrls: Boolean(databaseUrl && redisUrl),
       debugInfo: {
-        databaseUrl: databaseUrl ? DEBUG_CONSTANTS.ENV_VAR_SET : DEBUG_CONSTANTS.ENV_VAR_NOT_SET,
-        redisUrl: redisUrl ? DEBUG_CONSTANTS.ENV_VAR_SET : DEBUG_CONSTANTS.ENV_VAR_NOT_SET,
-        forceMock: process.env.FORCE_MOCK_MODE || DEBUG_CONSTANTS.ENV_VAR_NOT_SET,
+        databaseUrl: Boolean(databaseUrl),
+        redisUrl: Boolean(redisUrl),
+        forceMock: process.env.FORCE_MOCK_MODE || 'not_set',
       },
     };
   }
