@@ -31,13 +31,13 @@
     "scan-styles:dry": "node packages/style-scanner/bin/style-scanner.js scan --dry-run --verbose",
     "lint:benchmark": "node packages/eslint-config/performance-benchmark.js",
     "prepare": "husky",
-    "db:reset:web": "dotenv -- npx prisma db execute --file packages/session-management/scripts/reset/web-reset.sql --schema packages/session-management/prisma/schema.prisma",
-    "db:reset:admin": "dotenv -- npx prisma db execute --file packages/session-management/scripts/reset/admin-reset.sql --schema packages/session-management/prisma/schema.prisma",
-    "db:reset:all": "dotenv -- npx prisma db execute --file packages/session-management/scripts/reset/full-reset.sql --schema packages/session-management/prisma/schema.prisma",
-    "db:studio": "dotenv -- npx prisma studio --schema packages/session-management/prisma/schema.prisma",
-    "db:generate": "dotenv -- npx prisma generate --schema packages/session-management/prisma/schema.prisma",
-    "db:push": "dotenv -- npx prisma db push --schema packages/session-management/prisma/schema.prisma",
-    "db:migrate": "dotenv -- npx prisma migrate dev --schema packages/session-management/prisma/schema.prisma"
+    "db:reset:web": "dotenv -e apps/web/.env -- npx prisma db execute --file packages/session-management/scripts/reset/web-reset.sql --schema packages/session-management/prisma/schema.prisma",
+    "db:reset:admin": "dotenv -e apps/web/.env -- npx prisma db execute --file packages/session-management/scripts/reset/admin-reset.sql --schema packages/session-management/prisma/schema.prisma",
+    "db:reset:all": "dotenv -e apps/web/.env -- npx prisma db execute --file packages/session-management/scripts/reset/full-reset.sql --schema packages/session-management/prisma/schema.prisma",
+    "db:studio": "dotenv -e apps/web/.env -- npx prisma studio --schema packages/session-management/prisma/schema.prisma",
+    "db:generate": "dotenv -e apps/web/.env -- npx prisma generate --schema packages/session-management/prisma/schema.prisma",
+    "db:push": "dotenv -e apps/web/.env -- npx prisma db push --schema packages/session-management/prisma/schema.prisma",
+    "db:migrate": "dotenv -e apps/web/.env -- npx prisma migrate dev --schema packages/session-management/prisma/schema.prisma"
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.0.1",
