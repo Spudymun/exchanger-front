@@ -1,6 +1,9 @@
 // Экспорт всех типов
 export * from './types';
 
+// Экспорт Repository интерфейсов
+export * from './repositories';
+
 // Экспорт утилит
 export * from './utils/calculations';
 export * from './utils/crypto';

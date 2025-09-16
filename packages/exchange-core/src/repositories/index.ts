@@ -1,0 +1,30 @@
+/**
+ * 📁 Файл: packages/exchange-core/src/repositories/index.ts
+ * 🎯 Цель: Централизованный экспорт всех Repository интерфейсов
+ * 📋 AC: AC2.1A, AC2.3, AC3.4 - экспорт всех интерфейсов
+ * 🏗️ Архитектура: Clean Architecture - Repository Layer
+ * 🔧 Правило: Rule 20 - Single Source of Truth для экспортов
+ */
+
+// Экспорт всех Repository интерфейсов
+export type { EnhancedUserRepositoryInterface } from './enhanced-user-repository-interface.js';
+export type { OrderRepositoryInterface } from './order-repository-interface.js';
+export type { WalletRepositoryInterface } from './wallet-repository-interface.js';
+export type { QueueRepositoryInterface } from './queue-repository-interface.js';
+export type { AuditRepositoryInterface } from './audit-repository-interface.js';
+
+// Экспорт всех типов
+export type * from './types.js';
+
+// Re-export для удобства (исключая User для избежания циклических зависимостей)
+export type {
+  SessionMetadata,
+  OrderFilters,
+  PaginationOptions,
+  QueueJobData,
+  QueueJob,
+  WalletTransaction,
+  AuditLogEntry,
+  OperationResult,
+  BulkOperationResult,
+} from './types.js';
