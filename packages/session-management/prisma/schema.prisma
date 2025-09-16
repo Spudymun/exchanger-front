@@ -19,9 +19,14 @@ model User {
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   lastLoginAt    DateTime? @map("last_login_at") @db.Timestamptz(6)
 
-  // Relations
-  sessions Session[]
-  appRoles UserAppRole[]
+  // Relations - существующие и новые
+  sessions              Session[]
+  appRoles              UserAppRole[]
+  
+  // ✅ НОВЫЕ Relations для Order системы
+  orders                Order[]                           // Заявки пользователя
+  operatorAssignments   Order[] @relation("OperatorAssignments")  // Заявки назначенные этому оператору
+  auditLogsPerformed    OrderAuditLog[] @relation("AuditLogPerformer") // Действия выполненные оператором
 
   // Indexes
   @@index([email])
@@ -86,4 +91,96 @@ enum UserRole {
 enum ApplicationType {
   WEB      @map("web")
   ADMIN    @map("admin")
+}
+
+// ✅ Order statuses enum - соответствует packages/constants/src/order-statuses.ts
+enum OrderStatus {
+  PENDING    @map("pending")
+  PAID       @map("paid")
+  PROCESSING @map("processing")
+  COMPLETED  @map("completed")
+  CANCELLED  @map("cancelled")
+  FAILED     @map("failed")
+}
+
+// ✅ Order модель - интеграция с существующей User архитектурой  
+model Order {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+
+  // Business fields - соответствуют существующему Order interface
+  cryptoAmount  Decimal   @map("crypto_amount") @db.Decimal(36, 18)  // Универсальная точность для всех криптовалют
+  currency      String    @db.VarChar(10)                            // BTC, ETH, USDT
+  uahAmount     Decimal   @map("uah_amount") @db.Decimal(12, 2)      // UAH с копейками
+  tokenStandard String?   @map("token_standard") @db.VarChar(20)     // ERC20, TRC20, etc
+
+  // Status tracking
+  status        OrderStatus @default(PENDING)
+
+  // Crypto fields
+  depositAddress String    @map("deposit_address") @db.VarChar(255)
+  txHash         String?   @map("tx_hash") @db.VarChar(255)
+
+  // Recipient data - JSON для гибкости (соответствует existing interface)
+  recipientData  Json?     @map("recipient_data") @db.JsonB
+
+  // Operator assignment tracking
+  assignedOperatorId String? @map("assigned_operator_id") @db.Uuid
+  assignedAt         DateTime? @map("assigned_at") @db.Timestamptz(6)
+
+  // Timestamps - соответствуют существующему паттерну
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  processedAt   DateTime? @map("processed_at") @db.Timestamptz(6)
+
+  // Relations - правильная нормализация
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assignedOperator  User?    @relation("OperatorAssignments", fields: [assignedOperatorId], references: [id], onDelete: SetNull)
+  auditLogs         OrderAuditLog[] // История изменений
+
+  // Indexes - оптимизация для типовых запросов
+  @@index([userId])                    // Заявки пользователя
+  @@index([status])                    // Фильтрация по статусу
+  @@index([currency])                  // Фильтрация по валюте
+  @@index([createdAt])                 // Сортировка по времени
+  @@index([status, createdAt])         // Составной для операторов
+  @@index([depositAddress])            // Поиск по адресу
+  @@index([assignedOperatorId])        // Заявки оператора
+  @@index([txHash])                    // Поиск по транзакции
+
+  @@map("orders")
+}
+
+// ✅ OrderAuditLog модель - Аудит/История заявок для бизнеса
+model OrderAuditLog {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId   String   @map("order_id") @db.Uuid
+
+  // Аудит данные - история изменений
+  action    String   @db.VarChar(100)  // "ORDER_CREATED", "STATUS_CHANGED", "ASSIGNED_TO_OPERATOR", "OPERATOR_COMMENT"
+  oldValue  String?  @map("old_value") @db.VarChar(100)  // старый статус/значение
+  newValue  String?  @map("new_value") @db.VarChar(100)  // новый статус/значение
+
+  // Дополнительные данные (комментарии оператора, причины изменений)
+  metadata  Json?    @db.JsonB  // Гибкое хранение дополнительной информации
+  comment   String?  @db.Text   // Комментарий оператора
+
+  // Кто выполнил действие (null для системных действий)
+  performedBy String? @map("performed_by") @db.Uuid  // userId оператора
+
+  // Когда
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user      User?    @relation("AuditLogPerformer", fields: [performedBy], references: [id], onDelete: SetNull)
+
+  // Indexes для быстрого поиска истории
+  @@index([orderId])           // История конкретной заявки
+  @@index([createdAt])         // Сортировка по времени
+  @@index([action])            // Фильтрация по типу действия
+  @@index([performedBy])       // Действия конкретного оператора
+  @@index([orderId, createdAt]) // Составной для истории заявки
+
+  @@map("order_audit_logs")
 }
