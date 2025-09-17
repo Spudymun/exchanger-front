@@ -107,7 +107,7 @@ export const supportRouter = createTRPCRouter({
     .input(securityEnhancedCreateTicketAdminSchema)
     .mutation(async ({ input, ctx }) => {
       // SECURITY-ENHANCED VALIDATION
-      const user = userManager.findById(input.userId);
+      const user = await userManager.findById(input.userId);
 
       if (!user) {
         throw createNotFoundError('Пользователь');
@@ -200,13 +200,14 @@ export const supportRouter = createTRPCRouter({
   getUserInfo: supportOnly
     .input(securityEnhancedGetByIdSchema.extend({ userId: securityEnhancedGetByIdSchema.shape.id }))
     .query(async ({ input }) => {
-      const user = userManager.findById(input.userId);
+      const user = await userManager.findById(input.userId);
 
       if (!user) {
         throw createNotFoundError('Пользователь');
       }
 
-      const userOrders = orderManager.getAll().filter(order => order.email === user.email);
+      // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: заказы через userId, а не email
+      const userOrders = await orderManager.findByUserId(user.id);
 
       return {
         user: {
@@ -219,7 +220,7 @@ export const supportRouter = createTRPCRouter({
         stats: {
           totalOrders: userOrders.length,
           completedOrders: userOrders.filter(o => o.status === ORDER_STATUSES.COMPLETED).length,
-          totalVolume: userOrders.reduce((sum, o) => sum + o.uahAmount, 0),
+          totalVolume: userOrders.reduce((sum: number, o) => sum + o.uahAmount, 0),
           registrationDays: Math.floor(
             (Date.now() - user.createdAt.getTime()) /
               (TIME_CONSTANTS.HOURS_IN_DAY *

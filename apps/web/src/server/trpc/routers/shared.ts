@@ -5,7 +5,7 @@ import {
   DATE_FORMAT_CONSTANTS,
   UI_NUMERIC_CONSTANTS,
 } from '@repo/constants';
-import { orderManager, type Order } from '@repo/exchange-core';
+import { orderManager, userManager, type Order } from '@repo/exchange-core';
 import { UserManagerFactory } from '@repo/session-management';
 import {
   paginateOrders,
@@ -36,15 +36,23 @@ export const sharedRouter = createTRPCRouter({
       // SECURITY-ENHANCED VALIDATION
       const { query, dateFrom, dateTo, status, limit, offset: _offset } = input;
 
-      const matchesQuery = (order: Order) => {
+      const matchesQuery = (order: Order, userEmailCache: Map<string, string>) => {
         if (!query) return true; // No query means match all
         const searchTerm = query.toLowerCase();
-        return (
+        
+        // Обычные поиски (как раньше)
+        const basicMatches = (
           order.id.toLowerCase().includes(searchTerm) ||
-          order.email.toLowerCase().includes(searchTerm) ||
           order.cryptoAmount.toString().includes(query) ||
           order.uahAmount.toString().includes(query)
         );
+        
+        if (basicMatches) return true;
+        
+        // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: поиск по email через User relation (следует паттерну из exchange.ts)
+        // ✅ ОПТИМИЗИРОВАНО: используем cache вместо индивидуальных DB запросов
+        const userEmail = userEmailCache.get(order.userId);
+        return userEmail?.toLowerCase().includes(searchTerm) || false;
       };
 
       const matchesDate = (order: Order) => {
@@ -62,12 +70,31 @@ export const sharedRouter = createTRPCRouter({
 
       const matchesStatus = (order: Order) => !status || order.status === status;
 
-      const orders = orderManager
-        .getAll()
-        .filter(order => matchesQuery(order) && matchesDate(order) && matchesStatus(order));
+      const allOrders = await orderManager.getAll();
+      
+      // ✅ ОПТИМИЗАЦИЯ: Batch загрузка пользователей для избежания N+1 queries
+      let userCache: Map<string, string> = new Map(); // userId -> email
+      
+      if (query) {
+        // Если есть поисковый запрос, загружаем всех пользователей один раз
+        const allUsers = await userManager.getAll();
+        userCache = new Map(allUsers.map(user => [user.id, user.email]));
+      }
+
+      // Фильтруем с поддержкой email поиска через User cache
+      const filteredOrders = [];
+      for (const order of allOrders) {
+        const queryMatch = matchesQuery(order, userCache);
+        const dateMatch = matchesDate(order);
+        const statusMatch = matchesStatus(order);
+        
+        if (queryMatch && dateMatch && statusMatch) {
+          filteredOrders.push(order);
+        }
+      }
 
       // Используем централизованную утилиту для сортировки и ограничения
-      const result = paginateOrders(sortOrders(orders), {
+      const result = paginateOrders(sortOrders(filteredOrders), {
         limit,
         offset: UI_NUMERIC_CONSTANTS.INITIAL_OFFSET,
       });
@@ -100,20 +127,25 @@ export const sharedRouter = createTRPCRouter({
       // Сортировка по дате создания и ограничение
       users = users.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit);
 
-      // Возвращаем безопасную информацию о пользователях
-      return users.map(user => ({
-        id: user.id,
-        email: user.email,
-        isVerified: user.isVerified,
-        createdAt: user.createdAt,
-        lastLoginAt: user.lastLoginAt,
-        ordersCount: orderManager.getAll().filter(o => o.email === user.email).length,
-      }));
+      // Возвращаем безопасную информацию о пользователях с подсчетом заказов
+      return await Promise.all(
+        users.map(async user => {
+          const userOrders = await orderManager.findByUserId(user.id);
+          return {
+            id: user.id,
+            email: user.email,
+            isVerified: user.isVerified,
+            createdAt: user.createdAt,
+            lastLoginAt: user.lastLoginAt,
+            ordersCount: userOrders.length,
+          };
+        })
+      );
     }),
 
   // Общая статистика (доступна operator и support)
   getGeneralStats: operatorAndSupport.query(async () => {
-    const orders = orderManager.getAll();
+    const orders = await orderManager.getAll();
     // ✅ Use async UserManagerFactory pattern with web context
     const userManager = await UserManagerFactory.createForWeb();
     const users = await userManager.getAll();
@@ -141,7 +173,7 @@ export const sharedRouter = createTRPCRouter({
         orders: orders.filter(o => o.currency === currency).length,
         volume: orders
           .filter(o => o.currency === currency)
-          .reduce((sum, o) => sum + o.cryptoAmount, 0),
+          .reduce((sum: number, o) => sum + o.cryptoAmount, 0),
       })),
     };
   }),

@@ -5,7 +5,6 @@ import {
   CURRENCY_NAMES,
   UI_NUMERIC_CONSTANTS,
   PERCENTAGE_CALCULATIONS,
-  ORDER_STATUSES,
 } from '@repo/constants';
 import {
   calculateUahAmount,
@@ -89,7 +88,7 @@ function prepareOrderRequest(input: {
 /**
  * Создает новую заявку в системе
  */
-function createOrderInSystem(orderRequest: {
+async function createOrderInSystem(orderRequest: {
   email: string;
   cryptoAmount: number;
   currency: (typeof CRYPTOCURRENCIES)[number];
@@ -98,13 +97,23 @@ function createOrderInSystem(orderRequest: {
 }) {
   const depositAddress = generateDepositAddress(orderRequest.currency);
 
-  const order = orderManager.create({
-    email: orderRequest.email,
+  // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: auto-registration для обеспечения userId
+  let user = await userManager.findByEmail(orderRequest.email);
+  if (!user) {
+    // ✅ AC2.1A: Auto-registration для незарегистрированных пользователей
+    user = await userManager.create({
+      email: orderRequest.email,
+      hashedPassword: undefined,
+      isVerified: false,
+    });
+  }
+
+  const order = await orderManager.create({
+    userId: user.id, // ✅ НОВАЯ АРХИТЕКТУРА: userId вместо email
+    email: orderRequest.email, // ✅ Требуется для CreateOrderRequest interface
     cryptoAmount: orderRequest.cryptoAmount,
     currency: orderRequest.currency,
     uahAmount: orderRequest.uahAmount,
-    status: ORDER_STATUSES.PENDING,
-    depositAddress,
     recipientData: orderRequest.recipientData,
   });
 
@@ -222,7 +231,7 @@ export const exchangeRouter = createTRPCRouter({
       ensureUser(orderRequest.email);
 
       // Создаем заявку
-      const { order, depositAddress } = createOrderInSystem(orderRequest);
+      const { order, depositAddress } = await createOrderInSystem(orderRequest);
 
       return {
         orderId: order.id,
@@ -239,11 +248,15 @@ export const exchangeRouter = createTRPCRouter({
   getOrderStatus: publicProcedure
     .input(securityEnhancedOrderByIdSchema)
     .query(async ({ input }) => {
-      const order = orderManager.findById(input.orderId);
+      const order = await orderManager.findById(input.orderId);
 
       if (!order) {
         throw createOrderError('not_found', input.orderId);
       }
+
+      // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: получить email через userId → User
+      const user = await userManager.findById(order.userId);
+      const userEmail = user?.email || 'unknown@unknown.com';
 
       return {
         id: order.id,
@@ -254,7 +267,7 @@ export const exchangeRouter = createTRPCRouter({
         tokenStandard: order.tokenStandard,
         depositAddress: order.depositAddress,
         recipientData: order.recipientData,
-        email: order.email,
+        email: userEmail, // ✅ ПОЛУЧЕНО через связь userId → User
         createdAt: order.createdAt,
         updatedAt: order.updatedAt,
         processedAt: order.processedAt,
@@ -267,7 +280,14 @@ export const exchangeRouter = createTRPCRouter({
     .input(securityEnhancedGetOrderHistoryByEmailSchema)
     .query(async ({ input }) => {
       const sanitizedEmail = sanitizeEmail(input.email);
-      const orders = orderManager.findByEmail(sanitizedEmail);
+      
+      // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: email → user → orders by userId
+      const user = await userManager.findByEmail(sanitizedEmail);
+      if (!user) {
+        return { orders: [], total: 0 }; // Не раскрываем информацию о существовании email
+      }
+      
+      const orders = await orderManager.findByUserId(user.id);
 
       // Используем централизованные утилиты для сортировки и ограничения
       const result = paginateOrders(sortOrders(orders), {

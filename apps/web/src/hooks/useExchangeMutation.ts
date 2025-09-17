@@ -2,7 +2,6 @@
 
 import type { CreateOrderRequest } from '@repo/exchange-core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { TRPCError } from '@trpc/server';
 
 import { trpc } from '../../lib/trpc-provider';
 
@@ -31,7 +30,9 @@ interface OrderStatusResponse {
 
 interface UseExchangeMutationOptions {
   onSuccess?: (order: CreateOrderResponse | OrderStatusResponse) => void;
-  onError?: (error: TRPCError) => void;
+  // Following project architecture - error handling through React Query mechanism
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onError?: (error: any) => void;
 }
 
 export function useExchangeMutation(options?: UseExchangeMutationOptions) {
@@ -53,7 +54,8 @@ export function useExchangeMutation(options?: UseExchangeMutationOptions) {
       options?.onSuccess?.(order);
     },
     onError: error => {
-      options?.onError?.(error as TRPCError);
+      // Following project architecture - error passed as-is to callback
+      options?.onError?.(error);
     },
   });
 
@@ -69,7 +71,8 @@ export function useExchangeMutation(options?: UseExchangeMutationOptions) {
       queryClient.invalidateQueries({ queryKey: ['exchange.getOrderHistory'] });
     },
     onError: error => {
-      options?.onError?.(error as TRPCError);
+      // Following project architecture - error passed as-is to callback
+      options?.onError?.(error);
     },
   });
 

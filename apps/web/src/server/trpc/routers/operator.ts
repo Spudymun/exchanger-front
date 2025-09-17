@@ -38,7 +38,7 @@ export const operatorRouter = createTRPCRouter({
     )
     .query(async ({ input }) => {
       const { limit, cursor, status } = input;
-      const allOrders = orderManager.getAll();
+      const allOrders = await orderManager.getAll();
 
       // Используем централизованные утилиты для фильтрации, сортировки и пагинации
       const filteredOrders = status
@@ -64,7 +64,7 @@ export const operatorRouter = createTRPCRouter({
   takeOrder: operatorOnly
     .input(z.object({ orderId: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      const order = orderManager.findById(input.orderId);
+      const order = await orderManager.findById(input.orderId);
 
       if (!order) {
         throw createOrderError('not_found', input.orderId);
@@ -77,7 +77,7 @@ export const operatorRouter = createTRPCRouter({
       }
 
       // Обновляем статус заявки на processing
-      const updatedOrder = orderManager.update(input.orderId, {
+      const updatedOrder = await orderManager.update(input.orderId, {
         status: ORDER_STATUSES.PROCESSING,
       });
 
@@ -98,7 +98,7 @@ export const operatorRouter = createTRPCRouter({
   updateOrderStatus: operatorOnly
     .input(securityEnhancedUpdateOrderStatusSchema)
     .mutation(async ({ input, ctx }) => {
-      const order = orderManager.findById(input.orderId);
+      const order = await orderManager.findById(input.orderId);
 
       if (!order) {
         throw createOrderError('not_found', input.orderId);
@@ -111,7 +111,7 @@ export const operatorRouter = createTRPCRouter({
         );
       }
 
-      const updatedOrder = orderManager.update(input.orderId, {
+      const updatedOrder = await orderManager.update(input.orderId, {
         status: input.status,
         ...(input.status === ORDER_STATUSES.COMPLETED && { processedAt: new Date() }),
       });
@@ -135,7 +135,7 @@ export const operatorRouter = createTRPCRouter({
 
   // Получить статистику оператора
   getMyStats: operatorOnly.query(async () => {
-    const orders = orderManager.getAll();
+    const orders = await orderManager.getAll();
 
     // Используем централизованную утилиту для получения статистики
     const stats = getOrdersStatistics(orders);

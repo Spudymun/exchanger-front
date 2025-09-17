@@ -8,8 +8,9 @@ import { protectedProcedure } from '../../middleware/auth';
 export const profileRouter = createTRPCRouter({
   // Получить профиль текущего пользователя
   getProfile: protectedProcedure.query(async ({ ctx }) => {
-    const user = validateUserAccess(ctx.user.id);
-    const userOrders = orderManager.findByEmail(user.email);
+    const user = await validateUserAccess(ctx.user.id);
+    // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: email → user → orders by userId
+    const userOrders = await orderManager.findByUserId(user.id);
 
     // Используем централизованную утилиту для статистики
     const orderStats = getOrdersStatistics(userOrders);
@@ -31,7 +32,7 @@ export const profileRouter = createTRPCRouter({
   updateProfile: protectedProcedure
     .input(securityEnhancedUpdateNotificationsSchema)
     .mutation(async ({ ctx }) => {
-      const user = validateUserAccess(ctx.user.id);
+      const user = await validateUserAccess(ctx.user.id);
 
       // В текущей структуре User нет поля notifications
       // Возвращаем успешный ответ без реального обновления

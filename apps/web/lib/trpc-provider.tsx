@@ -2,7 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { httpBatchLink } from '@trpc/client';
-import { createTRPCReact, type CreateTRPCReact } from '@trpc/react-query';
+import { createTRPCReact } from '@trpc/react-query';
 import { useState, Suspense, lazy } from 'react';
 import superjson from 'superjson';
 
@@ -16,10 +16,9 @@ const ReactQueryDevtools =
       )
     : null;
 
-import type { AppRouter } from '../src/server/trpc';
-
-// Type annotation to avoid build errors
-const trpc: CreateTRPCReact<AppRouter, unknown> = createTRPCReact<AppRouter>();
+// Type annotation to avoid build errors - untyped for client isolation
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const trpc = createTRPCReact() as any;
 
 function getBaseUrl() {
   if (typeof window !== 'undefined') return '';

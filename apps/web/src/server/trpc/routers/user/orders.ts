@@ -24,8 +24,9 @@ export const ordersRouter = createTRPCRouter({
       })
     )
     .query(async ({ input, ctx }) => {
-      const user = validateUserAccess(ctx.user.id);
-      const allOrders = orderManager.findByEmail(user.email);
+      const user = await validateUserAccess(ctx.user.id);
+      // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: email → user → orders by userId
+      const allOrders = await orderManager.findByUserId(user.id);
 
       // Преобразуем page/pageSize в limit/offset для совместимости с существующим API
       const limit = input.pageSize;
@@ -72,8 +73,8 @@ export const ordersRouter = createTRPCRouter({
       })
     )
     .query(async ({ input, ctx }) => {
-      const user = validateUserAccess(ctx.user.id);
-      const order = validateOrderAccess(input.orderId, user.email);
+      const user = await validateUserAccess(ctx.user.id);
+      const order = await validateOrderAccess(input.orderId, user.email);
 
       return {
         id: order.id,
@@ -103,8 +104,8 @@ export const ordersRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const user = validateUserAccess(ctx.user.id);
-      const order = validateOrderAccess(input.orderId, user.email);
+      const user = await validateUserAccess(ctx.user.id);
+      const order = await validateOrderAccess(input.orderId, user.email);
 
       // Проверяем, можно ли отменить заявку
       if (
@@ -116,7 +117,7 @@ export const ordersRouter = createTRPCRouter({
       }
 
       // Отменяем заявку
-      const updatedOrder = orderManager.update(order.id, {
+      const updatedOrder = await orderManager.update(order.id, {
         status: ORDER_STATUSES.CANCELLED,
       });
 
