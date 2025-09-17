@@ -7,6 +7,7 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./types": "./src/types-only.ts",
     "./factories/*": "./src/factories/*"
   },
   "scripts": {
@@ -18,12 +19,12 @@
   "dependencies": {
     "@repo/constants": "*",
     "@repo/exchange-core": "*",
-    "@prisma/client": "^5.0.0",
+    "@prisma/client": "^6.15.0",
     "ioredis": "^5.0.0"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",
     "@repo/eslint-config": "*",
-    "prisma": "^5.0.0"
+    "prisma": "^6.15.0"
   }
 }
