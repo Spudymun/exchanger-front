@@ -15,9 +15,13 @@ export * from './banks';
 export * from './rate-limits';
 export * from './order-statuses';
 
+// Wallet Pool Configuration
+export * from './wallet-pool-config';
+
 // Type exports for new types
 export type { TokenStandard } from './exchange-currencies';
 export type { BankId } from './banks';
+export type { WalletPoolMode } from './wallet-pool-config';
 
 // Linter configuration constants
 export * from './linter-limits';

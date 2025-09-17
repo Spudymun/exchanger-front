@@ -5,3 +5,11 @@ export * from './currency';
 export * from './fiat';
 export * from './order';
 export * from './user';
+
+// Wallet Pool Management types (Task 2.1)
+export type {
+  WalletStatus,
+  AllocationResult,
+  PoolStats,
+  WalletAllocationStrategy,
+} from '../services/wallet-strategies/wallet-allocation-strategy';

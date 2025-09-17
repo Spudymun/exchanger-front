@@ -17,3 +17,9 @@ export {
   closePrismaClient,
   type PrismaClientConfig,
 } from './utils/prisma-singleton';
+
+// ✅ ДОБАВЛЕНО: PostgreSQL адаптеры для WalletPoolManager
+export { PostgresOrderAdapter } from './adapters/postgres-order-adapter';
+export { PostgresWalletAdapter } from './adapters/postgres-wallet-adapter';
+export { PostgresQueueAdapter } from './adapters/postgres-queue-adapter';
+export { BasePostgresAdapter, POSTGRES_ERRORS } from './adapters/base-postgres-adapter';
