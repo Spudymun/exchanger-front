@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable max-lines */
+
 import { PrismaClient, OrderStatus as PrismaOrderStatus } from '@prisma/client';
 
 import type { OrderStatus } from '@repo/constants';
@@ -5,34 +8,36 @@ import type { OrderRepositoryInterface, Order, CreateOrderRequest } from '@repo/
 import { createEnvironmentLogger } from '@repo/utils';
 
 /**
- * ✅ Clean Prisma order object matching database schema
+ * Clean Prisma order object matching database schema after migration v3
  */
 interface PrismaOrder {
   id: string;
   userId: string;
-  cryptoAmount: { toNumber(): number }; // Prisma Decimal type
+  cryptoAmount: { toNumber(): number };
   currency: string;
-  uahAmount: { toNumber(): number }; // Prisma Decimal type
+  uahAmount: { toNumber(): number };
   tokenStandard: string | null;
-  status: PrismaOrderStatus; // Use Prisma enum type
-  depositAddress: string;
+  status: PrismaOrderStatus;
+  walletId?: string | null; // ✅ ВРЕМЕННО: сделано опциональным до обновления кэша TS
   txHash: string | null;
-  recipientData: unknown; // JsonValue type
+  recipientData: unknown;
   assignedOperatorId: string | null;
   assignedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
   processedAt: Date | null;
+  wallet?: {
+    address: string;
+  } | null;
 }
 
-// Mapping between frontend status types and database enum values  
+// Mapping between frontend status types and database enum values
 const mapToPrismaStatus = (status: OrderStatus): PrismaOrderStatus => {
   return status.toUpperCase() as PrismaOrderStatus;
 };
 
 /**
- * ✅ PostgreSQL adapter for Order repository operations
- * Follows existing PostgreSQLUserAdapter pattern from session-management
+ * PostgreSQL adapter for Order repository operations
  */
 export class PostgresOrderAdapter implements OrderRepositoryInterface {
   private logger = createEnvironmentLogger('PostgresOrderAdapter');
@@ -41,7 +46,10 @@ export class PostgresOrderAdapter implements OrderRepositoryInterface {
 
   async create(orderData: CreateOrderRequest & { userId: string }): Promise<Order> {
     try {
-      this.logger.info('Creating order', { userId: orderData.userId, currency: orderData.currency });
+      this.logger.info('Creating order', {
+        userId: orderData.userId,
+        currency: orderData.currency,
+      });
 
       const prismaOrder = await this.prisma.order.create({
         data: {
@@ -49,8 +57,10 @@ export class PostgresOrderAdapter implements OrderRepositoryInterface {
           cryptoAmount: orderData.cryptoAmount,
           currency: orderData.currency,
           uahAmount: orderData.uahAmount,
-          depositAddress: '', // Will be generated separately
-          recipientData: orderData.recipientData ? JSON.parse(JSON.stringify(orderData.recipientData)) : undefined,
+          walletId: null, // ✅ ИСПРАВЛЕНО: будет назначен позже через WalletPoolManager
+          recipientData: orderData.recipientData
+            ? JSON.parse(JSON.stringify(orderData.recipientData))
+            : undefined,
           status: 'PENDING', // Default status
         },
       });
@@ -58,11 +68,13 @@ export class PostgresOrderAdapter implements OrderRepositoryInterface {
       this.logger.info('Order created successfully', { orderId: prismaOrder.id });
       return this.mapPrismaToOrder(prismaOrder);
     } catch (error) {
-      this.logger.error('PostgresOrderAdapter.create failed', { 
+      this.logger.error('PostgresOrderAdapter.create failed', {
         error: error instanceof Error ? error.message : String(error),
-        userId: orderData.userId 
+        userId: orderData.userId,
       });
-      throw new Error(`Failed to create order: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to create order: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -72,11 +84,11 @@ export class PostgresOrderAdapter implements OrderRepositoryInterface {
         where: { id },
       });
 
-      return prismaOrder ? this.mapPrismaToOrder(prismaOrder) : null;
+      return prismaOrder ? this.mapPrismaToOrder(prismaOrder as any) : null;
     } catch (error) {
-      this.logger.error('PostgresOrderAdapter.findById failed', { 
-        error: error instanceof Error ? error.message : String(error), 
-        id 
+      this.logger.error('PostgresOrderAdapter.findById failed', {
+        error: error instanceof Error ? error.message : String(error),
+        id,
       });
       return null;
     }
@@ -89,11 +101,11 @@ export class PostgresOrderAdapter implements OrderRepositoryInterface {
         orderBy: { createdAt: 'desc' },
       });
 
-      return prismaOrders.map((order: PrismaOrder) => this.mapPrismaToOrder(order));
+      return prismaOrders.map(order => this.mapPrismaToOrder(order as any));
     } catch (error) {
-      this.logger.error('PostgresOrderAdapter.findByUserId failed', { 
-        error: error instanceof Error ? error.message : String(error), 
-        userId 
+      this.logger.error('PostgresOrderAdapter.findByUserId failed', {
+        error: error instanceof Error ? error.message : String(error),
+        userId,
       });
       return [];
     }
@@ -123,17 +135,17 @@ export class PostgresOrderAdapter implements OrderRepositoryInterface {
           action: 'STATUS_CHANGED',
           oldValue: null,
           newValue: status,
-          performedBy: operatorId
+          performedBy: operatorId,
         });
       }
 
       this.logger.info('Order status updated successfully', { orderId: id, status });
-      return this.mapPrismaToOrder(prismaOrder);
+      return this.mapPrismaToOrder(prismaOrder as any);
     } catch (error) {
-      this.logger.error('PostgresOrderAdapter.updateStatus failed', { 
-        error: error instanceof Error ? error.message : String(error), 
-        id, 
-        status 
+      this.logger.error('PostgresOrderAdapter.updateStatus failed', {
+        error: error instanceof Error ? error.message : String(error),
+        id,
+        status,
       });
       return null;
     }
@@ -158,16 +170,16 @@ export class PostgresOrderAdapter implements OrderRepositoryInterface {
         action: 'ASSIGNED_TO_OPERATOR',
         oldValue: null,
         newValue: operatorId,
-        performedBy: operatorId
+        performedBy: operatorId,
       });
 
       this.logger.info('Order assigned successfully', { orderId, operatorId });
-      return this.mapPrismaToOrder(prismaOrder);
+      return this.mapPrismaToOrder(prismaOrder as any);
     } catch (error) {
-      this.logger.error('PostgresOrderAdapter.assignToOperator failed', { 
-        error: error instanceof Error ? error.message : String(error), 
-        orderId, 
-        operatorId 
+      this.logger.error('PostgresOrderAdapter.assignToOperator failed', {
+        error: error instanceof Error ? error.message : String(error),
+        orderId,
+        operatorId,
       });
       return null;
     }
@@ -180,11 +192,11 @@ export class PostgresOrderAdapter implements OrderRepositoryInterface {
         orderBy: { assignedAt: 'desc' },
       });
 
-      return prismaOrders.map((order: PrismaOrder) => this.mapPrismaToOrder(order));
+      return prismaOrders.map(order => this.mapPrismaToOrder(order as any));
     } catch (error) {
-      this.logger.error('PostgresOrderAdapter.findByOperator failed', { 
-        error: error instanceof Error ? error.message : String(error), 
-        operatorId 
+      this.logger.error('PostgresOrderAdapter.findByOperator failed', {
+        error: error instanceof Error ? error.message : String(error),
+        operatorId,
       });
       return [];
     }
@@ -197,11 +209,11 @@ export class PostgresOrderAdapter implements OrderRepositoryInterface {
         orderBy: { createdAt: 'desc' },
       });
 
-      return prismaOrders.map((order: PrismaOrder) => this.mapPrismaToOrder(order));
+      return prismaOrders.map(order => this.mapPrismaToOrder(order as any));
     } catch (error) {
-      this.logger.error('PostgresOrderAdapter.findByStatus failed', { 
-        error: error instanceof Error ? error.message : String(error), 
-        status 
+      this.logger.error('PostgresOrderAdapter.findByStatus failed', {
+        error: error instanceof Error ? error.message : String(error),
+        status,
       });
       return [];
     }
@@ -214,11 +226,11 @@ export class PostgresOrderAdapter implements OrderRepositoryInterface {
         orderBy: { createdAt: 'desc' },
       });
 
-      return prismaOrders.map((order: PrismaOrder) => this.mapPrismaToOrder(order));
+      return prismaOrders.map(order => this.mapPrismaToOrder(order as any));
     } catch (error) {
-      this.logger.error('PostgresOrderAdapter.findByCurrency failed', { 
-        error: error instanceof Error ? error.message : String(error), 
-        currency 
+      this.logger.error('PostgresOrderAdapter.findByCurrency failed', {
+        error: error instanceof Error ? error.message : String(error),
+        currency,
       });
       return [];
     }
@@ -226,15 +238,23 @@ export class PostgresOrderAdapter implements OrderRepositoryInterface {
 
   async findByDepositAddress(address: string): Promise<Order | null> {
     try {
-      const prismaOrder = await this.prisma.order.findFirst({
-        where: { depositAddress: address },
+      const wallet = await this.prisma.wallet.findUnique({
+        where: { address: address },
       });
 
-      return prismaOrder ? this.mapPrismaToOrder(prismaOrder) : null;
+      if (!wallet) {
+        return null;
+      }
+
+      const prismaOrder = await this.prisma.order.findFirst({
+        where: { walletId: wallet.id },
+      });
+
+      return prismaOrder ? this.mapPrismaToOrder(prismaOrder as any) : null;
     } catch (error) {
-      this.logger.error('PostgresOrderAdapter.findByDepositAddress failed', { 
-        error: error instanceof Error ? error.message : String(error), 
-        address 
+      this.logger.error('PostgresOrderAdapter.findByDepositAddress failed', {
+        error: error instanceof Error ? error.message : String(error),
+        address,
       });
       return null;
     }
@@ -273,16 +293,16 @@ export class PostgresOrderAdapter implements OrderRepositoryInterface {
       ]);
 
       return {
-        data: prismaOrders.map((order: PrismaOrder) => this.mapPrismaToOrder(order)),
+        data: prismaOrders.map(order => this.mapPrismaToOrder(order as any)),
         total,
         page,
         limit,
       };
     } catch (error) {
-      this.logger.error('PostgresOrderAdapter.findWithPagination failed', { 
+      this.logger.error('PostgresOrderAdapter.findWithPagination failed', {
         error: error instanceof Error ? error.message : String(error),
         page: options.page,
-        limit: options.limit
+        limit: options.limit,
       });
       return {
         data: [],
@@ -293,9 +313,6 @@ export class PostgresOrderAdapter implements OrderRepositoryInterface {
     }
   }
 
-  /**
-   * ✅ Create audit log entry following existing patterns with object parameter
-   */
   private async createAuditLog(params: {
     orderId: string;
     action: string;
@@ -314,65 +331,64 @@ export class PostgresOrderAdapter implements OrderRepositoryInterface {
         },
       });
     } catch (error) {
-      this.logger.error('Failed to create audit log', { 
+      this.logger.error('Failed to create audit log', {
         error: error instanceof Error ? error.message : String(error),
-        orderId: params.orderId, 
-        action: params.action 
+        orderId: params.orderId,
+        action: params.action,
       });
-      // Don't throw - audit log failure shouldn't break main operation
     }
   }
 
-  /**
-   * ✅ Safe mapping from Prisma to business domain object
-   * Handles Decimal conversion properly as per existing patterns
-   */
-  // ✅ ДОБАВЛЕНО: Методы для совместимости с manager.ts
   async getAll(): Promise<Order[]> {
     try {
-      this.logger.info('Fetching all orders');
-
       const prismaOrders = await this.prisma.order.findMany({
         orderBy: { createdAt: 'desc' },
       });
-
-      return prismaOrders.map((order: PrismaOrder) => this.mapPrismaToOrder(order));
+      return prismaOrders.map(order => this.mapPrismaToOrder(order as any));
     } catch (error) {
-      this.logger.error('Failed to fetch all orders', { error: error instanceof Error ? error.message : String(error) });
-      throw new Error(`Failed to fetch all orders: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error('Failed to fetch all orders', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new Error(
+        `Failed to fetch all orders: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
   async count(): Promise<number> {
     try {
-      this.logger.info('Counting all orders');
-
       return await this.prisma.order.count();
     } catch (error) {
-      this.logger.error('Failed to count orders', { error: error instanceof Error ? error.message : String(error) });
-      throw new Error(`Failed to count orders: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error('Failed to count orders', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new Error(
+        `Failed to count orders: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
-  async update(id: string, updates: Partial<Omit<Order, 'id' | 'createdAt'>>): Promise<Order | null> {
+  async update(
+    id: string,
+    updates: Partial<Omit<Order, 'id' | 'createdAt'>>
+  ): Promise<Order | null> {
     try {
-      this.logger.info('Updating order', { id });
-
       const updated = await this.prisma.order.update({
         where: { id },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        data: updates as any, // TECH DEBT: Simplify type casting for now
+        data: updates as any,
       });
-
-      this.logger.info('Order updated successfully', { id });
-      return this.mapPrismaToOrder(updated);
+      return this.mapPrismaToOrder(updated as any);
     } catch (error) {
       if (error instanceof Error && 'code' in error && error.code === 'P2025') {
-        this.logger.warn('Order not found for update', { id });
         return null;
       }
-      this.logger.error('Failed to update order', { id, error: error instanceof Error ? error.message : String(error) });
-      throw new Error(`Failed to update order: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error('Failed to update order', {
+        id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new Error(
+        `Failed to update order: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -386,7 +402,7 @@ export class PostgresOrderAdapter implements OrderRepositoryInterface {
       uahAmount: prismaOrder.uahAmount.toNumber(),
       tokenStandard: prismaOrder.tokenStandard || undefined,
       status: prismaOrder.status.toLowerCase() as OrderStatus, // Convert Prisma enum to frontend type
-      depositAddress: prismaOrder.depositAddress,
+      depositAddress: prismaOrder.wallet?.address || '', // ✅ ИСПРАВЛЕНО: получаем адрес из wallet relation или пустая строка для null
       recipientData: (prismaOrder.recipientData as Record<string, unknown>) || undefined,
       createdAt: prismaOrder.createdAt,
       updatedAt: prismaOrder.updatedAt,

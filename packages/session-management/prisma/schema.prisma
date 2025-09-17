@@ -1,6 +1,3 @@
-// ✅ Prisma Schema for Session Management
-// This schema defines the database structure for production session management
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,67 +8,53 @@ datasource db {
 }
 
 model User {
-  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email          String    @unique @db.VarChar(255)
-  hashedPassword String?   @map("hashed_password") @db.Text
-  isVerified     Boolean   @default(false) @map("is_verified")
-  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  lastLoginAt    DateTime? @map("last_login_at") @db.Timestamptz(6)
+  id                  String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email               String          @unique @db.VarChar(255)
+  hashedPassword      String?         @map("hashed_password")
+  isVerified          Boolean         @default(false) @map("is_verified")
+  createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastLoginAt         DateTime?       @map("last_login_at") @db.Timestamptz(6)
+  auditLogsPerformed  OrderAuditLog[] @relation("AuditLogPerformer")
+  operatorAssignments Order[]         @relation("OperatorAssignments")
+  orders              Order[]
+  sessions            Session[]
+  appRoles            UserAppRole[]
 
-  // Relations - существующие и новые
-  sessions              Session[]
-  appRoles              UserAppRole[]
-  
-  // ✅ НОВЫЕ Relations для Order системы
-  orders                Order[]                           // Заявки пользователя
-  operatorAssignments   Order[] @relation("OperatorAssignments")  // Заявки назначенные этому оператору
-  auditLogsPerformed    OrderAuditLog[] @relation("AuditLogPerformer") // Действия выполненные оператором
-
-  // Indexes
   @@index([email])
   @@index([createdAt])
   @@map("users")
 }
 
 model Session {
-  id           String    @id @db.VarChar(255)
-  userId       String    @map("user_id") @db.Uuid
-  data         Json?     @db.JsonB
-  expiresAt    DateTime  @map("expires_at") @db.Timestamptz(6)
-  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  lastActivity DateTime  @default(now()) @map("last_activity") @db.Timestamptz(6)
-  ipAddress    String?   @map("ip_address") @db.Inet
-  userAgent    String?   @map("user_agent") @db.Text
-  revoked      Boolean   @default(false)
-  revokedAt    DateTime? @map("revoked_at") @db.Timestamptz(6)
-
-  // ✅ НОВОЕ поле для application context с default 'WEB' для backward compatibility
+  id                 String          @id @db.VarChar(255)
+  userId             String          @map("user_id") @db.Uuid
+  data               Json?
+  expiresAt          DateTime        @map("expires_at") @db.Timestamptz(6)
+  createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastActivity       DateTime        @default(now()) @map("last_activity") @db.Timestamptz(6)
+  ipAddress          String?         @map("ip_address") @db.Inet
+  userAgent          String?         @map("user_agent")
+  revoked            Boolean         @default(false)
+  revokedAt          DateTime?       @map("revoked_at") @db.Timestamptz(6)
   applicationContext ApplicationType @default(WEB) @map("application_context")
+  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // ✅ ОБНОВЛЯЕМ indexes - добавляем applicationContext
   @@index([userId])
-  @@index([applicationContext, userId]) // ✅ НОВЫЙ индекс для изоляции по приложениям
+  @@index([applicationContext, userId])
   @@index([expiresAt])
   @@index([createdAt])
   @@index([revoked])
   @@map("sessions")
 }
 
-// ✅ НОВАЯ модель: роли пользователей по приложениям
 model UserAppRole {
   id                 String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId             String          @map("user_id") @db.Uuid
   applicationContext ApplicationType @map("application_context")
   role               UserRole
   createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  // ✅ CONSTRAINT: один пользователь = одна роль на приложение
   @@unique([userId, applicationContext])
   @@index([applicationContext])
   @@index([role])
@@ -79,20 +62,124 @@ model UserAppRole {
   @@map("user_app_roles")
 }
 
+model Order {
+  id                 String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String          @map("user_id") @db.Uuid
+  cryptoAmount       Decimal         @map("crypto_amount") @db.Decimal(36, 18)
+  currency           String          @db.VarChar(10)
+  uahAmount          Decimal         @map("uah_amount") @db.Decimal(12, 2)
+  tokenStandard      String?         @map("token_standard") @db.VarChar(20)
+  status             OrderStatus     @default(PENDING)
+  txHash             String?         @map("tx_hash") @db.VarChar(255)
+  recipientData      Json?           @map("recipient_data")
+  assignedOperatorId String?         @map("assigned_operator_id") @db.Uuid
+  assignedAt         DateTime?       @map("assigned_at") @db.Timestamptz(6)
+  createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  processedAt        DateTime?       @map("processed_at") @db.Timestamptz(6)
+  walletId           String?         @map("wallet_id") @db.Uuid
+  auditLogs          OrderAuditLog[]
+  assignedOperator   User?           @relation("OperatorAssignments", fields: [assignedOperatorId], references: [id])
+  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet             Wallet?         @relation(fields: [walletId], references: [id])
+  queueEntries       WalletQueue?
+
+  @@index([userId])
+  @@index([status])
+  @@index([currency])
+  @@index([createdAt])
+  @@index([status, createdAt])
+  @@index([walletId])
+  @@index([assignedOperatorId])
+  @@index([txHash])
+  @@map("orders")
+}
+
+model OrderAuditLog {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId     String   @map("order_id") @db.Uuid
+  action      String   @db.VarChar(100)
+  oldValue    String?  @map("old_value") @db.VarChar(100)
+  newValue    String?  @map("new_value") @db.VarChar(100)
+  metadata    Json?
+  comment     String?
+  performedBy String?  @map("performed_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user        User?    @relation("AuditLogPerformer", fields: [performedBy], references: [id])
+
+  @@index([orderId])
+  @@index([createdAt])
+  @@index([action])
+  @@index([performedBy])
+  @@index([orderId, createdAt])
+  @@map("order_audit_logs")
+}
+
+model Wallet {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  address       String        @unique @db.VarChar(255)
+  currency      String        @db.VarChar(10)
+  tokenStandard String?       @map("token_standard") @db.VarChar(20)
+  status        WalletStatus  @default(AVAILABLE)
+  label         String?       @db.VarChar(100)
+  notes         String?
+  totalOrders   Int           @default(0) @map("total_orders")
+  lastUsedAt    DateTime?     @map("last_used_at") @db.Timestamptz(6)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  disabledAt    DateTime?     @map("disabled_at") @db.Timestamptz(6)
+  orders        Order[]
+  queueEntries  WalletQueue[]
+
+  @@index([currency, status])
+  @@index([status])
+  @@index([currency])
+  @@index([lastUsedAt])
+  @@index([currency, status, lastUsedAt])
+  @@index([createdAt])
+  @@index([address])
+  @@map("wallets")
+}
+
+model WalletQueue {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId     String        @unique @map("order_id") @db.Uuid
+  walletId    String?       @map("wallet_id") @db.Uuid
+  currency    String        @db.VarChar(10)
+  priority    QueuePriority @default(NORMAL)
+  position    Int           @map("queue_position")
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  processedAt DateTime?     @map("processed_at") @db.Timestamptz(6)
+  expiresAt   DateTime?     @map("expires_at") @db.Timestamptz(6)
+  retryCount  Int           @default(0) @map("retry_count")
+  lastError   String?       @map("last_error")
+  metadata    Json?
+  order       Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  wallet      Wallet?       @relation(fields: [walletId], references: [id])
+
+  @@index([currency, priority, createdAt])
+  @@index([processedAt])
+  @@index([expiresAt])
+  @@index([orderId])
+  @@index([walletId])
+  @@index([createdAt])
+  @@index([priority, createdAt])
+  @@map("wallet_queue")
+}
+
 enum UserRole {
   USER     @map("user")
   ADMIN    @map("admin")
-  OPERATOR @map("operator") 
+  OPERATOR @map("operator")
   SUPPORT  @map("support")
 }
 
-// ✅ НОВЫЙ enum для application context
 enum ApplicationType {
-  WEB      @map("web")
-  ADMIN    @map("admin")
+  WEB   @map("web")
+  ADMIN @map("admin")
 }
 
-// ✅ Order statuses enum - соответствует packages/constants/src/order-statuses.ts
 enum OrderStatus {
   PENDING    @map("pending")
   PAID       @map("paid")
@@ -102,188 +189,15 @@ enum OrderStatus {
   FAILED     @map("failed")
 }
 
-// ✅ Order модель - интеграция с существующей User архитектурой  
-model Order {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId        String    @map("user_id") @db.Uuid
-
-  // Business fields - соответствуют существующему Order interface
-  cryptoAmount  Decimal   @map("crypto_amount") @db.Decimal(36, 18)  // Универсальная точность для всех криптовалют
-  currency      String    @db.VarChar(10)                            // BTC, ETH, USDT
-  uahAmount     Decimal   @map("uah_amount") @db.Decimal(12, 2)      // UAH с копейками
-  tokenStandard String?   @map("token_standard") @db.VarChar(20)     // ERC20, TRC20, etc
-
-  // Status tracking
-  status        OrderStatus @default(PENDING)
-
-  // ✅ ИСПРАВЛЕНА ссылочная целостность - depositAddress теперь ссылается на Wallet
-  walletId      String?     @map("wallet_id") @db.Uuid          // FK на выделенный кошелек (nullable для очереди)
-  txHash        String?     @map("tx_hash") @db.VarChar(255)
-
-  // Recipient data - JSON для гибкости (соответствует existing interface)
-  recipientData  Json?     @map("recipient_data") @db.JsonB
-
-  // Operator assignment tracking
-  assignedOperatorId String? @map("assigned_operator_id") @db.Uuid
-  assignedAt         DateTime? @map("assigned_at") @db.Timestamptz(6)
-
-  // Timestamps - соответствуют существующему паттерну
-  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  processedAt   DateTime? @map("processed_at") @db.Timestamptz(6)
-
-  // Relations - правильная нормализация
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  assignedOperator  User?    @relation("OperatorAssignments", fields: [assignedOperatorId], references: [id], onDelete: SetNull)
-  wallet            Wallet?  @relation(fields: [walletId], references: [id], onDelete: SetNull)  // ✅ Связь с кошельком
-  auditLogs         OrderAuditLog[] // История изменений
-  queueEntries      WalletQueue[]   // ✅ Связь с очередью ожидания
-
-  // Indexes - оптимизация для типовых запросов
-  @@index([userId])                    // Заявки пользователя
-  @@index([status])                    // Фильтрация по статусу
-  @@index([currency])                  // Фильтрация по валюте
-  @@index([createdAt])                 // Сортировка по времени
-  @@index([status, createdAt])         // Составной для операторов
-  @@index([walletId])                  // ✅ Заявки кошелька
-  @@index([assignedOperatorId])        // Заявки оператора
-  @@index([txHash])                    // Поиск по транзакции
-
-  @@map("orders")
-}
-
-// ✅ OrderAuditLog модель - Аудит/История заявок для бизнеса
-model OrderAuditLog {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  orderId   String   @map("order_id") @db.Uuid
-
-  // Аудит данные - история изменений
-  action    String   @db.VarChar(100)  // "ORDER_CREATED", "STATUS_CHANGED", "ASSIGNED_TO_OPERATOR", "OPERATOR_COMMENT"
-  oldValue  String?  @map("old_value") @db.VarChar(100)  // старый статус/значение
-  newValue  String?  @map("new_value") @db.VarChar(100)  // новый статус/значение
-
-  // Дополнительные данные (комментарии оператора, причины изменений)
-  metadata  Json?    @db.JsonB  // Гибкое хранение дополнительной информации
-  comment   String?  @db.Text   // Комментарий оператора
-
-  // Кто выполнил действие (null для системных действий)
-  performedBy String? @map("performed_by") @db.Uuid  // userId оператора
-
-  // Когда
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  // Relations
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  user      User?    @relation("AuditLogPerformer", fields: [performedBy], references: [id], onDelete: SetNull)
-
-  // Indexes для быстрого поиска истории
-  @@index([orderId])           // История конкретной заявки
-  @@index([createdAt])         // Сортировка по времени
-  @@index([action])            // Фильтрация по типу действия
-  @@index([performedBy])       // Действия конкретного оператора
-  @@index([orderId, createdAt]) // Составной для истории заявки
-
-  @@map("order_audit_logs")
-}
-
-// ================================================================================
-// 🟢 НЕДОСТАЮЩИЕ МОДЕЛИ ДЛЯ WALLET MANAGEMENT СИСТЕМЫ 
-// ================================================================================
-
-// ✅ Статусы кошельков для правильного управления пулом
 enum WalletStatus {
-  AVAILABLE  @map("available")   // Свободен, готов к выделению
-  ALLOCATED  @map("allocated")   // Выделен для заявки  
-  DISABLED   @map("disabled")    // Отключен (техобслуживание, проблемы)
+  AVAILABLE @map("available")
+  ALLOCATED @map("allocated")
+  DISABLED  @map("disabled")
 }
 
-// ✅ Модель Wallet - управление криптовалютными кошельками
-model Wallet {
-  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  
-  // ✅ КРИТИЧНО: UNIQUE constraint для адреса (один адрес = один кошелек)
-  address       String      @unique @db.VarChar(255)    // Уникальный криптоадрес
-  currency      String      @db.VarChar(10)             // BTC, ETH, USDT
-  tokenStandard String?     @map("token_standard") @db.VarChar(20)  // ERC20, TRC20, null для нативных
-  
-  // ✅ Статус управления для правильного FIFO алгоритма
-  status        WalletStatus @default(AVAILABLE)
-  
-  // ✅ Метаданные для администрирования
-  label         String?      @db.VarChar(100)           // Человекочитаемое имя
-  notes         String?      @db.Text                   // Заметки администратора
-  
-  // ✅ Статистика использования
-  totalOrders   Int          @default(0) @map("total_orders")     // Счетчик использований
-  lastUsedAt    DateTime?    @map("last_used_at") @db.Timestamptz(6)  // Последнее использование
-  
-  // ✅ Временные метки
-  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
-  disabledAt    DateTime?    @map("disabled_at") @db.Timestamptz(6)
-
-  // Relations
-  orders        Order[]      // Заявки использующие этот кошелек
-  queueEntries  WalletQueue[] // ✅ Очереди ожидания для этого кошелька
-
-  // ✅ ПРОИЗВОДИТЕЛЬНОСТЬ: Оптимизированные индексы для O(log n) FIFO операций
-  @@index([currency, status])             // ✅ Поиск доступных кошельков по валюте
-  @@index([status])                       // ✅ Фильтрация по статусу
-  @@index([currency])                     // ✅ Группировка по валюте
-  @@index([lastUsedAt])                   // ✅ FIFO сортировка по последнему использованию
-  @@index([currency, status, lastUsedAt]) // ✅ СОСТАВНОЙ индекс для оптимального FIFO
-  @@index([createdAt])                    // ✅ Сортировка по времени создания
-  @@index([address])                      // ✅ Быстрый поиск по адресу (дополнительно к UNIQUE)
-
-  @@map("wallets")
-}
-
-// ✅ Приоритеты для умного управления очередью  
 enum QueuePriority {
-  LOW      @map("low")       // Обычные заявки
-  NORMAL   @map("normal")    // Стандартный приоритет  
-  HIGH     @map("high")      // Важные клиенты
-  URGENT   @map("urgent")    // Критичные случаи
-}
-
-// ✅ Модель WalletQueue - FIFO очередь ожидания кошельков
-model WalletQueue {
-  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  
-  // ✅ Связи с Order и Wallet для полной трассировки
-  orderId       String        @map("order_id") @db.Uuid                // Заявка в очереди
-  walletId      String?       @map("wallet_id") @db.Uuid               // Предпочитаемый кошелек (nullable)
-  currency      String        @db.VarChar(10)                          // Нужная валюта
-  
-  // ✅ Управление очередью и приоритизация
-  priority      QueuePriority @default(NORMAL)                        // Приоритет в очереди
-  position      Int           @map("queue_position")                   // Позиция в очереди (для пользователя)
-  
-  // ✅ Временные метки для FIFO логики
-  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)  // Время добавления в очередь
-  processedAt   DateTime?     @map("processed_at") @db.Timestamptz(6)                // Время обработки
-  expiresAt     DateTime?     @map("expires_at") @db.Timestamptz(6)                  // Время истечения (опционально)
-  
-  // ✅ Метаданные для отладки и статистики
-  retryCount    Int           @default(0) @map("retry_count")          // Количество попыток обработки
-  lastError     String?       @map("last_error") @db.Text              // Последняя ошибка обработки
-  metadata      Json?         @db.JsonB                                // Дополнительные данные
-
-  // Relations
-  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  wallet        Wallet?       @relation(fields: [walletId], references: [id], onDelete: SetNull)
-
-  // ✅ КРИТИЧНЫЕ ИНДЕКСЫ для высокопроизводительного FIFO O(log n)
-  @@index([currency, priority, createdAt])    // ✅ ГЛАВНЫЙ индекс: FIFO с приоритетами по валюте
-  @@index([processedAt])                      // ✅ Обработанные записи
-  @@index([expiresAt])                        // ✅ Очистка просроченных
-  @@index([orderId])                          // ✅ Поиск по заявке
-  @@index([walletId])                         // ✅ Записи по кошельку
-  @@index([createdAt])                        // ✅ FIFO сортировка
-  @@index([priority, createdAt])              // ✅ Приоритетная FIFO
-  
-  // ✅ CONSTRAINT: одна заявка = одна запись в очереди
-  @@unique([orderId])
-
-  @@map("wallet_queue")
+  LOW    @map("low")
+  NORMAL @map("normal")
+  HIGH   @map("high")
+  URGENT @map("urgent")
 }
