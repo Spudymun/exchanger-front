@@ -127,9 +127,11 @@ export function OrderMetadataInfo({
 
 export function OrderCryptoInfo({
   orderData,
+  userEmail, // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: email передается отдельно
   t,
 }: {
   orderData: Order;
+  userEmail?: string; // Опциональный для обратной совместимости
   t: ReturnType<typeof useTranslations>;
 }) {
   return (
@@ -142,7 +144,7 @@ export function OrderCryptoInfo({
         {/* Email - слева (всегда есть) */}
         <div className="flex-1">
           <p className={textStyles.heading.sm}>{t('email')}</p>
-          <p className={textStyles.body.md}>{orderData.email}</p>
+          <p className={textStyles.body.md}>{userEmail || 'unknown@unknown.com'}</p>
         </div>
 
         {/* Blockchain Network - справа (опционально для USDT) */}

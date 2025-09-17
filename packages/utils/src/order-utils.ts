@@ -12,7 +12,7 @@ export type OrderSortOption = 'newest' | 'oldest' | 'amount-high' | 'amount-low'
  */
 export interface OrderFilterOptions {
   status?: OrderStatus;
-  email?: string;
+  userEmail?: string; // ✅ ВОССТАНОВЛЕНО: фильтрация по email пользователя (через User relation)
   fromDate?: Date;
   toDate?: Date;
   minAmount?: number;
@@ -70,10 +70,24 @@ function filterByStatus(orders: Order[], status: OrderStatus): Order[] {
 }
 
 /**
- * Фильтрует заказы по email
+ * Фильтрует заказы по email пользователя
+ * ✅ ВОССТАНОВЛЕНО И АДАПТИРОВАНО: использует User relation через userId
+ * ✅ СЛЕДУЕТ АРХИТЕКТУРНОМУ ПАТТЕРНУ: аналогично shared.ts router
+ * 
+ * @example
+ * // Пример использования с userEmailCache (как в shared.ts router):
+ * const allUsers = await userManager.getAll();
+ * const userEmailCache = new Map(allUsers.map(user => [user.id, user.email]));
+ * const filteredOrders = filterOrders(orders, { userEmail: 'john@example.com' }, userEmailCache);
  */
-function filterByEmail(orders: Order[], email: string): Order[] {
-  return orders.filter(order => order.email.toLowerCase().includes(email.toLowerCase()));
+function filterByUserEmail(orders: Order[], userEmail: string, userEmailCache: Map<string, string>): Order[] {
+  if (!userEmail.trim()) return orders;
+  
+  const searchTerm = userEmail.toLowerCase();
+  return orders.filter(order => {
+    const orderUserEmail = userEmailCache.get(order.userId);
+    return orderUserEmail?.toLowerCase().includes(searchTerm) || false;
+  });
 }
 
 /**
@@ -112,16 +126,24 @@ function filterByAmountRange(orders: Order[], minAmount?: number, maxAmount?: nu
 
 /**
  * Фильтрует заказы согласно заданным критериям
+ * ✅ OVERLOAD 1: Без userEmailCache - обратная совместимость (userEmail фильтр игнорируется)
  */
-export function filterOrders(orders: Order[], filters: OrderFilterOptions = {}): Order[] {
+export function filterOrders(orders: Order[], filters?: OrderFilterOptions): Order[];
+/**
+ * Фильтрует заказы согласно заданным критериям  
+ * ✅ OVERLOAD 2: С userEmailCache - полная функциональность включая userEmail фильтр
+ */
+export function filterOrders(orders: Order[], filters: OrderFilterOptions, userEmailCache: Map<string, string>): Order[];
+export function filterOrders(orders: Order[], filters: OrderFilterOptions = {}, userEmailCache?: Map<string, string>): Order[] {
   let filteredOrders = [...orders];
 
   if (filters.status) {
     filteredOrders = filterByStatus(filteredOrders, filters.status);
   }
 
-  if (filters.email) {
-    filteredOrders = filterByEmail(filteredOrders, filters.email);
+  // ✅ ВОССТАНОВЛЕНО: фильтрация по email пользователя (только если передан userEmailCache)
+  if (filters.userEmail && userEmailCache) {
+    filteredOrders = filterByUserEmail(filteredOrders, filters.userEmail, userEmailCache);
   }
 
   filteredOrders = filterByDateRange(filteredOrders, filters.fromDate, filters.toDate);
@@ -176,6 +198,7 @@ export function paginateOrders<T = Order>(
 
 /**
  * Комбинированная функция для фильтрации, сортировки и пагинации заказов
+ * ✅ OVERLOAD 1: Без userEmailCache - обратная совместимость
  */
 export function processOrders<T = Order>(
   orders: T[],
@@ -185,11 +208,38 @@ export function processOrders<T = Order>(
     pagination: PaginationOptions;
     getId?: (item: T) => string;
   }
+): PaginatedOrdersResult<T>;
+/**
+ * Комбинированная функция для фильтрации, сортировки и пагинации заказов
+ * ✅ OVERLOAD 2: С userEmailCache - полная функциональность включая userEmail фильтр
+ */
+export function processOrders<T = Order>(
+  orders: T[],
+  options: {
+    filters?: OrderFilterOptions;
+    sortBy?: OrderSortOption;
+    pagination: PaginationOptions;
+    getId?: (item: T) => string;
+    userEmailCache?: Map<string, string>; // ✅ ДОБАВЛЕНО: поддержка email фильтрации
+  }
+): PaginatedOrdersResult<T>;
+export function processOrders<T = Order>(
+  orders: T[],
+  options: {
+    filters?: OrderFilterOptions;
+    sortBy?: OrderSortOption;
+    pagination: PaginationOptions;
+    getId?: (item: T) => string;
+    userEmailCache?: Map<string, string>;
+  }
 ): PaginatedOrdersResult<T> {
   // Применяем фильтрацию только к заказам (Order[])
   let processedOrders = orders;
   if (options.filters && isOrderArray(orders)) {
-    processedOrders = filterOrders(orders as Order[], options.filters) as T[];
+    // ✅ ВОССТАНОВЛЕНО: передаем userEmailCache для поддержки email фильтрации
+    processedOrders = options.userEmailCache 
+      ? filterOrders(orders as Order[], options.filters, options.userEmailCache) as T[]
+      : filterOrders(orders as Order[], options.filters) as T[];
   }
 
   // Применяем сортировку только к заказам (Order[])
