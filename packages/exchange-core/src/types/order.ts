@@ -4,7 +4,7 @@ import type { RecipientData } from './contact';
 import type { CryptoCurrency } from './currency';
 
 export interface CreateOrderRequest {
-  email: string;
+  email: string; // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: входной email от UI
   cryptoAmount: number;
   currency: CryptoCurrency;
   uahAmount: number;
@@ -13,7 +13,7 @@ export interface CreateOrderRequest {
 
 export interface Order {
   id: string;
-  email: string;
+  userId: string; // ✅ ОБНОВЛЕНО: новая архитектура с userId
   cryptoAmount: number;
   currency: CryptoCurrency;
   uahAmount: number;
@@ -25,4 +25,5 @@ export interface Order {
   updatedAt: Date;
   processedAt?: Date;
   txHash?: string;
+  // ✅ УДАЛЕНО: email - теперь через userId -> User relation
 }

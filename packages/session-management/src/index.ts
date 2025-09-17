@@ -1,6 +1,6 @@
 // ✅ Main exports for session management package
 // Export all types through centralized types/index.ts (Rule 20 compliance)
-export type * from './types';
+export type * from './types/index';
 
 export { UserManagerFactory } from './factories/user-manager-factory';
 

@@ -1,201 +1,224 @@
-import { VALIDATION_BOUNDS, UI_NUMERIC_CONSTANTS, ORDER_STATUSES } from '@repo/constants';
-import type { OrderStatus } from '@repo/constants';
+import { VALIDATION_BOUNDS, ORDER_STATUSES } from '@repo/constants';
 
-import { generateOrderId } from '../services';
+import type { OrderRepositoryInterface } from '../repositories/order-repository-interface';
+import type { User, Order, CreateOrderRequest } from '../types';
 
-import type { User, Order, CryptoCurrency } from '../types';
+// ✅ User repository interface for compatibility
+interface UserRepositoryInterface {
+  findByEmail(email: string): Promise<User | undefined>;
+  findById(id: string): Promise<User | undefined>;
+  create(userData: Omit<User, 'id' | 'createdAt'>): Promise<User>;
+  update(id: string, updates: Partial<Pick<User, 'email' | 'hashedPassword' | 'isVerified' | 'lastLoginAt'>>): Promise<User | undefined>;
+  getAll(): Promise<User[]>;
+  count(): Promise<number>;
+}
 
-import {
-  MOCK_AUTH_DATA,
-  MOCK_USER_EMAILS,
-  MOCK_TIMESTAMPS,
-  MOCK_TRANSACTION_DATA,
-  MOCK_ORDER_IDS,
-} from './mock-data';
+// ✅ CONSTANTS - for magic number lint compliance
+const DEFAULT_LIMIT = 10;
+const SLICE_START_INDEX = 0;
+const REPO_ERROR_MESSAGE = 'Repository not available';
 
-// Мок данные пользователей
-const mockUsers = [
-  {
-    id: 'user_1',
-    email: MOCK_USER_EMAILS.TEST_USER,
-    hashedPassword: MOCK_AUTH_DATA.EXAMPLE_HASH,
-    isVerified: true,
-    createdAt: MOCK_TIMESTAMPS.BASE_CREATED_AT,
-    lastLoginAt: MOCK_TIMESTAMPS.LAST_LOGIN_AT,
-  },
-  {
-    id: 'user_2',
-    email: MOCK_USER_EMAILS.ADMIN_USER,
-    hashedPassword: MOCK_AUTH_DATA.ADMIN_HASH,
-    isVerified: true,
-    createdAt: MOCK_TIMESTAMPS.BASE_CREATED_AT,
-    lastLoginAt: MOCK_TIMESTAMPS.LAST_LOGIN_AT,
-  },
-];
+// ✅ Factory-based repositories (replaces in-memory arrays)
+// These are created through UserManagerFactory.createOrderManager() and UserManagerFactory.create()
+let userRepository: UserRepositoryInterface | null = null;
+let orderRepository: OrderRepositoryInterface | null = null;
 
-// Мок данные заявок
-const mockOrders = [
-  {
-    id: MOCK_ORDER_IDS.ORDER_1,
-    email: MOCK_USER_EMAILS.TEST_USER,
-    cryptoAmount: 0.001,
-    currency: 'BTC' as CryptoCurrency,
-    uahAmount: 1755.0,
-    status: ORDER_STATUSES.COMPLETED as OrderStatus,
-    depositAddress: MOCK_TRANSACTION_DATA.BTC_ADDRESS,
-    recipientData: {
-      cardNumber: MOCK_TRANSACTION_DATA.CARD_NUMBER,
-    },
-    createdAt: MOCK_TIMESTAMPS.BASE_CREATED_AT,
-    updatedAt: MOCK_TIMESTAMPS.ORDER_UPDATED_AT,
-    processedAt: MOCK_TIMESTAMPS.ORDER_PROCESSED_AT,
-    txHash: MOCK_TRANSACTION_DATA.TX_HASH,
-  },
-  {
-    id: MOCK_ORDER_IDS.ORDER_2,
-    email: MOCK_USER_EMAILS.TEST_USER,
-    cryptoAmount: 1.0,
-    currency: 'ETH' as CryptoCurrency,
-    uahAmount: 117600.0,
-    status: ORDER_STATUSES.PROCESSING as OrderStatus,
-    depositAddress: '0xde0B295669a9FD93d5F28D9Ec85E40f4cb697BAe',
-    createdAt: '2025-06-29T11:00:00.000Z',
-    updatedAt: '2025-06-29T11:30:00.000Z',
-  },
-];
-
-// In-memory хранилище (в реальном приложении будет база данных)
-const users: User[] = mockUsers.map(u => ({
-  ...u,
-  createdAt: new Date(u.createdAt),
-  lastLoginAt: u.lastLoginAt ? new Date(u.lastLoginAt) : undefined,
-}));
-
-const orders: Order[] = mockOrders.map(o => ({
-  ...o,
-  createdAt: new Date(o.createdAt),
-  updatedAt: new Date(o.updatedAt),
-  processedAt: o.processedAt ? new Date(o.processedAt) : undefined,
-}));
-
-// Пользователи
-export const userManager = {
-  findByEmail: (email: string): User | undefined => {
-    return users.find(u => u.email === email);
-  },
-
-  findById: (id: string): User | undefined => {
-    return users.find(u => u.id === id);
-  },
-
-  // ✅ УДАЛЕН - метод больше не нужен в новой архитектуре сессий
-  // findBySessionId больше не поддерживается, используйте session store
-
-  create: (userData: Omit<User, 'id' | 'createdAt'>): User => {
-    const user: User = {
-      id: `user_${Date.now()}`,
-      createdAt: new Date(),
-      ...userData,
+// ✅ BACKWARD COMPATIBILITY: Initialize repositories lazily
+async function getUserRepository(): Promise<UserRepositoryInterface> {
+  if (!userRepository) {
+    const { UserManagerFactory } = await import('@repo/session-management');
+    const sessionManager = await UserManagerFactory.create();
+    
+    // Adapter to bridge UserManagerInterface -> UserRepositoryInterface
+    userRepository = {
+      findByEmail: async (email: string) => {
+        const user = await sessionManager.findByEmail(email);
+        return user || undefined;
+      },
+      findById: async (id: string) => {
+        const user = await sessionManager.findById(id);
+        return user || undefined;
+      },
+      create: async (userData: Omit<User, 'id' | 'createdAt'>) => {
+        return await sessionManager.create({
+          email: userData.email,
+          hashedPassword: userData.hashedPassword,
+          isVerified: userData.isVerified ?? false,
+        });
+      },
+      update: async (id: string, updates: Partial<Pick<User, 'email' | 'hashedPassword' | 'isVerified' | 'lastLoginAt'>>) => {
+        const user = await sessionManager.update(id, updates);
+        return user || undefined;
+      },
+      getAll: async () => {
+        return await sessionManager.getAll();
+      },
+      count: async () => {
+        return await sessionManager.count();
+      },
     };
-    users.push(user);
-    return user;
+  }
+  return userRepository;
+}
+
+async function getOrderRepository() {
+  if (!orderRepository) {
+    const { UserManagerFactory } = await import('@repo/session-management');
+    orderRepository = await UserManagerFactory.createOrderManager();
+  }
+  return orderRepository;
+}
+
+// ✅ REPLACED: Factory-based userManager (replaces in-memory arrays)
+export const userManager = {
+  findByEmail: async (email: string): Promise<User | undefined> => {
+    const repo = await getUserRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    return await repo.findByEmail(email);
   },
 
-  update: (
+  findById: async (id: string): Promise<User | undefined> => {
+    const repo = await getUserRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    return await repo.findById(id);
+  },
+
+  create: async (userData: Omit<User, 'id' | 'createdAt'>): Promise<User> => {
+    const repo = await getUserRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    return await repo.create({
+      ...userData,
+      hashedPassword: userData.hashedPassword || undefined,
+      isVerified: userData.isVerified ?? false,
+    });
+  },
+
+  update: async (
     id: string,
     updates: Partial<Pick<User, 'email' | 'hashedPassword' | 'isVerified' | 'lastLoginAt'>>
-  ): User | undefined => {
-    const index = users.findIndex(u => u.id === id);
-    if (index === VALIDATION_BOUNDS.NOT_FOUND) return undefined;
-
-    const originalUser = users[index]!;
-
-    if (updates.email !== undefined) originalUser.email = updates.email;
-    if (updates.hashedPassword !== undefined) originalUser.hashedPassword = updates.hashedPassword;
-    if (updates.isVerified !== undefined) originalUser.isVerified = updates.isVerified;
-    if (updates.lastLoginAt !== undefined) originalUser.lastLoginAt = updates.lastLoginAt;
-
-    return originalUser;
+  ): Promise<User | undefined> => {
+    const repo = await getUserRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    return await repo.update(id, updates);
   },
 
-  getAll: (): User[] => users,
+  getAll: async (): Promise<User[]> => {
+    const repo = await getUserRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    return await repo.getAll();
+  },
 
-  count: (): number => users.length,
+  count: async (): Promise<number> => {
+    const repo = await getUserRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    return await repo.count();
+  },
 };
 
-// Заявки
+// ✅ REPLACED: Factory-based orderManager (replaces in-memory arrays)
 export const orderManager = {
-  findById: (id: string): Order | undefined => {
-    return orders.find(o => o.id === id);
+  findById: async (id: string): Promise<Order | undefined> => {
+    const repo = await getOrderRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    const order = await repo.findById(id);
+    return order || undefined;
   },
 
-  findByEmail: (email: string): Order[] => {
-    return orders.filter(o => o.email === email);
+  findByUserId: async (userId: string): Promise<Order[]> => {
+    const repo = await getOrderRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    return await repo.findByUserId(userId);
   },
 
-  create: (orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt'>): Order => {
-    const order: Order = {
-      id: generateOrderId(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      ...orderData,
-    };
-    orders.push(order);
-    return order;
+  create: async (orderData: CreateOrderRequest & { userId: string }): Promise<Order> => {
+    const repo = await getOrderRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    return await repo.create(orderData);
   },
 
-  update: (
-    id: string,
-    updates: Partial<Pick<Order, 'status' | 'recipientData' | 'processedAt' | 'txHash'>>
-  ): Order | undefined => {
-    const index = orders.findIndex(o => o.id === id);
-    if (index === VALIDATION_BOUNDS.NOT_FOUND) return undefined;
-
-    const originalOrder = orders[index]!;
-
-    if (updates.status !== undefined) originalOrder.status = updates.status;
-    if (updates.recipientData !== undefined) originalOrder.recipientData = updates.recipientData;
-    if (updates.processedAt !== undefined) originalOrder.processedAt = updates.processedAt;
-    if (updates.txHash !== undefined) originalOrder.txHash = updates.txHash;
-
-    originalOrder.updatedAt = new Date();
-
-    return originalOrder;
+  // ✅ ДОБАВЛЕНО: Универсальный update метод
+  update: async (id: string, updates: Partial<Omit<Order, 'id' | 'createdAt'>>): Promise<Order | undefined> => {
+    const repo = await getOrderRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    const order = await repo.update(id, updates);
+    return order || undefined;
   },
 
-  getAll: (): Order[] => orders,
-
-  getByStatus: (status: Order['status']): Order[] => {
-    return orders.filter(o => o.status === status);
+  updateStatus: async (id: string, status: Order['status']): Promise<Order | undefined> => {
+    const repo = await getOrderRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    const order = await repo.updateStatus(id, status);
+    return order || undefined;
   },
 
-  count: (): number => orders.length,
+  getAll: async (): Promise<Order[]> => {
+    const repo = await getOrderRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    return await repo.getAll();
+  },
 
-  getRecent: (limit: number = UI_NUMERIC_CONSTANTS.DEFAULT_PAGE_SIZE): Order[] => {
+  findByStatus: async (status: Order['status']): Promise<Order[]> => {
+    const repo = await getOrderRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    return await repo.findByStatus(status);
+  },
+
+  count: async (): Promise<number> => {
+    const repo = await getOrderRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    return await repo.count();
+  },
+
+  assignToOperator: async (orderId: string, operatorId: string): Promise<Order | undefined> => {
+    const repo = await getOrderRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    const order = await repo.assignToOperator(orderId, operatorId);
+    return order || undefined;
+  },
+
+  getLatest: async (limit: number = DEFAULT_LIMIT): Promise<Order[]> => {
+    const repo = await getOrderRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    const orders = await repo.getAll();
     return orders
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-      .slice(VALIDATION_BOUNDS.MIN_VALUE, limit);
+      .sort((a: Order, b: Order) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(SLICE_START_INDEX, limit);
   },
 };
 
-// Статистика
+// ✅ REPLACED: Factory-based statsManager (replaces in-memory arrays)
 export const statsManager = {
-  getTotalOrders: (): number => orders.length,
+  getTotalOrders: async (): Promise<number> => {
+    const repo = await getOrderRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    return await repo.count();
+  },
 
-  getTotalUsers: (): number => users.length,
+  getTotalUsers: async (): Promise<number> => {
+    const repo = await getUserRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    return await repo.count();
+  },
 
-  getOrdersByStatus: () => {
+  getOrdersByStatus: async (): Promise<Record<string, number>> => {
+    const repo = await getOrderRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    const allOrders = await repo.getAll();
     const stats: Record<string, number> = {};
-    for (const order of orders) {
+    for (const order of allOrders) {
       stats[order.status] =
         (stats[order.status] || VALIDATION_BOUNDS.MIN_VALUE) + VALIDATION_BOUNDS.SINGLE_ELEMENT;
     }
     return stats;
   },
 
-  getTotalVolume: (): number => {
-    return orders
-      .filter(o => o.status === ORDER_STATUSES.COMPLETED)
-      .reduce((sum: number, order) => sum + order.uahAmount, VALIDATION_BOUNDS.MIN_VALUE);
+  getTotalVolume: async (): Promise<number> => {
+    const repo = await getOrderRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    const completedOrders = await repo.findByStatus(ORDER_STATUSES.COMPLETED);
+    return completedOrders.reduce(
+      (sum: number, order: Order) => sum + order.uahAmount, 
+      VALIDATION_BOUNDS.MIN_VALUE
+    );
   },
 };
