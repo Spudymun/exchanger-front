@@ -14,8 +14,8 @@ import type { User, Order } from '../types';
  * @returns User object if found
  * @throws TRPCError if user not found
  */
-export function validateUserAccess(userId: string): User {
-  const user = userManager.findById(userId);
+export async function validateUserAccess(userId: string): Promise<User> {
+  const user = await userManager.findById(userId);
   if (!user) {
     throw createNotFoundError(`User with ID "${userId}" not found`);
   }
@@ -29,13 +29,15 @@ export function validateUserAccess(userId: string): User {
  * @returns Order object if found and user has access
  * @throws TRPCError if order not found or access denied
  */
-export function validateOrderAccess(orderId: string, userEmail: string): Order {
-  const order = orderManager.findById(orderId);
+export async function validateOrderAccess(orderId: string, userEmail: string): Promise<Order> {
+  const order = await orderManager.findById(orderId);
   if (!order) {
     throw createNotFoundError(`Order with ID "${orderId}" not found`);
   }
 
-  if (order.email !== userEmail) {
+  // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: проверка доступа через userId
+  const user = await userManager.findByEmail(userEmail);
+  if (!user || order.userId !== user.id) {
     throw createForbiddenError('Access to order denied');
   }
 

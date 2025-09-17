@@ -32,7 +32,7 @@ export const securityRouter = createTRPCRouter({
   changePassword: protectedProcedure
     .input(securityEnhancedChangePasswordSchema) // SECURITY-ENHANCED VALIDATION
     .mutation(async ({ input, ctx }) => {
-      const user = validateUserAccess(ctx.user.id);
+      const user = await validateUserAccess(ctx.user.id);
 
       if (!user.hashedPassword) {
         throw createUserError('not_found');
@@ -57,7 +57,7 @@ export const securityRouter = createTRPCRouter({
       );
 
       // Обновляем пароль
-      userManager.update(user.id, {
+      await userManager.update(user.id, {
         hashedPassword,
       });
 
@@ -70,7 +70,7 @@ export const securityRouter = createTRPCRouter({
 
   // Повторная отправка email подтверждения
   resendVerificationEmail: protectedProcedure.mutation(async ({ ctx }) => {
-    const user = validateUserAccess(ctx.user.id);
+    const user = await validateUserAccess(ctx.user.id);
 
     if (user.isVerified) {
       return {
@@ -99,7 +99,7 @@ export const securityRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      const user = validateUserAccess(ctx.user.id);
+      const user = await validateUserAccess(ctx.user.id);
 
       if (!user.hashedPassword) {
         throw createUserError('not_found');
@@ -111,11 +111,12 @@ export const securityRouter = createTRPCRouter({
         throw createSecurityError('invalid_password');
       }
 
-      // Проверяем активные заявки
+      // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: проверяем активные заявки через userId
       type Cancellable = (typeof CANCELLABLE_ORDER_STATUSES)[number];
-      const activeOrders = orderManager
-        .findByEmail(user.email)
-        .filter(order => CANCELLABLE_ORDER_STATUSES.includes(order.status as Cancellable));
+      const userOrders = await orderManager.findByUserId(user.id);
+      const activeOrders = userOrders.filter(order =>
+        CANCELLABLE_ORDER_STATUSES.includes(order.status as Cancellable)
+      );
 
       if (activeOrders.length > 0) {
         throw createBadRequestError(USER_MESSAGES.ACTIVE_ORDERS_EXIST(activeOrders.length));
