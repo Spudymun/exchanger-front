@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { gracefulHandler } from '@repo/utils';
 
-import type { SessionData } from '../types/index.js';
+import type { SessionData } from '../types/index';
 
 /**
  * PostgreSQL session adapter for Prisma ORM

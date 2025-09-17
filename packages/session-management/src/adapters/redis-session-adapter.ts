@@ -1,8 +1,15 @@
 import { SESSION_CONSTANTS, type ApplicationContext } from '@repo/constants';
 import { gracefulHandler } from '@repo/utils';
-import { Redis } from 'ioredis';
 
-import type { SessionAdapter, SessionData } from '../types/index.js';
+import type { SessionAdapter, SessionData } from '../types/index';
+
+// ✅ Dynamic type import для Redis для избежания проблем с Turbopack
+interface Redis {
+  get(key: string): Promise<string | null>;
+  set(key: string, value: string, ...args: unknown[]): Promise<'OK'>;
+  del(key: string): Promise<number>;
+  expire(key: string, seconds: number): Promise<number>;
+}
 
 export class RedisSessionAdapter implements SessionAdapter {
   // ✅ Context теперь обязательный - session prefixes всегда контекстные

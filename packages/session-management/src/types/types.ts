@@ -19,4 +19,4 @@ export type MigrationStrategy =
 export type { User };
 
 // Re-export ManagerEnvironment from config (avoid duplication)
-export type { ManagerEnvironment } from './config.js';
+export type { ManagerEnvironment } from './config';

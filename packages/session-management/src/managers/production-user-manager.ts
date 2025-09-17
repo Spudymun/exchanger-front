@@ -10,7 +10,7 @@ import type {
   SessionAdapter,
   SessionMetadata,
   SessionData,
-} from '../types/index.js';
+} from '../types/index';
 
 export class ProductionUserManager implements UserManagerInterface {
   constructor(

@@ -1,6 +1,6 @@
 import { SESSION_CONSTANTS } from '@repo/constants';
 
-import type { ManagerEnvironment } from '../types/config.js';
+import type { ManagerEnvironment } from '../types/config';
 
 /**
  * ✅ Determines current environment from process.env.NODE_ENV

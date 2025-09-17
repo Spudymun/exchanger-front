@@ -1,7 +1,7 @@
 import type { User } from '@repo/exchange-core';
 
 // ✅ CreateUserData defined in ./types.ts (avoid duplication - Rule 20)
-import type { CreateUserData } from './types.js';
+import type { CreateUserData } from './types';
 
 // Re-export User type for convenience
 export type { User, CreateUserData };
