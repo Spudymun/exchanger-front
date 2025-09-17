@@ -116,9 +116,9 @@ model Order {
   // Status tracking
   status        OrderStatus @default(PENDING)
 
-  // Crypto fields
-  depositAddress String    @map("deposit_address") @db.VarChar(255)
-  txHash         String?   @map("tx_hash") @db.VarChar(255)
+  // ✅ ИСПРАВЛЕНА ссылочная целостность - depositAddress теперь ссылается на Wallet
+  walletId      String?     @map("wallet_id") @db.Uuid          // FK на выделенный кошелек (nullable для очереди)
+  txHash        String?     @map("tx_hash") @db.VarChar(255)
 
   // Recipient data - JSON для гибкости (соответствует existing interface)
   recipientData  Json?     @map("recipient_data") @db.JsonB
@@ -135,7 +135,9 @@ model Order {
   // Relations - правильная нормализация
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   assignedOperator  User?    @relation("OperatorAssignments", fields: [assignedOperatorId], references: [id], onDelete: SetNull)
+  wallet            Wallet?  @relation(fields: [walletId], references: [id], onDelete: SetNull)  // ✅ Связь с кошельком
   auditLogs         OrderAuditLog[] // История изменений
+  queueEntries      WalletQueue[]   // ✅ Связь с очередью ожидания
 
   // Indexes - оптимизация для типовых запросов
   @@index([userId])                    // Заявки пользователя
@@ -143,7 +145,7 @@ model Order {
   @@index([currency])                  // Фильтрация по валюте
   @@index([createdAt])                 // Сортировка по времени
   @@index([status, createdAt])         // Составной для операторов
-  @@index([depositAddress])            // Поиск по адресу
+  @@index([walletId])                  // ✅ Заявки кошелька
   @@index([assignedOperatorId])        // Заявки оператора
   @@index([txHash])                    // Поиск по транзакции
 
@@ -182,4 +184,106 @@ model OrderAuditLog {
   @@index([orderId, createdAt]) // Составной для истории заявки
 
   @@map("order_audit_logs")
+}
+
+// ================================================================================
+// 🟢 НЕДОСТАЮЩИЕ МОДЕЛИ ДЛЯ WALLET MANAGEMENT СИСТЕМЫ 
+// ================================================================================
+
+// ✅ Статусы кошельков для правильного управления пулом
+enum WalletStatus {
+  AVAILABLE  @map("available")   // Свободен, готов к выделению
+  ALLOCATED  @map("allocated")   // Выделен для заявки  
+  DISABLED   @map("disabled")    // Отключен (техобслуживание, проблемы)
+}
+
+// ✅ Модель Wallet - управление криптовалютными кошельками
+model Wallet {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // ✅ КРИТИЧНО: UNIQUE constraint для адреса (один адрес = один кошелек)
+  address       String      @unique @db.VarChar(255)    // Уникальный криптоадрес
+  currency      String      @db.VarChar(10)             // BTC, ETH, USDT
+  tokenStandard String?     @map("token_standard") @db.VarChar(20)  // ERC20, TRC20, null для нативных
+  
+  // ✅ Статус управления для правильного FIFO алгоритма
+  status        WalletStatus @default(AVAILABLE)
+  
+  // ✅ Метаданные для администрирования
+  label         String?      @db.VarChar(100)           // Человекочитаемое имя
+  notes         String?      @db.Text                   // Заметки администратора
+  
+  // ✅ Статистика использования
+  totalOrders   Int          @default(0) @map("total_orders")     // Счетчик использований
+  lastUsedAt    DateTime?    @map("last_used_at") @db.Timestamptz(6)  // Последнее использование
+  
+  // ✅ Временные метки
+  createdAt     DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  disabledAt    DateTime?    @map("disabled_at") @db.Timestamptz(6)
+
+  // Relations
+  orders        Order[]      // Заявки использующие этот кошелек
+  queueEntries  WalletQueue[] // ✅ Очереди ожидания для этого кошелька
+
+  // ✅ ПРОИЗВОДИТЕЛЬНОСТЬ: Оптимизированные индексы для O(log n) FIFO операций
+  @@index([currency, status])             // ✅ Поиск доступных кошельков по валюте
+  @@index([status])                       // ✅ Фильтрация по статусу
+  @@index([currency])                     // ✅ Группировка по валюте
+  @@index([lastUsedAt])                   // ✅ FIFO сортировка по последнему использованию
+  @@index([currency, status, lastUsedAt]) // ✅ СОСТАВНОЙ индекс для оптимального FIFO
+  @@index([createdAt])                    // ✅ Сортировка по времени создания
+  @@index([address])                      // ✅ Быстрый поиск по адресу (дополнительно к UNIQUE)
+
+  @@map("wallets")
+}
+
+// ✅ Приоритеты для умного управления очередью  
+enum QueuePriority {
+  LOW      @map("low")       // Обычные заявки
+  NORMAL   @map("normal")    // Стандартный приоритет  
+  HIGH     @map("high")      // Важные клиенты
+  URGENT   @map("urgent")    // Критичные случаи
+}
+
+// ✅ Модель WalletQueue - FIFO очередь ожидания кошельков
+model WalletQueue {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  
+  // ✅ Связи с Order и Wallet для полной трассировки
+  orderId       String        @map("order_id") @db.Uuid                // Заявка в очереди
+  walletId      String?       @map("wallet_id") @db.Uuid               // Предпочитаемый кошелек (nullable)
+  currency      String        @db.VarChar(10)                          // Нужная валюта
+  
+  // ✅ Управление очередью и приоритизация
+  priority      QueuePriority @default(NORMAL)                        // Приоритет в очереди
+  position      Int           @map("queue_position")                   // Позиция в очереди (для пользователя)
+  
+  // ✅ Временные метки для FIFO логики
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)  // Время добавления в очередь
+  processedAt   DateTime?     @map("processed_at") @db.Timestamptz(6)                // Время обработки
+  expiresAt     DateTime?     @map("expires_at") @db.Timestamptz(6)                  // Время истечения (опционально)
+  
+  // ✅ Метаданные для отладки и статистики
+  retryCount    Int           @default(0) @map("retry_count")          // Количество попыток обработки
+  lastError     String?       @map("last_error") @db.Text              // Последняя ошибка обработки
+  metadata      Json?         @db.JsonB                                // Дополнительные данные
+
+  // Relations
+  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  wallet        Wallet?       @relation(fields: [walletId], references: [id], onDelete: SetNull)
+
+  // ✅ КРИТИЧНЫЕ ИНДЕКСЫ для высокопроизводительного FIFO O(log n)
+  @@index([currency, priority, createdAt])    // ✅ ГЛАВНЫЙ индекс: FIFO с приоритетами по валюте
+  @@index([processedAt])                      // ✅ Обработанные записи
+  @@index([expiresAt])                        // ✅ Очистка просроченных
+  @@index([orderId])                          // ✅ Поиск по заявке
+  @@index([walletId])                         // ✅ Записи по кошельку
+  @@index([createdAt])                        // ✅ FIFO сортировка
+  @@index([priority, createdAt])              // ✅ Приоритетная FIFO
+  
+  // ✅ CONSTRAINT: одна заявка = одна запись в очереди
+  @@unique([orderId])
+
+  @@map("wallet_queue")
 }
