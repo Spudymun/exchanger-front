@@ -89,6 +89,14 @@ export const PAGINATION_CONSTANTS = {
 } as const;
 
 /**
+ * Константы для времени жизни заявок и операций
+ */
+export const OPERATION_TIME_CONSTANTS = {
+  /** Время жизни заявки на обмен в минутах */
+  ORDER_EXPIRATION_MINUTES: 30,
+} as const;
+
+/**
  * Константы для временных зон и локализации времени
  */
 export const TIMEZONE_CONSTANTS = {

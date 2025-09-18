@@ -1,5 +1,6 @@
-import fs from 'node:fs';
+import fs from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
   CURRENCY_FULL_NAMES,
@@ -7,6 +8,7 @@ import {
   COMPANY_INFO,
   TIMEZONE_CONSTANTS,
 } from '@repo/constants';
+import { sanitizeHtmlContent } from '@repo/exchange-core';
 import { createEnvironmentLogger } from '@repo/utils';
 
 import type { CryptoAddressEmailData, EmailMessage } from '../types/index';
@@ -21,7 +23,10 @@ export class EmailTemplateService {
   /**
    * Load template from file with caching
    */
-  private static loadTemplate(templateName: string, extension: 'html' | 'txt'): string {
+  private static async loadTemplate(
+    templateName: string,
+    extension: 'html' | 'txt'
+  ): Promise<string> {
     const cacheKey = `${templateName}.${extension}`;
 
     const cached = this.templateCache.get(cacheKey);
@@ -30,12 +35,9 @@ export class EmailTemplateService {
     }
 
     try {
-      const templatePath = path.join(
-        process.cwd(),
-        'packages/email-service/src/templates',
-        `${templateName}.${extension}`
-      );
-      const template = fs.readFileSync(templatePath, 'utf8');
+      const __dirname = path.dirname(fileURLToPath(import.meta.url));
+      const templatePath = path.join(__dirname, '../templates', `${templateName}.${extension}`);
+      const template = await fs.readFile(templatePath, 'utf8');
       this.templateCache.set(cacheKey, template);
       return template;
     } catch (error) {
@@ -50,14 +52,17 @@ export class EmailTemplateService {
 
   /**
    * Replace template variables with actual values
+   * Sanitizes all values to prevent XSS attacks
    */
   private static replaceVariables(template: string, variables: Record<string, string>): string {
     let result = template;
 
     for (const [key, value] of Object.entries(variables)) {
+      // Sanitize value to prevent XSS attacks
+      const sanitizedValue = sanitizeHtmlContent(value);
       // Use string replace for template variables (safer than regex)
       const placeholder = `{{${key}}}`;
-      result = result.replaceAll(placeholder, value);
+      result = result.replaceAll(placeholder, sanitizedValue);
     }
 
     return result;
@@ -80,7 +85,7 @@ export class EmailTemplateService {
   /**
    * Generate crypto address email content
    */
-  static generateCryptoAddressEmail(data: CryptoAddressEmailData): EmailMessage {
+  static async generateCryptoAddressEmail(data: CryptoAddressEmailData): Promise<EmailMessage> {
     const variables = {
       orderId: data.orderId,
       cryptoAddress: data.cryptoAddress,
@@ -93,8 +98,8 @@ export class EmailTemplateService {
       companyName: COMPANY_INFO.NAME, // ✅ Добавляем из констант
     };
 
-    const htmlTemplate = this.loadTemplate('crypto-address', 'html');
-    const textTemplate = this.loadTemplate('crypto-address', 'txt');
+    const htmlTemplate = await this.loadTemplate('crypto-address', 'html');
+    const textTemplate = await this.loadTemplate('crypto-address', 'txt');
 
     const html = this.replaceVariables(htmlTemplate, variables);
     const text = this.replaceVariables(textTemplate, variables);

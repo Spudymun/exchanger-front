@@ -1,6 +1,9 @@
 // Main service export
 export { EmailService } from './services/email-service';
 
+// Rate-limited service export
+export { RateLimitedEmailService } from './utils/rate-limited-email-service';
+
 // Factory export
 export { EmailServiceFactory } from './factories/email-service-factory';
 

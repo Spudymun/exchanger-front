@@ -23,7 +23,7 @@ const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 const CLEANUP_INTERVAL =
   TIME_CONSTANTS.MINUTES_IN_HOUR *
   TIME_CONSTANTS.MILLISECONDS_IN_SECOND *
-  TIME_CONSTANTS.SECONDS_IN_MINUTE; // 5 minutes
+  TIME_CONSTANTS.SECONDS_IN_MINUTE; // 60 minutes
 
 // Periodic cleanup of expired records
 setInterval(() => {
@@ -82,22 +82,42 @@ export function createRateLimiter(
 // Middleware для разных типов действий
 export const rateLimitMiddleware = {
   createOrder: publicProcedure.use(async ({ ctx, next }) => {
-    await createRateLimiter('CREATE_ORDER', async (key, values) => await ctx.getErrorMessage(key, values))(getClientIp(ctx.ip));
+    await createRateLimiter(
+      'CREATE_ORDER',
+      async (key, values) => await ctx.getErrorMessage(key, values)
+    )(getClientIp(ctx.ip));
     return next();
   }),
 
   register: publicProcedure.use(async ({ ctx, next }) => {
-    await createRateLimiter('REGISTER', async (key, values) => await ctx.getErrorMessage(key, values))(getClientIp(ctx.ip));
+    await createRateLimiter(
+      'REGISTER',
+      async (key, values) => await ctx.getErrorMessage(key, values)
+    )(getClientIp(ctx.ip));
     return next();
   }),
 
   login: publicProcedure.use(async ({ ctx, next }) => {
-    await createRateLimiter('LOGIN', async (key, values) => await ctx.getErrorMessage(key, values))(getClientIp(ctx.ip));
+    await createRateLimiter(
+      'LOGIN',
+      async (key, values) => await ctx.getErrorMessage(key, values)
+    )(getClientIp(ctx.ip));
     return next();
   }),
 
   resetPassword: publicProcedure.use(async ({ ctx, next }) => {
-    await createRateLimiter('RESET_PASSWORD', async (key, values) => await ctx.getErrorMessage(key, values))(getClientIp(ctx.ip));
+    await createRateLimiter(
+      'RESET_PASSWORD',
+      async (key, values) => await ctx.getErrorMessage(key, values)
+    )(getClientIp(ctx.ip));
+    return next();
+  }),
+
+  emailSend: publicProcedure.use(async ({ ctx, next }) => {
+    await createRateLimiter(
+      'EMAIL_SEND',
+      async (key, values) => await ctx.getErrorMessage(key, values)
+    )(getClientIp(ctx.ip));
     return next();
   }),
 };

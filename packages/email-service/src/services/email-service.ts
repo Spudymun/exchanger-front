@@ -26,7 +26,7 @@ export class EmailService {
       });
 
       // Generate email content from template
-      const emailMessage = EmailTemplateService.generateCryptoAddressEmail(data);
+      const emailMessage = await EmailTemplateService.generateCryptoAddressEmail(data);
 
       // Get email provider and send
       const provider = EmailServiceFactory.create(config);

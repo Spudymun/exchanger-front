@@ -1,5 +1,9 @@
 import { DECIMAL_PRECISION } from './decimal-precision';
-import { REQUEST_TIMEOUT_CONSTANTS } from './time-constants';
+import {
+  REQUEST_TIMEOUT_CONSTANTS,
+  TIME_CONSTANTS,
+  OPERATION_TIME_CONSTANTS,
+} from './time-constants';
 
 /**
  * ExchangeGO specific constants
@@ -50,6 +54,13 @@ export const EXCHANGE_AMOUNT_PRECISION = DECIMAL_PRECISION.CRYPTO_DECIMAL_PLACES
 // API delays for exchange operations
 export const API_DELAY_MS = 100;
 export const ORDER_CREATION_DELAY_MS = 200;
+
+// Order expiration time (30 minutes)
+export const ORDER_EXPIRATION_TIME_MS =
+  OPERATION_TIME_CONSTANTS.ORDER_EXPIRATION_MINUTES *
+  TIME_CONSTANTS.MINUTES_IN_HOUR *
+  TIME_CONSTANTS.SECONDS_IN_MINUTE *
+  TIME_CONSTANTS.MILLISECONDS_IN_SECOND;
 
 // Order pagination limits
 export const DEFAULT_ORDER_LIMIT = 20;

@@ -2,12 +2,13 @@ import {
   CRYPTOCURRENCIES,
   API_DELAY_MS,
   ORDER_CREATION_DELAY_MS,
+  ORDER_EXPIRATION_TIME_MS,
   CURRENCY_NAMES,
   UI_NUMERIC_CONSTANTS,
   PERCENTAGE_CALCULATIONS,
   AUTH_CONSTANTS,
 } from '@repo/constants';
-import { EmailService } from '@repo/email-service';
+import { RateLimitedEmailService } from '@repo/email-service';
 import {
   calculateUahAmount,
   calculateCryptoAmount,
@@ -27,6 +28,7 @@ import {
   sortOrders,
   createBadRequestError,
   createOrderError,
+  createEnvironmentLogger,
   securityEnhancedGetCurrencyRateSchema,
   securityEnhancedCalculateAmountSchema,
   securityEnhancedCreateExchangeOrderSchema,
@@ -38,6 +40,9 @@ import { z } from 'zod';
 import { type Context } from '../context';
 import { createTRPCRouter, publicProcedure } from '../init';
 import { rateLimitMiddleware } from '../middleware/rateLimit';
+
+// ✅ Logger для централизованного логирования
+const logger = createEnvironmentLogger('ExchangeRouter');
 
 // === TYPE GUARDS ===
 
@@ -113,18 +118,25 @@ async function createOrderInSystem(
     recipientData: orderRequest.recipientData,
   });
 
-  // ✅ Task 3.4: Send crypto address to user's email
+  // ✅ Task 3.4: Send crypto address to user's email with rate limiting
   try {
-    await EmailService.sendCryptoAddress({
-      orderId: order.id,
-      cryptoAddress: depositAddress,
-      currency: orderRequest.currency,
-      amount: orderRequest.cryptoAmount,
-      expiresAt: new Date(Date.now() + ORDER_CREATION_DELAY_MS), // Set expiration time
-      userEmail: orderRequest.email,
-    });
+    await RateLimitedEmailService.sendCryptoAddress(
+      {
+        orderId: order.id,
+        cryptoAddress: depositAddress,
+        currency: orderRequest.currency,
+        amount: orderRequest.cryptoAmount,
+        expiresAt: new Date(Date.now() + ORDER_EXPIRATION_TIME_MS), // Set expiration time
+        userEmail: orderRequest.email,
+      },
+      sessionMetadata.ip
+    ); // Use IP address for rate limiting
   } catch (emailError) {
-    console.error('Failed to send crypto address email:', emailError);
+    logger.error('Failed to send crypto address email', {
+      orderId: order.id,
+      email: orderRequest.email,
+      error: emailError instanceof Error ? emailError.message : 'Unknown error',
+    });
     // Continue execution even if email sending fails to not interrupt the order flow
   }
 
