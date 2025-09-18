@@ -1,5 +1,7 @@
 import type { IncomingHttpHeaders } from 'node:http';
 
+import { AUTH_CONSTANTS } from '@repo/constants';
+
 /**
  * Helper function to safely get user agent from request headers
  */
@@ -20,7 +22,7 @@ export function createSessionMetadata(
   headers: IncomingHttpHeaders
 ): { ip: string; userAgent?: string } {
   return {
-    ip: ip || '0.0.0.0', // Ensure ip is never undefined
+    ip: ip || AUTH_CONSTANTS.FALLBACK_IP, // ✅ Используем централизованную константу
     userAgent: getUserAgent(headers),
   };
 }

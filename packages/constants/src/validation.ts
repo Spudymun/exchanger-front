@@ -137,4 +137,12 @@ export const AUTH_CONSTANTS = {
 
   // HTTP headers
   SET_COOKIE_HEADER: 'Set-Cookie',
+
+  // Logging constants
+  SESSION_ID_LOG_LENGTH: 8,
+  LOG_TRUNCATE_START: 0,
+
+  // Session metadata fallback values
+  FALLBACK_IP: '0.0.0.0',
+  FALLBACK_USER_AGENT: 'Unknown',
 } as const;

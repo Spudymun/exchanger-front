@@ -5,6 +5,7 @@ import {
   CURRENCY_NAMES,
   UI_NUMERIC_CONSTANTS,
   PERCENTAGE_CALCULATIONS,
+  AUTH_CONSTANTS,
 } from '@repo/constants';
 import {
   calculateUahAmount,
@@ -17,7 +18,9 @@ import {
   userManager,
   isAmountWithinLimits,
   type CryptoCurrency,
+  AutoRegistrationService,
 } from '@repo/exchange-core';
+import { UserManagerFactory, type SessionMetadata } from '@repo/session-management';
 import {
   paginateOrders,
   sortOrders,
@@ -51,20 +54,6 @@ async function assertValidCurrency(currency: string, ctx: Context): Promise<void
 // === HELPER FUNCTIONS FOR BUSINESS LOGIC ===
 
 /**
- * Создает или находит пользователя по email
- */
-function ensureUser(email: string) {
-  let user = userManager.findByEmail(email);
-  if (!user) {
-    user = userManager.create({
-      email,
-      isVerified: false,
-    });
-  }
-  return user;
-}
-
-/**
  * Подготавливает данные для создания заявки
  */
 function prepareOrderRequest(input: {
@@ -86,30 +75,34 @@ function prepareOrderRequest(input: {
 }
 
 /**
- * Создает новую заявку в системе
+ * Создает новую заявку в системе с обязательным session management
  */
-async function createOrderInSystem(orderRequest: {
-  email: string;
-  cryptoAmount: number;
-  currency: (typeof CRYPTOCURRENCIES)[number];
-  uahAmount: number;
-  recipientData?: { cardNumber?: string; bankDetails?: string };
-}) {
+async function createOrderInSystem(
+  orderRequest: {
+    email: string;
+    cryptoAmount: number;
+    currency: (typeof CRYPTOCURRENCIES)[number];
+    uahAmount: number;
+    recipientData?: { cardNumber?: string; bankDetails?: string };
+  },
+  sessionMetadata: SessionMetadata
+) {
   const depositAddress = generateDepositAddress(orderRequest.currency);
 
-  // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: auto-registration для обеспечения userId
-  let user = await userManager.findByEmail(orderRequest.email);
-  if (!user) {
-    // ✅ AC2.1A: Auto-registration для незарегистрированных пользователей
-    user = await userManager.create({
-      email: orderRequest.email,
-      hashedPassword: undefined,
-      isVerified: false,
-    });
-  }
+  // ✅ НОВАЯ АРХИТЕКТУРА: Используем существующую Multi-App Context архитектуру
+  const webUserManager = await UserManagerFactory.createForWeb();
+
+  // ✅ НОВАЯ АРХИТЕКТУРА: Используем существующий AutoRegistrationService
+  const autoRegService = new AutoRegistrationService(webUserManager);
+
+  // ✅ AC2.1A: Обязательная сессия для каждой заявки
+  const userSession = await autoRegService.ensureUserWithSession(
+    orderRequest.email,
+    sessionMetadata
+  );
 
   const order = await orderManager.create({
-    userId: user.id, // ✅ НОВАЯ АРХИТЕКТУРА: userId вместо email
+    userId: userSession.user.id, // ✅ ГАРАНТИРОВАННЫЙ userId из сессии
     email: orderRequest.email, // ✅ Требуется для CreateOrderRequest interface
     cryptoAmount: orderRequest.cryptoAmount,
     currency: orderRequest.currency,
@@ -117,7 +110,14 @@ async function createOrderInSystem(orderRequest: {
     recipientData: orderRequest.recipientData,
   });
 
-  return { order, depositAddress };
+  return {
+    order,
+    depositAddress,
+    sessionInfo: {
+      sessionId: userSession.sessionId,
+      isNewUser: userSession.isNewUser,
+    },
+  };
 }
 
 export const exchangeRouter = createTRPCRouter({
@@ -227,11 +227,17 @@ export const exchangeRouter = createTRPCRouter({
         );
       }
 
-      // Обеспечиваем существование пользователя
-      ensureUser(orderRequest.email);
+      // ✅ Task 3.1: Подготовка session metadata для обязательной сессии
+      const sessionMetadata: SessionMetadata = {
+        ip: ctx.ip || AUTH_CONSTANTS.FALLBACK_IP,
+        userAgent: ctx.req.headers['user-agent'] || AUTH_CONSTANTS.FALLBACK_USER_AGENT,
+      };
 
-      // Создаем заявку
-      const { order, depositAddress } = await createOrderInSystem(orderRequest);
+      // ✅ Task 3.1: Создаем заявку с обязательным session management
+      const { order, depositAddress, sessionInfo } = await createOrderInSystem(
+        orderRequest,
+        sessionMetadata
+      );
 
       return {
         orderId: order.id,
@@ -241,6 +247,8 @@ export const exchangeRouter = createTRPCRouter({
         currency: input.currency,
         status: order.status,
         createdAt: order.createdAt,
+        // ✅ Task 3.1: Дополнительная информация о сессии
+        sessionInfo,
       };
     }),
 
@@ -280,13 +288,13 @@ export const exchangeRouter = createTRPCRouter({
     .input(securityEnhancedGetOrderHistoryByEmailSchema)
     .query(async ({ input }) => {
       const sanitizedEmail = sanitizeEmail(input.email);
-      
+
       // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: email → user → orders by userId
       const user = await userManager.findByEmail(sanitizedEmail);
       if (!user) {
         return { orders: [], total: 0 }; // Не раскрываем информацию о существовании email
       }
-      
+
       const orders = await orderManager.findByUserId(user.id);
 
       // Используем централизованные утилиты для сортировки и ограничения

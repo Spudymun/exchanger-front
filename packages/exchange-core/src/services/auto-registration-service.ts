@@ -1,31 +1,19 @@
+import { AUTH_CONSTANTS } from '@repo/constants';
 import type { User } from '@repo/exchange-core';
+import type { SessionMetadata, UserManagerInterface } from '@repo/session-management';
 import { createEnvironmentLogger } from '@repo/utils';
 
-// Local interface definition to avoid import issues
-interface UserManagerInterface {
-  findByEmail(email: string): Promise<User | undefined>;
-  findById(id: string): Promise<User | undefined>;
-  findBySessionId?(sessionId: string): Promise<User | undefined>;
-  create(userData: { email: string; hashedPassword?: string; isVerified?: boolean }): Promise<User>;
-  createSession?(userId: string, metadata: Record<string, unknown>, ttl: number): Promise<string>;
-  extendSession?(sessionId: string, ttl: number): Promise<void>;
-}
-
-// Constants
-const DEFAULT_SESSION_TTL = 3600; // 1 hour
-const SESSION_ID_LOG_LENGTH = 8;
-const LOG_TRUNCATE_START = 0;
+// Constants from centralized AUTH_CONSTANTS
+const {
+  SESSION_MAX_AGE_SECONDS: DEFAULT_SESSION_TTL,
+  SESSION_ID_LOG_LENGTH,
+  LOG_TRUNCATE_START,
+} = AUTH_CONSTANTS;
 
 export interface AutoRegistrationResult {
   user: User;
   sessionId: string;
   isNewUser: boolean;
-}
-
-export interface SessionMetadata {
-  ip: string;
-  userAgent: string;
-  [key: string]: unknown; // Allow additional properties
 }
 
 /**
@@ -36,9 +24,7 @@ export interface SessionMetadata {
 export class AutoRegistrationService {
   private logger = createEnvironmentLogger('AutoRegistrationService');
 
-  constructor(
-    private userManager: UserManagerInterface
-  ) {}
+  constructor(private userManager: UserManagerInterface) {}
 
   async ensureUserWithSession(
     email: string,
@@ -53,19 +39,21 @@ export class AutoRegistrationService {
       // 2. Create session
       const sessionId = await this.createUserSession(user.id, sessionMetadata);
 
-      this.logger.info('User session created successfully', { 
-        userId: user.id, 
+      this.logger.info('User session created successfully', {
+        userId: user.id,
         isNewUser,
-        sessionId: sessionId.substring(LOG_TRUNCATE_START, SESSION_ID_LOG_LENGTH) + '...'
+        sessionId: sessionId.substring(LOG_TRUNCATE_START, SESSION_ID_LOG_LENGTH) + '...',
       });
 
       return { user, sessionId, isNewUser };
     } catch (error) {
-      this.logger.error('AutoRegistrationService.ensureUserWithSession failed', { 
+      this.logger.error('AutoRegistrationService.ensureUserWithSession failed', {
         error: error instanceof Error ? error.message : String(error),
-        email 
+        email,
       });
-      throw new Error(`Failed to ensure user with session: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to ensure user with session: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -75,28 +63,29 @@ export class AutoRegistrationService {
 
     if (!user) {
       this.logger.info('Auto-registration for new user', { email });
-      
+
       user = await this.userManager.create({
         email,
         hashedPassword: undefined,
         isVerified: false,
       });
-      
+
       isNewUser = true;
     }
 
     return { user, isNewUser };
   }
 
-  private async createUserSession(userId: string, sessionMetadata: SessionMetadata): Promise<string> {
+  private async createUserSession(
+    userId: string,
+    sessionMetadata: SessionMetadata
+  ): Promise<string> {
     if (!this.userManager.createSession) {
       throw new Error('Session creation not supported by this user manager');
     }
-    return await this.userManager.createSession(
-      userId,
-      sessionMetadata as Record<string, unknown>,
-      DEFAULT_SESSION_TTL
-    );
+
+    // ✅ session-management уже ожидает правильный формат SessionMetadata
+    return await this.userManager.createSession(userId, sessionMetadata, DEFAULT_SESSION_TTL);
   }
 
   /**
@@ -108,9 +97,9 @@ export class AutoRegistrationService {
       const user = await this.userManager.findBySessionId?.(sessionId);
       return user?.id === userId;
     } catch (error) {
-      this.logger.error('Session validation failed', { 
+      this.logger.error('Session validation failed', {
         error: error instanceof Error ? error.message : String(error),
-        userId 
+        userId,
       });
       return false;
     }
@@ -120,20 +109,23 @@ export class AutoRegistrationService {
    * ✅ Refresh session for active users
    * Extends session TTL for users with ongoing order processing
    */
-  async refreshUserSession(sessionId: string, additionalTtl: number = DEFAULT_SESSION_TTL): Promise<boolean> {
+  async refreshUserSession(
+    sessionId: string,
+    additionalTtl: number = DEFAULT_SESSION_TTL
+  ): Promise<boolean> {
     try {
       // Use session manager to extend TTL if method exists
       if (this.userManager.extendSession) {
         await this.userManager.extendSession(sessionId, additionalTtl);
         return true;
       }
-      
+
       this.logger.warn('Session extension not available in current UserManager implementation');
       return false;
     } catch (error) {
-      this.logger.error('Session refresh failed', { 
+      this.logger.error('Session refresh failed', {
         error: error instanceof Error ? error.message : String(error),
-        sessionId: sessionId.substring(LOG_TRUNCATE_START, SESSION_ID_LOG_LENGTH) + '...'
+        sessionId: sessionId.substring(LOG_TRUNCATE_START, SESSION_ID_LOG_LENGTH) + '...',
       });
       return false;
     }

@@ -6,13 +6,6 @@
  * 🔧 Правило: Rule 20 - Single Source of Truth для типов
  */
 
-// AC2.1A: Session metadata for enhanced user operations
-export interface SessionMetadata {
-  ipAddress?: string;
-  userAgent?: string;
-  appContext: 'web' | 'admin';
-}
-
 // AC2.3: Order data types
 export interface OrderFilters {
   status?: 'pending' | 'completed' | 'failed' | 'cancelled';
