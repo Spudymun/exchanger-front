@@ -7,6 +7,7 @@ import {
   PERCENTAGE_CALCULATIONS,
   AUTH_CONSTANTS,
 } from '@repo/constants';
+import { EmailService } from '@repo/email-service';
 import {
   calculateUahAmount,
   calculateCryptoAmount,
@@ -111,6 +112,21 @@ async function createOrderInSystem(
     uahAmount: orderRequest.uahAmount,
     recipientData: orderRequest.recipientData,
   });
+
+  // ✅ Task 3.4: Send crypto address to user's email
+  try {
+    await EmailService.sendCryptoAddress({
+      orderId: order.id,
+      cryptoAddress: depositAddress,
+      currency: orderRequest.currency,
+      amount: orderRequest.cryptoAmount,
+      expiresAt: new Date(Date.now() + ORDER_CREATION_DELAY_MS), // Set expiration time
+      userEmail: orderRequest.email,
+    });
+  } catch (emailError) {
+    console.error('Failed to send crypto address email:', emailError);
+    // Continue execution even if email sending fails to not interrupt the order flow
+  }
 
   return {
     order,

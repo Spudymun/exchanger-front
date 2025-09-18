@@ -88,4 +88,17 @@ export const PAGINATION_CONSTANTS = {
   MAX_LIMIT: 100,
 } as const;
 
+/**
+ * Константы для временных зон и локализации времени
+ */
+export const TIMEZONE_CONSTANTS = {
+  /** Основная временная зона для приложения */
+  DEFAULT_TIMEZONE: 'Europe/Kiev',
+  /** Основная локаль для форматирования времени */
+  DEFAULT_LOCALE: 'ru-RU',
+  /** Альтернативная локаль */
+  ENGLISH_LOCALE: 'en-US',
+} as const;
+
 export type TimeConstants = typeof TIME_CONSTANTS;
+export type TimezoneConstants = typeof TIMEZONE_CONSTANTS;
