@@ -85,7 +85,8 @@ async function createOrderInSystem(
     uahAmount: number;
     recipientData?: { cardNumber?: string; bankDetails?: string };
   },
-  sessionMetadata: SessionMetadata
+  sessionMetadata: SessionMetadata,
+  existingSessionId?: string
 ) {
   const depositAddress = generateDepositAddress(orderRequest.currency);
 
@@ -95,10 +96,11 @@ async function createOrderInSystem(
   // ✅ НОВАЯ АРХИТЕКТУРА: Используем существующий AutoRegistrationService
   const autoRegService = new AutoRegistrationService(webUserManager);
 
-  // ✅ AC2.1A: Обязательная сессия для каждой заявки
+  // ✅ ENHANCED AC2.1A: Pass existingSessionId for smart session management
   const userSession = await autoRegService.ensureUserWithSession(
     orderRequest.email,
-    sessionMetadata
+    sessionMetadata,
+    existingSessionId
   );
 
   const order = await orderManager.create({
@@ -233,10 +235,11 @@ export const exchangeRouter = createTRPCRouter({
         userAgent: ctx.req.headers['user-agent'] || AUTH_CONSTANTS.FALLBACK_USER_AGENT,
       };
 
-      // ✅ Task 3.1: Создаем заявку с обязательным session management
+      // ✅ ENHANCED Task 3.2: AC2.1A session management with existing sessionId
       const { order, depositAddress, sessionInfo } = await createOrderInSystem(
         orderRequest,
-        sessionMetadata
+        sessionMetadata,
+        ctx.sessionId
       );
 
       return {

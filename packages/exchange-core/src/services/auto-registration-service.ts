@@ -14,6 +14,7 @@ export interface AutoRegistrationResult {
   user: User;
   sessionId: string;
   isNewUser: boolean;
+  authenticationMethod: 'auto-registration' | 'auto-login' | 'existing-session';
 }
 
 /**
@@ -28,24 +29,47 @@ export class AutoRegistrationService {
 
   async ensureUserWithSession(
     email: string,
-    sessionMetadata: SessionMetadata
+    sessionMetadata: SessionMetadata,
+    existingSessionId?: string
   ): Promise<AutoRegistrationResult> {
     try {
-      this.logger.info('Ensuring user with session', { email });
-
-      // 1. Get or create user
-      const { user, isNewUser } = await this.getOrCreateUser(email);
-
-      // 2. Create session
-      const sessionId = await this.createUserSession(user.id, sessionMetadata);
-
-      this.logger.info('User session created successfully', {
-        userId: user.id,
-        isNewUser,
-        sessionId: sessionId.substring(LOG_TRUNCATE_START, SESSION_ID_LOG_LENGTH) + '...',
+      this.logger.info('Ensuring user with session', {
+        email,
+        hasExistingSession: !!existingSessionId,
       });
 
-      return { user, sessionId, isNewUser };
+      // ✅ ENHANCED: Determine user authentication status based on email and existing session
+      const userStatus = await this.determineUserStatus(email, existingSessionId);
+
+      let finalSessionId: string;
+
+      switch (userStatus.authenticationMethod) {
+        case 'existing-session':
+          // Reuse and extend existing session
+          finalSessionId = existingSessionId as string; // TypeScript guard: existingSessionId is guaranteed to exist
+          await this.refreshUserSession(finalSessionId);
+          break;
+
+        case 'auto-login':
+        case 'auto-registration':
+          // Create new session for auto-login or auto-registration
+          finalSessionId = await this.createUserSession(userStatus.user.id, sessionMetadata);
+          break;
+      }
+
+      this.logger.info('User session ensured successfully', {
+        userId: userStatus.user.id,
+        authMethod: userStatus.authenticationMethod,
+        isNewUser: userStatus.isNewUser,
+        sessionId: finalSessionId.substring(LOG_TRUNCATE_START, SESSION_ID_LOG_LENGTH) + '...',
+      });
+
+      return {
+        user: userStatus.user,
+        sessionId: finalSessionId,
+        isNewUser: userStatus.isNewUser,
+        authenticationMethod: userStatus.authenticationMethod,
+      };
     } catch (error) {
       this.logger.error('AutoRegistrationService.ensureUserWithSession failed', {
         error: error instanceof Error ? error.message : String(error),
@@ -74,6 +98,81 @@ export class AutoRegistrationService {
     }
 
     return { user, isNewUser };
+  }
+
+  /**
+   * ✅ ENHANCED: Determine user authentication status for AC2.1A compliance
+   * Supports: auto-registration, auto-login, existing-session scenarios
+   */
+  private async determineUserStatus(
+    email: string,
+    existingSessionId?: string
+  ): Promise<{
+    user: User;
+    authenticationMethod: 'auto-registration' | 'auto-login' | 'existing-session';
+    isNewUser: boolean;
+  }> {
+    // 1. Check if user is already logged in with valid session
+    if (existingSessionId) {
+      const sessionResult = await this.validateExistingSession(existingSessionId, email);
+      if (sessionResult) {
+        return sessionResult;
+      }
+    }
+
+    // 2. Check if user exists in database
+    const existingUser = await this.userManager.findByEmail(email);
+
+    if (existingUser) {
+      // Registered but not logged in → auto-login
+      return {
+        user: existingUser,
+        authenticationMethod: 'auto-login',
+        isNewUser: false,
+      };
+    }
+
+    // 3. Unregistered → auto-registration
+    const newUser = await this.userManager.create({
+      email,
+      hashedPassword: undefined,
+      isVerified: false,
+    });
+
+    return {
+      user: newUser,
+      authenticationMethod: 'auto-registration',
+      isNewUser: true,
+    };
+  }
+
+  /**
+   * ✅ Helper method for session validation to reduce complexity
+   */
+  private async validateExistingSession(
+    sessionId: string,
+    email: string
+  ): Promise<{ user: User; authenticationMethod: 'existing-session'; isNewUser: false } | null> {
+    try {
+      const sessionUser = await this.userManager.findBySessionId(sessionId);
+      if (sessionUser && sessionUser.email === email) {
+        return {
+          user: sessionUser,
+          authenticationMethod: 'existing-session',
+          isNewUser: false,
+        };
+      }
+      return null;
+    } catch (error) {
+      // Session validation failed - continue with auto-registration flow
+      this.logger.debug(
+        `Session validation failed for ${sessionId.substring(
+          AUTH_CONSTANTS.LOG_TRUNCATE_START,
+          AUTH_CONSTANTS.SESSION_ID_LOG_LENGTH
+        )}: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
+      return null;
+    }
   }
 
   private async createUserSession(
