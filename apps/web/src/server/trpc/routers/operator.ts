@@ -1,5 +1,5 @@
 import { ORDER_STATUS_CONFIG, VALIDATION_LIMITS, ORDER_STATUSES } from '@repo/constants';
-import { orderManager } from '@repo/exchange-core';
+import { orderManager, WalletPoolManagerFactory } from '@repo/exchange-core';
 import {
   paginateOrders,
   filterOrders,
@@ -9,6 +9,7 @@ import {
   createBadRequestError,
   filterOrdersForOperator,
   canTransitionStatus,
+  isFinalStatus,
   securityEnhancedOperatorOrdersSchema,
   securityEnhancedUpdateOrderStatusSchema,
 } from '@repo/utils';
@@ -118,6 +119,23 @@ export const operatorRouter = createTRPCRouter({
 
       if (!updatedOrder) {
         throw createOrderError('update_failed');
+      }
+
+      // 🎯 TASK 2.3: Автоматическое освобождение кошелька при финальном статусе
+      if (isFinalStatus(updatedOrder)) {
+        try {
+          const walletManager = await WalletPoolManagerFactory.create();
+          await walletManager.releaseWallet(updatedOrder.depositAddress);
+          console.log(
+            `🔓 Кошелек ${updatedOrder.depositAddress} освобожден для заявки ${input.orderId}`
+          );
+        } catch (walletError) {
+          console.error(
+            `❌ Ошибка освобождения кошелька для заявки ${input.orderId}:`,
+            walletError
+          );
+          // Не прерываем выполнение, так как статус уже обновлен
+        }
       }
 
       console.log(
