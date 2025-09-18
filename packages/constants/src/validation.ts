@@ -145,4 +145,15 @@ export const AUTH_CONSTANTS = {
   // Session metadata fallback values
   FALLBACK_IP: '0.0.0.0',
   FALLBACK_USER_AGENT: 'Unknown',
+
+  // Authentication methods for auto-registration service
+  AUTHENTICATION_METHODS: {
+    AUTO_REGISTRATION: 'auto-registration',
+    AUTO_LOGIN: 'auto-login',
+    EXISTING_SESSION: 'existing-session',
+  } as const,
 } as const;
+
+// Export AuthenticationMethod type for type safety
+export type AuthenticationMethod =
+  (typeof AUTH_CONSTANTS.AUTHENTICATION_METHODS)[keyof typeof AUTH_CONSTANTS.AUTHENTICATION_METHODS];

@@ -1,4 +1,4 @@
-import { AUTH_CONSTANTS } from '@repo/constants';
+import { AUTH_CONSTANTS, type AuthenticationMethod } from '@repo/constants';
 import type { User } from '@repo/exchange-core';
 import type { SessionMetadata, UserManagerInterface } from '@repo/session-management';
 import { createEnvironmentLogger } from '@repo/utils';
@@ -8,14 +8,28 @@ const {
   SESSION_MAX_AGE_SECONDS: DEFAULT_SESSION_TTL,
   SESSION_ID_LOG_LENGTH,
   LOG_TRUNCATE_START,
+  AUTHENTICATION_METHODS,
 } = AUTH_CONSTANTS;
 
 export interface AutoRegistrationResult {
   user: User;
   sessionId: string;
   isNewUser: boolean;
-  authenticationMethod: 'auto-registration' | 'auto-login' | 'existing-session';
+  authenticationMethod: AuthenticationMethod;
 }
+
+// Type alias for user authentication status - avoids inline type duplication
+type UserAuthenticationStatus = Pick<
+  AutoRegistrationResult,
+  'user' | 'authenticationMethod' | 'isNewUser'
+>;
+
+// Type alias for existing session validation result
+type ExistingSessionResult = {
+  user: User;
+  authenticationMethod: typeof AUTHENTICATION_METHODS.EXISTING_SESSION;
+  isNewUser: false;
+} | null;
 
 /**
  * ✅ AutoRegistrationService for AC2.1A requirements
@@ -44,14 +58,15 @@ export class AutoRegistrationService {
       let finalSessionId: string;
 
       switch (userStatus.authenticationMethod) {
-        case 'existing-session':
+        case AUTHENTICATION_METHODS.EXISTING_SESSION:
           // Reuse and extend existing session
           finalSessionId = existingSessionId as string; // TypeScript guard: existingSessionId is guaranteed to exist
-          await this.refreshUserSession(finalSessionId);
+          // Extend session TTL for existing session
+          await this.extendExistingSession(finalSessionId);
           break;
 
-        case 'auto-login':
-        case 'auto-registration':
+        case AUTHENTICATION_METHODS.AUTO_LOGIN:
+        case AUTHENTICATION_METHODS.AUTO_REGISTRATION:
           // Create new session for auto-login or auto-registration
           finalSessionId = await this.createUserSession(userStatus.user.id, sessionMetadata);
           break;
@@ -107,11 +122,7 @@ export class AutoRegistrationService {
   private async determineUserStatus(
     email: string,
     existingSessionId?: string
-  ): Promise<{
-    user: User;
-    authenticationMethod: 'auto-registration' | 'auto-login' | 'existing-session';
-    isNewUser: boolean;
-  }> {
+  ): Promise<UserAuthenticationStatus> {
     // 1. Check if user is already logged in with valid session
     if (existingSessionId) {
       const sessionResult = await this.validateExistingSession(existingSessionId, email);
@@ -127,7 +138,7 @@ export class AutoRegistrationService {
       // Registered but not logged in → auto-login
       return {
         user: existingUser,
-        authenticationMethod: 'auto-login',
+        authenticationMethod: AUTHENTICATION_METHODS.AUTO_LOGIN,
         isNewUser: false,
       };
     }
@@ -141,7 +152,7 @@ export class AutoRegistrationService {
 
     return {
       user: newUser,
-      authenticationMethod: 'auto-registration',
+      authenticationMethod: AUTHENTICATION_METHODS.AUTO_REGISTRATION,
       isNewUser: true,
     };
   }
@@ -152,13 +163,13 @@ export class AutoRegistrationService {
   private async validateExistingSession(
     sessionId: string,
     email: string
-  ): Promise<{ user: User; authenticationMethod: 'existing-session'; isNewUser: false } | null> {
+  ): Promise<ExistingSessionResult> {
     try {
       const sessionUser = await this.userManager.findBySessionId(sessionId);
       if (sessionUser && sessionUser.email === email) {
         return {
           user: sessionUser,
-          authenticationMethod: 'existing-session',
+          authenticationMethod: AUTHENTICATION_METHODS.EXISTING_SESSION,
           isNewUser: false,
         };
       }
@@ -205,28 +216,12 @@ export class AutoRegistrationService {
   }
 
   /**
-   * ✅ Refresh session for active users
-   * Extends session TTL for users with ongoing order processing
+   * ✅ Simple helper to extend existing session TTL
+   * Direct wrapper over UserManager.extendSession for code organization
    */
-  async refreshUserSession(
-    sessionId: string,
-    additionalTtl: number = DEFAULT_SESSION_TTL
-  ): Promise<boolean> {
-    try {
-      // Use session manager to extend TTL if method exists
-      if (this.userManager.extendSession) {
-        await this.userManager.extendSession(sessionId, additionalTtl);
-        return true;
-      }
-
-      this.logger.warn('Session extension not available in current UserManager implementation');
-      return false;
-    } catch (error) {
-      this.logger.error('Session refresh failed', {
-        error: error instanceof Error ? error.message : String(error),
-        sessionId: sessionId.substring(LOG_TRUNCATE_START, SESSION_ID_LOG_LENGTH) + '...',
-      });
-      return false;
+  private async extendExistingSession(sessionId: string): Promise<void> {
+    if (this.userManager.extendSession) {
+      await this.userManager.extendSession(sessionId, DEFAULT_SESSION_TTL);
     }
   }
 }
