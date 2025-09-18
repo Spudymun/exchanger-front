@@ -60,6 +60,10 @@ export function generateSessionId(): string {
   return idService.generateSessionId();
 }
 
+export function generateId(): string {
+  return idService.generateSessionId();
+}
+
 export function generateTransactionId(): string {
   return idService.generateTransactionId();
 }

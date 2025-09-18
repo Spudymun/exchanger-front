@@ -4,6 +4,10 @@ export * from './types';
 // Экспорт Repository интерфейсов
 export * from './repositories';
 
+// TASK 2.2: Redis FIFO Queue components
+export * from './adapters';
+export * from './factories';
+
 // Экспорт утилит
 export * from './utils/calculations';
 export * from './utils/crypto';

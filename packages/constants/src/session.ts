@@ -18,6 +18,46 @@ export const SESSION_CONSTANTS = {
     // ✅ Direct prefixes for multi-app namespace
     WEB_SESSION_PREFIX: 'session:web:',
     ADMIN_SESSION_PREFIX: 'session:admin:',
+
+    // ✅ НОВЫЕ константы для Wallet Queue (TASK 2.2)
+    WALLET_QUEUE_PREFIX: 'wallet:queue:',
+
+    // ✅ Redis операционные лимиты с высоким качеством
+    REDIS_OPERATION_LIMITS: {
+      /** TTL для wallet очередей в секундах (1 час) */
+      DEFAULT_TTL_SECONDS: 3600,
+      /** Максимальная длина очереди для предотвращения memory overflow */
+      MAX_QUEUE_LENGTH: 1000,
+      /** Лимит элементов для peek операций */
+      DEFAULT_PEEK_LIMIT: 10,
+      /** Лимит элементов для статистики очереди */
+      STATS_LIMIT: 10,
+      /** База данных Redis для wallet очередей (отделена от sessions) */
+      QUEUE_DATABASE_INDEX: 1,
+      /** Environment variable name для Redis URL */
+      REDIS_URL_ENV: 'REDIS_URL',
+      /** Таймаут подключения к Redis в миллисекундах */
+      CONNECTION_TIMEOUT_MS: 5000,
+      /** Максимальное время ожидания операции в Redis */
+      OPERATION_TIMEOUT_MS: 3000,
+    },
+
+    // ✅ Приоритеты очередей wallet
+    QUEUE_PRIORITIES: {
+      LOW: 1,
+      NORMAL: 5,
+      HIGH: 10,
+      URGENT: 20,
+    } as const,
+
+    // ✅ Значения по умолчанию для очередей
+    QUEUE_DEFAULTS: {
+      PRIORITY: 'normal' as const,
+      INITIAL_TIME: 0,
+      EMPTY_SIZE: 0,
+      QUEUE_START: 0,
+      INDEX_OFFSET: 1,
+    } as const,
   } as const,
 
   DATABASE: {

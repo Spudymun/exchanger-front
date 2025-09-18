@@ -13,3 +13,11 @@ export type {
   PoolStats,
   WalletAllocationStrategy,
 } from '../services/wallet-strategies/wallet-allocation-strategy';
+
+// FIFO Queue types (Task 2.2)
+export type {
+  WalletQueueAdapter,
+  QueueItem,
+  AddParams,
+  QueueStats,
+} from './wallet-queue-adapter.js';
