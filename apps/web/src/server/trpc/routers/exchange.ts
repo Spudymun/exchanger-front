@@ -14,7 +14,6 @@ import {
   calculateCryptoAmount,
   getExchangeRate,
   getCurrencyLimits,
-  generateDepositAddress,
   sanitizeEmail,
   orderManager,
   userManager,
@@ -81,9 +80,18 @@ function prepareOrderRequest(input: {
 }
 
 /**
- * Создает новую заявку в системе с обязательным session management
+ * Выделяет кошелек через WalletPoolManager
  */
-async function createOrderInSystem(
+async function allocateWalletForOrder(currency: CryptoCurrency) {
+  const { WalletPoolManagerFactory } = await import('@repo/exchange-core');
+  const walletManager = await WalletPoolManagerFactory.create();
+  return walletManager.allocateWallet(currency);
+}
+
+/**
+ * Обрабатывает заявку в очереди при недоступности кошелька
+ */
+async function processQueuedOrder(
   orderRequest: {
     email: string;
     cryptoAmount: number;
@@ -91,18 +99,64 @@ async function createOrderInSystem(
     uahAmount: number;
     recipientData?: { cardNumber?: string; bankDetails?: string };
   },
+  queuePosition: number,
   sessionMetadata: SessionMetadata,
   existingSessionId?: string
 ) {
-  const depositAddress = generateDepositAddress(orderRequest.currency);
-
-  // ✅ НОВАЯ АРХИТЕКТУРА: Используем существующую Multi-App Context архитектуру
+  const { WALLET_POOL_CONFIG } = await import('@repo/constants');
   const webUserManager = await UserManagerFactory.createForWeb();
-
-  // ✅ НОВАЯ АРХИТЕКТУРА: Используем существующий AutoRegistrationService
   const autoRegService = new AutoRegistrationService(webUserManager);
+  
+  const userSession = await autoRegService.ensureUserWithSession(
+    orderRequest.email,
+    sessionMetadata,
+    existingSessionId
+  );
 
-  // ✅ ENHANCED AC2.1A: Pass existingSessionId for smart session management
+  const queuedOrder = await orderManager.create({
+    userId: userSession.user.id,
+    email: orderRequest.email,
+    cryptoAmount: orderRequest.cryptoAmount,
+    currency: orderRequest.currency,
+    uahAmount: orderRequest.uahAmount,
+    recipientData: orderRequest.recipientData,
+  });
+
+  return {
+    order: queuedOrder,
+    depositAddress: '', // Адрес будет назначен позже
+    sessionInfo: {
+      sessionId: userSession.sessionId,
+      isNewUser: userSession.isNewUser,
+    },
+    queueInfo: {
+      inQueue: true,
+      position: queuePosition,
+      estimatedWaitTime: Math.ceil(
+        (queuePosition * WALLET_POOL_CONFIG.QUEUE_CONFIG.QUEUE_TIMEOUT) / (60 * 1000)
+      ), // Минуты (60 * 1000 = 60000 ms)
+    },
+  };
+}
+
+/**
+ * Обрабатывает успешную заявку с выделенным кошельком
+ */
+async function processSuccessfulOrder(
+  orderRequest: {
+    email: string;
+    cryptoAmount: number;
+    currency: (typeof CRYPTOCURRENCIES)[number];
+    uahAmount: number;
+    recipientData?: { cardNumber?: string; bankDetails?: string };
+  },
+  depositAddress: string,
+  sessionMetadata: SessionMetadata,
+  existingSessionId?: string
+) {
+  const webUserManager = await UserManagerFactory.createForWeb();
+  const autoRegService = new AutoRegistrationService(webUserManager);
+  
   const userSession = await autoRegService.ensureUserWithSession(
     orderRequest.email,
     sessionMetadata,
@@ -148,6 +202,43 @@ async function createOrderInSystem(
       isNewUser: userSession.isNewUser,
     },
   };
+}
+
+/**
+ * Создает новую заявку в системе с обязательным session management
+ */
+async function createOrderInSystem(
+  orderRequest: {
+    email: string;
+    cryptoAmount: number;
+    currency: (typeof CRYPTOCURRENCIES)[number];
+    uahAmount: number;
+    recipientData?: { cardNumber?: string; bankDetails?: string };
+  },
+  sessionMetadata: SessionMetadata,
+  existingSessionId?: string
+) {
+  // ✅ ИСПОЛЬЗУЕМ готовую инфраструктуру WalletPoolManager
+  const allocationResult = await allocateWalletForOrder(orderRequest.currency as CryptoCurrency);
+
+  // ✅ ОБРАБАТЫВАЕМ результат allocation (НЕ создаем дубликаты!)
+  if (!allocationResult.success) {
+    // Заявка в очереди - используем ГОТОВЫЕ поля AllocationResult
+    if (allocationResult.queuePosition) {
+      return processQueuedOrder(orderRequest, allocationResult.queuePosition, sessionMetadata, existingSessionId);
+    }
+
+    // Другие ошибки allocation
+    throw createOrderError('wallet_allocation_failed', allocationResult.error || 'Unknown error');
+  }
+
+  // ✅ Успешная аллокация - продолжаем обычный flow
+  const depositAddress = allocationResult.address;
+  if (!depositAddress) {
+    throw createOrderError('wallet_allocation_failed', 'No deposit address provided');
+  }
+
+  return processSuccessfulOrder(orderRequest, depositAddress, sessionMetadata, existingSessionId);
 }
 
 export const exchangeRouter = createTRPCRouter({
