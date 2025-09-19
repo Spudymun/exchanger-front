@@ -15,6 +15,8 @@ export * from './validation/handlers';
 export * from './validation/schemas-basic';
 export * from './validation/security-enhanced-auth-schemas';
 export * from './validation/security-enhanced-exchange-schemas';
+export * from './validation/security-enhanced-operator';
+export * from './validation/security-enhanced-utils';
 export * from './validation/security-utils';
 
 // ✅ URL Validation exports (Production-Ready)

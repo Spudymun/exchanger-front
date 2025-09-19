@@ -66,6 +66,7 @@
         "currencyNotSupported": "Неподдерживаемая криптовалюта: {currency}",
         "cardNumberInvalid": "Неверный номер карты",
         "orderProcessing": "Заявка уже обрабатывается или завершена",
+        "orderNotAssigned": "Заявка не назначена этому оператору",
         "bankNotFound": "Банк не найден: {bankId}",
         "parameterRequired": "Параметр {parameter} обязателен",
         "unknownAction": "Неизвестное действие"

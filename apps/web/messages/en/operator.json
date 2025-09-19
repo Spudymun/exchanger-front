@@ -1,0 +1,7 @@
+{
+  "escalatedSuccessfully": "Order escalated to support successfully",
+  "stats": {
+    "noData": "No data available",
+    "averageProcessingTime": "{minutes, plural, =0 {Less than a minute} one {# minute} other {# minutes}}"
+  }
+}

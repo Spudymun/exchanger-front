@@ -1,0 +1,7 @@
+{
+  "escalatedSuccessfully": "Заявка успешно эскалирована в поддержку",
+  "stats": {
+    "noData": "Нет данных",
+    "averageProcessingTime": "{minutes, plural, =0 {Меньше минуты} =1 {# минута} few {# минуты} other {# минут}}"
+  }
+}

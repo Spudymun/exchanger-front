@@ -120,6 +120,7 @@ const MODULE_NAMESPACE_MAP = {
   'common-ui': ['common', 'theme', 'NotFound', 'Error'],
   'dashboard-nav': ['dashboard', 'navigation'],
   'order-page': ['order-page', 'OrderStatus'],
+  operator: ['operator', 'OperatorDashboard'],
 } as const;
 
 /**

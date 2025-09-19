@@ -25,5 +25,13 @@ export interface Order {
   updatedAt: Date;
   processedAt?: Date;
   txHash?: string;
+  // ✅ OPERATOR FIELDS: поля для операторской работы
+  assignedOperatorId?: string;
+  assignedAt?: Date;
+  // ✅ ESCALATION FIELDS: поля для эскалации
+  escalationReason?: string;
+  escalationPriority?: 'low' | 'medium' | 'high';
+  escalatedAt?: Date;
+  escalatedBy?: string;
   // ✅ УДАЛЕНО: email - теперь через userId -> User relation
 }

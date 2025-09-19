@@ -66,6 +66,7 @@
         "currencyNotSupported": "Unsupported cryptocurrency: {currency}",
         "cardNumberInvalid": "Invalid card number",
         "orderProcessing": "Order is already being processed or completed",
+        "orderNotAssigned": "Order is not assigned to this operator",
         "bankNotFound": "Bank not found: {bankId}",
         "parameterRequired": "Parameter {parameter} is required",
         "unknownAction": "Unknown action"

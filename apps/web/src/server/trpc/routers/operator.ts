@@ -12,6 +12,8 @@ import {
   isFinalStatus,
   securityEnhancedOperatorOrdersSchema,
   securityEnhancedUpdateOrderStatusSchema,
+  orderIdSchema,
+  SECURITY_VALIDATION_LIMITS,
 } from '@repo/utils';
 import { z } from 'zod';
 
@@ -63,7 +65,7 @@ export const operatorRouter = createTRPCRouter({
 
   // Взять заявку в обработку
   takeOrder: operatorOnly
-    .input(z.object({ orderId: z.string() }))
+    .input(z.object({ orderId: orderIdSchema }))
     .mutation(async ({ input, ctx }) => {
       const order = await orderManager.findById(input.orderId);
 
@@ -77,10 +79,8 @@ export const operatorRouter = createTRPCRouter({
         );
       }
 
-      // Обновляем статус заявки на processing
-      const updatedOrder = await orderManager.update(input.orderId, {
-        status: ORDER_STATUSES.PROCESSING,
-      });
+      // ✅ ИСПРАВЛЕНИЕ: Используем assignToOperator вместо простого update для корректного audit tracking
+      const updatedOrder = await orderManager.assignToOperator(input.orderId, ctx.user.id);
 
       if (!updatedOrder) {
         throw createOrderError('update_failed');
@@ -108,7 +108,10 @@ export const operatorRouter = createTRPCRouter({
       // Проверка валидных переходов статусов
       if (!canTransitionStatus(order.status, input.status)) {
         throw createBadRequestError(
-          `Невозможно изменить статус с ${order.status} на ${input.status}`
+          await ctx.getErrorMessage('server.errors.business.statusTransition', {
+            currentStatus: order.status,
+            newStatus: input.status,
+          })
         );
       }
 
@@ -140,7 +143,7 @@ export const operatorRouter = createTRPCRouter({
 
       console.log(
         `🔄 Статус заявки ${input.orderId} изменен на ${input.status} оператором ${ctx.user.email}${
-          input.comment ? `. Комментарий: ${input.comment}` : ''
+          input.operatorNote ? `. Комментарий: ${input.operatorNote}` : ''
         }`
       );
 
@@ -152,20 +155,127 @@ export const operatorRouter = createTRPCRouter({
     }),
 
   // Получить статистику оператора
-  getMyStats: operatorOnly.query(async () => {
-    const orders = await orderManager.getAll();
-
-    // Используем централизованную утилиту для получения статистики
-    const stats = getOrdersStatistics(orders);
+  getMyStats: operatorOnly.query(async ({ ctx }) => {
+    const operatorOrders = await orderManager.findByOperator(ctx.user.id);
+    const statsData = getOrdersStatistics(operatorOrders);
 
     return {
-      total: stats.total,
-      today: stats.today,
-      completed: stats.byStatus.completed || 0,
-      processing: stats.byStatus.processing || 0,
-      pending: stats.byStatus.pending || 0,
-      totalVolume: stats.totalVolume,
-      avgProcessingTime: '15 мин', // Заглушка, в реальности расчет из логов
+      total: statsData.total,
+      totalVolume: statsData.totalVolume,
+      averageAmount: statsData.averageAmount,
+      byStatus: statsData.byStatus,
+      today: statsData.today,
     };
   }),
+
+  // Получить заявки назначенные оператору
+  getAssignedOrders: operatorOnly
+    .input(
+      z.object({
+        limit: z
+          .number()
+          .min(1)
+          .max(VALIDATION_LIMITS.ORDER_ITEMS_MAX)
+          .default(VALIDATION_LIMITS.DEFAULT_PAGE_SIZE),
+        cursor: z.string().optional(),
+        status: securityEnhancedOperatorOrdersSchema.shape.status.optional(),
+      })
+    )
+    .query(async ({ input, ctx }) => {
+      const { limit, cursor, status } = input;
+
+      // Используем существующий метод orderManager.findByOperator
+      const operatorOrders = await orderManager.findByOperator(ctx.user.id);
+
+      // Фильтрация по статусу если указан
+      const filteredOrders = status ? filterOrders(operatorOrders, { status }) : operatorOrders;
+
+      const sortedOrders = sortOrders(filteredOrders);
+
+      const result = paginateOrders(sortedOrders, { limit, cursor }, order => order.id);
+
+      return {
+        items: result.items.map(order => ({
+          ...order,
+          config:
+            ORDER_STATUS_CONFIG[order.status.toLowerCase() as keyof typeof ORDER_STATUS_CONFIG],
+        })),
+        nextCursor: result.nextCursor,
+        hasMore: result.hasMore,
+      };
+    }),
+
+  // Получить персонализированную статистику нагрузки оператора
+  getWorkloadStats: operatorOnly.query(async ({ ctx }) => {
+    const operatorOrders = await orderManager.findByOperator(ctx.user.id);
+    const stats = getOrdersStatistics(operatorOrders);
+
+    return {
+      assigned: operatorOrders.length,
+      completed: stats.byStatus.completed || 0,
+      processing: stats.byStatus.processing || 0,
+      totalVolume: stats.totalVolume,
+      averageAmount: stats.averageAmount,
+    };
+  }),
+
+  // Эскалация заявки на саппорт
+  escalateToSupport: operatorOnly
+    .input(
+      z.object({
+        orderId: orderIdSchema,
+        reason: z
+          .string()
+          .min(SECURITY_VALIDATION_LIMITS.MESSAGE_MIN_LENGTH)
+          .max(SECURITY_VALIDATION_LIMITS.COMMENT_MAX_LENGTH),
+        priority: z.enum(['low', 'medium', 'high']).default('medium'),
+      })
+    )
+    .mutation(async ({ input, ctx }) => {
+      const { orderId, reason, priority } = input;
+
+      const order = await orderManager.findById(orderId);
+      if (!order) {
+        throw createOrderError('not_found', orderId);
+      }
+
+      // Проверка что заявка назначена этому оператору
+      const operatorOrders = await orderManager.findByOperator(ctx.user.id);
+      const isAssigned = operatorOrders.some(o => o.id === orderId);
+
+      if (!isAssigned) {
+        throw createBadRequestError(
+          await ctx.getErrorMessage('server.errors.business.orderNotAssigned')
+        );
+      }
+
+      // Возвращаем заявку в общий пул (статус PENDING, убираем оператора)
+      const updatedOrder = await orderManager.update(orderId, {
+        status: ORDER_STATUSES.PENDING,
+        assignedOperatorId: undefined,
+        assignedAt: undefined,
+        escalationReason: reason,
+        escalationPriority: priority,
+        escalatedAt: new Date(),
+        escalatedBy: ctx.user.id,
+      });
+
+      if (!updatedOrder) {
+        throw createBadRequestError(
+          await ctx.getErrorMessage('server.errors.business.orderUpdateFailed')
+        );
+      }
+
+      return {
+        success: true,
+        message: await ctx.getErrorMessage('operator.escalatedSuccessfully'),
+        order: {
+          ...updatedOrder,
+          config:
+            ORDER_STATUS_CONFIG[
+              updatedOrder.status.toLowerCase() as keyof typeof ORDER_STATUS_CONFIG
+            ],
+        },
+      };
+    }),
 });

@@ -8,7 +8,10 @@ interface UserRepositoryInterface {
   findByEmail(email: string): Promise<User | undefined>;
   findById(id: string): Promise<User | undefined>;
   create(userData: Omit<User, 'id' | 'createdAt'>): Promise<User>;
-  update(id: string, updates: Partial<Pick<User, 'email' | 'hashedPassword' | 'isVerified' | 'lastLoginAt'>>): Promise<User | undefined>;
+  update(
+    id: string,
+    updates: Partial<Pick<User, 'email' | 'hashedPassword' | 'isVerified' | 'lastLoginAt'>>
+  ): Promise<User | undefined>;
   getAll(): Promise<User[]>;
   count(): Promise<number>;
 }
@@ -28,7 +31,7 @@ async function getUserRepository(): Promise<UserRepositoryInterface> {
   if (!userRepository) {
     const { UserManagerFactory } = await import('@repo/session-management');
     const sessionManager = await UserManagerFactory.create();
-    
+
     // Adapter to bridge UserManagerInterface -> UserRepositoryInterface
     userRepository = {
       findByEmail: async (email: string) => {
@@ -46,7 +49,10 @@ async function getUserRepository(): Promise<UserRepositoryInterface> {
           isVerified: userData.isVerified ?? false,
         });
       },
-      update: async (id: string, updates: Partial<Pick<User, 'email' | 'hashedPassword' | 'isVerified' | 'lastLoginAt'>>) => {
+      update: async (
+        id: string,
+        updates: Partial<Pick<User, 'email' | 'hashedPassword' | 'isVerified' | 'lastLoginAt'>>
+      ) => {
         const user = await sessionManager.update(id, updates);
         return user || undefined;
       },
@@ -137,7 +143,10 @@ export const orderManager = {
   },
 
   // ✅ ДОБАВЛЕНО: Универсальный update метод
-  update: async (id: string, updates: Partial<Omit<Order, 'id' | 'createdAt'>>): Promise<Order | undefined> => {
+  update: async (
+    id: string,
+    updates: Partial<Omit<Order, 'id' | 'createdAt'>>
+  ): Promise<Order | undefined> => {
     const repo = await getOrderRepository();
     if (!repo) throw new Error(REPO_ERROR_MESSAGE);
     const order = await repo.update(id, updates);
@@ -174,6 +183,12 @@ export const orderManager = {
     if (!repo) throw new Error(REPO_ERROR_MESSAGE);
     const order = await repo.assignToOperator(orderId, operatorId);
     return order || undefined;
+  },
+
+  findByOperator: async (operatorId: string): Promise<Order[]> => {
+    const repo = await getOrderRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    return await repo.findByOperator(operatorId);
   },
 
   getLatest: async (limit: number = DEFAULT_LIMIT): Promise<Order[]> => {
@@ -217,7 +232,7 @@ export const statsManager = {
     if (!repo) throw new Error(REPO_ERROR_MESSAGE);
     const completedOrders = await repo.findByStatus(ORDER_STATUSES.COMPLETED);
     return completedOrders.reduce(
-      (sum: number, order: Order) => sum + order.uahAmount, 
+      (sum: number, order: Order) => sum + order.uahAmount,
       VALIDATION_BOUNDS.MIN_VALUE
     );
   },
