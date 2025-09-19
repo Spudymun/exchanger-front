@@ -81,6 +81,11 @@ export const WALLET_POOL_CONFIG = {
     PRIORITY_PROCESSING: getEnvBoolean('WALLET_PRIORITY_PROCESSING', true),
   },
 
+  // Настройки email уведомлений
+  EMAIL_CONSTANTS: {
+    WALLET_EXPIRY_HOURS: 24, // Время действия кошелька в часах
+  },
+
   // Режимы работы
   ALLOCATION_MODES: {
     IMMEDIATE: 'immediate', // Немедленное выделение или MOCK

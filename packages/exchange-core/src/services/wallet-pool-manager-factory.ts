@@ -10,58 +10,62 @@ import { WalletPoolManager } from './wallet-pool-manager';
  */
 export class WalletPoolManagerFactory {
   /**
-   * Создать WalletPoolManager для development окружения
-   * ✅ ИСПРАВЛЕНО: Использует Prisma implementations (Task 1.3 завершена)
+   * Получить конфигурацию базы данных
    */
-  static async createForDevelopment(): Promise<WalletPoolManager> {
-    // ✅ РЕАЛИЗОВАНО: PostgresWalletAdapter и PostgresQueueAdapter созданы по образцу PostgresOrderAdapter
-    const { PostgresWalletAdapter, PostgresQueueAdapter, getPrismaClient } = await import(
-      '@repo/session-management'
-    );
-
+  private static async getDatabaseConfig(useProductionConfig: boolean) {
     const databaseUrl = process.env.DATABASE_URL;
     if (!databaseUrl) {
       throw new Error('DATABASE_URL environment variable is required for WalletPoolManager');
     }
 
-    const prisma = getPrismaClient({
-      url: databaseUrl,
-      maxConnections: 10,
-      connectionTimeout: 10000,
-    });
+    if (useProductionConfig) {
+      const { SESSION_CONSTANTS } = await import('@repo/constants');
+      return {
+        url: databaseUrl,
+        maxConnections: SESSION_CONSTANTS.DATABASE.MAX_CONNECTIONS,
+        connectionTimeout: SESSION_CONSTANTS.DATABASE.CONNECTION_TIMEOUT,
+      };
+    }
 
-    const walletRepo = new PostgresWalletAdapter(prisma);
-    const queueRepo = new PostgresQueueAdapter(prisma);
+    return { url: databaseUrl, maxConnections: 10, connectionTimeout: 10000 };
+  }
 
-    return new WalletPoolManager(walletRepo, queueRepo, 'hybrid');
+  /**
+   * Общий приватный метод для создания WalletPoolManager
+   * ✅ ИСПРАВЛЕНО: Устранено DRY нарушение
+   */
+  private static async createWalletPoolManager(
+    useProductionConfig: boolean = false
+  ): Promise<WalletPoolManager> {
+    const { PostgresWalletAdapter, PostgresQueueAdapter, getPrismaClient } = await import(
+      '@repo/session-management'
+    );
+
+    const config = await this.getDatabaseConfig(useProductionConfig);
+    const prisma = getPrismaClient(config);
+    const { WALLET_POOL_CONFIG } = await import('@repo/constants');
+
+    return new WalletPoolManager(
+      new PostgresWalletAdapter(prisma),
+      new PostgresQueueAdapter(prisma),
+      WALLET_POOL_CONFIG.DEFAULT_MODE
+    );
+  }
+
+  /**
+   * Создать WalletPoolManager для development окружения
+   * ✅ ИСПРАВЛЕНО: Использует общий метод
+   */
+  static async createForDevelopment(): Promise<WalletPoolManager> {
+    return await this.createWalletPoolManager(false);
   }
 
   /**
    * Создать WalletPoolManager для production окружения
-   * ✅ ИСПРАВЛЕНО: Использует те же Prisma implementations
+   * ✅ ИСПРАВЛЕНО: Использует общий метод
    */
   static async createForProduction(): Promise<WalletPoolManager> {
-    // ✅ РЕАЛИЗОВАНО: PostgresWalletAdapter и PostgresQueueAdapter созданы
-    const { PostgresWalletAdapter, PostgresQueueAdapter, getPrismaClient } = await import(
-      '@repo/session-management'
-    );
-    const { SESSION_CONSTANTS } = await import('@repo/constants');
-
-    const databaseUrl = process.env.DATABASE_URL;
-    if (!databaseUrl) {
-      throw new Error('DATABASE_URL environment variable is required for WalletPoolManager');
-    }
-
-    const prisma = getPrismaClient({
-      url: databaseUrl,
-      maxConnections: SESSION_CONSTANTS.DATABASE.MAX_CONNECTIONS,
-      connectionTimeout: SESSION_CONSTANTS.DATABASE.CONNECTION_TIMEOUT,
-    });
-
-    const walletRepo = new PostgresWalletAdapter(prisma);
-    const queueRepo = new PostgresQueueAdapter(prisma);
-
-    return new WalletPoolManager(walletRepo, queueRepo, 'hybrid');
+    return await this.createWalletPoolManager(true);
   }
 
   /**

@@ -3,7 +3,7 @@
  * 🎯 TASK 5.2: Изолированная email функциональность для предотвращения bundle конфликтов
  */
 
-import type { CryptoCurrency } from '../types';
+import type { CryptoCurrency, Order, User } from '../types';
 
 /**
  * Интерфейс для отправки email уведомлений из очереди
@@ -53,17 +53,19 @@ export class ServerQueueEmailNotifier implements QueueEmailNotifier {
   }
 
   private async sendEmailInServerEnvironment(
-    order: Record<string, unknown>,
-    user: Record<string, unknown>,
+    order: Order,
+    user: User,
     address: string,
     currency: CryptoCurrency
   ) {
     // Эта функция только для серверной среды
     // В development окружении email может быть недоступен
     try {
-      const WALLET_EXPIRY_HOURS = 24;
+      const { WALLET_POOL_CONFIG } = await import('@repo/constants');
       const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + WALLET_EXPIRY_HOURS);
+      expiresAt.setHours(
+        expiresAt.getHours() + WALLET_POOL_CONFIG.EMAIL_CONSTANTS.WALLET_EXPIRY_HOURS
+      );
 
       // Динамический импорт через переменную чтобы webpack не анализировал
       const emailServicePath = '@repo/email-service';
