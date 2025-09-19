@@ -7,6 +7,8 @@ import type { OrderStatus } from '@repo/constants';
 import type { OrderRepositoryInterface, Order, CreateOrderRequest } from '@repo/exchange-core';
 import { createEnvironmentLogger } from '@repo/utils';
 
+import { BasePostgresAdapter } from './base-postgres-adapter';
+
 /**
  * Clean Prisma order object matching database schema after migration v3
  */
@@ -39,10 +41,12 @@ const mapToPrismaStatus = (status: OrderStatus): PrismaOrderStatus => {
 /**
  * PostgreSQL adapter for Order repository operations
  */
-export class PostgresOrderAdapter implements OrderRepositoryInterface {
+export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRepositoryInterface {
   private logger = createEnvironmentLogger('PostgresOrderAdapter');
 
-  constructor(private prisma: PrismaClient) {}
+  constructor(protected prisma: PrismaClient) {
+    super(prisma);
+  }
 
   async create(orderData: CreateOrderRequest & { userId: string }): Promise<Order> {
     try {

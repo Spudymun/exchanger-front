@@ -35,9 +35,8 @@ export abstract class BasePostgresAdapter {
    * @throws Error если модели отсутствуют
    */
   protected validateSchema(): void {
-    // ВРЕМЕННАЯ ПРОВЕРКА: до добавления моделей в schema.prisma
-    // После добавления Wallet и WalletQueue моделей эта проверка будет удалена
-    throw new Error(POSTGRES_ERRORS.SCHEMA_ERROR);
+    // ✅ FIXED: Модели Wallet и WalletQueue добавлены в schema.prisma
+    // Проверка больше не требуется
   }
 
   /**

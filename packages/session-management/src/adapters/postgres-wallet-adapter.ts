@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, WalletStatus } from '@prisma/client';
 
 import type { CryptoCurrency } from '@repo/constants';
 import type {
@@ -9,21 +9,21 @@ import { createEnvironmentLogger } from '@repo/utils';
 
 import { BasePostgresAdapter } from './base-postgres-adapter';
 
-// Schema requirements message
-const WALLET_SCHEMA_REQUIRED =
-  'IMPLEMENTATION_REQUIRED: Add Wallet model to prisma/schema.prisma before using PostgresWalletAdapter';
-
 /**
- * ✅ Clean Prisma wallet object matching database schema
+ * ✅ Clean Prisma wallet object matching REAL database schema
  */
 interface PrismaWallet {
   id: string;
   address: string;
   currency: string;
-  isOccupied: boolean;
-  assignedOrderId?: string | null;
-  createdAt: Date;
+  status: WalletStatus; // Use enum instead of hardcoded strings
+  label?: string | null;
+  notes?: string | null;
+  totalOrders: number;
   lastUsedAt?: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+  disabledAt?: Date | null;
 }
 
 /**
@@ -55,59 +55,135 @@ export class PostgresWalletAdapter
   async findByAddress(address: string): Promise<WalletInfo | null> {
     this.validateRequired(address, 'address');
 
-    // NOTE: Requires Wallet model in schema.prisma:
-    // model Wallet {
-    //   id              String    @id @default(cuid())
-    //   address         String    @unique
-    //   currency        String
-    //   isOccupied      Boolean   @default(false)
-    //   assignedOrderId String?
-    //   createdAt       DateTime  @default(now())
-    //   lastUsedAt      DateTime?
-    //   @@map("wallets")
-    // }
+    try {
+      const wallet = await this.prismaClient.wallet.findUnique({
+        where: { address },
+      });
 
-    throw new Error(WALLET_SCHEMA_REQUIRED);
+      return wallet ? this.mapPrismaToWallet(wallet) : null;
+    } catch (error) {
+      this.handleError(error, 'findByAddress');
+    }
   }
 
   async findAvailable(currency: CryptoCurrency): Promise<WalletInfo[]> {
     this.validateRequired(currency, 'currency');
-    throw new Error(WALLET_SCHEMA_REQUIRED);
+
+    try {
+      const wallets = await this.prismaClient.wallet.findMany({
+        where: {
+          currency,
+          status: WalletStatus.AVAILABLE,
+        },
+        orderBy: { createdAt: 'asc' }, // FIFO order
+      });
+
+      return wallets.map(wallet => this.mapPrismaToWallet(wallet));
+    } catch (error) {
+      this.handleError(error, 'findAvailable');
+    }
   }
 
   async findOccupied(currency: CryptoCurrency): Promise<WalletInfo[]> {
     this.validateRequired(currency, 'currency');
-    throw new Error(WALLET_SCHEMA_REQUIRED);
+
+    try {
+      const wallets = await this.prismaClient.wallet.findMany({
+        where: {
+          currency,
+          status: WalletStatus.ALLOCATED,
+        },
+      });
+
+      return wallets.map(wallet => this.mapPrismaToWallet(wallet));
+    } catch (error) {
+      this.handleError(error, 'findOccupied');
+    }
   }
 
   async findOldestAvailable(currency: CryptoCurrency): Promise<WalletInfo | null> {
     this.validateRequired(currency, 'currency');
-    throw new Error(WALLET_SCHEMA_REQUIRED);
+
+    try {
+      const wallet = await this.prismaClient.wallet.findFirst({
+        where: {
+          currency,
+          status: WalletStatus.AVAILABLE,
+        },
+        orderBy: { lastUsedAt: 'asc' }, // FIFO: oldest used first
+      });
+
+      return wallet ? this.mapPrismaToWallet(wallet) : null;
+    } catch (error) {
+      this.handleError(error, 'findOldestAvailable');
+    }
   }
 
-  async markAsOccupied(_address: string, _orderId: string): Promise<WalletInfo | null> {
-    this.validateRequired(_address, 'address');
-    this.validateRequired(_orderId, 'orderId');
-    this.validateSchema();
-    return null; // Unreachable due to validateSchema()
+  async markAsOccupied(address: string, orderId: string): Promise<WalletInfo | null> {
+    this.validateRequired(address, 'address');
+    this.validateRequired(orderId, 'orderId');
+
+    try {
+      const wallet = await this.prismaClient.wallet.update({
+        where: { address },
+        data: {
+          status: WalletStatus.ALLOCATED,
+          lastUsedAt: new Date(),
+        },
+      });
+
+      return this.mapPrismaToWallet(wallet);
+    } catch (error) {
+      this.handleError(error, 'markAsOccupied');
+    }
   }
 
-  async markAsAvailable(_address: string): Promise<WalletInfo | null> {
-    this.validateRequired(_address, 'address');
-    this.validateSchema();
-    return null; // Unreachable due to validateSchema()
+  async markAsAvailable(address: string): Promise<WalletInfo | null> {
+    this.validateRequired(address, 'address');
+
+    try {
+      const wallet = await this.prismaClient.wallet.update({
+        where: { address },
+        data: {
+          status: WalletStatus.AVAILABLE,
+          lastUsedAt: new Date(),
+        },
+      });
+
+      return this.mapPrismaToWallet(wallet);
+    } catch (error) {
+      this.handleError(error, 'markAsAvailable');
+    }
   }
 
-  async findByCurrency(_currency: CryptoCurrency): Promise<WalletInfo[]> {
-    this.validateRequired(_currency, 'currency');
-    this.validateSchema();
-    return []; // Unreachable due to validateSchema()
+  async findByCurrency(currency: CryptoCurrency): Promise<WalletInfo[]> {
+    this.validateRequired(currency, 'currency');
+
+    try {
+      const wallets = await this.prismaClient.wallet.findMany({
+        where: { currency },
+      });
+
+      return wallets.map(wallet => this.mapPrismaToWallet(wallet));
+    } catch (error) {
+      this.handleError(error, 'findByCurrency');
+    }
   }
 
-  async findByOrderId(_orderId: string): Promise<WalletInfo | null> {
-    this.validateRequired(_orderId, 'orderId');
-    this.validateSchema();
-    return null; // Unreachable due to validateSchema()
+  async findByOrderId(orderId: string): Promise<WalletInfo | null> {
+    this.validateRequired(orderId, 'orderId');
+
+    try {
+      // Find wallet through Order relation
+      const order = await this.prismaClient.order.findUnique({
+        where: { id: orderId },
+        include: { wallet: true },
+      });
+
+      return order?.wallet ? this.mapPrismaToWallet(order.wallet) : null;
+    } catch (error) {
+      this.handleError(error, 'findByOrderId');
+    }
   }
 
   /**
@@ -119,9 +195,9 @@ export class PostgresWalletAdapter
       id: prismaWallet.id,
       address: prismaWallet.address,
       currency: prismaWallet.currency as CryptoCurrency,
-      isOccupied: prismaWallet.isOccupied,
+      isOccupied: prismaWallet.status === 'ALLOCATED', // Map status to isOccupied
       createdAt: prismaWallet.createdAt,
-      assignedOrderId: prismaWallet.assignedOrderId || undefined,
+      assignedOrderId: undefined, // Will be populated through orders relation when needed
       lastUsedAt: prismaWallet.lastUsedAt || undefined,
     };
   }
