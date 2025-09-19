@@ -33,7 +33,7 @@ export class WalletPoolManagerFactory {
     const walletRepo = new PostgresWalletAdapter(prisma);
     const queueRepo = new PostgresQueueAdapter(prisma);
 
-    return new WalletPoolManager(walletRepo, queueRepo, 'immediate');
+    return new WalletPoolManager(walletRepo, queueRepo, 'hybrid');
   }
 
   /**

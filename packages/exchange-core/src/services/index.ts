@@ -8,7 +8,9 @@ export * from './wallet-pool-manager-factory';
 // Wallet Strategies
 export * from './wallet-strategies/wallet-allocation-strategy';
 export * from './wallet-strategies/immediate-allocation-strategy';
-export * from './wallet-strategies/queue-allocation-strategy';
+// NOTE: queue-allocation-strategy не экспортируется из services для предотвращения frontend bundle проблем
 
 // ✅ Task 3.1: Auto Registration Service для flexible authentication
 export * from './auto-registration-service';
+
+// NOTE: queue-email-notifier НЕ экспортируется для предотвращения frontend bundle проблем

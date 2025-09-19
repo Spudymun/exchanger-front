@@ -2,6 +2,7 @@ import type { QueueRepositoryInterface, WalletRepositoryInterface } from '../rep
 import type { CryptoCurrency } from '../types';
 
 import { ImmediateAllocationStrategy } from './wallet-strategies/immediate-allocation-strategy';
+// Прямой импорт для серверной части - не экспортируется в services/index.ts
 import { QueueAllocationStrategy } from './wallet-strategies/queue-allocation-strategy';
 import type {
   WalletAllocationStrategy,

@@ -1,6 +1,8 @@
 import type { QueueRepositoryInterface, WalletRepositoryInterface } from '../../repositories';
+import type { QueueEntry } from '../../repositories/queue-repository-interface';
 import type { WalletInfo } from '../../repositories/wallet-repository-interface.js';
 import type { CryptoCurrency } from '../../types';
+import { createQueueEmailNotifier, type QueueEmailNotifier } from '../queue-email-notifier';
 
 import type {
   WalletAllocationStrategy,
@@ -13,10 +15,14 @@ import type {
  * Реализует AC3.2-3.4 требования
  */
 export class QueueAllocationStrategy implements WalletAllocationStrategy {
+  private emailNotifier: QueueEmailNotifier;
+
   constructor(
     private walletRepository: WalletRepositoryInterface,
     private queueRepository: QueueRepositoryInterface
-  ) {}
+  ) {
+    this.emailNotifier = createQueueEmailNotifier();
+  }
 
   async allocateWallet(currency: CryptoCurrency): Promise<AllocationResult> {
     try {
@@ -85,20 +91,7 @@ export class QueueAllocationStrategy implements WalletAllocationStrategy {
     const nextInQueue = await this.queueRepository.getNextInQueue(walletInfo.currency);
 
     if (nextInQueue) {
-      // Автоматически выделяем кошелек следующему в очереди
-      const assignedWallet = await this.walletRepository.markAsOccupied(
-        address,
-        nextInQueue.orderId
-      );
-
-      // Удаляем из очереди
-      await this.queueRepository.removeFromQueue(nextInQueue.id);
-
-      return {
-        success: true,
-        address,
-        walletInfo: assignedWallet || walletInfo,
-      };
+      return await this.assignWalletToNextInQueue(address, walletInfo, nextInQueue);
     }
 
     return {
@@ -106,6 +99,53 @@ export class QueueAllocationStrategy implements WalletAllocationStrategy {
       address,
       walletInfo,
     };
+  }
+
+  /**
+   * Выделить кошелек следующему в очереди
+   */
+  private async assignWalletToNextInQueue(
+    address: string,
+    walletInfo: WalletInfo,
+    nextInQueue: QueueEntry
+  ): Promise<AllocationResult> {
+    // Автоматически выделяем кошелек следующему в очереди
+    const assignedWallet = await this.walletRepository.markAsOccupied(address, nextInQueue.orderId);
+
+    // Удаляем из очереди
+    await this.queueRepository.removeFromQueue(nextInQueue.id);
+
+    // 🎯 TASK 5.2: Отправка email уведомления о готовности кошелька
+    await this.sendEmailNotificationSafely(nextInQueue.orderId, address, walletInfo.currency);
+
+    return {
+      success: true,
+      address,
+      walletInfo: assignedWallet || walletInfo,
+    };
+  }
+
+  /**
+   * Безопасная отправка email уведомления
+   */
+  private async sendEmailNotificationSafely(
+    orderId: string,
+    address: string,
+    currency: CryptoCurrency
+  ): Promise<void> {
+    try {
+      await this.emailNotifier.sendWalletReadyEmail(orderId, address, currency);
+    } catch (emailError) {
+      // Не прерываем workflow при ошибке email - кошелек уже выделен
+      const { createEnvironmentLogger } = await import('@repo/utils');
+      const logger = createEnvironmentLogger('QueueAllocationStrategy');
+      logger.error('Failed to send wallet ready email', {
+        orderId,
+        address,
+        currency,
+        error: emailError instanceof Error ? emailError.message : 'Unknown error',
+      });
+    }
   }
 
   async getPoolStats(currency: CryptoCurrency): Promise<PoolStats> {
