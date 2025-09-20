@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚨 Системное уведомление - {{companyName}}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .email-container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #dc3545;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #dc3545;
+            margin-bottom: 10px;
+        }
+        .alert-info {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .alert-critical {
+            background: #721c24;
+            color: white;
+            border: 2px solid #dc3545;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .alert-level {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .currency-details {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .action-required {
+            background: #fff;
+            border: 2px solid #28a745;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+            font-size: 12px;
+        }
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .critical-number {
+            font-size: 24px;
+            font-weight: bold;
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="logo">{{companyName}}</div>
+            <h1>🚨 Системное уведомление</h1>
+        </div>
+
+        <div class="alert-critical">
+            <div class="alert-level">{{alertLevel}} - {{alertType}}</div>
+            <div class="critical-number">{{alertCount}} критических проблем</div>
+        </div>
+
+        <div class="alert-info">
+            <h3>Детали уведомления:</h3>
+            <p><strong>Тип алерта:</strong> {{alertType}}</p>
+            <p><strong>Уровень критичности:</strong> <span class="highlight">{{alertLevel}}</span></p>
+            <p><strong>Время обнаружения:</strong> {{timestamp}}</p>
+            <p><strong>Количество проблем:</strong> {{alertCount}}</p>
+        </div>
+
+        <div class="currency-details">
+            <h3>Проблемные валюты:</h3>
+            {{alertDetails}}
+        </div>
+
+        <div class="action-required">
+            <h3>🎯 Требуемые действия:</h3>
+            <ul>
+                <li>Немедленно пополните пул кошельков для критических валют</li>
+                <li>Проверьте статус генерации новых адресов</li>
+                <li>Уведомите техническую команду о проблеме</li>
+                <li>Мониторьте ситуацию до устранения</li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p>Это автоматическое уведомление от системы мониторинга {{companyName}}</p>
+            <p>Время отправки: {{timestamp}}</p>
+        </div>
+    </div>
+</body>
+</html>

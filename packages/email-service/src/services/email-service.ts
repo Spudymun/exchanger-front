@@ -1,7 +1,14 @@
 import { createEnvironmentLogger } from '@repo/utils';
 
 import { EmailServiceFactory } from '../factories/email-service-factory';
-import type { CryptoAddressEmailData, EmailProviderConfig, EmailSendResult } from '../types/index';
+import type {
+  CryptoAddressEmailData,
+  EmailMessage,
+  EmailProviderConfig,
+  EmailProviderInterface,
+  EmailSendResult,
+  SystemAlertEmailData,
+} from '../types/index';
 
 import { EmailTemplateService } from './email-template-service';
 
@@ -10,6 +17,7 @@ import { EmailTemplateService } from './email-template-service';
  */
 export class EmailService {
   private static logger = createEnvironmentLogger('EmailService');
+  private static readonly UNKNOWN_ERROR = 'Unknown error';
 
   /**
    * Send crypto address email to user
@@ -51,13 +59,91 @@ export class EmailService {
       this.logger.error('Email service error', {
         orderId: data.orderId,
         to: data.userEmail,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : this.UNKNOWN_ERROR,
       });
 
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : this.UNKNOWN_ERROR,
       };
     }
+  }
+
+  /**
+   * Send system alert emails to administrators
+   */
+  static async sendSystemAlert(
+    data: SystemAlertEmailData,
+    config?: Partial<EmailProviderConfig>
+  ): Promise<EmailSendResult[]> {
+    try {
+      this.logger.info('Sending system alert emails', {
+        alertType: data.alertType,
+        alertLevel: data.alertLevel,
+        recipientCount: data.recipients.length,
+      });
+
+      // Generate email messages for all recipients
+      const emailMessages = await EmailTemplateService.generateSystemAlertEmail(data);
+
+      // Get email provider and send to all recipients
+      const provider = EmailServiceFactory.create(config);
+      return await this.sendToAllRecipients(emailMessages, provider, data);
+    } catch (error) {
+      this.logger.error('System alert service error', {
+        alertType: data.alertType,
+        error: error instanceof Error ? error.message : this.UNKNOWN_ERROR,
+      });
+
+      // Return failed result for all recipients
+      return data.recipients.map(() => ({
+        success: false,
+        error: error instanceof Error ? error.message : this.UNKNOWN_ERROR,
+      }));
+    }
+  }
+
+  /**
+   * Send emails to all recipients
+   */
+  private static async sendToAllRecipients(
+    emailMessages: EmailMessage[],
+    provider: EmailProviderInterface,
+    data: SystemAlertEmailData
+  ): Promise<EmailSendResult[]> {
+    return await Promise.all(
+      emailMessages.map(async message => {
+        try {
+          const result = await provider.send(message);
+
+          if (result.success) {
+            this.logger.info('System alert email sent successfully', {
+              alertType: data.alertType,
+              to: message.to,
+              messageId: result.messageId,
+            });
+          } else {
+            this.logger.error('Failed to send system alert email', {
+              alertType: data.alertType,
+              to: message.to,
+              error: result.error,
+            });
+          }
+
+          return result;
+        } catch (error) {
+          this.logger.error('System alert email error', {
+            alertType: data.alertType,
+            to: message.to,
+            error: error instanceof Error ? error.message : this.UNKNOWN_ERROR,
+          });
+
+          return {
+            success: false,
+            error: error instanceof Error ? error.message : this.UNKNOWN_ERROR,
+          };
+        }
+      })
+    );
   }
 }

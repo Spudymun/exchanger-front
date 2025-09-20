@@ -22,6 +22,7 @@ export type {
   EmailSendResult,
   EmailProviderConfig,
   CryptoAddressEmailData,
+  SystemAlertEmailData,
   EmailEnvironment,
   EmailTemplateType,
 } from './types/index';

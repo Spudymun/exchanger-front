@@ -1,5 +1,6 @@
-import { CONTACT_INFO, TIME_CONSTANTS } from '@repo/constants';
+import { CONTACT_INFO } from '@repo/constants';
 import { EmailService } from '@repo/email-service';
+import type { SystemAlertEmailData } from '@repo/email-service';
 import { createEnvironmentLogger } from '@repo/utils';
 
 import type { CryptoCurrency } from '../types';
@@ -62,23 +63,27 @@ export class WalletAlertsService {
         alertCount: alerts.length,
       });
 
-      const firstAlert = alerts[0];
-      if (!firstAlert) return;
+      // Формируем детали алертов
+      const alertDetails = alerts
+        .map(
+          alert => `• ${alert.currency}: ${alert.available} доступно (порог: ${alert.threshold})`
+        )
+        .join('\n');
 
-      // Простая отправка через существующую email систему
-      await EmailService.sendCryptoAddress({
-        orderId: `wallet-alert-${Date.now()}`,
-        cryptoAddress: 'SYSTEM-ALERT-PLACEHOLDER',
-        userEmail: CONTACT_INFO.SUPPORT_EMAIL, // Используем support email
-        currency: firstAlert.currency,
-        amount: alerts.length,
-        expiresAt: new Date(
-          Date.now() +
-            TIME_CONSTANTS.HOURS_IN_DAY *
-              TIME_CONSTANTS.SECONDS_IN_MINUTE *
-              TIME_CONSTANTS.MILLISECONDS_IN_SECOND
-        ),
-      });
+      // Используем правильный метод для системных алертов
+      const EMERGENCY_THRESHOLD = 0;
+      const systemAlertData: SystemAlertEmailData = {
+        alertType: 'WALLET_THRESHOLD',
+        alertLevel: alerts.some(a => a.available === EMERGENCY_THRESHOLD)
+          ? 'EMERGENCY'
+          : 'CRITICAL',
+        alertCount: alerts.length,
+        alertDetails,
+        timestamp: new Date(),
+        recipients: [CONTACT_INFO.SUPPORT_EMAIL], // Отправляем на support email
+      };
+
+      await EmailService.sendSystemAlert(systemAlertData);
 
       this.logger.info('Wallet alert email sent');
     } catch (error) {

@@ -49,6 +49,18 @@ export interface CryptoAddressEmailData {
 }
 
 /**
+ * System alert email template data
+ */
+export interface SystemAlertEmailData {
+  alertType: 'WALLET_THRESHOLD' | 'SYSTEM_ERROR' | 'MAINTENANCE';
+  alertLevel: 'WARNING' | 'CRITICAL' | 'EMERGENCY';
+  alertCount: number;
+  alertDetails: string;
+  timestamp: Date;
+  recipients: string[];
+}
+
+/**
  * Environment types for email service
  */
 export type EmailEnvironment = 'development' | 'production' | 'test';
@@ -56,4 +68,8 @@ export type EmailEnvironment = 'development' | 'production' | 'test';
 /**
  * Email template types
  */
-export type EmailTemplateType = 'crypto-address' | 'order-confirmation' | 'order-status-update';
+export type EmailTemplateType =
+  | 'crypto-address'
+  | 'system-alert'
+  | 'order-confirmation'
+  | 'order-status-update';

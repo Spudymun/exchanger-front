@@ -13,7 +13,7 @@ import {
 import { sanitizeHtmlContent } from '@repo/exchange-core';
 import { createEnvironmentLogger } from '@repo/utils';
 
-import type { CryptoAddressEmailData, EmailMessage } from '../types/index';
+import type { CryptoAddressEmailData, EmailMessage, SystemAlertEmailData } from '../types/index';
 
 /**
  * Template service for generating email content
@@ -118,6 +118,42 @@ export class EmailTemplateService {
       html,
       text,
     };
+  }
+
+  /**
+   * Generate system alert email content
+   */
+  static async generateSystemAlertEmail(data: SystemAlertEmailData): Promise<EmailMessage[]> {
+    const variables = {
+      alertType: data.alertType,
+      alertLevel: data.alertLevel,
+      alertCount: data.alertCount.toString(),
+      alertDetails: data.alertDetails,
+      timestamp: this.formatDate(data.timestamp),
+      companyName: COMPANY_INFO.NAME,
+    };
+
+    const htmlTemplate = await this.loadTemplate('system-alert', 'html');
+    const textTemplate = await this.loadTemplate('system-alert', 'txt');
+
+    const html = this.replaceVariables(htmlTemplate, variables);
+    const text = this.replaceVariables(textTemplate, variables);
+
+    const subject = `🚨 ${data.alertLevel} Alert: ${data.alertType} - ${COMPANY_INFO.NAME}`;
+
+    this.logger.info('Generated system alert email', {
+      alertType: data.alertType,
+      alertLevel: data.alertLevel,
+      recipientCount: data.recipients.length,
+    });
+
+    // Создаем отдельное сообщение для каждого получателя
+    return data.recipients.map(recipient => ({
+      to: recipient,
+      subject,
+      html,
+      text,
+    }));
   }
 
   /**
