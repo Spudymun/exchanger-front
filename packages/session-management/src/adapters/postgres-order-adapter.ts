@@ -157,12 +157,20 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
 
   async assignToOperator(orderId: string, operatorId: string): Promise<Order | null> {
     try {
-      this.logger.info('Assigning order to operator', { orderId, operatorId });
+      this.logger.info('Assigning order to operator with concurrent protection', {
+        orderId,
+        operatorId,
+      });
 
       const prismaOrder = await this.prisma.order.update({
-        where: { id: orderId },
+        where: {
+          id: orderId,
+          status: 'PENDING',
+          assignedOperatorId: null,
+        },
         data: {
           assignedOperatorId: operatorId,
+          status: 'PROCESSING',
           assignedAt: new Date(),
           updatedAt: new Date(),
         },
@@ -177,9 +185,25 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
         performedBy: operatorId,
       });
 
-      this.logger.info('Order assigned successfully', { orderId, operatorId });
+      this.logger.info('Order assigned successfully with concurrent protection', {
+        orderId,
+        operatorId,
+      });
       return this.mapPrismaToOrder(prismaOrder as any);
     } catch (error) {
+      // Enhanced error handling for concurrent conflicts
+      if (error instanceof Error && 'code' in error && error.code === 'P2025') {
+        // P2025 = Record not found or condition not met
+        this.logger.warn('Concurrent assignment attempt detected', {
+          orderId,
+          operatorId,
+          reason: 'Order already assigned or not in PENDING status',
+        });
+
+        // Return null for handling in tRPC layer
+        return null;
+      }
+
       this.logger.error('PostgresOrderAdapter.assignToOperator failed', {
         error: error instanceof Error ? error.message : String(error),
         orderId,

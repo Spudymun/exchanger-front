@@ -14,11 +14,15 @@ import {
   securityEnhancedUpdateOrderStatusSchema,
   orderIdSchema,
   SECURITY_VALIDATION_LIMITS,
+  createEnvironmentLogger,
 } from '@repo/utils';
 import { z } from 'zod';
 
 import { createTRPCRouter } from '../init';
 import { operatorOnly } from '../middleware/auth';
+
+// Create logger for operator operations
+const logger = createEnvironmentLogger('operator-router');
 
 /**
  * Operator API роутер
@@ -83,10 +87,23 @@ export const operatorRouter = createTRPCRouter({
       const updatedOrder = await orderManager.assignToOperator(input.orderId, ctx.user.id);
 
       if (!updatedOrder) {
-        throw createOrderError('update_failed');
+        // Enhanced error messaging for concurrent conflicts
+        logger.warn('Order assignment failed - likely concurrent access', {
+          orderId: input.orderId,
+          operatorId: ctx.user.id,
+          operatorEmail: ctx.user.email,
+        });
+
+        throw createBadRequestError(
+          await ctx.getErrorMessage('server.errors.business.orderAlreadyAssigned')
+        );
       }
 
-      console.log(`📋 Заявка ${input.orderId} взята в обработку оператором ${ctx.user.email}`);
+      logger.info('Order successfully assigned to operator', {
+        orderId: input.orderId,
+        operatorId: ctx.user.id,
+        operatorEmail: ctx.user.email,
+      });
 
       return {
         success: true,
@@ -129,23 +146,26 @@ export const operatorRouter = createTRPCRouter({
         try {
           const walletManager = await WalletPoolManagerFactory.create();
           await walletManager.releaseWallet(updatedOrder.depositAddress);
-          console.log(
-            `🔓 Кошелек ${updatedOrder.depositAddress} освобожден для заявки ${input.orderId}`
-          );
+          logger.info('Wallet released successfully for order', {
+            walletAddress: updatedOrder.depositAddress,
+            orderId: input.orderId,
+          });
         } catch (walletError) {
-          console.error(
-            `❌ Ошибка освобождения кошелька для заявки ${input.orderId}:`,
-            walletError
-          );
+          logger.error('Wallet release failed for order', {
+            orderId: input.orderId,
+            error: walletError instanceof Error ? walletError.message : String(walletError),
+          });
           // Не прерываем выполнение, так как статус уже обновлен
         }
       }
 
-      console.log(
-        `🔄 Статус заявки ${input.orderId} изменен на ${input.status} оператором ${ctx.user.email}${
-          input.operatorNote ? `. Комментарий: ${input.operatorNote}` : ''
-        }`
-      );
+      logger.info('Order status updated by operator', {
+        orderId: input.orderId,
+        newStatus: input.status,
+        operatorId: ctx.user.id,
+        operatorEmail: ctx.user.email,
+        operatorNote: input.operatorNote || null,
+      });
 
       return {
         success: true,
