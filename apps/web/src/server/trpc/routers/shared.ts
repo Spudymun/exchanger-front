@@ -4,14 +4,21 @@ import {
   AUTH_CONSTANTS,
   DATE_FORMAT_CONSTANTS,
   UI_NUMERIC_CONSTANTS,
+  type CryptoCurrency,
 } from '@repo/constants';
-import { orderManager, userManager, type Order } from '@repo/exchange-core';
+import {
+  orderManager,
+  userManager,
+  type Order,
+  WalletPoolManagerFactory,
+} from '@repo/exchange-core';
 import { UserManagerFactory } from '@repo/session-management';
 import {
   paginateOrders,
   sortOrders,
   getOrdersStatistics,
   securityEnhancedQuickActionsSchema,
+  createInternalServerError,
 } from '@repo/utils';
 
 // Security-enhanced schemas
@@ -39,16 +46,15 @@ export const sharedRouter = createTRPCRouter({
       const matchesQuery = (order: Order, userEmailCache: Map<string, string>) => {
         if (!query) return true; // No query means match all
         const searchTerm = query.toLowerCase();
-        
+
         // Обычные поиски (как раньше)
-        const basicMatches = (
+        const basicMatches =
           order.id.toLowerCase().includes(searchTerm) ||
           order.cryptoAmount.toString().includes(query) ||
-          order.uahAmount.toString().includes(query)
-        );
-        
+          order.uahAmount.toString().includes(query);
+
         if (basicMatches) return true;
-        
+
         // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: поиск по email через User relation (следует паттерну из exchange.ts)
         // ✅ ОПТИМИЗИРОВАНО: используем cache вместо индивидуальных DB запросов
         const userEmail = userEmailCache.get(order.userId);
@@ -71,10 +77,10 @@ export const sharedRouter = createTRPCRouter({
       const matchesStatus = (order: Order) => !status || order.status === status;
 
       const allOrders = await orderManager.getAll();
-      
+
       // ✅ ОПТИМИЗАЦИЯ: Batch загрузка пользователей для избежания N+1 queries
       let userCache: Map<string, string> = new Map(); // userId -> email
-      
+
       if (query) {
         // Если есть поисковый запрос, загружаем всех пользователей один раз
         const allUsers = await userManager.getAll();
@@ -87,7 +93,7 @@ export const sharedRouter = createTRPCRouter({
         const queryMatch = matchesQuery(order, userCache);
         const dateMatch = matchesDate(order);
         const statusMatch = matchesStatus(order);
-        
+
         if (queryMatch && dateMatch && statusMatch) {
           filteredOrders.push(order);
         }
@@ -177,6 +183,23 @@ export const sharedRouter = createTRPCRouter({
       })),
     };
   }),
+
+  // Статистика пулов кошельков (доступна operator и support)
+  getWalletPoolStats: operatorAndSupport
+    .input(securityEnhancedSearchOrdersSchema.pick({ currency: true }))
+    .query(async ({ input }) => {
+      try {
+        if (!input.currency) {
+          throw createInternalServerError('Currency is required for wallet pool statistics');
+        }
+
+        const walletPoolManager = await WalletPoolManagerFactory.create();
+        return await walletPoolManager.getPoolStats(input.currency as CryptoCurrency);
+      } catch (error) {
+        console.error('[getWalletPoolStats] Error:', error);
+        throw createInternalServerError('Failed to retrieve wallet pool statistics');
+      }
+    }),
 
   // Быстрые действия
   quickActions: operatorAndSupport
