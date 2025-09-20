@@ -12,6 +12,11 @@ import {
   type Order,
   WalletPoolManagerFactory,
 } from '@repo/exchange-core';
+import {
+  WalletAlertsService,
+  WalletMonitoringProcess,
+  type AlertCheckResult,
+} from '@repo/exchange-core/src/server';
 import { UserManagerFactory } from '@repo/session-management';
 import {
   paginateOrders,
@@ -198,6 +203,70 @@ export const sharedRouter = createTRPCRouter({
       } catch (error) {
         console.error('[getWalletPoolStats] Error:', error);
         throw createInternalServerError('Failed to retrieve wallet pool statistics');
+      }
+    }),
+
+  // Проверка критических алертов кошельков (доступна operator и support)
+  checkWalletAlerts: operatorAndSupport.query(async () => {
+    try {
+      const alerts = await WalletAlertsService.checkAll();
+
+      return {
+        success: true,
+        alertCount: alerts.length,
+        alerts: alerts.map((alert: AlertCheckResult) => ({
+          currency: alert.currency,
+          available: alert.available,
+          threshold: alert.threshold,
+          isCritical: alert.isCritical,
+          message: alert.message,
+        })),
+        timestamp: new Date(),
+      };
+    } catch (error) {
+      console.error('[checkWalletAlerts] Error:', error);
+      throw createInternalServerError('Failed to check wallet alerts');
+    }
+  }),
+
+  // Управление мониторингом кошельков (доступно operator и support)
+  walletMonitoringControl: operatorAndSupport
+    .input(securityEnhancedQuickActionsSchema.pick({ action: true }))
+    .mutation(async ({ input }) => {
+      try {
+        const actionValue = input.action as 'start' | 'stop' | 'status';
+
+        switch (actionValue) {
+          case 'start': {
+            WalletMonitoringProcess.start();
+            return {
+              success: true,
+              message: 'Wallet monitoring started',
+              status: WalletMonitoringProcess.getStatus(),
+            };
+          }
+          case 'stop': {
+            WalletMonitoringProcess.stop();
+            return {
+              success: true,
+              message: 'Wallet monitoring stopped',
+              status: WalletMonitoringProcess.getStatus(),
+            };
+          }
+          case 'status': {
+            return {
+              success: true,
+              message: 'Monitoring status retrieved',
+              status: WalletMonitoringProcess.getStatus(),
+            };
+          }
+          default: {
+            throw createInternalServerError('Unknown monitoring action');
+          }
+        }
+      } catch (error) {
+        console.error('[walletMonitoringControl] Error:', error);
+        throw createInternalServerError('Failed to control wallet monitoring');
       }
     }),
 

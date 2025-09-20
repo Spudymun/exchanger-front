@@ -1,3 +1,5 @@
+import { WALLET_POOL_CONFIG } from '@repo/constants';
+
 import type { QueueRepositoryInterface, WalletRepositoryInterface } from '../repositories';
 import type { CryptoCurrency } from '../types';
 
@@ -70,6 +72,36 @@ export class WalletPoolManager {
    */
   async switchStrategy(mode: AllocationMode): Promise<void> {
     this.allocationStrategy = this.createAllocationStrategy(mode);
+  }
+
+  /**
+   * Проверить критические пороги кошельков для alerting системы
+   * @implements AC6.4 - система оповещений о критически низком количестве кошельков
+   */
+  async checkThresholds(currencies?: CryptoCurrency[]): Promise<
+    Array<{
+      currency: CryptoCurrency;
+      available: number;
+      threshold: number;
+      isCritical: boolean;
+    }>
+  > {
+    const currenciesToCheck = currencies || (['BTC', 'ETH', 'USDT', 'LTC'] as CryptoCurrency[]);
+
+    return await Promise.all(
+      currenciesToCheck.map(async currency => {
+        const stats = await this.getPoolStats(currency);
+        // eslint-disable-next-line security/detect-object-injection
+        const threshold = WALLET_POOL_CONFIG.MIN_AVAILABLE_THRESHOLDS[currency];
+
+        return {
+          currency,
+          available: stats.availableWallets,
+          threshold,
+          isCritical: stats.availableWallets <= threshold,
+        };
+      })
+    );
   }
 
   /**
