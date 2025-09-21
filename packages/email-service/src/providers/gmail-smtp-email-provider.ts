@@ -31,6 +31,40 @@ export class GmailSmtpEmailProvider implements EmailProviderInterface {
   private logger = createEnvironmentLogger('GmailSmtpEmailProvider');
   private transporter: Transporter;
 
+  /**
+   * ⚙️ Create Gmail SMTP provider from environment variables
+   * @returns GmailSmtpEmailProvider instance or null if missing env vars
+   */
+  static createFromEnvironment(): GmailSmtpEmailProvider | null {
+    const logger = createEnvironmentLogger('GmailSmtpEmailProvider.createFromEnvironment');
+
+    // Получаем environment variables
+    const gmailUser = process.env.GMAIL_SMTP_USER;
+    const gmailPass = process.env.GMAIL_SMTP_PASS;
+    const smtpFrom = process.env.SMTP_FROM;
+
+    // Валидация обязательных переменных
+    if (!gmailUser || !gmailPass) {
+      logger.debug('Gmail SMTP environment variables not configured', {
+        hasUser: Boolean(gmailUser),
+        hasPass: Boolean(gmailPass),
+        fallbackReason: 'Missing GMAIL_SMTP_USER or GMAIL_SMTP_PASS',
+      });
+      return null;
+    }
+
+    // Извлекаем имя отправителя из SMTP_FROM или используем email
+    const fromName = smtpFrom || gmailUser;
+
+    logger.debug('Creating Gmail SMTP provider from environment', {
+      gmailUser,
+      fromName,
+      hasCustomFromName: Boolean(smtpFrom),
+    });
+
+    return new GmailSmtpEmailProvider(gmailPass, gmailUser, fromName);
+  }
+
   constructor(
     private appPassword: string,
     private gmailEmail: string,

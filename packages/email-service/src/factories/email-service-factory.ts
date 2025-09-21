@@ -75,6 +75,46 @@ export class EmailServiceFactory {
   }
 
   /**
+   * Create email provider automatically based on environment variables
+   * Tries providers in order: SendGrid → Resend → Gmail SMTP → Mock
+   */
+  static createFromEnvironment(): EmailProviderInterface {
+    const logger = createEnvironmentLogger('EmailServiceFactory.createFromEnvironment');
+
+    // Try SendGrid first (premium service)
+    if (process.env.SENDGRID_API_KEY) {
+      logger.debug('Creating SendGrid provider from environment');
+      return this.create({ provider: 'sendgrid', apiKey: process.env.SENDGRID_API_KEY });
+    }
+
+    // Try Resend (modern service)
+    if (process.env.RESEND_API_KEY) {
+      logger.debug('Creating Resend provider from environment');
+      return this.create({ provider: 'resend', apiKey: process.env.RESEND_API_KEY });
+    }
+
+    // Try Gmail SMTP (free service)
+    if (process.env.GMAIL_SMTP_USER && process.env.GMAIL_SMTP_PASS) {
+      logger.debug('Creating Gmail SMTP provider from environment');
+      return this.create({
+        provider: 'gmail',
+        apiKey: process.env.GMAIL_SMTP_PASS,
+        fromEmail: process.env.GMAIL_SMTP_USER,
+        fromName: process.env.SMTP_FROM || process.env.GMAIL_SMTP_USER,
+      });
+    }
+
+    // Fallback to mock provider
+    logger.debug('No email providers configured, using mock provider', {
+      sendgridConfigured: Boolean(process.env.SENDGRID_API_KEY),
+      resendConfigured: Boolean(process.env.RESEND_API_KEY),
+      gmailConfigured: Boolean(process.env.GMAIL_SMTP_USER && process.env.GMAIL_SMTP_PASS),
+    });
+
+    return this.createMock();
+  }
+
+  /**
    * Create email provider based on configuration
    */
   static create(config?: Partial<EmailProviderConfig>): EmailProviderInterface {
