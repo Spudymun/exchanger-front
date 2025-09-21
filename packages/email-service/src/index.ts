@@ -14,6 +14,7 @@ export { EmailTemplateService } from './services/email-template-service';
 export { MockEmailProvider } from './providers/mock-email-provider';
 export { SendGridEmailProvider } from './providers/sendgrid-email-provider';
 export { ResendEmailProvider } from './providers/resend-email-provider';
+export { GmailSmtpEmailProvider } from './providers/gmail-smtp-email-provider';
 
 // Type exports
 export type {

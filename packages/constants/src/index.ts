@@ -42,3 +42,9 @@ export * from './seo';
 
 // Application routes
 export * from './app-routes';
+
+// SMTP Provider configurations
+export * from './smtp-providers';
+
+// Email Service Error constants
+export * from './email-errors';

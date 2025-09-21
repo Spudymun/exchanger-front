@@ -30,7 +30,7 @@ export interface EmailSendResult {
  * Configuration for different email providers
  */
 export interface EmailProviderConfig {
-  provider: 'sendgrid' | 'resend' | 'mock';
+  provider: 'sendgrid' | 'resend' | 'gmail' | 'mock';
   apiKey?: string;
   fromEmail: string;
   fromName: string;

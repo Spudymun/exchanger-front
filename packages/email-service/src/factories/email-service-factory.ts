@@ -1,6 +1,7 @@
 import { CONTACT_INFO, COMPANY_INFO } from '@repo/constants';
 import { createEnvironmentLogger } from '@repo/utils';
 
+import { GmailSmtpEmailProvider } from '../providers/gmail-smtp-email-provider';
 import { MockEmailProvider } from '../providers/mock-email-provider';
 import { ResendEmailProvider } from '../providers/resend-email-provider';
 import { SendGridEmailProvider } from '../providers/sendgrid-email-provider';
@@ -58,6 +59,13 @@ export class EmailServiceFactory {
           return new MockEmailProvider(config.fromEmail, config.fromName);
         }
         return new ResendEmailProvider(config.apiKey, config.fromEmail, config.fromName);
+      }
+      case 'gmail': {
+        if (!config.apiKey) {
+          this.logger.warn('Gmail app password not provided, falling back to mock provider');
+          return new MockEmailProvider(config.fromEmail, config.fromName);
+        }
+        return new GmailSmtpEmailProvider(config.apiKey, config.fromEmail, config.fromName);
       }
       case 'mock':
       default: {
