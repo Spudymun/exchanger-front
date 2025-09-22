@@ -45,10 +45,13 @@ export const tempIgnores = [
 // === GENERATED FILES ===
 export const generatedIgnores = ['**/*.d.ts', '**/*.map', '**/*.tsbuildinfo'];
 
+// === CONFIG FILES ===
+export const configIgnores = ['turbo.json'];
+
 // === DEVELOPMENT/NON-PRODUCTION APPS ===
 export const devAppIgnores = [
-  'docs/**',            // Документация
-  'apps/docs/**',       // Документация приложение
+  'docs/**', // Документация
+  'apps/docs/**', // Документация приложение
   'apps/admin-panel/**', // Admin panel (в разработке)
 ];
 
@@ -59,5 +62,6 @@ export const allIgnores = [
   ...systemIgnores,
   ...tempIgnores,
   ...generatedIgnores,
+  ...configIgnores,
   ...devAppIgnores,
 ];

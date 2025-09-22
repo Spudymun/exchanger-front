@@ -10,6 +10,20 @@ import type { CryptoCurrency, Order, User } from '../types';
  */
 export interface QueueEmailNotifier {
   sendWalletReadyEmail(orderId: string, address: string, currency: CryptoCurrency): Promise<void>;
+  sendWalletReadyEmailAsync?(
+    order: Order,
+    user: User,
+    address: string,
+    currency: CryptoCurrency
+  ): Promise<void>;
+  getQueueStats?(): Promise<QueueStats>; // ✅ ФАЗА 4: Queue monitoring
+}
+
+interface QueueStats {
+  totalProcessed: number;
+  totalFailed: number;
+  queueLength: number;
+  lastProcessed: string | null;
 }
 
 /**
@@ -83,6 +97,29 @@ export class ServerQueueEmailNotifier implements QueueEmailNotifier {
       // eslint-disable-next-line no-console
       console.warn('Email service unavailable in current environment:', error);
     }
+  }
+
+  // ✅ НОВЫЙ МЕТОД: Простая async версия для будущего развития
+  async sendWalletReadyEmailAsync(
+    order: Order,
+    user: User,
+    address: string,
+    currency: CryptoCurrency
+  ): Promise<void> {
+    // Пока что fallback к синхронной отправке
+    return this.sendWalletReadyEmail(order.id, address, currency);
+  }
+
+  // ✅ ФАЗА 4: Простой мониторинг queue статистики
+  async getQueueStats(): Promise<QueueStats> {
+    // В реальной реализации здесь будет Redis queue статистика
+    // Пока возвращаем mock данные для демонстрации API
+    return {
+      totalProcessed: 0,
+      totalFailed: 0,
+      queueLength: 0,
+      lastProcessed: null,
+    };
   }
 }
 

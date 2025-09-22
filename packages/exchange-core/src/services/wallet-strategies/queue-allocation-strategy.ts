@@ -131,9 +131,16 @@ export class QueueAllocationStrategy implements WalletAllocationStrategy {
   private async sendEmailNotificationSafely(
     orderId: string,
     address: string,
-    currency: CryptoCurrency
+    currency: CryptoCurrency,
+    useAsyncQueue = false // ✅ НОВЫЙ параметр для async обработки (по умолчанию выключен)
   ): Promise<void> {
     try {
+      if (useAsyncQueue && this.emailNotifier.sendWalletReadyEmailAsync) {
+        await this.tryAsyncEmailSend(orderId, address, currency);
+        return;
+      }
+
+      // ✅ СУЩЕСТВУЮЩЕЕ: Синхронная отправка (по умолчанию)
       await this.emailNotifier.sendWalletReadyEmail(orderId, address, currency);
     } catch (emailError) {
       // Не прерываем workflow при ошибке email - кошелек уже выделен
@@ -146,6 +153,30 @@ export class QueueAllocationStrategy implements WalletAllocationStrategy {
         error: emailError instanceof Error ? emailError.message : 'Unknown error',
       });
     }
+  }
+
+  private async tryAsyncEmailSend(
+    orderId: string,
+    address: string,
+    currency: CryptoCurrency
+  ): Promise<void> {
+    const { orderManager, userManager } = await import('../../data/manager');
+    const order = await orderManager.findById(orderId);
+
+    if (!order) {
+      // Fallback к синхронной отправке если не найден order
+      await this.emailNotifier.sendWalletReadyEmail(orderId, address, currency);
+      return;
+    }
+
+    const user = await userManager.findById(order.userId);
+    if (!user) {
+      // Fallback к синхронной отправке если не найден user
+      await this.emailNotifier.sendWalletReadyEmail(orderId, address, currency);
+      return;
+    }
+
+    await this.emailNotifier.sendWalletReadyEmailAsync?.(order, user, address, currency);
   }
 
   async getPoolStats(currency: CryptoCurrency): Promise<PoolStats> {

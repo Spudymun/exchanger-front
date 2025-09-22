@@ -25,7 +25,7 @@ export const testingConfig = [
 
   // === PLAYWRIGHT И CI КОНФИГУРАЦИЯ ===
   {
-    files: ['playwright.config.ts', 'turbo.json'],
+    files: ['playwright.config.ts'],
     rules: {
       'turbo/no-undeclared-env-vars': 'off',
       'no-restricted-syntax': 'off', // Localhost допустим в test конфигурации
