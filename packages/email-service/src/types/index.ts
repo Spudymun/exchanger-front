@@ -1,4 +1,4 @@
-import type { CryptoCurrency } from '@repo/constants';
+import type { CryptoCurrency, EmailProviderType } from '@repo/constants';
 
 /**
  * Base email message interface
@@ -30,7 +30,7 @@ export interface EmailSendResult {
  * Configuration for different email providers
  */
 export interface EmailProviderConfig {
-  provider: 'sendgrid' | 'resend' | 'gmail' | 'mock';
+  provider: EmailProviderType;
   apiKey?: string;
   fromEmail: string;
   fromName: string;

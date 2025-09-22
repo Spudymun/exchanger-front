@@ -261,3 +261,47 @@ export type SecurityEnhancedOffsetPagination = z.infer<
 export type SecurityEnhancedCursorPagination = z.infer<
   typeof securityEnhancedCursorPaginationSchema
 >;
+
+/**
+ * EMAIL MONITORING SCHEMAS
+ * ✅ АРХИТЕКТУРНОЕ РЕШЕНИЕ: Validation для email monitoring integration
+ */
+
+/**
+ * Email provider enum validation
+ */
+export const emailProviderSchema = z.enum(['sendgrid', 'resend', 'gmail', 'mock']);
+export type EmailProvider = z.infer<typeof emailProviderSchema>;
+
+/**
+ * Email monitoring statistics query schema
+ */
+export const emailMonitoringStatsQuerySchema = z
+  .object({
+    provider: emailProviderSchema.optional(),
+  })
+  .strict();
+export type EmailMonitoringStatsQuery = z.infer<typeof emailMonitoringStatsQuerySchema>;
+
+/**
+ * Email providers health check response schema
+ */
+export const emailProvidersHealthSchema = z
+  .object({
+    healthy: z.boolean(),
+    providers: z.array(
+      z
+        .object({
+          name: emailProviderSchema,
+          healthy: z.boolean(),
+          lastCheck: z.date(),
+          error: createXSSProtectedStringWithLength(
+            0,
+            SECURITY_VALIDATION_LIMITS.MESSAGE_MAX_LENGTH
+          ).optional(),
+        })
+        .strict()
+    ),
+  })
+  .strict();
+export type EmailProvidersHealth = z.infer<typeof emailProvidersHealthSchema>;

@@ -41,6 +41,27 @@ export const GMAIL_SMTP_REQUIREMENTS = {
 export const GMAIL_DOMAIN = '@gmail.com' as const;
 
 /**
+ * Email provider types для всех email сервисов
+ * @description Централизованный список всех поддерживаемых email провайдеров
+ */
+export const EMAIL_PROVIDER_TYPES = {
+  SENDGRID: 'sendgrid',
+  RESEND: 'resend',
+  GMAIL: 'gmail',
+  MOCK: 'mock',
+} as const;
+
+/**
+ * Массив всех email провайдеров для использования в enum и валидации
+ */
+export const EMAIL_PROVIDERS = Object.values(EMAIL_PROVIDER_TYPES);
+
+/**
+ * TypeScript тип для email провайдеров
+ */
+export type EmailProviderType = (typeof EMAIL_PROVIDER_TYPES)[keyof typeof EMAIL_PROVIDER_TYPES];
+
+/**
  * Типы SMTP провайдеров
  */
 export type SmtpProviderName = 'gmail';

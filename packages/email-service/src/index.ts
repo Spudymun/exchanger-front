@@ -1,6 +1,13 @@
 // Main service export
 export { EmailService } from './services/email-service';
 
+// Monitoring service export
+export { EmailMonitoringService } from './services/email-monitoring-service';
+export type {
+  ProviderStatisticsResponse,
+  AggregatedStatistics,
+} from './services/email-monitoring-service';
+
 // Rate-limited service export
 export { RateLimitedEmailService } from './utils/rate-limited-email-service';
 

@@ -1,3 +1,4 @@
+import { EMAIL_PROVIDER_TYPES } from '@repo/constants';
 import { createEnvironmentLogger } from '@repo/utils';
 
 import { EmailServiceFactory } from '../factories/email-service-factory';
@@ -11,6 +12,7 @@ import type {
   SystemAlertEmailData,
 } from '../types/index';
 
+import { EmailMonitoringService } from './email-monitoring-service';
 import { EmailTemplateService } from './email-template-service';
 
 /**
@@ -19,6 +21,33 @@ import { EmailTemplateService } from './email-template-service';
 export class EmailService {
   private static logger = createEnvironmentLogger('EmailService');
   private static readonly UNKNOWN_ERROR = 'Unknown error';
+
+  /**
+   * ✅ НОВОЕ: Вспомогательный метод для записи результата email в мониторинг
+   */
+  private static recordEmailResultForMonitoring(
+    config: Partial<EmailProviderConfig> | undefined,
+    result: EmailSendResult,
+    errorMessage?: string
+  ): void {
+    const providerType = config?.provider || EMAIL_PROVIDER_TYPES.MOCK;
+    EmailMonitoringService.recordEmailResult(providerType, result, errorMessage);
+  }
+
+  /**
+   * ✅ НОВОЕ: Вспомогательный метод для записи ошибки email в мониторинг
+   */
+  private static recordEmailErrorForMonitoring(
+    config: Partial<EmailProviderConfig> | undefined,
+    errorMessage: string
+  ): void {
+    const providerType = config?.provider || EMAIL_PROVIDER_TYPES.MOCK;
+    EmailMonitoringService.recordEmailResult(
+      providerType,
+      { success: false, error: errorMessage },
+      errorMessage
+    );
+  }
 
   /**
    * Send crypto address email to user
@@ -41,6 +70,9 @@ export class EmailService {
       const provider = EmailServiceFactory.create(config);
       const result = await provider.send(emailMessage);
 
+      // ✅ НОВОЕ: Записать результат для мониторинга
+      this.recordEmailResultForMonitoring(config, result, result.error);
+
       if (result.success) {
         this.logger.info('Crypto address email sent successfully', {
           orderId: data.orderId,
@@ -57,15 +89,20 @@ export class EmailService {
 
       return result;
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : this.UNKNOWN_ERROR;
+
+      // ✅ НОВОЕ: Записать ошибку для мониторинга
+      this.recordEmailErrorForMonitoring(config, errorMessage);
+
       this.logger.error('Email service error', {
         orderId: data.orderId,
         to: data.userEmail,
-        error: error instanceof Error ? error.message : this.UNKNOWN_ERROR,
+        error: errorMessage,
       });
 
       return {
         success: false,
-        error: error instanceof Error ? error.message : this.UNKNOWN_ERROR,
+        error: errorMessage,
       };
     }
   }
@@ -91,6 +128,9 @@ export class EmailService {
       const provider = EmailServiceFactory.create(config);
       const result = await provider.send(emailMessage);
 
+      // ✅ НОВОЕ: Записать результат для мониторинга
+      this.recordEmailResultForMonitoring(config, result);
+
       if (result.success) {
         this.logger.info('Wallet ready email sent successfully', {
           orderId: data.orderId,
@@ -107,15 +147,20 @@ export class EmailService {
 
       return result;
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : this.UNKNOWN_ERROR;
+
+      // ✅ НОВОЕ: Записать ошибку для мониторинга
+      this.recordEmailErrorForMonitoring(config, errorMessage);
+
       this.logger.error('Email service error', {
         orderId: data.orderId,
         to: data.userEmail,
-        error: error instanceof Error ? error.message : this.UNKNOWN_ERROR,
+        error: errorMessage,
       });
 
       return {
         success: false,
-        error: error instanceof Error ? error.message : this.UNKNOWN_ERROR,
+        error: errorMessage,
       };
     }
   }
@@ -139,7 +184,7 @@ export class EmailService {
 
       // Get email provider and send to all recipients
       const provider = EmailServiceFactory.create(config);
-      return await this.sendToAllRecipients(emailMessages, provider, data);
+      return await this.sendToAllRecipients(emailMessages, provider, data, config);
     } catch (error) {
       this.logger.error('System alert service error', {
         alertType: data.alertType,
@@ -160,12 +205,16 @@ export class EmailService {
   private static async sendToAllRecipients(
     emailMessages: EmailMessage[],
     provider: EmailProviderInterface,
-    data: SystemAlertEmailData
+    data: SystemAlertEmailData,
+    config?: Partial<EmailProviderConfig>
   ): Promise<EmailSendResult[]> {
     return await Promise.all(
       emailMessages.map(async message => {
         try {
           const result = await provider.send(message);
+
+          // ✅ НОВОЕ: Записать результат для мониторинга
+          this.recordEmailResultForMonitoring(config, result);
 
           if (result.success) {
             this.logger.info('System alert email sent successfully', {
@@ -183,15 +232,20 @@ export class EmailService {
 
           return result;
         } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : this.UNKNOWN_ERROR;
+
+          // ✅ НОВОЕ: Записать ошибку для мониторинга
+          this.recordEmailErrorForMonitoring(config, errorMessage);
+
           this.logger.error('System alert email error', {
             alertType: data.alertType,
             to: message.to,
-            error: error instanceof Error ? error.message : this.UNKNOWN_ERROR,
+            error: errorMessage,
           });
 
           return {
             success: false,
-            error: error instanceof Error ? error.message : this.UNKNOWN_ERROR,
+            error: errorMessage,
           };
         }
       })

@@ -6,6 +6,7 @@ import {
   UI_NUMERIC_CONSTANTS,
   type CryptoCurrency,
 } from '@repo/constants';
+import { EmailMonitoringService } from '@repo/email-service';
 import {
   orderManager,
   userManager,
@@ -30,6 +31,7 @@ import {
 import {
   securityEnhancedSearchOrdersSchema,
   securityEnhancedSearchUsersSchema,
+  emailMonitoringStatsQuerySchema,
 } from '../../../../../../packages/utils/src/validation/security-enhanced-schemas';
 
 import { createTRPCRouter } from '../init';
@@ -269,6 +271,39 @@ export const sharedRouter = createTRPCRouter({
         throw createInternalServerError('Failed to control wallet monitoring');
       }
     }),
+
+  // ✅ EMAIL MONITORING - получить статистику по провайдерам
+  getEmailStatistics: operatorAndSupport
+    .input(emailMonitoringStatsQuerySchema)
+    .query(async ({ input }) => {
+      try {
+        const { provider } = input;
+        const statistics = EmailMonitoringService.getProviderStatistics(provider);
+
+        return {
+          success: true,
+          data: statistics,
+        };
+      } catch (error) {
+        console.error('[getEmailStatistics] Error:', error);
+        throw createInternalServerError('Failed to get email statistics');
+      }
+    }),
+
+  // ✅ EMAIL MONITORING - проверить здоровье email провайдеров
+  checkEmailProvidersHealth: operatorAndSupport.query(async () => {
+    try {
+      const healthStatus = await EmailMonitoringService.checkEmailProvidersHealth();
+
+      return {
+        success: true,
+        data: healthStatus,
+      };
+    } catch (error) {
+      console.error('[checkEmailProvidersHealth] Error:', error);
+      throw createInternalServerError('Failed to check email providers health');
+    }
+  }),
 
   // Быстрые действия
   quickActions: operatorAndSupport

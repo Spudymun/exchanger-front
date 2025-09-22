@@ -1,6 +1,14 @@
 import { TIME_CONSTANTS } from '@repo/constants';
 import { createEnvironmentLogger } from '@repo/utils';
 
+import {
+  type MonitoringState,
+  type MonitoringConfig,
+  startMonitoring,
+  stopMonitoring,
+  getMonitoringStatus,
+} from '../utils/monitoring-utils';
+
 import type { AlertCheckResult } from './wallet-alerts-service';
 import { WalletAlertsService } from './wallet-alerts-service';
 
@@ -19,90 +27,34 @@ const MONITORING_CONSTANTS = {
  * Background процесс для мониторинга состояния кошельков
  */
 export class WalletMonitoringProcess {
-  private static logger = createEnvironmentLogger('WalletMonitoringProcess');
-  private static intervalId: NodeJS.Timeout | null = null;
-  private static isRunning = false;
+  // ✅ Используем monitoring-utils для устранения дублирования с EmailMonitoringService
+  private static state: MonitoringState = {
+    intervalId: null,
+    isRunning: false,
+    logger: createEnvironmentLogger('WalletMonitoringProcess'),
+  };
 
-  /**
-   * Конфигурация мониторинга
-   */
-  private static readonly CONFIG = {
-    CHECK_INTERVAL_MS:
-      MONITORING_CONSTANTS.CHECK_INTERVAL_MINUTES *
-      TIME_CONSTANTS.MINUTES_IN_HOUR *
-      TIME_CONSTANTS.SECONDS_IN_MINUTE *
-      TIME_CONSTANTS.MILLISECONDS_IN_SECOND,
-    CHECK_TIMEOUT_MS:
-      MONITORING_CONSTANTS.CHECK_TIMEOUT_SECONDS * TIME_CONSTANTS.MILLISECONDS_IN_SECOND,
+  private static config: MonitoringConfig = {
+    checkIntervalMinutes: MONITORING_CONSTANTS.CHECK_INTERVAL_MINUTES,
+    checkTimeoutSeconds: MONITORING_CONSTANTS.CHECK_TIMEOUT_SECONDS,
   };
 
   /**
-   * Запустить background мониторинг
+   * Запустить background мониторинг (используем monitoring-utils)
    */
   static start(): void {
-    if (this.isRunning) {
-      this.logger.warn('Wallet monitoring already running');
-      return;
-    }
-
-    this.logger.info('Starting wallet monitoring process', {
-      intervalMinutes: MONITORING_CONSTANTS.CHECK_INTERVAL_MINUTES,
-    });
-
-    // Первая проверка сразу
-    this.performInitialCheck();
-
-    // Устанавливаем периодические проверки
-    this.intervalId = setInterval(() => {
-      this.performScheduledCheck();
-    }, this.CONFIG.CHECK_INTERVAL_MS);
-
-    this.isRunning = true;
+    startMonitoring(this.state, this.config, this.performCheck.bind(this));
   }
 
   /**
-   * Остановить background мониторинг
+   * Остановить background мониторинг (используем monitoring-utils)
    */
   static stop(): void {
-    if (!this.isRunning) {
-      this.logger.warn('Wallet monitoring not running');
-      return;
-    }
-
-    this.logger.info('Stopping wallet monitoring process');
-
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
-    }
-
-    this.isRunning = false;
+    stopMonitoring(this.state);
   }
 
   /**
-   * Выполнить первоначальную проверку
-   */
-  private static performInitialCheck(): void {
-    this.performCheck().catch(error => {
-      this.logger.error('Initial wallet check failed', {
-        error: error instanceof Error ? error.message : MONITORING_CONSTANTS.UNKNOWN_ERROR,
-      });
-    });
-  }
-
-  /**
-   * Выполнить запланированную проверку
-   */
-  private static performScheduledCheck(): void {
-    this.performCheck().catch(error => {
-      this.logger.error('Scheduled wallet check failed', {
-        error: error instanceof Error ? error.message : MONITORING_CONSTANTS.UNKNOWN_ERROR,
-      });
-    });
-  }
-
-  /**
-   * Выполнить одну проверку с таймаутом
+   * Выполнить одну проверку с таймаутом (для мониторинга)
    */
   private static async performCheck(): Promise<void> {
     const checkStartTime = Date.now();
@@ -122,7 +74,8 @@ export class WalletMonitoringProcess {
    */
   private static async performCheckWithTimeout() {
     const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('Check timeout')), this.CONFIG.CHECK_TIMEOUT_MS);
+      const timeoutMs = this.config.checkTimeoutSeconds * TIME_CONSTANTS.MILLISECONDS_IN_SECOND;
+      setTimeout(() => reject(new Error('Check timeout')), timeoutMs);
     });
 
     const checkPromise = WalletAlertsService.checkAndAlert();
@@ -135,13 +88,13 @@ export class WalletMonitoringProcess {
    */
   private static handleCheckResult(alerts: AlertCheckResult[], checkDuration: number): void {
     if (alerts.length > MONITORING_CONSTANTS.NO_ALERTS) {
-      this.logger.warn('Wallet monitoring detected critical alerts', {
+      this.state.logger.warn('Wallet monitoring detected critical alerts', {
         alertCount: alerts.length,
         currencyCount: alerts.length,
         checkDurationMs: checkDuration,
       });
     } else {
-      this.logger.info('Wallet monitoring check completed - all OK', {
+      this.state.logger.info('Wallet monitoring check completed - all OK', {
         checkDurationMs: checkDuration,
       });
     }
@@ -153,20 +106,17 @@ export class WalletMonitoringProcess {
   private static handleCheckError(error: unknown, checkStartTime: number): void {
     const checkDuration = Date.now() - checkStartTime;
 
-    this.logger.error('Wallet monitoring check failed', {
+    this.state.logger.error('Wallet monitoring check failed', {
       error: error instanceof Error ? error.message : MONITORING_CONSTANTS.UNKNOWN_ERROR,
       checkDurationMs: checkDuration,
     });
   }
 
   /**
-   * Получить статус мониторинга
+   * Получить статус мониторинга (используем monitoring-utils)
    */
   static getStatus(): { isRunning: boolean; intervalMs: number } {
-    return {
-      isRunning: this.isRunning,
-      intervalMs: this.CONFIG.CHECK_INTERVAL_MS,
-    };
+    return getMonitoringStatus(this.state, this.config);
   }
 }
 
