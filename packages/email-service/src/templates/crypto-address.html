@@ -5,125 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Заявка на обмен создана - {{companyName}}</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f9f9f9;
-        }
-        .email-container {
-            background: white;
-            border-radius: 8px;
-            padding: 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .header {
-            text-align: center;
-            border-bottom: 2px solid #0066cc;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-        }
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #0066cc;
-            margin-bottom: 10px;
-        }
-        .order-info {
-            background: #f8f9fa;
-            border-left: 4px solid #0066cc;
-            padding: 20px;
-            margin: 20px 0;
-        }
-        .crypto-address {
-            background: #e8f4fd;
-            border: 2px solid #0066cc;
-            border-radius: 6px;
-            padding: 20px;
-            margin: 20px 0;
-            text-align: center;
-        }
-        .address-label {
-            font-weight: bold;
-            color: #0066cc;
-            font-size: 18px;
-            margin-bottom: 10px;
-        }
-        .address-value {
-            font-family: 'Courier New', monospace;
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-            word-break: break-all;
-            background: white;
-            padding: 15px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-        }
-        .warning {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 4px;
-            padding: 15px;
-            margin: 20px 0;
-            color: #856404;
-        }
-        .footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-            font-size: 14px;
-            color: #666;
-            text-align: center;
-        }
+        /* Import centralized email styles */
+        @import url('./email-base.css');
+        
+        /* Additional styles specific to this template */
         .amount-info {
             display: flex;
             justify-content: space-between;
-            margin: 10px 0;
-        }
-        .amount-label {
-            font-weight: bold;
-        }
-        .expires-info {
-            color: #d63384;
-            font-weight: bold;
-            text-align: center;
-            margin: 15px 0;
+            margin: 0.5rem 0;
         }
     </style>
 </head>
 <body>
     <div class="email-container">
-        <div class="header">
-                    <div class="logo">{{companyName}}</div>
-            <h1>Заявка на обмен создана</h1>
+        <!-- Header Section -->
+        <div class="header header-primary">
+            <div class="logo logo-primary">{{companyName}}</div>
+            <p>Заявка на обмен создана</p>
         </div>
-
-        <div class="order-info">
+        
+        <!-- Order Information -->
+        <div class="info-block info-block-primary">
             <h2>📋 Детали заявки №{{orderId}}</h2>
             <div class="amount-info">
-                <span class="amount-label">Сумма к отправке:</span>
+                <span class="text-bold">Сумма к отправке:</span>
                 <span>{{amount}} {{currency}}</span>
             </div>
             <div class="amount-info">
-                <span class="amount-label">Валюта:</span>
+                <span class="text-bold">Валюта:</span>
                 <span>{{currencyFullName}}</span>
             </div>
             <div class="amount-info">
-                <span class="amount-label">Сеть:</span>
+                <span class="text-bold">Сеть:</span>
                 <span>{{networkName}}</span>
             </div>
         </div>
 
+        <!-- Crypto Address Block -->
         <div class="crypto-address">
             <div class="address-label">📍 Адрес для отправки {{currency}}</div>
-            <div class="address-value">{{cryptoAddress}}</div>
+            <div class="crypto-address-value">{{cryptoAddress}}</div>
         </div>
 
-        <div class="warning">
+        <!-- Instructions -->
+        <div class="instructions">
             <strong>⚠️ Важно:</strong>
             <ul>
                 <li>Отправляйте точно <strong>{{amount}} {{currency}}</strong> на указанный адрес</li>
@@ -133,13 +58,15 @@
             </ul>
         </div>
 
-        <div class="expires-info">
-            ⏰ Заявка действительна до: {{expiresAt}}
+        <!-- Expiration Warning -->
+        <div class="warning text-center">
+            <strong>⏰ Заявка действительна до: {{expiresAt}}</strong>
         </div>
 
+        <!-- Footer -->
         <div class="footer">
             <p>С уважением,<br>Команда {{companyName}}</p>
-            <p style="font-size: 12px; color: #999;">
+            <p class="text-small text-muted">
                 Это автоматическое сообщение. Не отвечайте на него.
             </p>
         </div>

@@ -1,0 +1,304 @@
+/* Email Templates Base Styles v1.0 */
+/* Centralized styles for all email templates */
+/* Based on ExchangeGO Design System v3.0 */
+
+/* === CSS VARIABLES - Using ExchangeGO Design Tokens === */
+/* 
+ * ⚠️  ВАЖНО: НЕ ДУБЛИРОВАНИЕ, А ПРАВИЛЬНАЯ АРХИТЕКТУРА!
+ * 
+ * Эти CSS переменные НЕ дублируют packages/tailwind-preset/globals.css
+ * Это разные форматы для разных целей:
+ * 
+ * 1. Tailwind format (globals.css):  --primary: 220 90% 50%;  (space-separated)
+ * 2. Email format (здесь):          --email-color-primary: hsl(220deg 90% 50%);  (full HSL)
+ * 
+ * ПРИЧИНЫ такого подхода:
+ * ✅ Email клиенты НЕ поддерживают space-separated CSS переменные
+ * ✅ Email клиенты требуют полного HSL/RGB формата с функциями
+ * ✅ Значения ИДЕНТИЧНЫ, только разный синтаксис для совместимости
+ * ✅ Архитектурное решение документировано в DEVELOPER_GUIDE.md
+ * 
+ * При изменении цветов в globals.css необходимо синхронизировать значения здесь!
+ */
+:root {
+  /* Colors from design system */
+  --email-bg-primary: hsl(220deg 14% 98%);
+  --email-bg-card: hsl(0deg 0% 100%);
+  --email-bg-muted: hsl(220deg 14% 96%);
+  --email-bg-success: hsl(142deg 76% 95%);
+  --email-bg-warning: hsl(38deg 92% 95%);
+  --email-bg-error: hsl(0deg 84% 95%);
+  --email-bg-info: hsl(220deg 90% 95%);
+
+  /* Text colors */
+  --email-text-primary: hsl(222.2deg 84% 4.9%);
+  --email-text-muted: hsl(215deg 16% 47%);
+  --email-text-white: hsl(210deg 40% 98%);
+
+  /* Brand colors */
+  --email-color-primary: hsl(220deg 90% 50%);
+  --email-color-success: hsl(142deg 76% 36%);
+  --email-color-warning: hsl(38deg 92% 50%);
+  --email-color-error: hsl(0deg 84% 60%);
+  --email-color-info: hsl(220deg 90% 50%);
+
+  /* Borders */
+  --email-border-primary: hsl(220deg 13% 85%);
+  --email-border-muted: hsl(220deg 13% 91%);
+
+  /* Spacing from design tokens */
+  --email-spacing-xs: 0.25rem;
+  /* 4px */
+  --email-spacing-sm: 0.5rem;
+  /* 8px */
+  --email-spacing-md: 1rem;
+  /* 16px */
+  --email-spacing-lg: 1.5rem;
+  /* 24px */
+  --email-spacing-xl: 2rem;
+  /* 32px */
+  --email-spacing-2xl: 2.5rem;
+  /* 40px */
+
+  /* Border radius */
+  --email-radius-sm: 0.25rem;
+  /* 4px */
+  --email-radius-md: 0.5rem;
+  /* 8px */
+  --email-radius-lg: 0.75rem;
+  /* 12px */
+
+  /* Typography */
+  --email-font-family: 'Segoe UI', tahoma, geneva, verdana, sans-serif;
+  --email-font-mono: 'Courier New', monospace;
+  --email-line-height: 1.6;
+
+  /* Shadows */
+  --email-shadow-sm: 0 1px 3px rgb(0 0 0 / 10%);
+  --email-shadow-md: 0 2px 10px rgb(0 0 0 / 10%);
+}
+
+/* === BASE LAYOUT === */
+body {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: var(--email-spacing-lg);
+  background-color: var(--email-bg-primary);
+  color: var(--email-text-primary);
+  font-family: var(--email-font-family);
+  line-height: var(--email-line-height);
+}
+
+.email-container {
+  padding: var(--email-spacing-2xl);
+  background: var(--email-bg-card);
+  border-radius: var(--email-radius-md);
+  box-shadow: var(--email-shadow-md);
+}
+
+/* === HEADER COMPONENTS === */
+.header {
+  margin-bottom: var(--email-spacing-2xl);
+  padding-bottom: var(--email-spacing-lg);
+  text-align: center;
+}
+
+.header-primary {
+  border-bottom: 2px solid var(--email-color-primary);
+}
+
+.header-success {
+  border-bottom: 2px solid var(--email-color-success);
+}
+
+.header-warning {
+  border-bottom: 2px solid var(--email-color-warning);
+}
+
+.header-error {
+  border-bottom: 2px solid var(--email-color-error);
+}
+
+.logo {
+  margin-bottom: var(--email-spacing-sm);
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.logo-primary {
+  color: var(--email-color-primary);
+}
+
+.logo-success {
+  color: var(--email-color-success);
+}
+
+.logo-error {
+  color: var(--email-color-error);
+}
+
+/* === CONTENT BLOCKS === */
+.info-block {
+  margin: var(--email-spacing-lg) 0;
+  padding: var(--email-spacing-lg);
+  border-radius: var(--email-radius-sm);
+}
+
+.info-block-primary {
+  background: var(--email-bg-muted);
+  border-left: 4px solid var(--email-color-primary);
+}
+
+.info-block-success {
+  background: var(--email-bg-success);
+  border-left: 4px solid var(--email-color-success);
+}
+
+.info-block-warning {
+  background: var(--email-bg-warning);
+  border-left: 4px solid var(--email-color-warning);
+}
+
+.info-block-error {
+  background: var(--email-bg-error);
+  border-left: 4px solid var(--email-color-error);
+}
+
+/* === NOTIFICATION BLOCKS === */
+.notification-block {
+  margin: var(--email-spacing-lg) 0;
+  padding: var(--email-spacing-lg);
+  text-align: center;
+  border-radius: var(--email-radius-md);
+}
+
+.notification-block-success {
+  background: var(--email-bg-success);
+  border: 2px solid var(--email-color-success);
+}
+
+.notification-block-warning {
+  background: var(--email-bg-warning);
+  border: 2px solid var(--email-color-warning);
+}
+
+.notification-block-error {
+  background: var(--email-bg-error);
+  border: 2px solid var(--email-color-error);
+}
+
+/* === CRYPTO ADDRESS BLOCK === */
+.crypto-address {
+  margin: var(--email-spacing-lg) 0;
+  padding: var(--email-spacing-lg);
+  background: var(--email-bg-info);
+  text-align: center;
+  border: 2px solid var(--email-color-info);
+  border-radius: var(--email-radius-md);
+}
+
+.address-label {
+  margin-bottom: var(--email-spacing-sm);
+  color: var(--email-color-info);
+  font-weight: bold;
+}
+
+.crypto-address-value {
+  margin: var(--email-spacing-sm) 0;
+  padding: var(--email-spacing-md);
+  background: var(--email-bg-card);
+  font-family: var(--email-font-mono);
+  font-size: 1rem;
+  border: 1px solid var(--email-border-muted);
+  border-radius: var(--email-radius-sm);
+  word-break: break-all;
+}
+
+/* === INSTRUCTIONS BLOCK === */
+.instructions {
+  margin: var(--email-spacing-lg) 0;
+  padding: var(--email-spacing-lg);
+  background: var(--email-bg-warning);
+  border: 1px solid var(--email-color-warning);
+  border-radius: var(--email-radius-md);
+}
+
+/* === WARNING BLOCK === */
+.warning {
+  margin: var(--email-spacing-lg) 0;
+  padding: var(--email-spacing-md);
+  background: var(--email-bg-error);
+  border: 1px solid var(--email-color-error);
+  border-radius: var(--email-radius-md);
+}
+
+/* === FOOTER === */
+.footer {
+  margin-top: var(--email-spacing-2xl);
+  padding-top: var(--email-spacing-lg);
+  color: var(--email-text-muted);
+  font-size: 0.875rem;
+  text-align: center;
+  border-top: 1px solid var(--email-border-primary);
+}
+
+/* === UTILITY CLASSES === */
+.text-center {
+  text-align: center;
+}
+
+.text-bold {
+  font-weight: bold;
+}
+
+.text-muted {
+  color: var(--email-text-muted);
+}
+
+.text-small {
+  font-size: 0.875rem;
+}
+
+.text-large {
+  font-size: 1.125rem;
+}
+
+.margin-top-sm {
+  margin-top: var(--email-spacing-sm);
+}
+
+.margin-top-md {
+  margin-top: var(--email-spacing-md);
+}
+
+.margin-top-lg {
+  margin-top: var(--email-spacing-lg);
+}
+
+.margin-bottom-sm {
+  margin-bottom: var(--email-spacing-sm);
+}
+
+.margin-bottom-md {
+  margin-bottom: var(--email-spacing-md);
+}
+
+.margin-bottom-lg {
+  margin-bottom: var(--email-spacing-lg);
+}
+
+/* === RESPONSIVE DESIGN === */
+@media screen and (width <=480px) {
+  body {
+    padding: var(--email-spacing-md);
+  }
+
+  .email-container {
+    padding: var(--email-spacing-lg);
+  }
+
+  .crypto-address-value {
+    padding: var(--email-spacing-sm);
+    font-size: 0.875rem;
+  }
+}

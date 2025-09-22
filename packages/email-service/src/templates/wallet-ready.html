@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Адрес готов для заявки №{{orderId}} - {{companyName}}</title>
+    <style>
+        /* Import centralized email styles */
+        @import url('./email-base.css');
+        
+        /* Additional styles specific to this template */
+        .amount-info {
+            display: flex;
+            justify-content: space-between;
+            margin: var(--email-spacing-sm) 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container success-theme">
+        <!-- Header Section -->
+        <div class="header header-success">
+            <div class="logo logo-success">{{companyName}}</div>
+            <p>🎉 Адрес готов для заявки №{{orderId}}</p>
+        </div>
+        
+        <!-- Success Notification -->
+        <div class="notification-block notification-block-success">
+            <h2>✅ Ваш адрес готов!</h2>
+            <p>Кошелек для заявки №{{orderId}} успешно выделен</p>
+        </div>
+        
+        <!-- Order Information -->
+        <div class="info-block info-block-success">
+            <h3>📋 Детали заявки</h3>
+            <div class="amount-info">
+                <span class="text-bold">Заявка №:</span>
+                <span>{{orderId}}</span>
+            </div>
+            <div class="amount-info">
+                <span class="text-bold">Сумма к отправке:</span>
+                <span>{{amount}} {{currency}}</span>
+            </div>
+            <div class="amount-info">
+                <span class="text-bold">Валюта:</span>
+                <span>{{currencyFullName}}</span>
+            </div>
+            <div class="amount-info">
+                <span class="text-bold">Сеть:</span>
+                <span>{{networkName}}</span>
+            </div>
+            <div class="amount-info">
+                <span class="text-bold">Действительно до:</span>
+                <span>{{expiresAt}}</span>
+            </div>
+        </div>
+
+        <!-- Crypto Address Block -->
+        <div class="crypto-address">
+            <div class="address-label">📍 Адрес для отправки {{currency}}</div>
+            <div class="crypto-address-value">{{cryptoAddress}}</div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="instructions">
+            <strong>📝 Инструкции:</strong>
+            <ol>
+                <li>Отправьте <strong>точно {{amount}} {{currency}}</strong> на указанный адрес</li>
+                <li>Проверьте правильность сети: <strong>{{networkName}}</strong></li>
+                <li>Дождитесь подтверждения транзакции в блокчейне</li>
+                <li>Ваша заявка будет обработана автоматически</li>
+            </ol>
+        </div>
+
+        <!-- Warning -->
+        <div class="warning text-center">
+            <strong>⏰ Время действия адреса ограничено до: {{expiresAt}}</strong>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>С уважением,<br>Команда {{companyName}}</p>
+            <p class="text-small text-muted">
+                Это автоматическое сообщение. Ваш адрес был выделен из очереди.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

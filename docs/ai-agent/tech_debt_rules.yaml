@@ -96,8 +96,8 @@ tech_debt_rules:
     patterns:
       - regex: "--[a-z-]+\\s*:"
     severity: error
-    excludes: ['packages/tailwind-preset/globals.css', 'packages/design-tokens/**/*']
-    rationale: 'Single Source of Truth для CSS переменных'
+    excludes: ['packages/tailwind-preset/globals.css', 'packages/design-tokens/**/*', 'packages/email-service/src/templates/email-base.css']
+    rationale: 'Single Source of Truth для CSS переменных. ИСКЛЮЧЕНИЕ: email-base.css использует полный HSL формат для совместимости с email клиентами'
 
   - id: globals_css_import_required
     description: 'Каждое приложение должно импортировать @repo/tailwind-preset/globals.css'

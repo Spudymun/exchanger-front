@@ -37,9 +37,9 @@ export interface EmailProviderConfig {
 }
 
 /**
- * Crypto address email template data
+ * Base interface for crypto-related email template data
  */
-export interface CryptoAddressEmailData {
+export interface BaseCryptoEmailData {
   orderId: string;
   cryptoAddress: string;
   currency: CryptoCurrency;
@@ -47,6 +47,18 @@ export interface CryptoAddressEmailData {
   expiresAt: Date;
   userEmail: string;
 }
+
+/**
+ * Crypto address email template data
+ * Type alias to base interface to eliminate duplication
+ */
+export type CryptoAddressEmailData = BaseCryptoEmailData;
+
+/**
+ * Wallet ready email template data (for orders from queue)
+ * Type alias to base interface to eliminate duplication
+ */
+export type WalletReadyEmailData = BaseCryptoEmailData;
 
 /**
  * System alert email template data
@@ -71,5 +83,6 @@ export type EmailEnvironment = 'development' | 'production' | 'test';
 export type EmailTemplateType =
   | 'crypto-address'
   | 'system-alert'
+  | 'wallet-ready' // 🆕 НОВЫЙ для заявок из очереди
   | 'order-confirmation'
   | 'order-status-update';

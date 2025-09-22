@@ -22,7 +22,9 @@ export type {
   EmailProviderInterface,
   EmailSendResult,
   EmailProviderConfig,
+  BaseCryptoEmailData, // 🆕 НОВЫЙ базовый тип
   CryptoAddressEmailData,
+  WalletReadyEmailData,
   SystemAlertEmailData,
   EmailEnvironment,
   EmailTemplateType,

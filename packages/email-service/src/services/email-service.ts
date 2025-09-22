@@ -3,6 +3,7 @@ import { createEnvironmentLogger } from '@repo/utils';
 import { EmailServiceFactory } from '../factories/email-service-factory';
 import type {
   CryptoAddressEmailData,
+  WalletReadyEmailData,
   EmailMessage,
   EmailProviderConfig,
   EmailProviderInterface,
@@ -48,6 +49,56 @@ export class EmailService {
         });
       } else {
         this.logger.error('Failed to send crypto address email', {
+          orderId: data.orderId,
+          to: data.userEmail,
+          error: result.error,
+        });
+      }
+
+      return result;
+    } catch (error) {
+      this.logger.error('Email service error', {
+        orderId: data.orderId,
+        to: data.userEmail,
+        error: error instanceof Error ? error.message : this.UNKNOWN_ERROR,
+      });
+
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : this.UNKNOWN_ERROR,
+      };
+    }
+  }
+
+  /**
+   * Send wallet ready email to user (for orders from queue)
+   */
+  static async sendWalletReady(
+    data: WalletReadyEmailData,
+    config?: Partial<EmailProviderConfig>
+  ): Promise<EmailSendResult> {
+    try {
+      this.logger.info('Sending wallet ready email', {
+        orderId: data.orderId,
+        currency: data.currency,
+        to: data.userEmail,
+      });
+
+      // Generate email content from template
+      const emailMessage = await EmailTemplateService.generateWalletReadyEmail(data);
+
+      // Get email provider and send
+      const provider = EmailServiceFactory.create(config);
+      const result = await provider.send(emailMessage);
+
+      if (result.success) {
+        this.logger.info('Wallet ready email sent successfully', {
+          orderId: data.orderId,
+          to: data.userEmail,
+          messageId: result.messageId,
+        });
+      } else {
+        this.logger.error('Failed to send wallet ready email', {
           orderId: data.orderId,
           to: data.userEmail,
           error: result.error,

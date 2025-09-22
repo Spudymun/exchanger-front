@@ -2,6 +2,13 @@
 
 /* Based on Semantic Design System v2.1 */
 
+/* 
+ * 📧 EMAIL COMPATIBILITY NOTE:
+ * Эти CSS переменные используют space-separated format для Tailwind CSS.
+ * Для email templates используется полный HSL формат в packages/email-service/src/templates/email-base.css
+ * Значения должны быть синхронизированы между системами!
+ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

@@ -13,7 +13,13 @@ import {
 import { sanitizeHtmlContent } from '@repo/exchange-core';
 import { createEnvironmentLogger } from '@repo/utils';
 
-import type { CryptoAddressEmailData, EmailMessage, SystemAlertEmailData } from '../types/index';
+import type {
+  CryptoAddressEmailData,
+  EmailMessage,
+  SystemAlertEmailData,
+  WalletReadyEmailData,
+  BaseCryptoEmailData,
+} from '../types/index';
 
 /**
  * Template service for generating email content
@@ -85,9 +91,14 @@ export class EmailTemplateService {
   }
 
   /**
-   * Generate crypto address email content
+   * Generic template email generator to eliminate code duplication
+   * Centralizes the common logic used by crypto-related email templates
    */
-  static async generateCryptoAddressEmail(data: CryptoAddressEmailData): Promise<EmailMessage> {
+  private static async generateGenericTemplateEmail(
+    templateName: string,
+    subject: string,
+    data: BaseCryptoEmailData
+  ): Promise<EmailMessage> {
     const variables = {
       orderId: data.orderId,
       cryptoAddress: data.cryptoAddress,
@@ -97,27 +108,58 @@ export class EmailTemplateService {
       amount: data.amount.toString(),
       expiresAt: this.formatDate(data.expiresAt),
       userEmail: data.userEmail,
-      companyName: COMPANY_INFO.NAME, // ✅ Добавляем из констант
+      companyName: COMPANY_INFO.NAME,
     };
 
-    const htmlTemplate = await this.loadTemplate('crypto-address', 'html');
-    const textTemplate = await this.loadTemplate('crypto-address', 'txt');
+    const logContext = {
+      orderId: data.orderId,
+      currency: data.currency,
+      to: data.userEmail,
+    };
+
+    // Reuse the universal template generator to eliminate duplication
+    const { html, text } = await this.generateUniversalTemplateEmail(
+      templateName,
+      subject,
+      variables,
+      logContext
+    );
+
+    return {
+      to: data.userEmail,
+      subject,
+      html,
+      text,
+    };
+  }
+
+  /**
+   * Universal template generator for any email type - eliminates semantic duplication
+   * Centralizes the loadTemplate → replaceVariables → return pattern
+   */
+  private static async generateUniversalTemplateEmail(
+    templateName: string,
+    subject: string,
+    variables: Record<string, string>,
+    logContext: Record<string, string | number> = {}
+  ): Promise<{ html: string; text: string; subject: string }> {
+    const htmlTemplate = await this.loadTemplate(templateName, 'html');
+    const textTemplate = await this.loadTemplate(templateName, 'txt');
 
     const html = this.replaceVariables(htmlTemplate, variables);
     const text = this.replaceVariables(textTemplate, variables);
 
-    this.logger.info('Generated crypto address email', {
-      orderId: data.orderId,
-      currency: data.currency,
-      to: data.userEmail,
-    });
+    this.logger.info(`Generated ${templateName} email`, logContext);
 
-    return {
-      to: data.userEmail,
-      subject: `💱 Заявка №${data.orderId} создана - отправьте ${data.amount} ${data.currency}`,
-      html,
-      text,
-    };
+    return { html, text, subject };
+  }
+
+  /**
+   * Generate crypto address email content
+   */
+  static async generateCryptoAddressEmail(data: CryptoAddressEmailData): Promise<EmailMessage> {
+    const subject = `💱 Заявка №${data.orderId} создана - отправьте ${data.amount} ${data.currency}`;
+    return this.generateGenericTemplateEmail('crypto-address', subject, data);
   }
 
   /**
@@ -133,19 +175,21 @@ export class EmailTemplateService {
       companyName: COMPANY_INFO.NAME,
     };
 
-    const htmlTemplate = await this.loadTemplate('system-alert', 'html');
-    const textTemplate = await this.loadTemplate('system-alert', 'txt');
-
-    const html = this.replaceVariables(htmlTemplate, variables);
-    const text = this.replaceVariables(textTemplate, variables);
-
     const subject = `🚨 ${data.alertLevel} Alert: ${data.alertType} - ${COMPANY_INFO.NAME}`;
 
-    this.logger.info('Generated system alert email', {
+    const logContext = {
       alertType: data.alertType,
       alertLevel: data.alertLevel,
-      recipientCount: data.recipients.length,
-    });
+      recipientCount: data.recipients.length.toString(),
+    };
+
+    // Используем централизованный механизм генерации
+    const { html, text } = await this.generateUniversalTemplateEmail(
+      'system-alert',
+      subject,
+      variables,
+      logContext
+    );
 
     // Создаем отдельное сообщение для каждого получателя
     return data.recipients.map(recipient => ({
@@ -154,6 +198,14 @@ export class EmailTemplateService {
       html,
       text,
     }));
+  }
+
+  /**
+   * Generate wallet ready email content (for orders from queue)
+   */
+  static async generateWalletReadyEmail(data: WalletReadyEmailData): Promise<EmailMessage> {
+    const subject = `🎉 Адрес готов для заявки №${data.orderId} - отправьте ${data.amount} ${data.currency}`;
+    return this.generateGenericTemplateEmail('wallet-ready', subject, data);
   }
 
   /**
