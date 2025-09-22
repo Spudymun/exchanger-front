@@ -9,7 +9,11 @@ const createJestConfig = nextJest({
 const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/jest.setup.cjs'],
   testEnvironment: 'jest-environment-jsdom',
-  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
+  testPathIgnorePatterns: [
+    '<rootDir>/.next/', 
+    '<rootDir>/node_modules/',
+    '<rootDir>/**/dist/**', // ✅ Исключаем compiled файлы
+  ],
   collectCoverageFrom: [
     'apps/**/*.{js,jsx,ts,tsx}',
     'packages/**/*.{js,jsx,ts,tsx}',
