@@ -212,11 +212,63 @@ function handleOrdersCommand(update: TelegramUpdate): string {
 }
 
 /**
+ * Обработчик callback queries от inline кнопок
+ */
+async function handleCallbackQuery(update: TelegramUpdate): Promise<string | null> {
+  const callbackQuery = update.callback_query;
+  if (!callbackQuery?.from || !callbackQuery.data) {
+    return null;
+  }
+
+  const session = getSession(callbackQuery.from.id);
+
+  if (!session.isOperator) {
+    return 'Только операторы могут использовать эти кнопки';
+  }
+
+  logger.info('Processing callback query', {
+    userId: callbackQuery.from.id,
+    data: callbackQuery.data,
+  });
+
+  // Обработка callback_data для взятия заявки
+  if (callbackQuery.data.startsWith('take_order_')) {
+    const orderId = callbackQuery.data.replace('take_order_', '');
+    return await handleTakeOrderCommand({
+      ...update,
+      message: {
+        message_id: 0,
+        from: callbackQuery.from,
+        text: `/takeorder ${orderId}`,
+        chat: {
+          id: callbackQuery.from.id,
+          type: 'private',
+        },
+      },
+    });
+  }
+
+  // Обработка callback_data для деталей заявки
+  if (callbackQuery.data.startsWith('details_order_')) {
+    const orderId = callbackQuery.data.replace('details_order_', '');
+    return `📋 Детали заявки #${orderId}\n\n` +
+           `Для получения подробной информации используйте web интерфейс оператора.`;
+  }
+
+  return '❓ Неизвестное действие';
+}
+
+/**
  * Основная функция обработки telegram update
  */
 export async function handleTelegramUpdate(update: TelegramUpdate): Promise<string | null> {
   return await gracefulHandler(
     async () => {
+      // Обработка callback queries (inline кнопки)
+      if (update.callback_query) {
+        return await handleCallbackQuery(update);
+      }
+
       const message = update.message;
 
       if (!message?.text) {

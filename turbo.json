@@ -27,22 +27,101 @@
         "RESEND_API_KEY",
         "TELEGRAM_BOT_TOKEN",
         "TELEGRAM_WEBHOOK_URL",
+        "TELEGRAM_BOT_URL",
         "WEB_APP_URL",
         "API_SECRET_KEY",
+        "AUTHORIZED_TELEGRAM_OPERATORS",
         "OPERATOR_TELEGRAM_CHAT_IDS"
       ]
     },
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["^lint"],
+      "env": [
+        "VERCEL_URL",
+        "PORT",
+        "NODE_ENV",
+        "ANALYZE",
+        "DATABASE_URL",
+        "REDIS_URL",
+        "FORCE_MOCK_MODE",
+        "SESSION_ENVIRONMENT",
+        "NEXTAUTH_URL",
+        "NEXTAUTH_SECRET",
+        "SMTP_HOST",
+        "SMTP_PORT",
+        "SMTP_FROM",
+        "GMAIL_SMTP_USER",
+        "GMAIL_SMTP_PASS",
+        "SENDGRID_API_KEY",
+        "RESEND_API_KEY",
+        "TELEGRAM_BOT_TOKEN",
+        "TELEGRAM_WEBHOOK_URL",
+        "TELEGRAM_BOT_URL",
+        "WEB_APP_URL",
+        "API_SECRET_KEY",
+        "AUTHORIZED_TELEGRAM_OPERATORS",
+        "OPERATOR_TELEGRAM_CHAT_IDS"
+      ]
     },
     "lint:strict": {
-      "dependsOn": ["^lint:strict"]
+      "dependsOn": ["^lint:strict"],
+      "env": [
+        "VERCEL_URL",
+        "PORT",
+        "NODE_ENV",
+        "ANALYZE",
+        "DATABASE_URL",
+        "REDIS_URL",
+        "FORCE_MOCK_MODE",
+        "SESSION_ENVIRONMENT",
+        "NEXTAUTH_URL",
+        "NEXTAUTH_SECRET",
+        "SMTP_HOST",
+        "SMTP_PORT",
+        "SMTP_FROM",
+        "GMAIL_SMTP_USER",
+        "GMAIL_SMTP_PASS",
+        "SENDGRID_API_KEY",
+        "RESEND_API_KEY",
+        "TELEGRAM_BOT_TOKEN",
+        "TELEGRAM_WEBHOOK_URL",
+        "WEB_APP_URL",
+        "API_SECRET_KEY",
+        "AUTHORIZED_TELEGRAM_OPERATORS",
+        "OPERATOR_TELEGRAM_CHAT_IDS"
+      ]
     },
     "lint:styles": {
       "dependsOn": ["^lint:styles"]
     },
     "check-types": {
-      "dependsOn": ["^check-types"]
+      "dependsOn": ["^check-types"],
+      "env": [
+        "VERCEL_URL",
+        "PORT",
+        "NODE_ENV",
+        "ANALYZE",
+        "DATABASE_URL",
+        "REDIS_URL",
+        "FORCE_MOCK_MODE",
+        "SESSION_ENVIRONMENT",
+        "NEXTAUTH_URL",
+        "NEXTAUTH_SECRET",
+        "SMTP_HOST",
+        "SMTP_PORT",
+        "SMTP_FROM",
+        "GMAIL_SMTP_USER",
+        "GMAIL_SMTP_PASS",
+        "SENDGRID_API_KEY",
+        "RESEND_API_KEY",
+        "TELEGRAM_BOT_TOKEN",
+        "TELEGRAM_WEBHOOK_URL",
+        "TELEGRAM_BOT_URL",
+        "WEB_APP_URL",
+        "API_SECRET_KEY",
+        "AUTHORIZED_TELEGRAM_OPERATORS",
+        "OPERATOR_TELEGRAM_CHAT_IDS"
+      ]
     },
     "build:clean": {
       "cache": false
@@ -101,8 +180,10 @@
         "RESEND_API_KEY",
         "TELEGRAM_BOT_TOKEN",
         "TELEGRAM_WEBHOOK_URL",
+        "TELEGRAM_BOT_URL",
         "WEB_APP_URL",
         "API_SECRET_KEY",
+        "AUTHORIZED_TELEGRAM_OPERATORS",
         "OPERATOR_TELEGRAM_CHAT_IDS"
       ]
     },

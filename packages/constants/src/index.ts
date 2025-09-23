@@ -50,3 +50,6 @@ export * from './smtp-providers';
 
 // Email Service Error constants
 export * from './email-errors';
+
+// Telegram Bot API and notification constants
+export * from './telegram';

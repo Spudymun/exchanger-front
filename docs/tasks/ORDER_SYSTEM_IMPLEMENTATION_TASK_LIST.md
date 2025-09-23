@@ -249,7 +249,7 @@
 - [ ] **9.3** Реализовать webhook уведомления о новых заявках
   - _Интеграция в exchange.createOrder для отправки в Telegram_
   - _Сообщения с деталями заявки и inline кнопками_
-  - _Разные сообщения для immediate и queued заявок_
+  - _Разные формулировки для fresh и reused wallet заявок_
 
 - [ ] **9.4** Создать Telegram callback procedures в `operator.ts`
   - _operator.claimOrderFromTelegram procedure_

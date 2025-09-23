@@ -9,6 +9,9 @@ import {
   AUTH_CONSTANTS,
 } from '@repo/constants';
 import { RateLimitedEmailService } from '@repo/email-service';
+
+// Constants for error messages
+const UNKNOWN_ERROR_MESSAGE = 'Unknown error' as const;
 import {
   calculateUahAmount,
   calculateCryptoAmount,
@@ -19,6 +22,7 @@ import {
   userManager,
   isAmountWithinLimits,
   type CryptoCurrency,
+  type Order,
   AutoRegistrationService,
 } from '@repo/exchange-core';
 import { UserManagerFactory, type SessionMetadata } from '@repo/session-management';
@@ -140,6 +144,58 @@ async function processQueuedOrder(
 }
 
 /**
+ * 🆕 TASK 9.3: Send Telegram notification to operators
+ */
+async function sendTelegramNotification(
+  order: Order,
+  orderRequest: { email: string },
+  depositAddress: string,
+  usedOldestOccupiedWallet: boolean
+) {
+  const telegramBotUrl = process.env.TELEGRAM_BOT_URL;
+  if (!telegramBotUrl) {
+    logger.warn('TELEGRAM_BOT_URL not configured, skipping Telegram notification', {
+      orderId: order.id,
+    });
+    return;
+  }
+
+  try {
+    await fetch(`${telegramBotUrl}/api/notify-operators`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${process.env.API_SECRET_KEY}`,
+      },
+      body: JSON.stringify({
+        order: {
+          id: order.id,
+          email: orderRequest.email,
+          cryptoAmount: order.cryptoAmount,
+          currency: order.currency,
+          uahAmount: order.uahAmount,
+          status: order.status,
+          createdAt: order.createdAt,
+        },
+        depositAddress,
+        walletType: usedOldestOccupiedWallet ? 'reused' : 'fresh',
+      }),
+    });
+    
+    logger.info('Telegram notification sent successfully', {
+      orderId: order.id,
+      walletType: usedOldestOccupiedWallet ? 'reused' : 'fresh',
+    });
+  } catch (telegramError) {
+    logger.error('Failed to send Telegram notification', {
+      orderId: order.id,
+      error: telegramError instanceof Error ? telegramError.message : UNKNOWN_ERROR_MESSAGE,
+    });
+    // Continue execution - Telegram notification failure should not interrupt order creation
+  }
+}
+
+/**
  * Обрабатывает успешную заявку с выделенным кошельком
  */
 async function processSuccessfulOrder(params: {
@@ -197,10 +253,13 @@ async function processSuccessfulOrder(params: {
     logger.error('Failed to send crypto address email', {
       orderId: order.id,
       email: orderRequest.email,
-      error: emailError instanceof Error ? emailError.message : 'Unknown error',
+      error: emailError instanceof Error ? emailError.message : UNKNOWN_ERROR_MESSAGE,
     });
     // Continue execution even if email sending fails to not interrupt the order flow
   }
+
+  // 🆕 TASK 9.3: Send Telegram notification to operators
+  await sendTelegramNotification(order, orderRequest, depositAddress, usedOldestOccupiedWallet);
 
   return {
     order,
