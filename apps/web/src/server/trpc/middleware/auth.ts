@@ -19,6 +19,22 @@ export const authMiddleware = publicProcedure.use(async ({ ctx, next }) => {
   });
 });
 
+// ✅ НОВЫЙ MIDDLEWARE для системных API вызовов (telegram bot)
+export const systemApiMiddleware = publicProcedure.use(async ({ ctx, next }) => {
+  const apiKey = ctx.req.headers.authorization?.replace('Bearer ', '');
+
+  if (!apiKey || apiKey !== process.env.API_SECRET_KEY) {
+    throw createUnauthorizedError('Invalid system API key');
+  }
+
+  return next({
+    ctx: {
+      ...ctx,
+      isSystemCall: true,
+    },
+  });
+});
+
 // Generic middleware для проверки роли
 
 export const roleMiddleware = (allowedRoles: string[]) => {

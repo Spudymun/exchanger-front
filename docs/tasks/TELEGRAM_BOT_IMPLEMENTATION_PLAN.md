@@ -3,7 +3,17 @@
 > **Дата создания:** 23 сентября 2025  
 > **Архитектор:** AI Agent (фокус на рефакторинг и интеграцию)  
 > **Источник:** Задача 9.1 из ORDER_SYSTEM_IMPLEMENTATION_TASK_LIST.md  
-> **Принцип:** Минимальные изменения, максимальное переиспользование существующих паттернов
+> **Принцип:** Минимальные изменения, максимальное переиспользование существующих паттернов  
+> **АРХИТЕКТУРНОЕ ОБНОВЛЕНИЕ:** Переход с Node.js на Next.js приложение для соответствия монорепо паттернам
+
+🔄 **КЛЮЧЕВЫЕ ИЗМЕНЕНИЯ АРХИТЕКТУРЫ:**
+
+- ✅ **Next.js приложение** вместо standalone Node.js приложения
+- ✅ **API Routes** (`pages/api/`) для webhook endpoints вместо Express.js сервера
+- ✅ **Стандартные Next.js скрипты** (`next dev`, `next build`) в package.json
+- ✅ **@repo/typescript-config/nextjs.json** для TypeScript конфигурации
+- ✅ **Webhook management скрипты** для development workflow
+- ✅ **Соответствие turbo.json** паттернам (outputs: `.next/**`)
 
 ⚠️ **КРИТИЧЕСКИ ВАЖНЫЙ ПОРЯДОК ВЫПОЛНЕНИЯ:**
 
@@ -138,12 +148,30 @@ packages/constants/src/
 ├── rate-limits.ts         # ✅ RATE_LIMITS (line 6)
 └── time-constants.ts      # ✅ TIME_CONSTANTS (line 6)
 
-НОВОЕ ПРИЛОЖЕНИЕ:
-apps/telegram-bot/src/
-├── trpc-client.ts         # 🆕 tRPC клиент с AppRouter типом
-├── telegram-bot.ts        # 🆕 основная логика бота
-├── webhook-handler.ts     # 🆕 express webhook сервер
-└── index.ts              # 🆕 entry point
+НОВОЕ ПРИЛОЖЕНИЕ (Next.js BACKEND-ONLY архитектура):
+
+⚠️ **ВАЖНО: Это чистое backend приложение без UI страниц!**
+- ❌ Никаких React компонентов или веб-страниц
+- ❌ Никакого пользовательского интерфейса
+- ✅ Только API Routes для обработки Telegram webhooks
+- ✅ Только серверная логика для bot интеграции
+
+apps/telegram-bot/
+├── pages/api/              # 🆕 ТОЛЬКО API Routes (БЕЗ UI страниц)
+│   ├── webhook.ts          # 🆕 Telegram webhook endpoint
+│   ├── health.ts           # 🆕 Health check endpoint
+│   └── trpc/               # 🆕 tRPC endpoints для bot
+│       └── [trpc].ts       # 🆕 tRPC API handler
+├── src/
+│   ├── lib/
+│   │   ├── trpc-client.ts  # 🆕 tRPC клиент с AppRouter типом
+│   │   └── telegram-bot.ts # 🆕 основная логика бота
+│   └── server/
+│       └── telegram/       # 🆕 Telegram Bot сервисы
+│           ├── handlers/   # 🆕 Обработчики команд/callback'ов
+│           └── services/   # 🆕 Сервисы для интеграции
+├── next.config.js          # 🆕 Next.js конфигурация (API-only)
+└── package.json            # 🆕 Dependencies БЕЗ React
 ```
 
 #### 🔗 ТОЧКИ ИНТЕГРАЦИИ:
@@ -165,11 +193,18 @@ apps/telegram-bot/src/
 
 **УПРОЩЕНИЕ:** Убрана автоматическая интеграция с exchange.createOrder для базовой версии
 
-### Phase 1: Infrastructure Setup (День 1)
+### Phase 1: Infrastructure Setup (День 1) - BACKEND-ONLY приложение
 
-#### 🔧 1.1 Создать базовую структуру приложения
+⚠️ **КРИТИЧЕСКИ ВАЖНО:** Создаём исключительно backend сервис без UI!
 
-**ЦЕЛЬ:** Настроить apps/telegram-bot как полноценное приложение в монорепо
+- ❌ Никаких React компонентов или страниц
+- ❌ Никакого фронтенда или пользовательского интерфейса
+- ✅ Только API Routes для Telegram webhook обработки
+- ✅ Только серверная логика для интеграции с основным приложением
+
+#### 🔧 1.1 Создать базовую структуру backend приложения
+
+**ЦЕЛЬ:** Настроить apps/telegram-bot как backend-only сервис в монорепо
 
 **ФАЙЛЫ К СОЗДАНИЮ:**
 
@@ -181,25 +216,34 @@ apps/telegram-bot/src/
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsx src/index.ts",
-    "start": "node dist/index.js"
+    "dev": "next dev --turbopack --port 3003",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint --max-warnings 0",
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "@repo/constants": "*",           // ✅ ПЕРЕИСПОЛЬЗОВАНИЕ
     "@repo/exchange-core": "*",       // ✅ ПЕРЕИСПОЛЬЗОВАНИЕ
     "@repo/utils": "*",               // ✅ ПЕРЕИСПОЛЬЗОВАНИЕ
     "@trpc/client": "^11.4.3",       // ✅ КАК В web/package.json
+    "next": "^15.3.0",               // ✅ Next.js framework (API routes only)
     "node-telegram-bot-api": "^0.66.0",
     "superjson": "^2.2.1",           // ✅ КАК В web/package.json
-    "tsx": "^4.7.1",
     "zod": "^3.25.67"                // ✅ КАК В web/package.json
   },
   "devDependencies": {
-    "@repo/typescript-config": "^0.0.0"  // ✅ ПЕРЕИСПОЛЬЗОВАНИЕ
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "^0.0.0",  // ✅ ПЕРЕИСПОЛЬЗОВАНИЕ
+    "@types/node": "^22.15.3",
+    "eslint": "^9.29.0",
+    "eslint-config-next": "^15.3.0",
+    "typescript": "5.8.2"
   }
 }
 ```
+
+**РЕФАКТОРИНГ ПОДХОД:** Удалены React зависимости - это backend-only приложение без UI
 
 **РЕФАКТОРИНГ ПОДХОД:** Копируем структуру зависимостей из apps/web/package.json
 
@@ -210,15 +254,18 @@ apps/telegram-bot/src/
 ```typescript
 // apps/telegram-bot/tsconfig.json
 {
-  "extends": "@repo/typescript-config/node.json",  // ✅ ПЕРЕИСПОЛЬЗОВАНИЕ
+  "extends": "@repo/typescript-config/nextjs.json",  // ✅ ПЕРЕИСПОЛЬЗОВАНИЕ Next.js конфигурации
   "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": false
+    "plugins": [{ "name": "next" }],
+    "baseUrl": ".",
+    "paths": {
+      "@repo/constants": ["../../packages/constants/dist"],
+      "@repo/exchange-core": ["../../packages/exchange-core/dist"],
+      "@repo/utils": ["../../packages/utils/dist"]
+    }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["**/*.ts", "**/*.tsx", "next-env.d.ts", "next.config.js", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", ".next"]
 }
 ```
 
@@ -253,7 +300,46 @@ LOG_LEVEL=info
 
 **ИНТЕГРАЦИЯ:** Переменные должны быть добавлены в turbo.json → tasks.dev.env
 
-#### 🔧 1.4 Создать пакет API типов
+#### 🔧 1.4 Создать Next.js конфигурацию
+
+**ЦЕЛЬ:** Настроить Next.js для работы только с API routes (без фронтенда)
+
+```javascript
+// apps/telegram-bot/next.config.js
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  // ⚠️ ВАЖНО: Это backend-only приложение
+  // Отключаем всё что связано с UI/фронтендом
+  distDir: '.next',
+  trailingSlash: false,
+  poweredByHeader: false,
+
+  // Оптимизация для API-only
+  experimental: {
+    serverComponentsExternalPackages: ['node-telegram-bot-api'],
+  },
+
+  // КРИТИЧНО: Отключаем генерацию статических страниц
+  // Так как у нас нет UI страниц, только API routes
+  output: 'standalone',
+
+  // Переменные окружения для runtime
+  env: {
+    TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
+    WEB_APP_URL: process.env.WEB_APP_URL,
+    API_SECRET_KEY: process.env.API_SECRET_KEY,
+  },
+
+  // Отключаем SWC minification для API routes (опционально)
+  swcMinify: true,
+};
+
+module.exports = nextConfig;
+```
+
+**РЕФАКТОРИНГ ПОДХОД:** Next.js конфигурация оптимизированная для backend-only приложения
+
+#### 🔧 1.5 Создать пакет API типов
 
 **ЦЕЛЬ:** Решение проблемы импорта AppRouter типов между приложениями
 
@@ -724,45 +810,76 @@ export class ExchangeOperatorBot {
 
 #### 🔗 4.1 Создать webhook для уведомлений о новых заявках
 
-**ЦЕЛЬ:** Интегрировать с exchange.createOrder для автоматических уведомлений
+**ЦЕЛЬ:** Создать Next.js API routes для Telegram webhook integration
 
 ```typescript
-// apps/telegram-bot/src/handlers/webhook-handler.ts
-import express from 'express';
+// apps/telegram-bot/pages/api/webhook.ts
+import type { NextApiRequest, NextApiResponse } from 'next';
 import { createEnvironmentLogger } from '@repo/utils/logger';
-import { ExchangeOperatorBot } from '../bot/telegram-bot';
+import { TelegramBotService } from '../../src/server/telegram/telegram-bot-service';
 
-const logger = createEnvironmentLogger('telegram-bot', 'webhook-handler');
+const logger = createEnvironmentLogger('telegram-bot', 'webhook-api');
 
-export class WebhookHandler {
-  private app: express.Application;
-  private bot: ExchangeOperatorBot;
-
-  constructor(bot: ExchangeOperatorBot) {
-    this.app = express();
-    this.bot = bot;
-    this.setupMiddleware();
-    this.setupRoutes();
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  private setupMiddleware() {
-    this.app.use(express.json());
+  // Webhook security validation
+  const authHeader = req.headers.authorization;
+  const expectedAuth = `Bearer ${process.env.API_SECRET_KEY}`;
 
-    // Webhook security validation
-    this.app.use('/api/telegram', (req, res, next) => {
-      const authHeader = req.headers.authorization;
-      const expectedAuth = `Bearer ${process.env.API_SECRET_KEY}`;
-
-      if (!authHeader || authHeader !== expectedAuth) {
-        logger.warn('Unauthorized webhook access attempt', {
-          ip: req.ip,
-          userAgent: req.headers['user-agent'],
-        });
-        return res.status(401).json({ error: 'Unauthorized' });
-      }
-
-      next();
+  if (!authHeader || authHeader !== expectedAuth) {
+    logger.warn('Unauthorized webhook access attempt', {
+      ip: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
+      userAgent: req.headers['user-agent'],
     });
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    const update = req.body;
+    logger.info('Received Telegram webhook', {
+      updateId: update.update_id,
+      type: update.message ? 'message' : 'callback_query',
+    });
+
+    const botService = new TelegramBotService();
+    await botService.processUpdate(update);
+
+    res.status(200).json({ success: true });
+  } catch (error) {
+    logger.error('Webhook processing failed', { error });
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+```
+
+**РЕФАКТОРИНГ ПОДХОД:** Next.js API route вместо Express.js сервера
+
+#### 🔗 2.3 Создать tRPC API handler для интеграции
+
+**ЦЕЛЬ:** Использовать существующий tRPC паттерн для внутренней коммуникации
+
+```typescript
+// apps/telegram-bot/pages/api/trpc/[trpc].ts
+import { createNextApiHandler } from '@trpc/server/adapters/next';
+import { telegramBotRouter } from '../../../src/server/trpc/telegram-bot-router';
+import { createTelegramContext } from '../../../src/server/trpc/context';
+
+// tRPC API handler для внутренней коммуникации с Telegram Bot
+export default createNextApiHandler({
+  router: telegramBotRouter,
+  createContext: createTelegramContext,
+  onError: ({ path, error }) => {
+    console.error(`❌ Telegram Bot tRPC failed on ${path ?? '<no-path>'}:`, error);
+  },
+});
+```
+
+**РЕФАКТОРИНГ ПОДХОД:** Переиспользование существующих tRPC паттернов
+
+#### 🔗 2.4 Создать service для обработки Telegram updates
 
     // Request logging
     this.app.use((req, res, next) => {
@@ -773,13 +890,14 @@ export class WebhookHandler {
       });
       next();
     });
-  }
 
-  private setupRoutes() {
-    // Telegram Bot API webhook
-    this.app.post('/api/telegram/bot-webhook', async (req, res) => {
-      try {
-        const update = req.body;
+}
+
+private setupRoutes() {
+// Telegram Bot API webhook
+this.app.post('/api/telegram/bot-webhook', async (req, res) => {
+try {
+const update = req.body;
 
         if (!update) {
           return res.status(400).json({ error: 'No update data' });
@@ -823,15 +941,16 @@ export class WebhookHandler {
         timestamp: new Date().toISOString()
       });
     });
-  }
 
-  private async notifyOperatorsAboutNewOrder(orderId: string, orderData: any) {
-    const message =
-      `🆕 <b>Новая заявка #${orderId}</b>\n\n` +
-      `💰 ${orderData.fromAmount} ${orderData.fromCurrency} → ${orderData.toCurrency}\n` +
-      `📧 ${orderData.clientEmail}\n` +
-      `⏰ ${new Date().toLocaleString('ru-RU')}\n\n` +
-      `Используйте /take ${orderId} для принятия`;
+}
+
+private async notifyOperatorsAboutNewOrder(orderId: string, orderData: any) {
+const message =
+`🆕 <b>Новая заявка #${orderId}</b>\n\n` +
+`💰 ${orderData.fromAmount} ${orderData.fromCurrency} → ${orderData.toCurrency}\n` +
+`📧 ${orderData.clientEmail}\n` +
+`⏰ ${new Date().toLocaleString('ru-RU')}\n\n` +
+`Используйте /take ${orderId} для принятия`;
 
     // Отправка всем авторизованным операторам
     const authorizedOperators = process.env.AUTHORIZED_TELEGRAM_OPERATORS?.split(',') || [];
@@ -845,34 +964,95 @@ export class WebhookHandler {
         logger.warn('Failed to notify operator', { operatorId, error });
       }
     }
+
+}
+
+public listen(port: number = 3003): void {
+this.app.listen(port, '0.0.0.0', () => {
+
+````
+
+**РЕФАКТОРИНГ ПОДХОД:** Service layer для обработки Telegram updates
+
+```typescript
+// apps/telegram-bot/src/server/telegram/telegram-bot-service.ts
+import { createEnvironmentLogger } from '@repo/utils/logger';
+import TelegramBot from 'node-telegram-bot-api';
+
+const logger = createEnvironmentLogger('telegram-bot', 'bot-service');
+
+export class TelegramBotService {
+  private bot: TelegramBot;
+
+  constructor() {
+    const token = process.env.TELEGRAM_BOT_TOKEN;
+    if (!token) {
+      throw new Error('TELEGRAM_BOT_TOKEN is required');
+    }
+
+    this.bot = new TelegramBot(token);
   }
 
-  public listen(port: number = 3003): void {
-    this.app.listen(port, '0.0.0.0', () => {
-      logger.info('Webhook server started', { port });
+  async processUpdate(update: any) {
+    try {
+      if (update.message) {
+        await this.handleMessage(update.message);
+      } else if (update.callback_query) {
+        await this.handleCallbackQuery(update.callback_query);
+      }
+    } catch (error) {
+      logger.error('Failed to process update', { error, updateId: update.update_id });
+      throw error;
+    }
+  }
+
+  private async handleMessage(message: any) {
+    logger.info('Processing message', {
+      chatId: message.chat.id,
+      text: message.text
     });
+
+    // TODO: Implement message handling logic
   }
 
-  public getApp(): express.Application {
-    return this.app;
+  private async handleCallbackQuery(callbackQuery: any) {
+    logger.info('Processing callback query', {
+      chatId: callbackQuery.message.chat.id,
+      data: callbackQuery.data
+    });
+
+    // TODO: Implement callback handling logic
   }
 }
-        status: 'ok',
-        service: 'telegram-bot',
-        timestamp: new Date().toISOString(),
-      });
-    });
+````
+
+#### 🔗 2.5 Создать health check API route
+
+**ЦЕЛЬ:** Добавить мониторинг состояния Telegram Bot приложения
+
+```typescript
+// apps/telegram-bot/pages/api/health.ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  start(port: number = 3003) {
-    this.app.listen(port, () => {
-      logger.info(`Telegram bot webhook server running on port ${port}`);
-    });
-  }
+  res.status(200).json({
+    status: 'ok',
+    service: 'telegram-bot',
+    timestamp: new Date().toISOString(),
+    version: process.env.npm_package_version || '0.1.0',
+  });
 }
 ```
 
-#### 🔗 4.2 СОЗДАТЬ простую систему авторизации операторов
+**РЕФАКТОРИНГ ПОДХОД:** Стандартный Next.js API route для health check
+
+### Phase 3: Authorization System (День 3)
+
+#### 🔗 3.1 СОЗДАТЬ простую систему авторизации операторов
 
 **ЦЕЛЬ:** Создать базовую проверку авторизации операторов через Telegram ID
 
@@ -1033,33 +1213,24 @@ export * from './telegram-bot';
 }
 ```
 
-### Phase 6: Entry Point & Startup (День 6)
+### Phase 6: Webhook Setup & Deployment (День 6)
 
-#### 🚀 6.1 Создать главный entry point
+#### 🚀 6.1 Создать скрипт настройки webhook
 
-**ЦЕЛЬ:** Собрать все компоненты в единое приложение
+**ЦЕЛЬ:** Автоматизировать настройку Telegram webhook для интеграции с приложением
 
 ```typescript
-// apps/telegram-bot/src/index.ts
-import { ExchangeOperatorBot } from './bot/telegram-bot';
-import { WebhookHandler } from './handlers/webhook-handler';
+// apps/telegram-bot/scripts/setup-webhook.ts
 import { createEnvironmentLogger } from '@repo/utils/logger';
-import { gracefulHandler } from '@repo/utils/graceful-handler';
 
-const logger = createEnvironmentLogger('telegram-bot', 'main');
+const logger = createEnvironmentLogger('telegram-bot', 'webhook-setup');
 
-async function startTelegramBot() {
+async function setupTelegramWebhook() {
   try {
-    logger.info('Starting Telegram Bot for ExchangeGO...');
+    logger.info('Setting up Telegram webhook...');
 
     // Валидация обязательных environment variables
-    const requiredEnvVars = [
-      'TELEGRAM_BOT_TOKEN',
-      'TELEGRAM_WEBHOOK_URL',
-      'API_SECRET_KEY',
-      'WEB_APP_URL',
-      'AUTHORIZED_TELEGRAM_OPERATORS'
-    ];
+    const requiredEnvVars = ['TELEGRAM_BOT_TOKEN', 'TELEGRAM_WEBHOOK_URL', 'API_SECRET_KEY'];
 
     for (const envVar of requiredEnvVars) {
       if (!process.env[envVar]) {
@@ -1067,54 +1238,114 @@ async function startTelegramBot() {
       }
     }
 
-    // Инициализация бота
-    const bot = new ExchangeOperatorBot();
+    const botToken = process.env.TELEGRAM_BOT_TOKEN!;
+    const webhookUrl = `${process.env.TELEGRAM_WEBHOOK_URL}/api/webhook`;
 
-    // Настройка webhook
-    const webhookUrl = `${process.env.TELEGRAM_WEBHOOK_URL}/api/telegram/bot-webhook`;
-    await bot.setWebhook(webhookUrl, {
-      secret_token: process.env.TELEGRAM_WEBHOOK_SECRET
+    // Настройка webhook через Telegram Bot API
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        url: webhookUrl,
+        secret_token: process.env.API_SECRET_KEY,
+      }),
     });
 
-    // Запуск webhook сервера
-    const webhookHandler = new WebhookHandler(bot);
-    const port = parseInt(process.env.PORT || '3003');
-    webhookHandler.listen(port);
+    const result = await response.json();
 
-    logger.info('Telegram Bot started successfully', {
-      port,
-      webhookUrl,
-      operatorsCount: process.env.AUTHORIZED_TELEGRAM_OPERATORS?.split(',').length || 0
-    });
-
-    // Graceful shutdown handling
-    gracefulHandler({
-      logger,
-      onShutdown: async () => {
-        logger.info('Shutting down Telegram Bot...');
-        await bot.deleteWebHook();
-        logger.info('Telegram Bot shut down complete');
-      }
-    });
-
+    if (result.ok) {
+      logger.info('Webhook setup successful', {
+        webhookUrl,
+        description: result.description,
+      });
+    } else {
+      throw new Error(`Webhook setup failed: ${result.description}`);
+    }
   } catch (error) {
-    logger.error('Failed to start Telegram Bot', { error });
+    logger.error('Failed to setup webhook', { error });
     process.exit(1);
   }
 }
 
+// Запуск настройки webhook
+setupTelegramWebhook();
+```
+
+**РЕФАКТОРИНГ ПОДХОД:** Утилитарный скрипт вместо main entry point
+
+**ЦЕЛЬ:** Добавить команды для управления webhook и development workflow
+
+```json
+// Добавить в apps/telegram-bot/package.json в секцию scripts:
+{
+  "scripts": {
+    "dev": "next dev --turbopack --port 3003",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint --max-warnings 0",
+    "check-types": "tsc --noEmit",
+    "webhook:setup": "tsx scripts/setup-webhook.ts",
+    "webhook:remove": "tsx scripts/remove-webhook.ts"
+  }
+}
+```
+
+**РЕФАКТОРИНГ ПОДХОД:** Стандартные Next.js команды + утилиты webhook
+
+#### 🚀 6.3 Создать скрипт удаления webhook
+
+**ЦЕЛЬ:** Утилита для очистки webhook при разработке
+
+```typescript
+// apps/telegram-bot/scripts/remove-webhook.ts
+import { createEnvironmentLogger } from '@repo/utils/logger';
+
+const logger = createEnvironmentLogger('telegram-bot', 'webhook-remove');
+
+async function removeTelegramWebhook() {
+  try {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) {
+      throw new Error('TELEGRAM_BOT_TOKEN is required');
+    }
+
+    const response = await fetch(`https://api.telegram.org/bot${botToken}/deleteWebhook`);
+    const result = await response.json();
+
+    if (result.ok) {
+      logger.info('Webhook removed successfully');
+    } else {
+      throw new Error(`Failed to remove webhook: ${result.description}`);
+    }
+  } catch (error) {
+    logger.error('Failed to remove webhook', { error });
+    process.exit(1);
+  }
+}
+
+removeTelegramWebhook();
+```
+
+**РЕФАКТОРИНГ ПОДХОД:** Утилитарные скрипты для управления webhook
+
+### Phase 7: Development Workflow (День 7)
+
+}
+
 // Запуск приложения
 if (require.main === module) {
-  startTelegramBot();
+startTelegramBot();
 }
 
 export { startTelegramBot };
-    const requiredEnvVars = [
-      'TELEGRAM_BOT_TOKEN',
-      'TELEGRAM_WEBHOOK_URL',
-      'WEB_APP_URL',
-      'API_SECRET_KEY',
-    ];
+const requiredEnvVars = [
+'TELEGRAM_BOT_TOKEN',
+'TELEGRAM_WEBHOOK_URL',
+'WEB_APP_URL',
+'API_SECRET_KEY',
+];
 
     for (const envVar of requiredEnvVars) {
       if (!process.env[envVar]) {
@@ -1149,14 +1380,16 @@ export { startTelegramBot };
       logger.info('Shutting down Telegram Bot...');
       process.exit(0);
     });
-  } catch (error) {
-    logger.error('Failed to start Telegram Bot', error);
-    process.exit(1);
-  }
+
+} catch (error) {
+logger.error('Failed to start Telegram Bot', error);
+process.exit(1);
+}
 }
 
 // Запуск приложения
 startTelegramBot();
+
 ```
 
 ---
@@ -1235,20 +1468,28 @@ startTelegramBot();
 ### 📐 Схема интеграции в проект:
 
 ```
+
 СУЩЕСТВУЮЩАЯ АРХИТЕКТУРА:
 ├── apps/web/src/server/trpc/routers/
-│   ├── operator.ts ✅ (используется как есть)
-│   └── exchange.ts ✅ (минимальное дополнение)
+│ ├── operator.ts ✅ (используется как есть)
+│ └── exchange.ts ✅ (минимальное дополнение)
 ├── packages/constants/ ✅ (дополнен telegram config)
 ├── packages/utils/ ✅ (дополнен telegram utilities)
 
-НОВОЕ ПРИЛОЖЕНИЕ:
+НОВОЕ Next.js BACKEND-ONLY ПРИЛОЖЕНИЕ (БЕЗ UI):
 └── apps/telegram-bot/
-    ├── src/
-    │   ├── trpc-client/ 🆕 (подключение к существующему API)
-    │   ├── bot/ 🆕 (Telegram Bot логика)
-    │   ├── handlers/ 🆕 (webhook обработчики)
-    │   └── index.ts 🆕 (entry point)
+├── pages/api/ 🆕 (ТОЛЬКО API Routes - никаких UI страниц!)
+│ ├── webhook.ts 🆕 (Telegram webhook endpoint)
+│ ├── health.ts 🆕 (health check)
+│ └── trpc/[trpc].ts 🆕 (tRPC handler)
+├── src/
+│ ├── lib/ 🆕 (утилиты для серверной логики)
+│ │ └── trpc-client.ts 🆕 (подключение к web API)
+│ └── server/ 🆕 (серверная логика)
+│ └── telegram/ 🆕 (Telegram Bot сервисы)
+├── scripts/ 🆕 (утилиты webhook)
+└── next.config.js 🆕 (API-only конфигурация)
+
 ```
 
 ### 🔗 Data Flow:
@@ -1302,11 +1543,11 @@ startTelegramBot();
    - ✅ Детализированные сообщения для пользователей
    - ✅ Конфигурация Telegram API лимитов
 
-6. **Комплексный Entry Point:**
-   - ✅ Валидация всех environment variables
-   - ✅ Graceful shutdown с использованием `gracefulHandler`
-   - ✅ Detailed startup logging
-   - ✅ Error handling и process exit codes
+6. **Next.js API Routes & Webhook Management:**
+   - ✅ API Routes для Telegram webhook processing
+   - ✅ Health check endpoint для мониторинга
+   - ✅ tRPC handler для внутренней коммуникации
+   - ✅ Webhook setup/remove скрипты для development workflow
 
 7. **Environment Variables:**
    - ✅ Полный набор конфигурационных переменных
@@ -1337,29 +1578,36 @@ startTelegramBot();
 ### 🏗️ Архитектурная диаграмма:
 
 ```
+
 СУЩЕСТВУЮЩЕЕ:
 └── packages/
-    ├── constants/ ✅ (RATE_LIMITS, TIME_CONSTANTS)
-    ├── utils/ ✅ (createEnvironmentLogger, gracefulHandler)
-    └── exchange-core/ ✅ (domain логика)
+├── constants/ ✅ (RATE_LIMITS, TIME_CONSTANTS)
+├── utils/ ✅ (createEnvironmentLogger, gracefulHandler)
+└── exchange-core/ ✅ (domain логика)
 
 └── apps/web/src/server/trpc/
-    ├── routers/
-    │   ├── operator.ts ✅ (takeOrder, updateOrderStatus)
-    │   └── exchange.ts ✅ (createOrder с rateLimitMiddleware)
-    └── middleware/ ✅ (rateLimitMiddleware)
+├── routers/
+│ ├── operator.ts ✅ (takeOrder, updateOrderStatus)
+│ └── exchange.ts ✅ (createOrder с rateLimitMiddleware)
+└── middleware/ ✅ (rateLimitMiddleware)
 
-НОВОЕ ПРИЛОЖЕНИЕ:
+НОВОЕ Next.js BACKEND-ONLY ПРИЛОЖЕНИЕ (БЕЗ UI):
 └── apps/telegram-bot/
-    ├── src/
-    │   ├── trpc-client/ 🆕 (подключение к существующему API)
-    │   ├── bot/ 🆕 (Telegram Bot логика)
-    │   ├── auth/ 🆕 (авторизация операторов)
-    │   ├── handlers/ 🆕 (webhook обработчики)
-    │   └── index.ts 🆕 (entry point)
+├── pages/api/ 🆕 (ТОЛЬКО API Routes - никаких React/UI страниц!)
+│ ├── webhook.ts 🆕 (Telegram webhook)
+│ ├── health.ts 🆕 (health check)  
+ │ └── trpc/[trpc].ts 🆕 (tRPC handler)
+├── src/
+│ ├── lib/ 🆕 (серверные утилиты)
+│ │ └── trpc-client.ts 🆕 (подключение к web API)
+│ └── server/ 🆕 (серверная логика)
+│ └── telegram/ 🆕 (Bot сервисы + авторизация)
+├── scripts/ 🆕 (webhook management утилиты)
+└── next.config.js 🆕 (API-only конфигурация)
 
 НОВЫЙ ПАКЕТ:
 └── packages/api-types/ 🆕 (решение AppRouter импорта)
+
 ```
 
 ### 🔗 Data Flow:
@@ -1369,13 +1617,15 @@ startTelegramBot();
 3. **Управление статусом:** telegram bot → tRPC client → web/operator.updateOrderStatus
 4. **Новые заявки:** web/exchange.createOrder → webhook → telegram notifications
 
-### ⚡ Преимущества подхода:
+### ⚡ Преимущества BACKEND-ONLY подхода:
 
+- ✅ **Чистый backend сервис** - никаких React зависимостей и UI кода
 - ✅ **Минимальные изменения** в существующем коде
 - ✅ **Максимальное переиспользование** tRPC procedures, utils, constants
+- ✅ **Оптимизированная сборка** - только API routes, нет генерации статики
 - ✅ **Сохранение архитектуры** монорепо и паттернов проекта
 - ✅ **Backwards compatibility** - существующие системы работают без изменений
-- ✅ **Easy rollback** - новое приложение можно отключить без влияния на core
+- ✅ **Легкий deployment** - как обычный API сервер без фронтенда
 
 1. **Фактическая проверка всех импортов:**
    - ✅ Добавлены точные номера строк для всех существующих компонентов
@@ -1453,3 +1703,4 @@ startTelegramBot();
 ---
 
 _Создано AI Agent-кодером с фокусом на интеграцию существующих паттернов архитектуры._
+```

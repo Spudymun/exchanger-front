@@ -27,6 +27,7 @@
         "RESEND_API_KEY",
         "TELEGRAM_BOT_TOKEN",
         "TELEGRAM_WEBHOOK_URL",
+        "WEB_APP_URL",
         "API_SECRET_KEY",
         "OPERATOR_TELEGRAM_CHAT_IDS"
       ]
@@ -100,6 +101,7 @@
         "RESEND_API_KEY",
         "TELEGRAM_BOT_TOKEN",
         "TELEGRAM_WEBHOOK_URL",
+        "WEB_APP_URL",
         "API_SECRET_KEY",
         "OPERATOR_TELEGRAM_CHAT_IDS"
       ]

@@ -238,8 +238,8 @@
 
 - [ ] **9.1** Создать `/apps/telegram-bot/` приложение в монорепо
   - _Новое приложение в структуре apps/ аналогично web/admin-panel_
-  - _Node.js приложение с Telegram Bot API_
-  - _Package.json и TypeScript конфигурация_
+  - _Next.js приложение с API Routes для Telegram Bot API_
+  - _Package.json и TypeScript конфигурация в стиле монорепо_
 
 - [ ] **9.2** Настроить tRPC client для связи с основным API
   - _Import type { AppRouter } из @repo/web_
