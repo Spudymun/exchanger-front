@@ -24,7 +24,11 @@
         "GMAIL_SMTP_USER",
         "GMAIL_SMTP_PASS",
         "SENDGRID_API_KEY",
-        "RESEND_API_KEY"
+        "RESEND_API_KEY",
+        "TELEGRAM_BOT_TOKEN",
+        "TELEGRAM_WEBHOOK_URL",
+        "API_SECRET_KEY",
+        "OPERATOR_TELEGRAM_CHAT_IDS"
       ]
     },
     "lint": {
@@ -93,7 +97,11 @@
         "GMAIL_SMTP_USER",
         "GMAIL_SMTP_PASS",
         "SENDGRID_API_KEY",
-        "RESEND_API_KEY"
+        "RESEND_API_KEY",
+        "TELEGRAM_BOT_TOKEN",
+        "TELEGRAM_WEBHOOK_URL",
+        "API_SECRET_KEY",
+        "OPERATOR_TELEGRAM_CHAT_IDS"
       ]
     },
     "scan-styles": {

@@ -1,3 +1,5 @@
+import { WALLET_ALLOCATION_UTILS, WALLET_ALLOCATION_CONSTANTS } from '@repo/constants';
+
 import type { QueueRepositoryInterface, WalletRepositoryInterface } from '../../repositories';
 import type { QueueEntry } from '../../repositories/queue-repository-interface';
 import type { WalletInfo } from '../../repositories/wallet-repository-interface.js';
@@ -26,40 +28,87 @@ export class QueueAllocationStrategy implements WalletAllocationStrategy {
 
   async allocateWallet(currency: CryptoCurrency): Promise<AllocationResult> {
     try {
-      // Пытаемся найти свободный кошелек (FIFO)
-      const availableWallet = await this.walletRepository.findOldestAvailable(currency);
+      /**
+       * Пытаемся найти свободный кошелек (FIFO)
+       */
+      const availableResult = await this.tryAllocateAvailableWallet(currency);
+      if (availableResult) return availableResult;
 
-      if (availableWallet) {
-        // Отмечаем кошелек как занятый
-        const walletInfo = await this.walletRepository.markAsOccupied(
-          availableWallet.address,
-          `allocation-${Date.now()}`
-        );
+      /**
+       * 🆕 НОВАЯ ЛОГИКА: Ищем самый старый занятый кошелек
+       */
+      const occupiedResult = await this.tryAllocateOldestOccupiedWallet(currency);
+      if (occupiedResult) return occupiedResult;
 
-        return {
-          success: true,
-          address: availableWallet.address,
-          walletInfo: walletInfo || availableWallet,
-        };
-      }
-
-      // Нет свободных кошельков - добавляем в очередь
-      const queueEntry = await this.queueRepository.addToQueue({
-        orderId: `queue-${Date.now()}`,
-        currency,
-        priority: 1, // Стандартный приоритет
-      });
-
-      return {
-        success: false, // Кошелек не выделен немедленно
-        queuePosition: await this.getQueuePosition(queueEntry.id, currency),
-      };
+      /**
+       * Нет ни свободных, ни занятых кошельков - добавляем в очередь
+       */
+      return await this.addToQueue(currency);
     } catch (error) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown allocation error',
       };
     }
+  }
+
+  /**
+   * Попытка выделить доступный кошелек
+   */
+  private async tryAllocateAvailableWallet(currency: CryptoCurrency): Promise<AllocationResult | null> {
+    const availableWallet = await this.walletRepository.findOldestAvailable(currency);
+
+    if (!availableWallet) return null;
+
+    /**
+     * Отмечаем кошелек как занятый
+     */
+    const walletInfo = await this.walletRepository.markAsOccupied(
+      availableWallet.address,
+      WALLET_ALLOCATION_UTILS.generateAllocationKey()
+    );
+
+    return {
+      success: true,
+      address: availableWallet.address,
+      walletInfo: walletInfo || availableWallet,
+      usedOldestOccupiedWallet: false, // Использован свободный кошелек
+    };
+  }
+
+  /**
+   * 🆕 Попытка выделить самый старый занятый кошелек
+   */
+  private async tryAllocateOldestOccupiedWallet(currency: CryptoCurrency): Promise<AllocationResult | null> {
+    const oldestOccupiedWallet = await this.walletRepository.findOldestOccupied(currency);
+
+    if (!oldestOccupiedWallet) return null;
+
+    /**
+     * 🆕 НЕМЕДЛЕННОЕ создание заявки с занятым кошельком
+     */
+    return {
+      success: true, // ✅ СРАЗУ успех вместо очереди
+      address: oldestOccupiedWallet.address,
+      walletInfo: oldestOccupiedWallet,
+      usedOldestOccupiedWallet: true, // 🆕 Флаг использования занятого
+    };
+  }
+
+  /**
+   * Добавление в очередь при отсутствии кошельков
+   */
+  private async addToQueue(currency: CryptoCurrency): Promise<AllocationResult> {
+    const queueEntry = await this.queueRepository.addToQueue({
+      orderId: WALLET_ALLOCATION_UTILS.generateQueueKey(),
+      currency,
+      priority: WALLET_ALLOCATION_CONSTANTS.PRIORITIES.STANDARD,
+    });
+
+    return {
+      success: false, // Кошелек не выделен немедленно
+      queuePosition: await this.getQueuePosition(queueEntry.id, currency),
+    };
   }
 
   async releaseWallet(address: string): Promise<AllocationResult> {

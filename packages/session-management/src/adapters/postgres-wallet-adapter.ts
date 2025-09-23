@@ -1,6 +1,7 @@
 import { PrismaClient, WalletStatus } from '@prisma/client';
 
 import type { CryptoCurrency } from '@repo/constants';
+import { CRYPTOCURRENCIES } from '@repo/constants';
 import type {
   WalletRepositoryInterface,
   WalletInfo,
@@ -183,6 +184,29 @@ export class PostgresWalletAdapter
       return order?.wallet ? this.mapPrismaToWallet(order.wallet) : null;
     } catch (error) {
       this.handleError(error, 'findByOrderId');
+    }
+  }
+
+  async findOldestOccupied(currency: CryptoCurrency): Promise<WalletInfo | null> {
+    this.validateRequired(currency, 'currency');
+    
+    // Validate currency against supported cryptocurrencies
+    if (!CRYPTOCURRENCIES.includes(currency as typeof CRYPTOCURRENCIES[number])) {
+      throw new Error(`Unsupported currency: ${currency}. Supported currencies: ${CRYPTOCURRENCIES.join(', ')}`);
+    }
+
+    try {
+      const wallet = await this.prismaClient.wallet.findFirst({
+        where: {
+          currency,
+          status: WalletStatus.ALLOCATED, // Только занятые кошельки
+        },
+        orderBy: { lastUsedAt: 'asc' }, // FIFO: самый старый занятый
+      });
+
+      return wallet ? this.mapPrismaToWallet(wallet) : null;
+    } catch (error) {
+      this.handleError(error, 'findOldestOccupied');
     }
   }
 

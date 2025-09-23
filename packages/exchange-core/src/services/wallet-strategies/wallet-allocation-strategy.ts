@@ -7,6 +7,7 @@ export interface AllocationResult {
   walletInfo?: WalletInfo;
   error?: string;
   queuePosition?: number; // Для случая когда кошелек в очереди
+  usedOldestOccupiedWallet?: boolean; // Флаг использования самого старого занятого кошелька
 }
 
 export interface PoolStats {

@@ -142,18 +142,26 @@ async function processQueuedOrder(
 /**
  * Обрабатывает успешную заявку с выделенным кошельком
  */
-async function processSuccessfulOrder(
+async function processSuccessfulOrder(params: {
   orderRequest: {
     email: string;
     cryptoAmount: number;
     currency: (typeof CRYPTOCURRENCIES)[number];
     uahAmount: number;
     recipientData?: { cardNumber?: string; bankDetails?: string };
-  },
-  depositAddress: string,
-  sessionMetadata: SessionMetadata,
-  existingSessionId?: string
-) {
+  };
+  depositAddress: string;
+  sessionMetadata: SessionMetadata;
+  existingSessionId?: string;
+  usedOldestOccupiedWallet?: boolean; // 🆕 Новый параметр
+}) {
+  const {
+    orderRequest,
+    depositAddress,
+    sessionMetadata,
+    existingSessionId,
+    usedOldestOccupiedWallet = false,
+  } = params;
   const webUserManager = await UserManagerFactory.createForWeb();
   const autoRegService = new AutoRegistrationService(webUserManager);
   
@@ -197,6 +205,7 @@ async function processSuccessfulOrder(
   return {
     order,
     depositAddress,
+    usedOldestOccupiedWallet, // 🆕 Передаем флаг в response
     sessionInfo: {
       sessionId: userSession.sessionId,
       isNewUser: userSession.isNewUser,
@@ -238,7 +247,13 @@ async function createOrderInSystem(
     throw createOrderError('wallet_allocation_failed', 'No deposit address provided');
   }
 
-  return processSuccessfulOrder(orderRequest, depositAddress, sessionMetadata, existingSessionId);
+  return processSuccessfulOrder({
+    orderRequest,
+    depositAddress,
+    sessionMetadata,
+    existingSessionId,
+    usedOldestOccupiedWallet: allocationResult.usedOldestOccupiedWallet, // 🆕 Передаем флаг
+  });
 }
 
 export const exchangeRouter = createTRPCRouter({

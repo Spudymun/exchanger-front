@@ -28,4 +28,7 @@ export interface WalletRepositoryInterface {
   // Поиск для FIFO очереди (задача 2.2)
   findOldestAvailable(currency: CryptoCurrency): Promise<WalletInfo | null>;
   findByOrderId(orderId: string): Promise<WalletInfo | null>;
+
+  // Поиск самого старого занятого кошелька для умной очереди
+  findOldestOccupied(currency: CryptoCurrency): Promise<WalletInfo | null>;
 }
