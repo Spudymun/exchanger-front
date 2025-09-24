@@ -125,11 +125,9 @@ export const authRouter = createTRPCRouter({
         sessionMetadata
       );
 
-      // Устанавливаем cookie с session ID
-      ctx.res.setHeader(
-        AUTH_CONSTANTS.SET_COOKIE_HEADER,
-        `sessionId=${finalSessionId}; HttpOnly; Path=/; Max-Age=${AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS}; SameSite=Lax`
-      );
+      // Устанавливаем cookie с session ID используя централизованную утилиту
+      const { SessionCookieUtils } = await import('../../utils/session-cookie');
+      SessionCookieUtils.setSessionCookie(ctx.res, finalSessionId);
 
       console.log(`👤 New user registered: ${sanitizedEmail}`);
 
@@ -193,11 +191,9 @@ export const authRouter = createTRPCRouter({
         lastLoginAt: new Date(),
       });
 
-      // Устанавливаем cookie
-      ctx.res.setHeader(
-        AUTH_CONSTANTS.SET_COOKIE_HEADER,
-        `sessionId=${finalSessionId}; HttpOnly; Path=/; Max-Age=${AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS}; SameSite=Lax`
-      );
+      // Устанавливаем cookie используя централизованную утилиту
+      const { SessionCookieUtils } = await import('../../utils/session-cookie');
+      SessionCookieUtils.setSessionCookie(ctx.res, finalSessionId);
 
       console.log(`🔐 User logged in: ${sanitizedEmail}`);
 
@@ -225,8 +221,9 @@ export const authRouter = createTRPCRouter({
       await handleSessionCleanup(webUserManager, sessionId);
     }
 
-    // Очищаем cookie
-    ctx.res.setHeader('Set-Cookie', `sessionId=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax`);
+    // Очищаем cookie используя централизованную утилиту
+    const { SessionCookieUtils } = await import('../../utils/session-cookie');
+    SessionCookieUtils.clearSessionCookie(ctx.res);
 
     return {
       message: 'Logout successful',

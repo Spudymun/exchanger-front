@@ -324,10 +324,12 @@ export class UserManagerFactory {
 ```typescript
 // ❌ ПРОБЛЕМА: Заглушки без логики хранения сессий
 return {
-  async get() { return null; },    // Всегда возвращает null
-  async set() { },                 // Ничего не сохраняет
-  async delete() { },              // Ничего не удаляет  
-  async extend() { }               // Ничего не продлевает
+  async get() {
+    return null;
+  }, // Всегда возвращает null
+  async set() {}, // Ничего не сохраняет
+  async delete() {}, // Ничего не удаляет
+  async extend() {}, // Ничего не продлевает
 } as SessionAdapter;
 ```
 
@@ -345,8 +347,9 @@ return new MemorySessionAdapter(context);
 **Файл**: `packages/session-management/src/adapters/memory-session-adapter.ts`
 
 **Возможности**:
+
 - ✅ **Полная эмуляция Redis API**: get, set, delete, extend
-- ✅ **Context-aware storage**: session:web:*, session:admin:*  
+- ✅ **Context-aware storage**: session:web:_, session:admin:_
 - ✅ **TTL поддержка**: автоматическая очистка просроченных сессий
 - ✅ **Debug методы**: getStorageSize(), getAllSessions(), clearAll()
 - ⚠️ **Ограничения**: данные теряются при рестарте, нет distributed доступа
@@ -361,16 +364,16 @@ graph TD
     D --> E[catch block activated]
     E --> F[new MemorySessionAdapter]
     F --> G[✅ Сессии работают в RAM]
-    
+
     B -->|No| H[ioredis → real module]
-    H --> I[new RedisSessionAdapter]  
+    H --> I[new RedisSessionAdapter]
     I --> J[✅ Сессии работают в Redis]
 ```
 
 ### Результат
 
 - **Development (Turbopack)**: Полноценные сессии в памяти
-- **Production (Webpack)**: Полноценные сессии в Redis  
+- **Production (Webpack)**: Полноценные сессии в Redis
 - **Обратная совместимость**: 100% сохранена
 - **Логин/аутентификация**: Работает в любом режиме
 
@@ -386,20 +389,20 @@ private static async createSessionAdapter(
     // Пробуем создать Redis
     const ioredisModule = await import('ioredis');
     const Redis = ioredisModule.default || ioredisModule;
-    
+
     if (typeof Redis !== 'function') {
       throw new Error('Redis constructor not available');
     }
-    
+
     const redis = new Redis(redisConfig.url, { /* config */ });
     return new RedisSessionAdapter(redis, context);
   } catch (error) {
     // ✅ НОВОЕ: Graceful fallback на MemorySessionAdapter
-    this.logger.warn('Failed to initialize Redis, using MemorySessionAdapter fallback', { 
+    this.logger.warn('Failed to initialize Redis, using MemorySessionAdapter fallback', {
       error: error instanceof Error ? error.message : String(error),
-      context: context 
+      context: context
     });
-    
+
     return new MemorySessionAdapter(context);
   }
 }

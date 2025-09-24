@@ -122,14 +122,14 @@ npm run test:coverage -- --filter=session-management
 // ✅ В Production (webpack)
 Redis доступен → RedisSessionAdapter → сессии в Redis
 
-// ✅ В Development (Turbopack)  
+// ✅ В Development (Turbopack)
 Redis → empty.js → MemorySessionAdapter → сессии в RAM
 ```
 
 ### Возможности MemorySessionAdapter
 
 - **Полная эмуляция Redis API**: get, set, delete, extend
-- **Context-aware storage**: session:web:*, session:admin:*
+- **Context-aware storage**: session:web:_, session:admin:_
 - **TTL поддержка**: автоматическая очистка просроченных сессий
 - **Debug методы**: для разработки и отладки
 - **Graceful degradation**: полная функциональность без Redis
