@@ -33,7 +33,8 @@
       },
       "internal": {
         "operation": "Error executing operation: {operation}",
-        "general": "Internal server error"
+        "general": "Internal server error",
+        "serviceUnavailable": "The service is temporarily unavailable. Please try again later or contact support."
       },
       "conflict": {
         "resource": "Conflict working with {resource}: {reason}",
@@ -70,7 +71,10 @@
         "orderNotAssigned": "Order is not assigned to this operator",
         "bankNotFound": "Bank not found: {bankId}",
         "parameterRequired": "Parameter {parameter} is required",
-        "unknownAction": "Unknown action"
+        "unknownAction": "Unknown action",
+        "walletAllocationFailed": "We are currently experiencing technical difficulties. Please try again later or contact support",
+        "processingFailed": "An error occurred while processing the order. Please try again",
+        "systemUnavailable": "Service is temporarily unavailable. Please try again later"
       }
     }
   }

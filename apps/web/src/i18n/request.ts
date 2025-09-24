@@ -73,10 +73,10 @@ const ROUTE_MODULE_MAP: Record<string, RouteModuleConfig> = {
     description: 'Home page with hero, features, layout',
   },
 
-  // Exchange page - 2 critical + 1 lazy modules
+  // Exchange page - 2 critical + 2 lazy modules (добавлен server-errors для обработки ошибок)
   '/exchange': {
     critical: ['advanced-exchange', LAZY_MODULES.LAYOUT],
-    lazy: [LAZY_MODULES.ORDER_PAGE],
+    lazy: [LAZY_MODULES.ORDER_PAGE, LAZY_MODULES.SERVER_ERRORS],
     description: 'Exchange page with forms and trading',
   },
 
@@ -150,7 +150,7 @@ function shouldLoadLazyModule(
     case LAZY_MODULES.DASHBOARD_NAV:
       return conditions.hasAdminMode;
     case LAZY_MODULES.SERVER_ERRORS:
-      return conditions.hasDebugMode;
+      return true; // Always load server-errors for proper error handling
     case LAZY_MODULES.NOTIFICATIONS:
       return conditions.shouldLoadNotifications;
     case LAZY_MODULES.COMMON_UI:

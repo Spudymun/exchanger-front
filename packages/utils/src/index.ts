@@ -3,6 +3,12 @@ export * from './calculations';
 export * from './validation-helpers';
 export * from './order-utils';
 export * from './trpc-errors';
+
+// ✅ Enhanced Error System
+export * from './error-system/domain-errors';
+export * from './error-system/error-mapper';
+export * from './error-system/exchange-errors';
+
 export * from './order-status';
 export * from './card-utils';
 export * from './logger';

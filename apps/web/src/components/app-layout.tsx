@@ -5,6 +5,7 @@ import { TRPCProvider } from '../../lib/trpc-provider';
 
 import { AppFooter } from './app-footer';
 import { AppHeader } from './app-header';
+import { NotificationDisplay } from './notification-display';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -22,6 +23,7 @@ export function AppLayout({ children, className }: AppLayoutProps) {
               {children}
             </main>
             <AppFooter />
+            <NotificationDisplay />
           </div>
         </TRPCProvider>
       </ThemeProvider>

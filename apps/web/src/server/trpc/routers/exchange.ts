@@ -31,6 +31,7 @@ import {
   sortOrders,
   createBadRequestError,
   createOrderError,
+  ExchangeErrors,
   createEnvironmentLogger,
   securityEnhancedGetCurrencyRateSchema,
   securityEnhancedCalculateAmountSchema,
@@ -332,7 +333,13 @@ async function createOrderInSystem(
       currency: orderRequest.currency,
       error: errorMessage,
     });
-    throw createOrderError('wallet_allocation_failed', errorMessage);
+    ExchangeErrors.throw(
+      ExchangeErrors.walletAllocationFailed({
+        email: orderRequest.email,
+        currency: orderRequest.currency,
+        error: errorMessage
+      })
+    );
   }
 
   // ✅ Успешная аллокация - продолжаем обычный flow
@@ -349,7 +356,12 @@ async function createOrderInSystem(
       email: orderRequest.email,
       allocationResult: JSON.stringify(allocationResult),
     });
-    throw createOrderError('wallet_allocation_failed', 'No deposit address provided');
+    ExchangeErrors.throw(
+      ExchangeErrors.walletAllocationFailed({
+        email: orderRequest.email,
+        reason: 'no_address_returned'
+      })
+    );
   }
 
   logger.info('PROCESSING_SUCCESSFUL_ORDER', {

@@ -11,7 +11,7 @@ import {
 } from '@repo/constants';
 import { calculateUahAmount, getCurrencyLimits } from '@repo/exchange-core';
 import { useFormWithNextIntl } from '@repo/hooks';
-import { useAutoMinAmount } from '@repo/hooks/src/client-hooks';
+import { useAutoMinAmount, useNotifications } from '@repo/hooks/src/client-hooks';
 import { ExchangeForm, ExchangeErrorBoundary } from '@repo/ui';
 import {
   securityEnhancedFullExchangeFormSchema,
@@ -180,37 +180,66 @@ function useAutoFillLogic(
 }
 
 // Create order submission function
-function createOrderSubmission(
-  exchangeMutation: ReturnType<typeof useExchangeMutation>,
-  router: ReturnType<typeof useRouter>
-) {
+function createOrderSubmission({
+  exchangeMutation,
+  router,
+  notifications,
+  serverErrorT,
+  notificationsT,
+}: {
+  exchangeMutation: ReturnType<typeof useExchangeMutation>;
+  router: ReturnType<typeof useRouter>;
+  notifications: ReturnType<typeof useNotifications>;
+  serverErrorT: ReturnType<typeof useTranslations>;
+  notificationsT: ReturnType<typeof useTranslations>;
+}) {
   return async (values: SecurityEnhancedFullExchangeForm) => {
-    // Calculate amount at submit time to get the most up-to-date value
-    const submitTimeAmount = calculateUahAmount(
-      Number(values.fromAmount),
-      values.fromCurrency as CryptoCurrency
-    );
+    try {
+      // Calculate amount at submit time to get the most up-to-date value
+      const submitTimeAmount = calculateUahAmount(
+        Number(values.fromAmount),
+        values.fromCurrency as CryptoCurrency
+      );
 
-    const orderRequest = {
-      email: values.email,
-      cryptoAmount: Number(values.fromAmount),
-      currency: values.fromCurrency as CryptoCurrency,
-      uahAmount: submitTimeAmount,
-      recipientData: {
-        cardNumber: values.cardNumber,
-        bankId: values.selectedBankId || getDefaultBank(), // ⚡ Centralized fallback
-      },
-    };
+      const orderRequest = {
+        email: values.email,
+        cryptoAmount: Number(values.fromAmount),
+        currency: values.fromCurrency as CryptoCurrency,
+        uahAmount: submitTimeAmount,
+        recipientData: {
+          cardNumber: values.cardNumber,
+          bankId: values.selectedBankId || getDefaultBank(), // ⚡ Centralized fallback
+        },
+      };
 
-    const orderData = await exchangeMutation.createOrder.mutateAsync(orderRequest);
-    router.push(`/order/${orderData.orderId}`);
+      const orderData = await exchangeMutation.createOrder.mutateAsync(orderRequest);
+      router.push(`/order/${orderData.orderId}`);
+    } catch (error) {
+      // Handle localized error messages
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      // Check if error message is a localization key
+      if (errorMessage.startsWith('server.errors.')) {
+        const localizedMessage = serverErrorT(errorMessage.replace('server.errors.', ''));
+        const errorTitle = notificationsT('exchange.error');
+        notifications.error(errorTitle, localizedMessage);
+      } else {
+        notifications.handleApiError(error, notificationsT('exchange.error'));
+      }
+    }
   };
 }
 
-export function ExchangeContainer({ locale: _locale, initialParams }: ExchangeContainerProps) {
+// Hook для инициализации формы
+function useExchangeForm(
+  initialParams?: ExchangeContainerProps['initialParams']
+) {
   const t = useTranslations('AdvancedExchangeForm');
+  const serverErrorT = useTranslations('server.errors');
+  const notificationsT = useTranslations('notifications');
   const router = useRouter();
   const exchangeMutation = useExchangeMutation();
+  const notifications = useNotifications();
 
   const initialFormData = useExchangeFormData(initialParams);
 
@@ -218,8 +247,21 @@ export function ExchangeContainer({ locale: _locale, initialParams }: ExchangeCo
     initialValues: initialFormData,
     validationSchema: securityEnhancedFullExchangeFormSchema,
     t,
-    onSubmit: createOrderSubmission(exchangeMutation, router),
+    onSubmit: createOrderSubmission({
+      exchangeMutation,
+      router,
+      notifications,
+      serverErrorT,
+      notificationsT,
+    }),
   });
+
+  return { form };
+}
+
+export function ExchangeContainer({ locale: _locale, initialParams }: ExchangeContainerProps) {
+  const t = useTranslations('AdvancedExchangeForm');
+  const { form } = useExchangeForm(initialParams);
 
   const calculatedAmount = useExchangeCalculations(
     form.values.fromAmount as string,
