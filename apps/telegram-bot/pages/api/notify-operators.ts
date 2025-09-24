@@ -34,34 +34,75 @@ interface InlineKeyboard {
  */
 function validateAuth(req: NextApiRequest): boolean {
   const authHeader = req.headers.authorization;
-  return authHeader === `Bearer ${process.env.API_SECRET_KEY}`;
+  const expectedAuth = `Bearer ${process.env.API_SECRET_KEY}`;
+  
+  logger.debug('TELEGRAM_NOTIFY_AUTH_CHECK', {
+    hasAuthHeader: !!authHeader,
+    hasSecretKey: !!process.env.API_SECRET_KEY,
+    authMatch: authHeader === expectedAuth,
+  });
+  
+  return authHeader === expectedAuth;
 }
 
 /**
  * Валидация payload уведомления
  */
 function validatePayload(body: unknown): PayloadValidationResult {
+  logger.debug('TELEGRAM_NOTIFY_PAYLOAD_VALIDATION', {
+    hasBody: !!body,
+    bodyType: typeof body,
+  });
+
   if (!body || typeof body !== 'object') {
+    logger.warn('TELEGRAM_NOTIFY_INVALID_PAYLOAD_TYPE', { bodyType: typeof body });
     return { isValid: false, error: 'Invalid payload' };
   }
 
   const typedBody = body as Record<string, unknown>;
   const { order, depositAddress, walletType } = typedBody;
 
+  logger.debug('TELEGRAM_NOTIFY_PAYLOAD_FIELDS', {
+    hasOrder: !!order,
+    hasDepositAddress: !!depositAddress,
+    hasWalletType: !!walletType,
+    walletTypeValue: String(walletType),
+  });
+
   if (!order || !depositAddress || !walletType) {
+    logger.warn('TELEGRAM_NOTIFY_MISSING_FIELDS', {
+      order: !!order,
+      depositAddress: !!depositAddress,
+      walletType: !!walletType,
+    });
     return { 
       isValid: false, 
       error: 'Missing required fields: order, depositAddress, walletType' 
     };
   }
 
-  if (!['fresh', 'reused'].includes(walletType as string)) {
+  const validWalletTypes = ['fresh', 'reused'];
+  const isValidWalletType = validWalletTypes.includes(walletType as string);
+
+  logger.debug('TELEGRAM_NOTIFY_WALLET_TYPE_VALIDATION', {
+    walletType: String(walletType),
+    validTypesCount: validWalletTypes.length,
+    isValid: isValidWalletType,
+  });
+
+  if (!isValidWalletType) {
+    logger.warn('TELEGRAM_NOTIFY_INVALID_WALLET_TYPE', {
+      provided: String(walletType),
+      expectedOptions: 'fresh|reused',
+    });
     return { 
       isValid: false, 
       error: 'Invalid walletType. Must be "fresh" or "reused"' 
     };
   }
 
+  const orderData = order as Record<string, unknown>;
+  logger.debug('TELEGRAM_NOTIFY_PAYLOAD_VALID', { orderId: String(orderData?.id) });
   return { isValid: true };
 }
 
@@ -124,27 +165,60 @@ async function notifyOperator(
   keyboard: InlineKeyboard,
   orderId: string
 ): Promise<boolean> {
+  logger.debug('TELEGRAM_NOTIFY_SINGLE_OPERATOR', {
+    operatorId: operatorId.trim(),
+    orderId,
+    messageLength: message.length,
+    keyboardButtons: keyboard.inline_keyboard.length,
+  });
+
   try {
     const telegramApiUrl = `${TELEGRAM_API.BASE_URL}/bot${process.env.TELEGRAM_BOT_TOKEN}${TELEGRAM_API.SEND_MESSAGE}`;
+    
+    const requestPayload = {
+      chat_id: operatorId.trim(),
+      text: message,
+      parse_mode: TELEGRAM_API.PARAMS.PARSE_MODE,
+      reply_markup: keyboard,
+    };
+
+    logger.debug('TELEGRAM_API_REQUEST', {
+      operatorId: operatorId.trim(),
+      orderId,
+      url: telegramApiUrl.replace(process.env.TELEGRAM_BOT_TOKEN || '', '[TOKEN]'),
+      payloadSize: JSON.stringify(requestPayload).length,
+    });
     
     const response = await fetch(telegramApiUrl, {
       method: TELEGRAM_API.PARAMS.METHOD,
       headers: { 'Content-Type': TELEGRAM_API.PARAMS.CONTENT_TYPE },
-      body: JSON.stringify({
-        chat_id: operatorId.trim(),
-        text: message,
-        parse_mode: TELEGRAM_API.PARAMS.PARSE_MODE,
-        reply_markup: keyboard,
-      }),
+      body: JSON.stringify(requestPayload),
+    });
+
+    logger.debug('TELEGRAM_API_RESPONSE', {
+      operatorId: operatorId.trim(),
+      orderId,
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok,
     });
 
     if (response.ok) {
       logger.info('Operator notified successfully', {
         operatorId: operatorId.trim(),
         orderId,
+        responseStatus: response.status,
       });
       return true;
     } else {
+      const responseText = await response.text();
+      logger.error('TELEGRAM_API_ERROR_RESPONSE', {
+        operatorId: operatorId.trim(),
+        orderId,
+        status: response.status,
+        statusText: response.statusText,
+        responseBody: responseText,
+      });
       throw new Error(`Telegram API error: ${response.status} ${response.statusText}`);
     }
   } catch (error) {
@@ -152,6 +226,7 @@ async function notifyOperator(
       operatorId: operatorId.trim(),
       orderId,
       error: error instanceof Error ? error.message : 'Unknown error',
+      errorName: error instanceof Error ? error.name : 'UnknownError',
     });
     return false;
   }
@@ -185,20 +260,54 @@ async function sendOperatorNotifications(
 ): Promise<{ notifiedCount: number; errorCount: number; totalOperators: number }> {
   const operatorIds = getAuthorizedOperators();
   
+  logger.info('TELEGRAM_NOTIFY_ALL_OPERATORS_START', {
+    orderId,
+    totalOperators: operatorIds.length,
+    operatorIds: operatorIds.join(','),
+  });
+  
   if (operatorIds.length === 0) {
+    logger.warn('TELEGRAM_NO_AUTHORIZED_OPERATORS', { orderId });
     return { notifiedCount: 0, errorCount: 0, totalOperators: 0 };
   }
 
   let notifiedCount = 0;
   
   for (const operatorId of operatorIds) {
+    logger.debug('TELEGRAM_NOTIFY_OPERATOR_ATTEMPT', {
+      orderId,
+      operatorId,
+      attemptNumber: notifiedCount + 1,
+      totalOperators: operatorIds.length,
+    });
+
     const success = await notifyOperator(operatorId, message, keyboard, orderId);
     if (success) {
       notifiedCount++;
+      logger.debug('TELEGRAM_NOTIFY_OPERATOR_SUCCESS', {
+        orderId,
+        operatorId,
+        successCount: notifiedCount,
+      });
+    } else {
+      logger.warn('TELEGRAM_NOTIFY_OPERATOR_FAILED', {
+        orderId,
+        operatorId,
+        failedCount: (operatorIds.length - notifiedCount - 1),
+      });
     }
   }
 
   const errorCount = operatorIds.length - notifiedCount;
+  
+  logger.info('TELEGRAM_NOTIFY_ALL_OPERATORS_COMPLETE', {
+    orderId,
+    totalOperators: operatorIds.length,
+    notifiedCount,
+    errorCount,
+    successRate: `${((notifiedCount / operatorIds.length) * 100).toFixed(1)}%`,
+  });
+
   return { notifiedCount, errorCount, totalOperators: operatorIds.length };
 }
 

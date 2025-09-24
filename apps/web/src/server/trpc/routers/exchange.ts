@@ -286,25 +286,77 @@ async function createOrderInSystem(
   sessionMetadata: SessionMetadata,
   existingSessionId?: string
 ) {
+  logger.info('CREATE_ORDER_IN_SYSTEM_START', {
+    email: orderRequest.email,
+    currency: orderRequest.currency,
+    cryptoAmount: orderRequest.cryptoAmount,
+    uahAmount: orderRequest.uahAmount,
+    hasExistingSessionId: !!existingSessionId,
+    sessionIp: sessionMetadata.ip,
+  });
+
   // ✅ ИСПОЛЬЗУЕМ готовую инфраструктуру WalletPoolManager
+  logger.debug('ALLOCATING_WALLET_FOR_ORDER', { currency: orderRequest.currency });
   const allocationResult = await allocateWalletForOrder(orderRequest.currency as CryptoCurrency);
+  
+  logger.debug('WALLET_ALLOCATION_COMPLETE', {
+    success: allocationResult.success,
+    address: allocationResult.address,
+    queuePosition: allocationResult.queuePosition,
+    usedOldestOccupiedWallet: allocationResult.usedOldestOccupiedWallet,
+    error: allocationResult.error,
+  });
 
   // ✅ ОБРАБАТЫВАЕМ результат allocation (НЕ создаем дубликаты!)
   if (!allocationResult.success) {
+    logger.warn('WALLET_ALLOCATION_FAILED', {
+      email: orderRequest.email,
+      currency: orderRequest.currency,
+      error: allocationResult.error,
+      queuePosition: allocationResult.queuePosition,
+    });
+
     // Заявка в очереди - используем ГОТОВЫЕ поля AllocationResult
     if (allocationResult.queuePosition) {
+      logger.info('PROCESSING_QUEUED_ORDER', {
+        email: orderRequest.email,
+        queuePosition: allocationResult.queuePosition,
+      });
       return processQueuedOrder(orderRequest, allocationResult.queuePosition, sessionMetadata, existingSessionId);
     }
 
     // Другие ошибки allocation
-    throw createOrderError('wallet_allocation_failed', allocationResult.error || 'Unknown error');
+    const errorMessage = allocationResult.error || 'Unknown error';
+    logger.error('CRITICAL_WALLET_ALLOCATION_ERROR', {
+      email: orderRequest.email,
+      currency: orderRequest.currency,
+      error: errorMessage,
+    });
+    throw createOrderError('wallet_allocation_failed', errorMessage);
   }
 
   // ✅ Успешная аллокация - продолжаем обычный flow
   const depositAddress = allocationResult.address;
+  logger.debug('WALLET_ALLOCATION_SUCCESS', {
+    email: orderRequest.email,  
+    currency: orderRequest.currency,
+    depositAddress,
+    usedOldestOccupiedWallet: allocationResult.usedOldestOccupiedWallet,
+  });
+
   if (!depositAddress) {
+    logger.error('WALLET_ALLOCATION_NO_ADDRESS', {
+      email: orderRequest.email,
+      allocationResult: JSON.stringify(allocationResult),
+    });
     throw createOrderError('wallet_allocation_failed', 'No deposit address provided');
   }
+
+  logger.info('PROCESSING_SUCCESSFUL_ORDER', {
+    email: orderRequest.email,
+    depositAddress,
+    usedOldestOccupiedWallet: allocationResult.usedOldestOccupiedWallet,
+  });
 
   return processSuccessfulOrder({
     orderRequest,
@@ -401,39 +453,79 @@ export const exchangeRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
+      // 🔍 LOG: Начало создания заявки
+      logger.info('ORDER_CREATION_STARTED', {
+        email: input.email,
+        currency: input.currency,
+        cryptoAmount: input.cryptoAmount,
+        sessionId: ctx.sessionId,
+        ip: ctx.ip,
+        userAgent: ctx.req.headers['user-agent'],
+      });
+
       // Имитация задержки
       await new Promise(resolve => setTimeout(resolve, ORDER_CREATION_DELAY_MS));
 
       // Валидация типа валюты
+      logger.debug('VALIDATING_CURRENCY', { currency: input.currency });
       await assertValidCurrency(input.currency, ctx);
+      logger.debug('CURRENCY_VALIDATED', { currency: input.currency });
 
       // Подготавливаем данные заявки с правильным типом
+      logger.debug('PREPARING_ORDER_REQUEST', { email: input.email });
       const orderRequest = prepareOrderRequest({
         ...input,
         currency: input.currency as CryptoCurrency,
       });
+      logger.debug('ORDER_REQUEST_PREPARED', {
+        sanitizedEmail: orderRequest.email,
+        uahAmount: orderRequest.uahAmount,
+        cryptoAmount: orderRequest.cryptoAmount,
+      });
 
       // Проверяем только бизнес-условия (лимиты, курсы)
       // Input validation уже выполнена Zod schemas в input()
+      logger.debug('CHECKING_AMOUNT_LIMITS', { cryptoAmount: input.cryptoAmount, currency: input.currency });
       const limitCheck = isAmountWithinLimits(input.cryptoAmount, input.currency as CryptoCurrency);
       if (!limitCheck.isValid && limitCheck.localizationKey) {
+        logger.warn('AMOUNT_LIMIT_EXCEEDED', {
+          cryptoAmount: input.cryptoAmount,
+          currency: input.currency,
+          localizationKey: limitCheck.localizationKey,
+          paramsString: JSON.stringify(limitCheck.params),
+        });
         throw createBadRequestError(
           await ctx.getErrorMessage(limitCheck.localizationKey, limitCheck.params)
         );
       }
+      logger.debug('AMOUNT_LIMITS_PASSED', { cryptoAmount: input.cryptoAmount });
 
       // ✅ Task 3.1: Подготовка session metadata для обязательной сессии
+      logger.debug('PREPARING_SESSION_METADATA', { sessionId: ctx.sessionId, ip: ctx.ip });
       const sessionMetadata: SessionMetadata = {
         ip: ctx.ip || AUTH_CONSTANTS.FALLBACK_IP,
         userAgent: ctx.req.headers['user-agent'] || AUTH_CONSTANTS.FALLBACK_USER_AGENT,
       };
 
       // ✅ ENHANCED Task 3.2: AC2.1A session management with existing sessionId
+      logger.info('CREATING_ORDER_IN_SYSTEM', {
+        email: orderRequest.email,
+        currency: orderRequest.currency,
+        existingSessionId: ctx.sessionId,
+      });
       const { order, depositAddress, sessionInfo } = await createOrderInSystem(
         orderRequest,
         sessionMetadata,
         ctx.sessionId
       );
+      logger.info('ORDER_CREATED_SUCCESSFULLY', {
+        orderId: order.id,
+        depositAddress,
+        status: order.status,
+        userId: order.userId,
+        sessionId: sessionInfo.sessionId,
+        isNewUser: sessionInfo.isNewUser,
+      });
 
       return {
         orderId: order.id,

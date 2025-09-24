@@ -1,4 +1,5 @@
 import { WALLET_POOL_CONFIG } from '@repo/constants';
+import { createEnvironmentLogger } from '@repo/utils';
 
 import type { QueueRepositoryInterface, WalletRepositoryInterface } from '../repositories';
 import type { CryptoCurrency } from '../types';
@@ -11,6 +12,8 @@ import type {
   AllocationResult,
   PoolStats,
 } from './wallet-strategies/wallet-allocation-strategy';
+
+const logger = createEnvironmentLogger('wallet-pool-manager');
 
 type AllocationMode = 'immediate' | 'queue' | 'hybrid';
 
@@ -41,7 +44,23 @@ export class WalletPoolManager {
    * @implements AC3.1 - основной метод для интеграции
    */
   async allocateWallet(currency: CryptoCurrency): Promise<AllocationResult> {
-    return await this.allocationStrategy.allocateWallet(currency);
+    logger.info('WALLET_ALLOCATION_REQUEST', {
+      currency,
+      strategyType: this.allocationStrategy.constructor.name,
+    });
+
+    const result = await this.allocationStrategy.allocateWallet(currency);
+    
+    logger.info('WALLET_ALLOCATION_RESULT', {
+      currency,
+      success: result.success,
+      address: result.address,
+      queuePosition: result.queuePosition,
+      usedOldestOccupiedWallet: result.usedOldestOccupiedWallet,
+      error: result.error,
+    });
+
+    return result;
   }
 
   /**
@@ -49,7 +68,20 @@ export class WalletPoolManager {
    * @implements AC3.3 - механизм освобождения
    */
   async releaseWallet(address: string): Promise<AllocationResult> {
-    return await this.allocationStrategy.releaseWallet(address);
+    logger.info('WALLET_RELEASE_REQUEST', {
+      address,
+      strategyType: this.allocationStrategy.constructor.name,
+    });
+
+    const result = await this.allocationStrategy.releaseWallet(address);
+    
+    logger.info('WALLET_RELEASE_RESULT', {
+      address,
+      success: result.success,
+      error: result.error,
+    });
+
+    return result;
   }
 
   /**
@@ -57,7 +89,19 @@ export class WalletPoolManager {
    * @implements AC3.5 - мониторинг состояния
    */
   async getPoolStats(currency: CryptoCurrency): Promise<PoolStats> {
-    return await this.allocationStrategy.getPoolStats(currency);
+    logger.debug('WALLET_POOL_STATS_REQUEST', { currency });
+    
+    const stats = await this.allocationStrategy.getPoolStats(currency);
+    
+    logger.debug('WALLET_POOL_STATS_RESULT', {
+      currency,
+      totalWallets: stats.totalWallets,
+      availableWallets: stats.availableWallets,
+      occupiedWallets: stats.occupiedWallets,
+      queueSize: stats.queueSize,
+    });
+
+    return stats;
   }
 
   /**

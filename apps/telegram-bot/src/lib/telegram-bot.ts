@@ -54,24 +54,37 @@ function getSession(userId: number): BotSession {
  * Обработчик команды /start
  */
 function handleStartCommand(update: TelegramUpdate): string {
+  logger.debug('TELEGRAM_START_COMMAND', {
+    messageId: update.message?.message_id,
+    updateId: update.update_id,
+    hasUser: !!update.message?.from,
+  });
+
   if (!update.message?.from) {
+    logger.warn('TELEGRAM_START_NO_USER', { update: JSON.stringify(update) });
     return ERROR_MESSAGES.USER_NOT_FOUND;
   }
 
-  getSession(update.message.from.id);
+  const userId = update.message.from.id;
+  logger.debug('CREATING_TELEGRAM_SESSION', { userId });
+  getSession(userId);
 
   logger.info('User started bot', {
     userId: update.message.from.id,
     username: update.message.from.username,
+    firstName: update.message.from.first_name,
   });
 
-  return (
+  const welcomeMessage = (
     `Добро пожаловать в ExchangeGO Bot! 👋\n\n` +
     `Я помогаю операторам управлять заявками.\n\n` +
     `Доступные команды:\n` +
     BOT_COMMANDS.map(cmd => `/${cmd.command} - ${cmd.description}`).join('\n') +
     `\n\nДля начала работы используйте /login`
   );
+
+  logger.debug('TELEGRAM_START_RESPONSE_PREPARED', { messageLength: welcomeMessage.length });
+  return welcomeMessage;
 }
 
 /**
@@ -91,36 +104,68 @@ function handleHelpCommand(): string {
  * Обработчик команды /login
  */
 function handleLoginCommand(update: TelegramUpdate): string {
+  logger.debug('TELEGRAM_LOGIN_COMMAND', {
+    messageId: update.message?.message_id,
+    updateId: update.update_id,
+    hasUser: !!update.message?.from,
+  });
+
   if (!update.message?.from) {
+    logger.warn('TELEGRAM_LOGIN_NO_USER', { update: JSON.stringify(update) });
     return ERROR_MESSAGES.USER_NOT_FOUND;
   }
 
-  const session = getSession(update.message.from.id);
+  const userId = update.message.from.id;
+  const username = update.message.from.username;
+  
+  logger.debug('RETRIEVING_TELEGRAM_SESSION_FOR_LOGIN', { userId, username });
+  const session = getSession(userId);
 
   // Упрощенная проверка оператора (в production будет через API)
-  const isOperatorUsername = update.message.from.username?.includes('operator') || false;
+  const isOperatorUsername = username?.includes('operator') || false;
+  
+  logger.debug('TELEGRAM_OPERATOR_VALIDATION', {
+    userId,
+    username,
+    isOperatorUsername,
+    validationRule: 'username_contains_operator',
+  });
 
   if (isOperatorUsername) {
     session.isOperator = true;
-    session.operatorId = update.message.from.username;
+    session.operatorId = username;
 
     logger.info('Operator logged in', {
       userId: update.message.from.id,
       username: update.message.from.username,
+      operatorId: session.operatorId,
+      sessionUpdated: true,
     });
 
-    return (
+    const successMessage = (
       `✅ Вы вошли как оператор!\n\n` +
       `Теперь доступны операторские команды:\n` +
       `• /takeorder - взять заявку в работу\n` +
       `• /orders - показать активные заявки`
     );
+    
+    logger.debug('TELEGRAM_LOGIN_SUCCESS_RESPONSE', { messageLength: successMessage.length });
+    return successMessage;
   } else {
-    return (
+    logger.warn('TELEGRAM_LOGIN_ACCESS_DENIED', {
+      userId,
+      username,
+      reason: 'not_operator_username',
+    });
+
+    const deniedMessage = (
       `❌ Доступ запрещен\n\n` +
       `Только операторы могут использовать этого бота.\n` +
       `Обратитесь к администратору для получения доступа.`
     );
+    
+    logger.debug('TELEGRAM_LOGIN_DENIED_RESPONSE', { messageLength: deniedMessage.length });
+    return deniedMessage;
   }
 }
 
@@ -128,13 +173,28 @@ function handleLoginCommand(update: TelegramUpdate): string {
  * Обработчик команды /takeorder
  */
 async function handleTakeOrderCommand(update: TelegramUpdate): Promise<string> {
+  logger.debug('TELEGRAM_TAKE_ORDER_COMMAND', {
+    messageId: update.message?.message_id,
+    updateId: update.update_id,
+    hasUser: !!update.message?.from,
+  });
+
   if (!update.message?.from) {
+    logger.warn('TELEGRAM_TAKE_ORDER_NO_USER', { update: JSON.stringify(update) });
     return ERROR_MESSAGES.USER_NOT_FOUND;
   }
 
-  const session = getSession(update.message.from.id);
+  const userId = update.message.from.id;
+  const session = getSession(userId);
+
+  logger.debug('TELEGRAM_TAKE_ORDER_SESSION_CHECK', {
+    userId,
+    isOperator: session.isOperator,
+    operatorId: session.operatorId,
+  });
 
   if (!session.isOperator) {
+    logger.warn('TELEGRAM_TAKE_ORDER_NOT_OPERATOR', { userId, sessionOperator: session.isOperator });
     return ERROR_MESSAGES.OPERATOR_ONLY;
   }
 
@@ -142,22 +202,44 @@ async function handleTakeOrderCommand(update: TelegramUpdate): Promise<string> {
   const messageText = update.message.text || '';
   const orderIdMatch = messageText.match(/\/takeorder\s+(\w+)/);
 
+  logger.debug('TELEGRAM_TAKE_ORDER_PARSE_ID', {
+    messageText,
+    hasMatch: !!orderIdMatch?.[1],
+    extractedOrderId: orderIdMatch?.[1],
+  });
+
   if (!orderIdMatch?.[1]) {
+    logger.warn('TELEGRAM_TAKE_ORDER_NO_ID', { messageText });
     return '❌ Укажите ID заявки: /takeorder ORDER_ID';
   }
 
   const orderId = orderIdMatch[1];
+  const telegramOperatorId = userId.toString();
+
+  logger.info('TELEGRAM_TAKE_ORDER_ATTEMPT', {
+    orderId,
+    telegramOperatorId,
+    operatorId: session.operatorId,
+  });
 
   const result = await gracefulHandler(
     async () => {
       // ✅ ИНТЕГРАЦИЯ: Использование нового telegram-specific API
+      logger.debug('CALLING_TELEGRAM_TAKE_ORDER_API', { orderId, telegramOperatorId });
       return await api.telegram.takeOrder({
         orderId,
-        telegramOperatorId: update.message?.from?.id.toString() || 'unknown',
+        telegramOperatorId,
       });
     },
     { fallback: null }
   );
+
+  logger.debug('TELEGRAM_TAKE_ORDER_API_RESULT', {
+    orderId,
+    success: !!result?.order,
+    hasOrder: !!result?.order,
+    orderStatus: result?.order?.status,
+  });
 
   if (result?.order) {
     session.currentOrderId = result.order.id;
@@ -165,17 +247,31 @@ async function handleTakeOrderCommand(update: TelegramUpdate): Promise<string> {
     logger.info('Order taken by operator', {
       operatorId: session.operatorId,
       orderId: result.order.id,
+      telegramOperatorId,
+      orderStatus: result.order.status,
+      cryptoAmount: result.order.cryptoAmount,
+      currency: result.order.currency,
     });
 
-    return (
+    const successMessage = (
       `✅ Заявка взята в работу!\n\n` +
       `📋 Заявка #${result.order.id}\n` +
       `💰 Сумма: ${result.order.cryptoAmount} ${result.order.currency}\n` +
       `🔄 Статус: ${result.order.status}\n\n` +
       `Используйте /orders для просмотра деталей.`
     );
+    
+    logger.debug('TELEGRAM_TAKE_ORDER_SUCCESS_RESPONSE', { messageLength: successMessage.length });
+    return successMessage;
   } else {
-    return (
+    logger.warn('TELEGRAM_TAKE_ORDER_FAILED', {
+      orderId,
+      telegramOperatorId,
+      operatorId: session.operatorId,
+      result: JSON.stringify(result),
+    });
+
+    const errorMessage = (
       `❌ Не удалось взять заявку\n\n` +
       `Возможные причины:\n` +
       `• Заявка не найдена\n` +
@@ -183,6 +279,9 @@ async function handleTakeOrderCommand(update: TelegramUpdate): Promise<string> {
       `• Системная ошибка\n\n` +
       `Проверьте ID заявки и попробуйте снова.`
     );
+    
+    logger.debug('TELEGRAM_TAKE_ORDER_ERROR_RESPONSE', { messageLength: errorMessage.length });
+    return errorMessage;
   }
 }
 

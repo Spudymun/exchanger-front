@@ -26,7 +26,7 @@ const EMPTY_MODULE = './lib/empty.js';
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ['@repo/exchange-core', '@repo/constants', '@repo/ui', '@repo/utils'],
-  serverExternalPackages: ['@trpc/server', '@repo/session-management', 'ioredis'],
+  serverExternalPackages: ['@trpc/server', '@repo/session-management', '@repo/email-service', 'ioredis'],
   env: {
     DATABASE_URL: process.env.DATABASE_URL, // eslint-disable-line no-undef
     REDIS_URL: process.env.REDIS_URL, // eslint-disable-line no-undef
@@ -38,6 +38,7 @@ const nextConfig = {
     resolveAlias: {
       // ✅ Block external server-only packages from client bundle in Turbopack  
       'ioredis': EMPTY_MODULE,
+      '@repo/email-service': EMPTY_MODULE,
       // ✅ Block Node.js built-ins
       'dns': EMPTY_MODULE,
       'net': EMPTY_MODULE, 
@@ -62,6 +63,7 @@ const nextConfig = {
       config.resolve.alias = {
         ...config.resolve.alias,
         '@repo/session-management': false,
+        '@repo/email-service': false,
         'ioredis': false
       };
     }

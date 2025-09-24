@@ -44,17 +44,34 @@ export const operatorRouter = createTRPCRouter({
       })
     )
     .query(async ({ input }) => {
+      logger.debug('GET_PENDING_ORDERS_REQUEST', {
+        limit: input.limit,
+        cursor: input.cursor,
+        requestedStatus: input.status,
+      });
+
       const { limit, cursor, status } = input;
       const allOrders = await orderManager.getAll();
+      logger.debug('FETCHED_ALL_ORDERS', { totalCount: allOrders.length });
 
       // Используем централизованные утилиты для фильтрации, сортировки и пагинации
       const filteredOrders = status
         ? filterOrders(allOrders, { status })
         : filterOrdersForOperator(allOrders);
+      logger.debug('FILTERED_ORDERS', {
+        filteredCount: filteredOrders.length,
+        filterApplied: status || 'operator_default',
+      });
 
       const sortedOrders = sortOrders(filteredOrders);
+      logger.debug('SORTED_ORDERS', { sortedCount: sortedOrders.length });
 
       const result = paginateOrders(sortedOrders, { limit, cursor }, order => order.id);
+      logger.info('PENDING_ORDERS_RESPONSE', {
+        returnedItems: result.items.length,
+        nextCursor: result.nextCursor,
+        hasMore: result.hasMore,
+      });
 
       return {
         items: result.items.map(order => ({
@@ -71,19 +88,41 @@ export const operatorRouter = createTRPCRouter({
   takeOrder: operatorOnly
     .input(z.object({ orderId: orderIdSchema }))
     .mutation(async ({ input, ctx }) => {
+      logger.info('TAKE_ORDER_REQUEST', {
+        orderId: input.orderId,
+        operatorId: ctx.user.id,
+        operatorEmail: ctx.user.email,
+      });
+
       const order = await orderManager.findById(input.orderId);
+      logger.debug('ORDER_LOOKUP_RESULT', {
+        orderId: input.orderId,
+        found: !!order,
+        currentStatus: order?.status,
+        assignedOperator: order?.assignedOperatorId,
+      });
 
       if (!order) {
+        logger.warn('ORDER_NOT_FOUND', { orderId: input.orderId });
         throw createOrderError('not_found', input.orderId);
       }
 
       if (order.status !== ORDER_STATUSES.PENDING) {
+        logger.warn('INVALID_ORDER_STATUS_FOR_ASSIGNMENT', {
+          orderId: input.orderId,
+          currentStatus: order.status,
+          expectedStatus: ORDER_STATUSES.PENDING,
+        });
         throw createBadRequestError(
           await ctx.getErrorMessage('server.errors.business.orderProcessing')
         );
       }
 
       // ✅ ИСПРАВЛЕНИЕ: Используем assignToOperator вместо простого update для корректного audit tracking
+      logger.debug('ATTEMPTING_ORDER_ASSIGNMENT', {
+        orderId: input.orderId,
+        operatorId: ctx.user.id,
+      });
       const updatedOrder = await orderManager.assignToOperator(input.orderId, ctx.user.id);
 
       if (!updatedOrder) {
@@ -103,6 +142,8 @@ export const operatorRouter = createTRPCRouter({
         orderId: input.orderId,
         operatorId: ctx.user.id,
         operatorEmail: ctx.user.email,
+        newStatus: updatedOrder.status,
+        assignedAt: updatedOrder.assignedAt?.toISOString(),
       });
 
       return {
@@ -116,14 +157,42 @@ export const operatorRouter = createTRPCRouter({
   updateOrderStatus: operatorOnly
     .input(securityEnhancedUpdateOrderStatusSchema)
     .mutation(async ({ input, ctx }) => {
+      logger.info('UPDATE_ORDER_STATUS_REQUEST', {
+        orderId: input.orderId,
+        newStatus: input.status,
+        operatorId: ctx.user.id,
+        operatorEmail: ctx.user.email,
+        operatorNote: input.operatorNote,
+      });
+
       const order = await orderManager.findById(input.orderId);
+      logger.debug('ORDER_STATUS_LOOKUP', {
+        orderId: input.orderId,
+        found: !!order,
+        currentStatus: order?.status,
+        requestedStatus: input.status,
+      });
 
       if (!order) {
+        logger.warn('ORDER_NOT_FOUND_FOR_STATUS_UPDATE', { orderId: input.orderId });
         throw createOrderError('not_found', input.orderId);
       }
 
       // Проверка валидных переходов статусов
-      if (!canTransitionStatus(order.status, input.status)) {
+      const canTransition = canTransitionStatus(order.status, input.status);
+      logger.debug('STATUS_TRANSITION_VALIDATION', {
+        orderId: input.orderId,
+        fromStatus: order.status,
+        toStatus: input.status,
+        canTransition,
+      });
+
+      if (!canTransition) {
+        logger.warn('INVALID_STATUS_TRANSITION', {
+          orderId: input.orderId,
+          fromStatus: order.status,
+          toStatus: input.status,
+        });
         throw createBadRequestError(
           await ctx.getErrorMessage('server.errors.business.statusTransition', {
             currentStatus: order.status,
@@ -132,18 +201,44 @@ export const operatorRouter = createTRPCRouter({
         );
       }
 
-      const updatedOrder = await orderManager.update(input.orderId, {
+      const updateData = {
         status: input.status,
         ...(input.status === ORDER_STATUSES.COMPLETED && { processedAt: new Date() }),
+      };
+      logger.debug('UPDATING_ORDER_STATUS', {
+        orderId: input.orderId,
+        updateData: JSON.stringify(updateData),
       });
 
+      const updatedOrder = await orderManager.update(input.orderId, updateData);
+
       if (!updatedOrder) {
+        logger.error('ORDER_STATUS_UPDATE_FAILED', { orderId: input.orderId });
         throw createOrderError('update_failed');
       }
 
+      logger.info('ORDER_STATUS_UPDATED_SUCCESSFULLY', {
+        orderId: input.orderId,
+        oldStatus: order.status,
+        newStatus: updatedOrder.status,
+        processedAt: updatedOrder.processedAt?.toISOString(),
+      });
+
       // 🎯 TASK 2.3: Автоматическое освобождение кошелька при финальном статусе
-      if (isFinalStatus(updatedOrder)) {
+      const isFinal = isFinalStatus(updatedOrder);
+      logger.debug('CHECKING_FINAL_STATUS', {
+        orderId: input.orderId,
+        status: updatedOrder.status,
+        isFinalStatus: isFinal,
+        depositAddress: updatedOrder.depositAddress,
+      });
+
+      if (isFinal) {
         try {
+          logger.debug('ATTEMPTING_WALLET_RELEASE', {
+            orderId: input.orderId,
+            walletAddress: updatedOrder.depositAddress,
+          });
           const walletManager = await WalletPoolManagerFactory.create();
           await walletManager.releaseWallet(updatedOrder.depositAddress);
           logger.info('Wallet released successfully for order', {
@@ -153,6 +248,7 @@ export const operatorRouter = createTRPCRouter({
         } catch (walletError) {
           logger.error('Wallet release failed for order', {
             orderId: input.orderId,
+            walletAddress: updatedOrder.depositAddress,
             error: walletError instanceof Error ? walletError.message : String(walletError),
           });
           // Не прерываем выполнение, так как статус уже обновлен
