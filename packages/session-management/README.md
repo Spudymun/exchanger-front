@@ -112,6 +112,36 @@ npm test -- --filter=session-management
 npm run test:coverage -- --filter=session-management
 ```
 
+## Turbopack Support 🚀
+
+### Automatic Fallback for Development
+
+В Turbopack режиме (Next.js 15 dev mode), когда Redis недоступен из-за server/client bundle изоляции, автоматически активируется **MemorySessionAdapter**:
+
+```typescript
+// ✅ В Production (webpack)
+Redis доступен → RedisSessionAdapter → сессии в Redis
+
+// ✅ В Development (Turbopack)  
+Redis → empty.js → MemorySessionAdapter → сессии в RAM
+```
+
+### Возможности MemorySessionAdapter
+
+- **Полная эмуляция Redis API**: get, set, delete, extend
+- **Context-aware storage**: session:web:*, session:admin:*
+- **TTL поддержка**: автоматическая очистка просроченных сессий
+- **Debug методы**: для разработки и отладки
+- **Graceful degradation**: полная функциональность без Redis
+
+### Ограничения в Development
+
+⚠️ **Данные теряются при рестарте** `npm run dev`  
+⚠️ **Нет distributed access** между процессами  
+✅ **Приемлемо для development** - логин/сессии работают полноценно
+
+Подробнее: `docs/troubleshooting/turbopack-ioredis-leak.md`
+
 ## Development
 
 This package follows the monorepo architecture with:
@@ -120,3 +150,4 @@ This package follows the monorepo architecture with:
 - ✅ **Clean imports** from single entry point
 - ✅ **Environment-based configuration**
 - ✅ **TypeScript strict mode**
+- ✅ **Turbopack compatibility** with automatic fallback

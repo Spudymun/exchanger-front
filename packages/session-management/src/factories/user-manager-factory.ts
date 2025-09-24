@@ -3,6 +3,7 @@ import { userManager as mockUserManager, orderManager as mockOrderManager } from
 import type { OrderRepositoryInterface, Order, CreateOrderRequest } from '@repo/exchange-core';
 import { createEnvironmentLogger } from '@repo/utils';
 
+import { MemorySessionAdapter } from '../adapters/memory-session-adapter';
 import { PostgreSQLSessionAdapter } from '../adapters/postgres-session-adapter';
 import { PostgreSQLUserAdapter } from '../adapters/postgres-user-adapter';
 import { RedisSessionAdapter } from '../adapters/redis-session-adapter';
@@ -250,17 +251,13 @@ export class UserManagerFactory {
       return new RedisSessionAdapter(redis, context);
     } catch (error) {
       // В случае проблем с Redis (например Turbopack empty.js) используем fallback
-      this.logger.warn('Failed to initialize Redis, using fallback session adapter', { 
-        error: error instanceof Error ? error.message : String(error) 
+      this.logger.warn('Failed to initialize Redis, using MemorySessionAdapter fallback', { 
+        error: error instanceof Error ? error.message : String(error),
+        context: context 
       });
       
-      // Простой in-memory fallback адаптер для разработки
-      return {
-        async get() { return null; },
-        async set() { },
-        async delete() { },
-        async extend() { }
-      } as SessionAdapter;
+      // ✅ ИСПРАВЛЕНО: Полноценный MemorySessionAdapter вместо заглушек
+      return new MemorySessionAdapter(context);
     }
   }
 

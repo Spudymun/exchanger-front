@@ -312,3 +312,95 @@ export class UserManagerFactory {
 4. **Проверка типа конструктора** позволяет выявить замену модуля на empty.js
 
 **Применение в проекте**: Данное решение используется в `packages/session-management` для интеграции PostgresOrderAdapter + Redis session management в рамках задачи 1.3 Prisma Integration.
+
+---
+
+## 🆕 ОБНОВЛЕНИЕ: MemorySessionAdapter Fallback (Сентябрь 2025)
+
+### Проблема с заглушечным fallback
+
+**Старая реализация** в `UserManagerFactory.createSessionAdapter()` использовала неполные заглушки:
+
+```typescript
+// ❌ ПРОБЛЕМА: Заглушки без логики хранения сессий
+return {
+  async get() { return null; },    // Всегда возвращает null
+  async set() { },                 // Ничего не сохраняет
+  async delete() { },              // Ничего не удаляет  
+  async extend() { }               // Ничего не продлевает
+} as SessionAdapter;
+```
+
+**Результат**: Логин не работал в Turbopack режиме - сессии не сохранялись.
+
+### Решение: MemorySessionAdapter
+
+**Новая реализация** использует полноценный in-memory адаптер:
+
+```typescript
+// ✅ РЕШЕНИЕ: Полноценный MemorySessionAdapter
+return new MemorySessionAdapter(context);
+```
+
+**Файл**: `packages/session-management/src/adapters/memory-session-adapter.ts`
+
+**Возможности**:
+- ✅ **Полная эмуляция Redis API**: get, set, delete, extend
+- ✅ **Context-aware storage**: session:web:*, session:admin:*  
+- ✅ **TTL поддержка**: автоматическая очистка просроченных сессий
+- ✅ **Debug методы**: getStorageSize(), getAllSessions(), clearAll()
+- ⚠️ **Ограничения**: данные теряются при рестарте, нет distributed доступа
+
+### Workflow в разработке
+
+```mermaid
+graph TD
+    A[npm run dev] --> B{Turbopack mode?}
+    B -->|Yes| C[ioredis → empty.js]
+    C --> D[Redis constructor unavailable]
+    D --> E[catch block activated]
+    E --> F[new MemorySessionAdapter]
+    F --> G[✅ Сессии работают в RAM]
+    
+    B -->|No| H[ioredis → real module]
+    H --> I[new RedisSessionAdapter]  
+    I --> J[✅ Сессии работают в Redis]
+```
+
+### Результат
+
+- **Development (Turbopack)**: Полноценные сессии в памяти
+- **Production (Webpack)**: Полноценные сессии в Redis  
+- **Обратная совместимость**: 100% сохранена
+- **Логин/аутентификация**: Работает в любом режиме
+
+### Техническая реализация
+
+```typescript
+// packages/session-management/src/factories/user-manager-factory.ts
+private static async createSessionAdapter(
+  redisConfig: RedisConfiguration,
+  context: ApplicationContext
+): Promise<SessionAdapter> {
+  try {
+    // Пробуем создать Redis
+    const ioredisModule = await import('ioredis');
+    const Redis = ioredisModule.default || ioredisModule;
+    
+    if (typeof Redis !== 'function') {
+      throw new Error('Redis constructor not available');
+    }
+    
+    const redis = new Redis(redisConfig.url, { /* config */ });
+    return new RedisSessionAdapter(redis, context);
+  } catch (error) {
+    // ✅ НОВОЕ: Graceful fallback на MemorySessionAdapter
+    this.logger.warn('Failed to initialize Redis, using MemorySessionAdapter fallback', { 
+      error: error instanceof Error ? error.message : String(error),
+      context: context 
+    });
+    
+    return new MemorySessionAdapter(context);
+  }
+}
+```

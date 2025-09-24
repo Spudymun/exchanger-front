@@ -18,6 +18,10 @@ export {
   type PrismaClientConfig,
 } from './utils/prisma-singleton';
 
+// ✅ ДОБАВЛЕНО: Session адаптеры для Turbopack fallback
+export { MemorySessionAdapter } from './adapters/memory-session-adapter';
+export { RedisSessionAdapter } from './adapters/redis-session-adapter';
+
 // ✅ ДОБАВЛЕНО: PostgreSQL адаптеры для WalletPoolManager
 export { PostgresOrderAdapter } from './adapters/postgres-order-adapter';
 export { PostgresWalletAdapter } from './adapters/postgres-wallet-adapter';
