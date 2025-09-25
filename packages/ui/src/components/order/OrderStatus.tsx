@@ -95,7 +95,11 @@ function OrderStatusDetails({
           <div className={responsiveStyles.spacing.columnGap}>
             {/* Crypto Information Group - адрес + сеть + email */}
             <div className="flex-1">
-              <OrderCryptoInfo orderData={orderData} t={t} />
+              <OrderCryptoInfo 
+                orderData={orderData} 
+                userEmail={(orderData as Order & { email?: string })?.email}
+                t={t} 
+              />
             </div>
 
             {/* Financial Information Group - сумма + карта получателя */}

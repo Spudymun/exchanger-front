@@ -195,6 +195,66 @@ async function sendTelegramNotification(
 }
 
 /**
+ * Получает информацию о кошельке по адресу
+ */
+async function getWalletByAddress(depositAddress: string, orderEmail: string) {
+  const { PostgresWalletAdapter, getPrismaClient } = await import('@repo/session-management');
+  const { SESSION_CONSTANTS } = await import('@repo/constants');
+  const databaseUrl = process.env.DATABASE_URL;
+  if (!databaseUrl) {
+    throw new Error('DATABASE_URL environment variable is required');
+  }
+  
+  const prisma = getPrismaClient({
+    url: databaseUrl,
+    maxConnections: SESSION_CONSTANTS.DATABASE.MAX_CONNECTIONS,
+  });
+  const walletRepository = new PostgresWalletAdapter(prisma);
+  const walletInfo = await walletRepository.findByAddress(depositAddress);
+  
+  if (!walletInfo) {
+    logger.error('WALLET_NOT_FOUND_BY_ADDRESS', {
+      depositAddress,
+      orderEmail,
+    });
+    ExchangeErrors.throw(
+      ExchangeErrors.walletAllocationFailed({
+        email: orderEmail,
+        reason: 'wallet_not_found_by_address'
+      })
+    );
+  }
+
+  return walletInfo;
+}
+
+/**
+ * Отправляет email с адресом криптовалюты
+ */
+async function sendCryptoAddressEmail(order: Order, orderRequest: { email: string; currency: CryptoCurrency; cryptoAmount: number }, depositAddress: string, sessionMetadata: SessionMetadata) {
+  try {
+    await RateLimitedEmailService.sendCryptoAddress(
+      {
+        orderId: order.id,
+        cryptoAddress: depositAddress,
+        currency: orderRequest.currency,
+        amount: orderRequest.cryptoAmount,
+        expiresAt: new Date(Date.now() + ORDER_EXPIRATION_TIME_MS),
+        userEmail: orderRequest.email,
+      },
+      sessionMetadata.ip
+    );
+  } catch (emailError) {
+    logger.error('Failed to send crypto address email', {
+      orderId: order.id,
+      email: orderRequest.email,
+      error: emailError instanceof Error ? emailError.message : UNKNOWN_ERROR_MESSAGE,
+    });
+    // Continue execution even if email sending fails to not interrupt the order flow
+  }
+}
+
+/**
  * Обрабатывает успешную заявку с выделенным кошельком
  */
 async function processSuccessfulOrder(params: {
@@ -212,7 +272,7 @@ async function processSuccessfulOrder(params: {
     isNewUser: boolean;
     authenticationMethod: string;
   };
-  sessionMetadata: SessionMetadata; // 🔥 ДОБАВЛЕНО: для email service
+  sessionMetadata: SessionMetadata;
   usedOldestOccupiedWallet?: boolean;
 }) {
   const {
@@ -223,44 +283,30 @@ async function processSuccessfulOrder(params: {
     usedOldestOccupiedWallet = false,
   } = params;
 
+  // Получение информации о кошельке
+  const walletInfo = await getWalletByAddress(depositAddress, orderRequest.email);
+
+  // Создание заказа
   const order = await orderManager.create({
-    userId: userSession.user.id, // ✅ ГАРАНТИРОВАННЫЙ userId из сессии
-    email: orderRequest.email, // ✅ Требуется для CreateOrderRequest interface
+    userId: userSession.user.id,
+    email: orderRequest.email,
     cryptoAmount: orderRequest.cryptoAmount,
     currency: orderRequest.currency,
     uahAmount: orderRequest.uahAmount,
     recipientData: orderRequest.recipientData,
+    walletId: walletInfo.id,
   });
 
-  // ✅ Task 3.4: Send crypto address to user's email with rate limiting
-  try {
-    await RateLimitedEmailService.sendCryptoAddress(
-      {
-        orderId: order.id,
-        cryptoAddress: depositAddress,
-        currency: orderRequest.currency,
-        amount: orderRequest.cryptoAmount,
-        expiresAt: new Date(Date.now() + ORDER_EXPIRATION_TIME_MS), // Set expiration time
-        userEmail: orderRequest.email,
-      },
-      sessionMetadata.ip
-    ); // Use IP address for rate limiting
-  } catch (emailError) {
-    logger.error('Failed to send crypto address email', {
-      orderId: order.id,
-      email: orderRequest.email,
-      error: emailError instanceof Error ? emailError.message : UNKNOWN_ERROR_MESSAGE,
-    });
-    // Continue execution even if email sending fails to not interrupt the order flow
-  }
+  // Отправка email с адресом
+  await sendCryptoAddressEmail(order, orderRequest, depositAddress, sessionMetadata);
 
-  // 🆕 TASK 9.3: Send Telegram notification to operators
+  // Отправка уведомления в Telegram
   await sendTelegramNotification(order, orderRequest, depositAddress, usedOldestOccupiedWallet);
 
   return {
     order,
     depositAddress,
-    usedOldestOccupiedWallet, // 🆕 Передаем флаг в response
+    usedOldestOccupiedWallet,
     sessionInfo: {
       sessionId: userSession.sessionId,
       isNewUser: userSession.isNewUser,
@@ -653,6 +699,12 @@ export const exchangeRouter = createTRPCRouter({
 
       // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: получить email через userId → User
       const user = await userManager.findById(order.userId);
+      console.log('� DEBUG getOrderStatus:', { 
+        orderId: input.orderId,
+        orderUserId: order.userId,
+        userFound: user !== null && user !== undefined, 
+        userEmail: user?.email 
+      });
       const userEmail = user?.email || 'unknown@unknown.com';
 
       return {

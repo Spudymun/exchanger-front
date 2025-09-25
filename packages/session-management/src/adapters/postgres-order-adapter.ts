@@ -50,11 +50,12 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
     super(prisma);
   }
 
-  async create(orderData: CreateOrderRequest & { userId: string }): Promise<Order> {
+  async create(orderData: CreateOrderRequest & { userId: string; walletId?: string }): Promise<Order> {
     try {
       this.logger.info('Creating order', {
         userId: orderData.userId,
         currency: orderData.currency,
+        walletId: orderData.walletId,
       });
 
       const publicId = generatePublicOrderId();
@@ -66,12 +67,13 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
           cryptoAmount: orderData.cryptoAmount,
           currency: orderData.currency,
           uahAmount: orderData.uahAmount,
-          walletId: null, // ✅ ИСПРАВЛЕНО: будет назначен позже через WalletPoolManager
+          walletId: orderData.walletId || null, // ✅ ИСПРАВЛЕНО: поддержка привязки кошелька
           recipientData: orderData.recipientData
             ? JSON.parse(JSON.stringify(orderData.recipientData))
             : undefined,
           status: 'PENDING', // Default status
         },
+        include: { wallet: true }, // ✅ ИСПРАВЛЕНО: для получения depositAddress
       });
 
       this.logger.info('Order created successfully', { orderId: prismaOrder.id });
@@ -91,6 +93,7 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
     try {
       const prismaOrder = await this.prisma.order.findUnique({
         where: { id },
+        include: { wallet: true }, // ✅ ИСПРАВЛЕНО: загружаем wallet relation для depositAddress
       });
 
       return prismaOrder ? this.mapPrismaToOrder(prismaOrder as any) : null;
@@ -107,6 +110,7 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
     try {
       const prismaOrder = await this.prisma.order.findUnique({
         where: { publicId },
+        include: { wallet: true }, // ✅ ИСПРАВЛЕНО: загружаем wallet relation для depositAddress
       });
 
       return prismaOrder ? this.mapPrismaToOrder(prismaOrder as any) : null;
@@ -123,6 +127,7 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
     try {
       const prismaOrders = await this.prisma.order.findMany({
         where: { userId },
+        include: { wallet: true }, // ✅ ИСПРАВЛЕНО: загружаем wallet relation для depositAddress
         orderBy: { createdAt: 'desc' },
       });
 
@@ -151,6 +156,7 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
       const prismaOrder = await this.prisma.order.update({
         where: { id },
         data: updateData,
+        include: { wallet: true }, // ✅ ИСПРАВЛЕНО: загружаем wallet relation для depositAddress
       });
 
       // Create audit log for status change
@@ -176,6 +182,45 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
     }
   }
 
+  private async updateOrderAssignment(orderId: string, operatorId: string) {
+    return await this.prisma.order.update({
+      where: {
+        id: orderId,
+        status: 'PENDING',
+        assignedOperatorId: null,
+      },
+      data: {
+        assignedOperatorId: operatorId,
+        status: 'PROCESSING',
+        assignedAt: new Date(),
+        updatedAt: new Date(),
+      },
+      include: {
+        wallet: true,
+      },
+    });
+  }
+
+  private handleAssignmentError(error: unknown, orderId: string, operatorId: string): Order | null {
+    // Enhanced error handling for concurrent conflicts
+    if (error instanceof Error && 'code' in error && error.code === 'P2025') {
+      // P2025 = Record not found or condition not met
+      this.logger.warn('Concurrent assignment attempt detected', {
+        orderId,
+        operatorId,
+        reason: 'Order already assigned or not in PENDING status',
+      });
+      return null;
+    }
+
+    this.logger.error('PostgresOrderAdapter.assignToOperator failed', {
+      error: error instanceof Error ? error.message : String(error),
+      orderId,
+      operatorId,
+    });
+    return null;
+  }
+
   async assignToOperator(orderId: string, operatorId: string): Promise<Order | null> {
     try {
       this.logger.info('Assigning order to operator with concurrent protection', {
@@ -183,19 +228,7 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
         operatorId,
       });
 
-      const prismaOrder = await this.prisma.order.update({
-        where: {
-          id: orderId,
-          status: 'PENDING',
-          assignedOperatorId: null,
-        },
-        data: {
-          assignedOperatorId: operatorId,
-          status: 'PROCESSING',
-          assignedAt: new Date(),
-          updatedAt: new Date(),
-        },
-      });
+      const prismaOrder = await this.updateOrderAssignment(orderId, operatorId);
 
       // Create audit log for assignment
       await this.createAuditLog({
@@ -212,25 +245,7 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
       });
       return this.mapPrismaToOrder(prismaOrder as any);
     } catch (error) {
-      // Enhanced error handling for concurrent conflicts
-      if (error instanceof Error && 'code' in error && error.code === 'P2025') {
-        // P2025 = Record not found or condition not met
-        this.logger.warn('Concurrent assignment attempt detected', {
-          orderId,
-          operatorId,
-          reason: 'Order already assigned or not in PENDING status',
-        });
-
-        // Return null for handling in tRPC layer
-        return null;
-      }
-
-      this.logger.error('PostgresOrderAdapter.assignToOperator failed', {
-        error: error instanceof Error ? error.message : String(error),
-        orderId,
-        operatorId,
-      });
-      return null;
+      return this.handleAssignmentError(error, orderId, operatorId);
     }
   }
 
@@ -239,6 +254,9 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
       const prismaOrders = await this.prisma.order.findMany({
         where: { assignedOperatorId: operatorId },
         orderBy: { assignedAt: 'desc' },
+        include: {
+          wallet: true,
+        },
       });
 
       return prismaOrders.map(order => this.mapPrismaToOrder(order as any));
@@ -256,6 +274,9 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
       const prismaOrders = await this.prisma.order.findMany({
         where: { status: mapToPrismaStatus(status) },
         orderBy: { createdAt: 'desc' },
+        include: {
+          wallet: true,
+        },
       });
 
       return prismaOrders.map(order => this.mapPrismaToOrder(order as any));
@@ -273,6 +294,9 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
       const prismaOrders = await this.prisma.order.findMany({
         where: { currency },
         orderBy: { createdAt: 'desc' },
+        include: {
+          wallet: true,
+        },
       });
 
       return prismaOrders.map(order => this.mapPrismaToOrder(order as any));
@@ -297,6 +321,9 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
 
       const prismaOrder = await this.prisma.order.findFirst({
         where: { walletId: wallet.id },
+        include: {
+          wallet: true,
+        },
       });
 
       return prismaOrder ? this.mapPrismaToOrder(prismaOrder as any) : null;
@@ -307,6 +334,31 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
       });
       return null;
     }
+  }
+
+  private buildWhereClause(status?: OrderStatus, userId?: string) {
+    const whereClause: {
+      status?: PrismaOrderStatus;
+      userId?: string;
+    } = {};
+    if (status) whereClause.status = mapToPrismaStatus(status);
+    if (userId) whereClause.userId = userId;
+    return whereClause;
+  }
+
+  private async fetchOrdersAndCount(whereClause: any, skip: number, limit: number) {
+    return await Promise.all([
+      this.prisma.order.findMany({
+        where: whereClause,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        include: {
+          wallet: true,
+        },
+      }),
+      this.prisma.order.count({ where: whereClause }),
+    ]);
   }
 
   async findWithPagination(options: {
@@ -323,23 +375,8 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
     try {
       const { page, limit, status, userId } = options;
       const skip = (page - 1) * limit;
-
-      const whereClause: {
-        status?: PrismaOrderStatus;
-        userId?: string;
-      } = {};
-      if (status) whereClause.status = mapToPrismaStatus(status);
-      if (userId) whereClause.userId = userId;
-
-      const [prismaOrders, total] = await Promise.all([
-        this.prisma.order.findMany({
-          where: whereClause,
-          orderBy: { createdAt: 'desc' },
-          skip,
-          take: limit,
-        }),
-        this.prisma.order.count({ where: whereClause }),
-      ]);
+      const whereClause = this.buildWhereClause(status, userId);
+      const [prismaOrders, total] = await this.fetchOrdersAndCount(whereClause, skip, limit);
 
       return {
         data: prismaOrders.map(order => this.mapPrismaToOrder(order as any)),
@@ -392,6 +429,9 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
     try {
       const prismaOrders = await this.prisma.order.findMany({
         orderBy: { createdAt: 'desc' },
+        include: {
+          wallet: true,
+        },
       });
       return prismaOrders.map(order => this.mapPrismaToOrder(order as any));
     } catch (error) {
@@ -425,6 +465,9 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
       const updated = await this.prisma.order.update({
         where: { id },
         data: updates as any,
+        include: {
+          wallet: true,
+        },
       });
       return this.mapPrismaToOrder(updated as any);
     } catch (error) {

@@ -9,6 +9,7 @@ export interface CreateOrderRequest {
   currency: CryptoCurrency;
   uahAmount: number;
   recipientData?: RecipientData;
+  walletId?: string; // ✅ ДОБАВЛЕНО: для привязки кошелька при создании
 }
 
 export interface Order {
