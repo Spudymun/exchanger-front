@@ -6,16 +6,25 @@ import { UI_NUMERIC_CONSTANTS, DECIMAL_PRECISION } from '@repo/constants';
  */
 export class IdGenerationService {
   /**
-   * Generate unique order ID with timestamp and random suffix
+   * Generate order ID with timestamp and random suffix
    * @param deterministicTimestamp - для тестов можно передать фиксированный timestamp
+   * @private - internal helper for order ID generation
    */
-  generateOrderId(deterministicTimestamp?: number): string {
+  private generateOrderIdInternal(deterministicTimestamp?: number): string {
     const timestamp = deterministicTimestamp ?? Date.now();
     const randomSuffix = Math.random()
       .toString(UI_NUMERIC_CONSTANTS.ID_GENERATION_BASE)
       .substr(UI_NUMERIC_CONSTANTS.SUBSTR_START_INDEX, DECIMAL_PRECISION.ORDER_ID_RANDOM_LENGTH);
 
     return `order_${timestamp}_${randomSuffix}`;
+  }
+
+  /**
+   * Generate unique order ID with timestamp and random suffix (backward compatibility)
+   * @param deterministicTimestamp - для тестов можно передать фиксированный timestamp
+   */
+  generateOrderId(deterministicTimestamp?: number): string {
+    return this.generateOrderIdInternal(deterministicTimestamp);
   }
 
   /**
@@ -32,6 +41,15 @@ export class IdGenerationService {
    */
   generateSessionId(): string {
     return crypto.randomUUID();
+  }
+
+  /**
+   * Generate public order ID for external use (URLs, API responses)
+   * Uses the same format as generateOrderId but serves as dedicated method for public IDs
+   * @param deterministicTimestamp - для тестов можно передать фиксированный timestamp
+   */
+  generatePublicOrderId(deterministicTimestamp?: number): string {
+    return this.generateOrderIdInternal(deterministicTimestamp);
   }
 
   /**
@@ -62,6 +80,10 @@ export function generateSessionId(): string {
 
 export function generateId(): string {
   return idService.generateSessionId();
+}
+
+export function generatePublicOrderId(deterministicTimestamp?: number): string {
+  return idService.generatePublicOrderId(deterministicTimestamp);
 }
 
 export function generateTransactionId(): string {

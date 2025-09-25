@@ -8,16 +8,40 @@ import { currencySchema } from './schemas-crypto';
 import { SECURITY_VALIDATION_LIMITS, containsPotentialXSS } from './security-utils';
 
 /**
+ * Utility function to check if a string is a UUID
+ */
+export function isUUID(str: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+}
+
+/**
+ * Utility function to check if a string is a public order ID
+ */
+export function isPublicOrderId(str: string): boolean {
+  const publicOrderIdRegex = /^order_\d{13,}_[a-zA-Z0-9]{8,}$/;
+  return publicOrderIdRegex.test(str);
+}
+
+/**
  * Security-enhanced ID schema
  */
 export const securityEnhancedIdSchema = z.string().uuid('INVALID_ID_FORMAT');
 
 /**
- * Order ID schema - validates the specific format: order_TIMESTAMP_RANDOMSTRING
+ * Public Order ID schema - validates the specific format: order_TIMESTAMP_RANDOMSTRING
  */
-export const orderIdSchema = z
+export const publicOrderIdSchema = z
   .string()
-  .regex(/^order_\d{13,}_[a-zA-Z0-9]{8,}$/, 'INVALID_ORDER_ID_FORMAT');
+  .regex(/^order_\d{13,}_[a-zA-Z0-9]{8,}$/, 'INVALID_PUBLIC_ORDER_ID_FORMAT');
+
+/**
+ * Order ID schema - accepts both UUID (internal) and publicId (external) formats
+ */
+export const orderIdSchema = z.union([
+  securityEnhancedIdSchema, // UUID format for internal use
+  publicOrderIdSchema,      // order_TIMESTAMP_RANDOMSTRING format for external use
+], { errorMap: () => ({ message: 'INVALID_ORDER_ID_FORMAT' }) });
 
 /**
  * Security-enhanced getById schema

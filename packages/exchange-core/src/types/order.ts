@@ -13,6 +13,7 @@ export interface CreateOrderRequest {
 
 export interface Order {
   id: string;
+  publicId: string; // ✅ ДОБАВЛЕНО: внешний ID для URL и API
   userId: string; // ✅ ОБНОВЛЕНО: новая архитектура с userId
   cryptoAmount: number;
   currency: CryptoCurrency;

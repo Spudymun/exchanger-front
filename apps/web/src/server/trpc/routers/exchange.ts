@@ -39,6 +39,7 @@ import {
   securityEnhancedCreateExchangeOrderSchema,
   securityEnhancedOrderByIdSchema,
   securityEnhancedGetOrderHistoryByEmailSchema,
+  isUUID,
 } from '@repo/utils';
 import { z } from 'zod';
 
@@ -626,7 +627,7 @@ export const exchangeRouter = createTRPCRouter({
       });
 
       return {
-        orderId: result.order.id,
+        orderId: result.order.publicId, // ✅ ИЗМЕНЕНО: возвращаем publicId для URL
         depositAddress: result.depositAddress,
         cryptoAmount: input.cryptoAmount,
         uahAmount: orderRequest.uahAmount,
@@ -641,7 +642,10 @@ export const exchangeRouter = createTRPCRouter({
   getOrderStatus: publicProcedure
     .input(securityEnhancedOrderByIdSchema)
     .query(async ({ input }) => {
-      const order = await orderManager.findById(input.orderId);
+      // Определяем тип ID и используем соответствующий метод поиска
+      const order = isUUID(input.orderId)
+        ? await orderManager.findById(input.orderId)
+        : await orderManager.findByPublicId(input.orderId);
 
       if (!order) {
         throw createOrderError('not_found', input.orderId);
@@ -652,7 +656,7 @@ export const exchangeRouter = createTRPCRouter({
       const userEmail = user?.email || 'unknown@unknown.com';
 
       return {
-        id: order.id,
+        id: order.publicId, // ✅ ИЗМЕНЕНО: возвращаем publicId для frontend
         status: order.status,
         cryptoAmount: order.cryptoAmount,
         uahAmount: order.uahAmount,
@@ -690,7 +694,7 @@ export const exchangeRouter = createTRPCRouter({
 
       return {
         orders: result.items.map(order => ({
-          id: order.id,
+          id: order.publicId, // ✅ ИЗМЕНЕНО: возвращаем publicId для frontend
           status: order.status,
           cryptoAmount: order.cryptoAmount,
           uahAmount: order.uahAmount,

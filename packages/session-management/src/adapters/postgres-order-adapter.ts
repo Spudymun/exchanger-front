@@ -5,6 +5,7 @@ import { PrismaClient, OrderStatus as PrismaOrderStatus } from '@prisma/client';
 
 import type { OrderStatus } from '@repo/constants';
 import type { OrderRepositoryInterface, Order, CreateOrderRequest } from '@repo/exchange-core';
+import { generatePublicOrderId } from '@repo/exchange-core';
 import { createEnvironmentLogger } from '@repo/utils';
 
 import { BasePostgresAdapter } from './base-postgres-adapter';
@@ -14,6 +15,7 @@ import { BasePostgresAdapter } from './base-postgres-adapter';
  */
 interface PrismaOrder {
   id: string;
+  publicId: string;
   userId: string;
   cryptoAmount: { toNumber(): number };
   currency: string;
@@ -55,8 +57,11 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
         currency: orderData.currency,
       });
 
+      const publicId = generatePublicOrderId();
+
       const prismaOrder = await this.prisma.order.create({
         data: {
+          publicId,
           userId: orderData.userId,
           cryptoAmount: orderData.cryptoAmount,
           currency: orderData.currency,
@@ -93,6 +98,22 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
       this.logger.error('PostgresOrderAdapter.findById failed', {
         error: error instanceof Error ? error.message : String(error),
         id,
+      });
+      return null;
+    }
+  }
+
+  async findByPublicId(publicId: string): Promise<Order | null> {
+    try {
+      const prismaOrder = await this.prisma.order.findUnique({
+        where: { publicId },
+      });
+
+      return prismaOrder ? this.mapPrismaToOrder(prismaOrder as any) : null;
+    } catch (error) {
+      this.logger.error('PostgresOrderAdapter.findByPublicId failed', {
+        error: error instanceof Error ? error.message : String(error),
+        publicId,
       });
       return null;
     }
@@ -423,6 +444,7 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
   private mapPrismaToOrder(prismaOrder: PrismaOrder): Order {
     return {
       id: prismaOrder.id,
+      publicId: prismaOrder.publicId, // ✅ ДОБАВЛЕНО: внешний ID для URL и API
       userId: prismaOrder.userId, // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: используем userId
       // Safe Decimal conversion using .toNumber() method as per existing patterns
       cryptoAmount: prismaOrder.cryptoAmount.toNumber(),

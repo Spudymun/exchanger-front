@@ -15,6 +15,7 @@ export interface OrderRepositoryInterface {
   // Основные CRUD операции
   create(orderData: CreateOrderRequest & { userId: string }): Promise<Order>;
   findById(id: string): Promise<Order | null>;
+  findByPublicId(publicId: string): Promise<Order | null>; // Поиск по внешнему ID для URL/API
   findByUserId(userId: string): Promise<Order[]>; // Поиск по пользователю через userId
   // EMAIL ПОИСК: реализуется на уровне business logic через UserManager + findByUserId
   

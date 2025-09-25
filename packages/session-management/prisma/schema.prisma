@@ -64,6 +64,7 @@ model UserAppRole {
 
 model Order {
   id                 String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  publicId           String          @unique @map("public_id") @db.VarChar(30)
   userId             String          @map("user_id") @db.Uuid
   cryptoAmount       Decimal         @map("crypto_amount") @db.Decimal(36, 18)
   currency           String          @db.VarChar(10)
@@ -92,6 +93,7 @@ model Order {
   @@index([walletId])
   @@index([assignedOperatorId])
   @@index([txHash])
+  @@index([publicId])
   @@map("orders")
 }
 

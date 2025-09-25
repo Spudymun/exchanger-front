@@ -130,6 +130,13 @@ export const orderManager = {
     return order || undefined;
   },
 
+  findByPublicId: async (publicId: string): Promise<Order | undefined> => {
+    const repo = await getOrderRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    const order = await repo.findByPublicId(publicId);
+    return order || undefined;
+  },
+
   findByUserId: async (userId: string): Promise<Order[]> => {
     const repo = await getOrderRepository();
     if (!repo) throw new Error(REPO_ERROR_MESSAGE);
