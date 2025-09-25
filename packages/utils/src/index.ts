@@ -40,4 +40,7 @@ export * from './store-factory';
 export * from './input-validation';
 export * from './scroll-utils';
 
+// Password Generation
+export { generatePasswordForAutoFlow } from './password-generation';
+
 // server-i18n-errors.ts удален - используйте getTranslations из next-intl/server

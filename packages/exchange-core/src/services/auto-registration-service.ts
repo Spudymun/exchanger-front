@@ -1,7 +1,7 @@
-import { AUTH_CONSTANTS, type AuthenticationMethod } from '@repo/constants';
+import { AUTH_CONSTANTS, VALIDATION_LIMITS, type AuthenticationMethod } from '@repo/constants';
 import type { User } from '@repo/exchange-core';
 import type { SessionMetadata, UserManagerInterface } from '@repo/session-management';
-import { createEnvironmentLogger } from '@repo/utils';
+import { createEnvironmentLogger, generatePasswordForAutoFlow } from '@repo/utils';
 
 // Constants from centralized AUTH_CONSTANTS
 const {
@@ -10,6 +10,10 @@ const {
   LOG_TRUNCATE_START,
   AUTHENTICATION_METHODS,
 } = AUTH_CONSTANTS;
+
+export interface AutoRegistrationOptions {
+  generatePassword?: boolean; // Новая опция для генерации пароля
+}
 
 export interface AutoRegistrationResult {
   user: User;
@@ -44,7 +48,8 @@ export class AutoRegistrationService {
   async ensureUserWithSession(
     email: string,
     sessionMetadata: SessionMetadata,
-    existingSessionId?: string
+    existingSessionId?: string,
+    options: AutoRegistrationOptions = {}
   ): Promise<AutoRegistrationResult> {
     try {
       this.logger.info('Ensuring user with session', {
@@ -52,25 +57,8 @@ export class AutoRegistrationService {
         hasExistingSession: !!existingSessionId,
       });
 
-      // ✅ ENHANCED: Determine user authentication status based on email and existing session
-      const userStatus = await this.determineUserStatus(email, existingSessionId);
-
-      let finalSessionId: string;
-
-      switch (userStatus.authenticationMethod) {
-        case AUTHENTICATION_METHODS.EXISTING_SESSION:
-          // Reuse and extend existing session
-          finalSessionId = existingSessionId as string; // TypeScript guard: existingSessionId is guaranteed to exist
-          // Extend session TTL for existing session
-          await this.extendExistingSession(finalSessionId);
-          break;
-
-        case AUTHENTICATION_METHODS.AUTO_LOGIN:
-        case AUTHENTICATION_METHODS.AUTO_REGISTRATION:
-          // Create new session for auto-login or auto-registration
-          finalSessionId = await this.createUserSession(userStatus.user.id, sessionMetadata);
-          break;
-      }
+      const userStatus = await this.determineUserStatus(email, existingSessionId, options.generatePassword || false);
+      const finalSessionId = await this.resolveSessionId(userStatus, existingSessionId, sessionMetadata);
 
       this.logger.info('User session ensured successfully', {
         userId: userStatus.user.id,
@@ -94,6 +82,20 @@ export class AutoRegistrationService {
         `Failed to ensure user with session: ${error instanceof Error ? error.message : String(error)}`
       );
     }
+  }
+
+  private async resolveSessionId(
+    userStatus: UserAuthenticationStatus,
+    existingSessionId: string | undefined,
+    sessionMetadata: SessionMetadata
+  ): Promise<string> {
+    if (userStatus.authenticationMethod === AUTHENTICATION_METHODS.EXISTING_SESSION) {
+      const sessionId = existingSessionId as string;
+      await this.extendExistingSession(sessionId);
+      return sessionId;
+    }
+    
+    return await this.createUserSession(userStatus.user.id, sessionMetadata);
   }
 
   private async getOrCreateUser(email: string): Promise<{ user: User; isNewUser: boolean }> {
@@ -121,7 +123,8 @@ export class AutoRegistrationService {
    */
   private async determineUserStatus(
     email: string,
-    existingSessionId?: string
+    existingSessionId?: string,
+    generatePassword: boolean = false
   ): Promise<UserAuthenticationStatus> {
     // 1. Check if user is already logged in with valid session
     if (existingSessionId) {
@@ -144,11 +147,7 @@ export class AutoRegistrationService {
     }
 
     // 3. Unregistered → auto-registration
-    const newUser = await this.userManager.create({
-      email,
-      hashedPassword: undefined,
-      isVerified: false,
-    });
+    const newUser = await this.createNewUserWithPassword(email, generatePassword);
 
     return {
       user: newUser,
@@ -223,5 +222,45 @@ export class AutoRegistrationService {
     if (this.userManager.extendSession) {
       await this.userManager.extendSession(sessionId, DEFAULT_SESSION_TTL);
     }
+  }
+
+  /**
+   * ✅ Create new user with optional password generation
+   * Extracted from determineUserStatus to reduce complexity
+   */
+  private async createNewUserWithPassword(email: string, generatePassword: boolean): Promise<User> {
+    const userData: {
+      email: string;
+      hashedPassword: string | undefined;
+      isVerified: boolean;
+    } = {
+      email,
+      hashedPassword: undefined,
+      isVerified: false,
+    };
+
+    // Генерируем пароль если нужно
+    if (generatePassword) {
+      // АРХИТЕКТУРНАЯ ГАРАНТИЯ: generatePasswordForAutoFlow() ВСЕГДА создает валидный пароль
+      // Никаких дополнительных проверок не требуется - функция математически корректна
+      const plainPassword = generatePasswordForAutoFlow();
+
+      // 🚨 ТОЛЬКО ДЛЯ РАЗРАБОТКИ - логируем сгенерированный пароль
+      if (process.env.NODE_ENV === 'development') {
+        this.logger.warn('DEV_ONLY_GENERATED_PASSWORD', { 
+          email,
+          plainPassword, // ⚠️ УДАЛИТЬ В ПРОДАКШЕНЕ!
+          note: 'This is development-only logging. Remove in production!'
+        });
+      }
+
+      const bcrypt = await import('bcryptjs');
+      userData.hashedPassword = await bcrypt.hash(plainPassword, VALIDATION_LIMITS.BCRYPT_SALT_ROUNDS);
+      userData.isVerified = true; // Если есть пароль - считаем верифицированным
+
+      this.logger.info('Generated secure password for auto-registered user', { email });
+    }
+
+    return await this.userManager.create(userData);
   }
 }

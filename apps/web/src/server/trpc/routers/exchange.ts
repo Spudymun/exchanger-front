@@ -267,45 +267,52 @@ async function processSuccessfulOrder(params: {
 }
 
 /**
- * Создает новую заявку в системе с обязательным session management
+ * Валидирует входные данные заявки
  */
-async function createOrderInSystem(
-  orderRequest: {
-    email: string;
-    cryptoAmount: number;
-    currency: (typeof CRYPTOCURRENCIES)[number];
-    uahAmount: number;
-    recipientData?: { cardNumber?: string; bankDetails?: string };
-  },
-  sessionMetadata: SessionMetadata,
-  existingSessionId?: string
+async function validateOrderInput(
+  input: { cryptoAmount: number; currency: string },
+  ctx: { getErrorMessage: (key: string, params?: Record<string, string | number>) => Promise<string> }
 ) {
-  logger.info('CREATE_ORDER_IN_SYSTEM_START', {
-    email: orderRequest.email,
-    currency: orderRequest.currency,
-    cryptoAmount: orderRequest.cryptoAmount,
-    uahAmount: orderRequest.uahAmount,
-    hasExistingSessionId: !!existingSessionId,
-    sessionIp: sessionMetadata.ip,
-  });
+  logger.debug('CHECKING_AMOUNT_LIMITS', { cryptoAmount: input.cryptoAmount, currency: input.currency });
+  const limitCheck = isAmountWithinLimits(input.cryptoAmount, input.currency as CryptoCurrency);
+  if (!limitCheck.isValid && limitCheck.localizationKey) {
+    logger.warn('AMOUNT_LIMIT_EXCEEDED', {
+      cryptoAmount: input.cryptoAmount,
+      currency: input.currency,
+      localizationKey: limitCheck.localizationKey,
+      paramsString: JSON.stringify(limitCheck.params),
+    });
+    throw createBadRequestError(
+      await ctx.getErrorMessage(limitCheck.localizationKey, limitCheck.params)
+    );
+  }
+  logger.debug('AMOUNT_LIMITS_PASSED', { cryptoAmount: input.cryptoAmount });
+}
 
-  // 🔥 ИСПРАВЛЕНИЕ: Auto-registration выполняется ДО аллокации кошелька
-  // Это обеспечивает регистрацию даже при недоступности кошельков
+/**
+ * Создает и устанавливает сессию пользователя с куки
+ */
+async function ensureUserSessionWithCookie(
+  orderRequest: { email: string; currency: string },
+  sessionMetadata: SessionMetadata,
+  ctx: { sessionId?: string; res: { setHeader: (name: string, value: string) => void } }
+) {
   const webUserManager = await UserManagerFactory.createForWeb();
   const autoRegService = new AutoRegistrationService(webUserManager);
   
-  logger.debug('ENSURING_USER_SESSION_BEFORE_ALLOCATION', {
+  logger.debug('ENSURING_USER_SESSION_FOR_COOKIE_SETUP', {
     email: orderRequest.email,
-    hasExistingSessionId: !!existingSessionId,
+    hasExistingSessionId: !!ctx.sessionId,
   });
   
   const userSession = await autoRegService.ensureUserWithSession(
     orderRequest.email,
     sessionMetadata,
-    existingSessionId
+    ctx.sessionId,
+    { generatePassword: true }
   );
 
-  logger.info('USER_SESSION_ENSURED', {
+  logger.info('USER_SESSION_ENSURED_FOR_COOKIE', {
     email: orderRequest.email,
     userId: userSession.user.id,
     isNewUser: userSession.isNewUser,
@@ -313,7 +320,89 @@ async function createOrderInSystem(
     sessionId: userSession.sessionId.substring(AUTH_CONSTANTS.LOG_TRUNCATE_START, AUTH_CONSTANTS.SESSION_ID_LOG_LENGTH) + '...',
   });
 
-  // ✅ ИСПОЛЬЗУЕМ готовую инфраструктуру WalletPoolManager
+  // Установка куки сразу после создания сессии
+  if (userSession.sessionId && (!ctx.sessionId || ctx.sessionId !== userSession.sessionId)) {
+    const { SessionCookieUtils } = await import('../../utils/session-cookie');
+    SessionCookieUtils.setSessionCookie(ctx.res, userSession.sessionId);
+    
+    logger.info('COOKIE_SET_AFTER_SESSION_CREATION', {
+      oldSessionId: ctx.sessionId?.substring(AUTH_CONSTANTS.LOG_TRUNCATE_START, AUTH_CONSTANTS.SESSION_ID_LOG_LENGTH) + '...' || 'none',
+      newSessionId: userSession.sessionId.substring(AUTH_CONSTANTS.LOG_TRUNCATE_START, AUTH_CONSTANTS.SESSION_ID_LOG_LENGTH) + '...',
+      isNewUser: userSession.isNewUser,
+    });
+  }
+
+  return userSession;
+}
+
+/**
+ * Обрабатывает неуспешные результаты wallet allocation
+ */
+async function handleFailedAllocation(
+  orderRequest: {
+    email: string;
+    cryptoAmount: number;
+    currency: (typeof CRYPTOCURRENCIES)[number];
+    uahAmount: number;
+    recipientData?: { cardNumber?: string; bankDetails?: string };
+  },
+  userSession: {
+    user: { id: string };
+    sessionId: string;
+    isNewUser: boolean;
+    authenticationMethod: string;
+  },
+  allocationResult: { success: false; error?: string; queuePosition?: number }
+) {
+  logger.warn('WALLET_ALLOCATION_FAILED', {
+    email: orderRequest.email,
+    currency: orderRequest.currency,
+    error: allocationResult.error,
+    queuePosition: allocationResult.queuePosition,
+  });
+
+  if (allocationResult.queuePosition) {
+    logger.info('PROCESSING_QUEUED_ORDER', {
+      email: orderRequest.email,
+      queuePosition: allocationResult.queuePosition,
+    });
+    return processQueuedOrder(orderRequest, allocationResult.queuePosition, userSession);
+  }
+
+  const errorMessage = allocationResult.error || 'Unknown error';
+  logger.error('CRITICAL_WALLET_ALLOCATION_ERROR', {
+    email: orderRequest.email,
+    currency: orderRequest.currency,
+    error: errorMessage,
+  });
+  ExchangeErrors.throw(
+    ExchangeErrors.walletAllocationFailed({
+      email: orderRequest.email,
+      currency: orderRequest.currency,
+      error: errorMessage
+    })
+  );
+}
+
+/**
+ * Обрабатывает результат wallet allocation
+ */
+async function handleWalletAllocation(
+  orderRequest: {
+    email: string;
+    cryptoAmount: number;
+    currency: (typeof CRYPTOCURRENCIES)[number];
+    uahAmount: number;
+    recipientData?: { cardNumber?: string; bankDetails?: string };
+  },
+  userSession: {
+    user: { id: string };
+    sessionId: string;
+    isNewUser: boolean;
+    authenticationMethod: string;
+  },
+  sessionMetadata: SessionMetadata
+) {
   logger.debug('ALLOCATING_WALLET_FOR_ORDER', { currency: orderRequest.currency });
   const allocationResult = await allocateWalletForOrder(orderRequest.currency as CryptoCurrency);
   
@@ -325,49 +414,16 @@ async function createOrderInSystem(
     error: allocationResult.error,
   });
 
-  // ✅ ОБРАБАТЫВАЕМ результат allocation (НЕ создаем дубликаты!)
   if (!allocationResult.success) {
-    logger.warn('WALLET_ALLOCATION_FAILED', {
-      email: orderRequest.email,
-      currency: orderRequest.currency,
-      error: allocationResult.error,
-      queuePosition: allocationResult.queuePosition,
-    });
-
-    // Заявка в очереди - используем ГОТОВЫЕ поля AllocationResult
-    if (allocationResult.queuePosition) {
-      logger.info('PROCESSING_QUEUED_ORDER', {
-        email: orderRequest.email,
-        queuePosition: allocationResult.queuePosition,
-      });
-      return processQueuedOrder(orderRequest, allocationResult.queuePosition, userSession);
-    }
-
-    // Другие ошибки allocation
-    const errorMessage = allocationResult.error || 'Unknown error';
-    logger.error('CRITICAL_WALLET_ALLOCATION_ERROR', {
-      email: orderRequest.email,
-      currency: orderRequest.currency,
-      error: errorMessage,
-    });
-    ExchangeErrors.throw(
-      ExchangeErrors.walletAllocationFailed({
-        email: orderRequest.email,
-        currency: orderRequest.currency,
-        error: errorMessage
-      })
+    return handleFailedAllocation(
+      orderRequest, 
+      userSession, 
+      allocationResult as { success: false; error?: string; queuePosition?: number }
     );
   }
 
-  // ✅ Успешная аллокация - продолжаем обычный flow
+  // Успешная allocation
   const depositAddress = allocationResult.address;
-  logger.debug('WALLET_ALLOCATION_SUCCESS', {
-    email: orderRequest.email,  
-    currency: orderRequest.currency,
-    depositAddress,
-    usedOldestOccupiedWallet: allocationResult.usedOldestOccupiedWallet,
-  });
-
   if (!depositAddress) {
     logger.error('WALLET_ALLOCATION_NO_ADDRESS', {
       email: orderRequest.email,
@@ -391,9 +447,59 @@ async function createOrderInSystem(
     orderRequest,
     depositAddress,
     userSession,
-    sessionMetadata, // 🔥 ДОБАВЛЕНО: для email service
+    sessionMetadata,
     usedOldestOccupiedWallet: allocationResult.usedOldestOccupiedWallet,
   });
+}
+
+/**
+ * Создает новую заявку в системе с обязательным session management
+ */
+async function createOrderInSystem(
+  orderRequest: {
+    email: string;
+    cryptoAmount: number;
+    currency: (typeof CRYPTOCURRENCIES)[number];
+    uahAmount: number;
+    recipientData?: { cardNumber?: string; bankDetails?: string };
+  },
+  sessionMetadata: SessionMetadata,
+  existingSessionId?: string
+) {
+  logger.info('CREATE_ORDER_IN_SYSTEM_START', {
+    email: orderRequest.email,
+    currency: orderRequest.currency,
+    cryptoAmount: orderRequest.cryptoAmount,
+    uahAmount: orderRequest.uahAmount,
+    hasExistingSessionId: !!existingSessionId,
+    sessionIp: sessionMetadata.ip,
+  });
+
+  // Auto-registration выполняется ДО аллокации кошелька
+  const webUserManager = await UserManagerFactory.createForWeb();
+  const autoRegService = new AutoRegistrationService(webUserManager);
+  
+  logger.debug('ENSURING_USER_SESSION_BEFORE_ALLOCATION', {
+    email: orderRequest.email,
+    hasExistingSessionId: !!existingSessionId,
+  });
+  
+  const userSession = await autoRegService.ensureUserWithSession(
+    orderRequest.email,
+    sessionMetadata,
+    existingSessionId,
+    { generatePassword: true }
+  );
+
+  logger.info('USER_SESSION_ENSURED', {
+    email: orderRequest.email,
+    userId: userSession.user.id,
+    isNewUser: userSession.isNewUser,
+    authMethod: userSession.authenticationMethod,
+    sessionId: userSession.sessionId.substring(AUTH_CONSTANTS.LOG_TRUNCATE_START, AUTH_CONSTANTS.SESSION_ID_LOG_LENGTH) + '...',
+  });
+
+  return handleWalletAllocation(orderRequest, userSession, sessionMetadata);
 }
 
 export const exchangeRouter = createTRPCRouter({
@@ -482,7 +588,7 @@ export const exchangeRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input, ctx }) => {
-      // 🔍 LOG: Начало создания заявки
+      // Начальное логирование
       logger.info('ORDER_CREATION_STARTED', {
         email: input.email,
         currency: input.currency,
@@ -495,90 +601,30 @@ export const exchangeRouter = createTRPCRouter({
       // Имитация задержки
       await new Promise(resolve => setTimeout(resolve, ORDER_CREATION_DELAY_MS));
 
-      // Валидация типа валюты
+      // Валидация валюты
       logger.debug('VALIDATING_CURRENCY', { currency: input.currency });
       await assertValidCurrency(input.currency, ctx);
       logger.debug('CURRENCY_VALIDATED', { currency: input.currency });
 
-      // Подготавливаем данные заявки с правильным типом
-      logger.debug('PREPARING_ORDER_REQUEST', { email: input.email });
+      // Подготовка данных
       const orderRequest = prepareOrderRequest({
         ...input,
         currency: input.currency as CryptoCurrency,
       });
-      logger.debug('ORDER_REQUEST_PREPARED', {
-        sanitizedEmail: orderRequest.email,
-        uahAmount: orderRequest.uahAmount,
-        cryptoAmount: orderRequest.cryptoAmount,
-      });
 
-      // Проверяем только бизнес-условия (лимиты, курсы)
-      // Input validation уже выполнена Zod schemas в input()
-      logger.debug('CHECKING_AMOUNT_LIMITS', { cryptoAmount: input.cryptoAmount, currency: input.currency });
-      const limitCheck = isAmountWithinLimits(input.cryptoAmount, input.currency as CryptoCurrency);
-      if (!limitCheck.isValid && limitCheck.localizationKey) {
-        logger.warn('AMOUNT_LIMIT_EXCEEDED', {
-          cryptoAmount: input.cryptoAmount,
-          currency: input.currency,
-          localizationKey: limitCheck.localizationKey,
-          paramsString: JSON.stringify(limitCheck.params),
-        });
-        throw createBadRequestError(
-          await ctx.getErrorMessage(limitCheck.localizationKey, limitCheck.params)
-        );
-      }
-      logger.debug('AMOUNT_LIMITS_PASSED', { cryptoAmount: input.cryptoAmount });
+      // Валидация входных данных
+      await validateOrderInput(input, ctx);
 
-      // ✅ Task 3.1: Подготовка session metadata для обязательной сессии
-      logger.debug('PREPARING_SESSION_METADATA', { sessionId: ctx.sessionId, ip: ctx.ip });
+      // Подготовка session metadata
       const sessionMetadata: SessionMetadata = {
         ip: ctx.ip || AUTH_CONSTANTS.FALLBACK_IP,
         userAgent: ctx.req.headers['user-agent'] || AUTH_CONSTANTS.FALLBACK_USER_AGENT,
       };
 
-      // ✅ ENHANCED Task 3.2: AC2.1A session management with existing sessionId
-      logger.info('CREATING_ORDER_IN_SYSTEM', {
-        email: orderRequest.email,
-        currency: orderRequest.currency,
-        existingSessionId: ctx.sessionId,
-      });
-      // 🚨 ИСПРАВЛЕНИЕ: Сначала получаем сессию для установки куки ДО wallet allocation
-      // Это обеспечивает установку куки даже при ошибках wallet pool
-      const webUserManager = await UserManagerFactory.createForWeb();
-      const autoRegService = new AutoRegistrationService(webUserManager);
-      
-      logger.debug('ENSURING_USER_SESSION_FOR_COOKIE_SETUP', {
-        email: orderRequest.email,
-        hasExistingSessionId: !!ctx.sessionId,
-      });
-      
-      const userSession = await autoRegService.ensureUserWithSession(
-        orderRequest.email,
-        sessionMetadata,
-        ctx.sessionId
-      );
+      // Создание сессии с куки
+      await ensureUserSessionWithCookie(orderRequest, sessionMetadata, ctx);
 
-      logger.info('USER_SESSION_ENSURED_FOR_COOKIE', {
-        email: orderRequest.email,
-        userId: userSession.user.id,
-        isNewUser: userSession.isNewUser,
-        authMethod: userSession.authenticationMethod,
-        sessionId: userSession.sessionId.substring(AUTH_CONSTANTS.LOG_TRUNCATE_START, AUTH_CONSTANTS.SESSION_ID_LOG_LENGTH) + '...',
-      });
-
-      // 🚨 УСТАНОВКА КУКИ СРАЗУ ПОСЛЕ СОЗДАНИЯ СЕССИИ
-      if (userSession.sessionId && (!ctx.sessionId || ctx.sessionId !== userSession.sessionId)) {
-        const { SessionCookieUtils } = await import('../../utils/session-cookie');
-        SessionCookieUtils.setSessionCookie(ctx.res, userSession.sessionId);
-        
-        logger.info('COOKIE_SET_AFTER_SESSION_CREATION', {
-          oldSessionId: ctx.sessionId?.substring(AUTH_CONSTANTS.LOG_TRUNCATE_START, AUTH_CONSTANTS.SESSION_ID_LOG_LENGTH) + '...' || 'none',
-          newSessionId: userSession.sessionId.substring(AUTH_CONSTANTS.LOG_TRUNCATE_START, AUTH_CONSTANTS.SESSION_ID_LOG_LENGTH) + '...',
-          isNewUser: userSession.isNewUser,
-        });
-      }
-
-      // Теперь пытаемся создать заказ
+      // Создание заказа
       const result = await createOrderInSystem(
         orderRequest,
         sessionMetadata,
@@ -602,7 +648,6 @@ export const exchangeRouter = createTRPCRouter({
         currency: input.currency,
         status: result.order.status,
         createdAt: result.order.createdAt,
-        // ✅ Task 3.1: Дополнительная информация о сессии
         sessionInfo: result.sessionInfo,
       };
     }),
