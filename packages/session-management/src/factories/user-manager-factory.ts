@@ -1,6 +1,6 @@
-import { SESSION_CONSTANTS, type ApplicationContext, type OrderStatus } from '@repo/constants';
-import { userManager as mockUserManager, orderManager as mockOrderManager } from '@repo/exchange-core';
-import type { OrderRepositoryInterface, Order, CreateOrderRequest } from '@repo/exchange-core';
+import { SESSION_CONSTANTS, type ApplicationContext } from '@repo/constants';
+import { userManager as mockUserManager } from '@repo/exchange-core';
+import type { OrderRepositoryInterface } from '@repo/exchange-core';
 import { createEnvironmentLogger } from '@repo/utils';
 
 import { MemorySessionAdapter } from '../adapters/memory-session-adapter';
@@ -235,14 +235,14 @@ export class UserManagerFactory {
     try {
       // Dynamic import для совместимости с Turbopack
       const ioredisModule = await import('ioredis');
-      
+
       // Проверяем что это реальный Redis класс, а не empty.js
       const Redis = ioredisModule.default || ioredisModule;
-      
+
       if (typeof Redis !== 'function') {
         throw new Error('Redis constructor not available (likely empty.js fallback)');
       }
-      
+
       const redis = new Redis(redisConfig.url, {
         maxRetriesPerRequest: redisConfig.maxRetries || SESSION_CONSTANTS.REDIS.MAX_RETRIES,
       });
@@ -251,11 +251,11 @@ export class UserManagerFactory {
       return new RedisSessionAdapter(redis, context);
     } catch (error) {
       // В случае проблем с Redis (например Turbopack empty.js) используем fallback
-      this.logger.warn('Failed to initialize Redis, using MemorySessionAdapter fallback', { 
+      this.logger.warn('Failed to initialize Redis, using MemorySessionAdapter fallback', {
         error: error instanceof Error ? error.message : String(error),
-        context: context 
+        context: context,
       });
-      
+
       // ✅ ИСПРАВЛЕНО: Полноценный MemorySessionAdapter вместо заглушек
       return new MemorySessionAdapter(context);
     }
@@ -294,23 +294,10 @@ export class UserManagerFactory {
     return await this.createForContext(SESSION_CONSTANTS.APPLICATION_CONTEXT.ADMIN);
   }
 
-  // ✅ НОВЫЙ метод для создания OrderManager через существующую архитектуру
+  // ✅ НОВЫЙ метод для создания OrderManager через PostgreSQL (production-ready)
   static async createOrderManager(): Promise<OrderRepositoryInterface> {
-    const environment = getEnvironment();
-    
-    switch (environment) {
-      case SESSION_CONSTANTS.ENVIRONMENTS.MOCK: {
-        // Use imported mock order manager from exchange-core
-        return new MockOrderManagerWrapper(mockOrderManager);
-      }
-
-      case SESSION_CONSTANTS.ENVIRONMENTS.DEVELOPMENT:
-      case SESSION_CONSTANTS.ENVIRONMENTS.PRODUCTION:
-        return await this.createPostgresOrderManager();
-
-      default:
-        throw new Error(`Unsupported environment for OrderManager: ${environment}`);
-    }
+    // Always use PostgresOrderAdapter for all environments (production-ready approach)
+    return await this.createPostgresOrderManager();
   }
 
   private static async createPostgresOrderManager(): Promise<OrderRepositoryInterface> {
@@ -332,7 +319,7 @@ export class UserManagerFactory {
 
     const prisma = getPrismaClient(prismaConfig);
     const { PostgresOrderAdapter } = await import('../adapters/postgres-order-adapter');
-    
+
     return new PostgresOrderAdapter(prisma);
   }
 }
@@ -384,101 +371,5 @@ class MockUserManagerWrapper implements UserManagerInterface {
 
   async extendSession(_sessionId: string, _ttl: number): Promise<void> {
     // Mock: ничего не делаем, TTL управляется browser cookie
-  }
-}
-
-// ✅ Wrapper для существующего mockOrderManager с async compatibility
-// ✅ Wrapper для order manager из exchange-core с правильными типами
-class MockOrderManagerWrapper implements OrderRepositoryInterface {
-  constructor(private mockManager: typeof mockOrderManager) {}
-
-  async create(orderData: CreateOrderRequest & { userId: string }): Promise<Order> {
-    // Convert userId-based request to email-based for compatibility with mock system
-    const mockData = {
-      ...orderData,
-      email: 'mock@email.com', // Fallback email for mock
-      status: 'pending' as Order['status'],
-      depositAddress: '',
-      updatedAt: new Date(),
-    };
-    return await this.mockManager.create(mockData);
-  }
-
-  async findById(id: string): Promise<Order | null> {
-    const result = await this.mockManager.findById(id);
-    return result || null;
-  }
-
-  async findByUserId(_userId: string): Promise<Order[]> {
-    // Mock implementation - return empty array since mock doesn't support userId lookup
-    return [];
-  }
-
-  async updateStatus(id: string, status: OrderStatus, _operatorId?: string): Promise<Order | null> {
-    const result = await this.mockManager.updateStatus(id, status);
-    return result || null;
-  }
-
-  async assignToOperator(orderId: string, _operatorId: string): Promise<Order | null> {
-    // Mock implementation - just return the order
-    const result = await this.mockManager.findById(orderId);
-    return result || null;
-  }
-
-  async findByOperator(_operatorId: string): Promise<Order[]> {
-    // Mock implementation - return empty array
-    return [];
-  }
-
-  async findByStatus(status: OrderStatus): Promise<Order[]> {
-    return await this.mockManager.findByStatus(status);
-  }
-
-  async findByCurrency(_currency: string): Promise<Order[]> {
-    // Mock implementation - return empty array
-    return [];
-  }
-
-  async findByDepositAddress(_address: string): Promise<Order | null> {
-    return null;
-  }
-
-  async getAll(): Promise<Order[]> {
-    return await this.mockManager.getAll();
-  }
-
-  async count(): Promise<number> {
-    return await this.mockManager.count();
-  }
-
-  async update(id: string, updates: Partial<Omit<Order, 'id' | 'createdAt'>>): Promise<Order | null> {
-    // Mock implementation - find order and apply updates
-    const existing = await this.mockManager.findById(id);
-    if (!existing) return null;
-    return { ...existing, ...updates, updatedAt: new Date() };
-  }
-
-  async findWithPagination(options: {
-    page: number;
-    limit: number;
-    status?: OrderStatus;
-    userId?: string;
-  }): Promise<{
-    data: Order[];
-    total: number;
-    page: number;
-    limit: number;
-  }> {
-    const { page, limit } = options;
-    const allOrders = await this.mockManager.getAll();
-    const start = (page - 1) * limit;
-    const end = start + limit;
-    
-    return {
-      data: allOrders.slice(start, end),
-      total: allOrders.length,
-      page,
-      limit,
-    };
   }
 }
