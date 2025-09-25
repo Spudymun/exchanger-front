@@ -69,6 +69,7 @@
         "orderProcessing": "Заявка уже обрабатывается или завершена",
         "orderAlreadyAssigned": "Заявка уже взята другим оператором",
         "orderNotAssigned": "Заявка не назначена этому оператору",
+        "duplicateActiveOrder": "У вас уже есть активная заявка. Завершите её перед созданием новой.",
         "bankNotFound": "Банк не найден: {bankId}",
         "parameterRequired": "Параметр {parameter} обязателен",
         "unknownAction": "Неизвестное действие",
