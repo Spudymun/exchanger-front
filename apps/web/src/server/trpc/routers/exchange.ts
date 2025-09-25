@@ -24,6 +24,7 @@ import {
   type CryptoCurrency,
   type Order,
   AutoRegistrationService,
+  type AutoRegistrationResult,
 } from '@repo/exchange-core';
 import { UserManagerFactory, type SessionMetadata } from '@repo/session-management';
 import {
@@ -464,34 +465,18 @@ async function createOrderInSystem(
     recipientData?: { cardNumber?: string; bankDetails?: string };
   },
   sessionMetadata: SessionMetadata,
-  existingSessionId?: string
+  userSession: AutoRegistrationResult
 ) {
   logger.info('CREATE_ORDER_IN_SYSTEM_START', {
     email: orderRequest.email,
     currency: orderRequest.currency,
     cryptoAmount: orderRequest.cryptoAmount,
     uahAmount: orderRequest.uahAmount,
-    hasExistingSessionId: !!existingSessionId,
+    hasExistingSessionId: !!userSession.sessionId,
     sessionIp: sessionMetadata.ip,
   });
 
-  // Auto-registration выполняется ДО аллокации кошелька
-  const webUserManager = await UserManagerFactory.createForWeb();
-  const autoRegService = new AutoRegistrationService(webUserManager);
-  
-  logger.debug('ENSURING_USER_SESSION_BEFORE_ALLOCATION', {
-    email: orderRequest.email,
-    hasExistingSessionId: !!existingSessionId,
-  });
-  
-  const userSession = await autoRegService.ensureUserWithSession(
-    orderRequest.email,
-    sessionMetadata,
-    existingSessionId,
-    { generatePassword: true }
-  );
-
-  logger.info('USER_SESSION_ENSURED', {
+  logger.info('USER_SESSION_ALREADY_ENSURED', {
     email: orderRequest.email,
     userId: userSession.user.id,
     isNewUser: userSession.isNewUser,
@@ -622,13 +607,13 @@ export const exchangeRouter = createTRPCRouter({
       };
 
       // Создание сессии с куки
-      await ensureUserSessionWithCookie(orderRequest, sessionMetadata, ctx);
+      const userSession = await ensureUserSessionWithCookie(orderRequest, sessionMetadata, ctx);
 
       // Создание заказа
       const result = await createOrderInSystem(
         orderRequest,
         sessionMetadata,
-        ctx.sessionId
+        userSession
       );
       
       logger.info('ORDER_CREATED_SUCCESSFULLY', {
