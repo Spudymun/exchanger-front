@@ -33,10 +33,23 @@ export class ImmediateAllocationStrategy implements WalletAllocationStrategy {
         };
       }
 
-      // Нет свободных кошельков - ошибка (больше не используем MOCK адреса)
+      // AC2.3: Умная очередь кошельков - используем самый старый занятый кошелек
+      const oldestOccupiedWallet = await this.walletRepository.findOldestOccupied(currency);
+      
+      if (oldestOccupiedWallet) {
+        // НЕМЕДЛЕННОЕ создание заявки с занятым кошельком (без изменения статуса кошелька)
+        return {
+          success: true,
+          address: oldestOccupiedWallet.address,
+          walletInfo: oldestOccupiedWallet,
+          usedOldestOccupiedWallet: true, // Флаг для индикации режима повторного использования
+        };
+      }
+
+      // Нет ни свободных, ни занятых кошельков - критическая ошибка
       return {
         success: false,
-        error: `No available wallets for currency ${currency}. Real wallet pool needed.`,
+        error: `No wallets available for currency ${currency}. Wallet pool is empty.`,
       };
     } catch (error) {
       return {

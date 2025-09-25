@@ -7,6 +7,7 @@ import {
   UI_NUMERIC_CONSTANTS,
   PERCENTAGE_CALCULATIONS,
   AUTH_CONSTANTS,
+  ORDER_STATUS_GROUPS,
 } from '@repo/constants';
 import { RateLimitedEmailService } from '@repo/email-service';
 
@@ -45,6 +46,7 @@ import { z } from 'zod';
 
 import { type Context } from '../context';
 import { createTRPCRouter, publicProcedure } from '../init';
+
 import { rateLimitMiddleware } from '../middleware/rateLimit';
 
 // ✅ Logger для централизованного логирования
@@ -629,6 +631,28 @@ export const exchangeRouter = createTRPCRouter({
         ip: ctx.ip,
         userAgent: ctx.req.headers['user-agent'],
       });
+
+      // Проверка на дублирование активных заказов (Level 3 Protection)
+      const sanitizedEmail = sanitizeEmail(input.email);
+      const existingUser = await userManager.findByEmail(sanitizedEmail);
+      if (existingUser) {
+        const userOrders = await orderManager.findByUserId(existingUser.id);
+        const activeOrders = userOrders.filter(order => 
+          (ORDER_STATUS_GROUPS.ACTIVE as readonly string[]).includes(order.status)
+        );
+        if (activeOrders.length > 0) {
+          logger.warn('DUPLICATE_ACTIVE_ORDER_PREVENTED', {
+            email: sanitizedEmail,
+            userId: existingUser.id,
+            activeOrdersCount: activeOrders.length,
+            sessionId: ctx.sessionId,
+            ip: ctx.ip,
+          });
+          throw createBadRequestError(
+            await ctx.getErrorMessage('server.errors.business.duplicateActiveOrder')
+          );
+        }
+      }
 
       // Имитация задержки
       await new Promise(resolve => setTimeout(resolve, ORDER_CREATION_DELAY_MS));

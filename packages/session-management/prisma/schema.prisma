@@ -94,6 +94,7 @@ model Order {
   @@index([assignedOperatorId])
   @@index([txHash])
   @@index([publicId])
+  @@index([userId, status], name: "idx_user_status_for_duplicate_check")
   @@map("orders")
 }
 

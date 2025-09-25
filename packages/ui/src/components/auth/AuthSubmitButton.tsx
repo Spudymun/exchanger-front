@@ -1,10 +1,44 @@
+"use client";
+
 import { SUBMIT_BUTTON_STYLES } from '@repo/constants';
 import { UseFormReturn } from '@repo/hooks';
 
-import React from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
+
+// ✅ ВЫНЕСЕННАЯ логика debounce для соблюдения лимита строк
+function useDebounceProtection(
+  debounceMs: number,
+  preventDoubleClick: boolean
+) {
+  const [isDebouncing, setIsDebouncing] = useState(false);
+  const lastClickRef = useRef<number>(0);
+
+  const checkDebounce = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
+    if (preventDoubleClick && isDebouncing) {
+      event.preventDefault();
+      return false;
+    }
+
+    const now = Date.now();
+    const timeSinceLastClick = now - lastClickRef.current;
+
+    if (timeSinceLastClick < debounceMs) {
+      event.preventDefault();
+      return false;
+    }
+
+    lastClickRef.current = now;
+    setIsDebouncing(true);
+    setTimeout(() => setIsDebouncing(false), debounceMs);
+    
+    return true;
+  }, [debounceMs, preventDoubleClick, isDebouncing]);
+
+  return { isDebouncing, checkDebounce };
+}
 
 /**
  * Расширенная переиспользуемая кнопка отправки для форм - УНИФИЦИРОВАННАЯ
@@ -27,6 +61,10 @@ export interface AuthSubmitButtonProps<
   submitStyle?: 'auth' | 'hero' | 'exchange'; // Стиль submit button
   children?: React.ReactNode;
   className?: string;
+
+  // ✅ НОВЫЕ props для Double Submit Protection
+  debounceMs?: number; // по умолчанию 300ms
+  preventDoubleClick?: boolean; // по умолчанию true
 }
 
 // КОНТЕКСТНО-зависимые стили согласно плану
@@ -84,6 +122,8 @@ export const AuthSubmitButton = <T extends Record<string, unknown> = Record<stri
   submitStyle = 'auth',
   children,
   className,
+  debounceMs = 300,
+  preventDoubleClick = true,
   // Исключаем non-DOM props из ...props
   fieldId: _fieldId,
   formType: _formType,
@@ -93,6 +133,30 @@ export const AuthSubmitButton = <T extends Record<string, unknown> = Record<stri
   formType?: string;
   [key: string]: unknown;
 }) => {
+  // ✅ Используем вынесенную логику debounce
+  const { isDebouncing, checkDebounce } = useDebounceProtection(debounceMs, preventDoubleClick);
+
+  // ✅ УПРОЩЕННЫЙ handleClick с правильным вызовом формы
+  const handleClick = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      if (!checkDebounce(event)) return;
+
+      // ✅ ГЛАВНОЕ ИСПРАВЛЕНИЕ: вызываем handleSubmit формы если есть
+      if (form?.handleSubmit) {
+        event.preventDefault(); // Предотвращаем стандартную отправку формы
+        form.handleSubmit(event);
+        return;
+      }
+
+      // Передаем клик дальше если нет формы
+      const originalOnClick = domProps.onClick as React.MouseEventHandler<HTMLButtonElement> | undefined;
+      if (originalOnClick) {
+        originalOnClick(event);
+      }
+    },
+    [checkDebounce, form, domProps]
+  );
+
   // СУЩЕСТВУЮЩАЯ валидация logic (сохранена для обратной совместимости)
   const getFormValidation = (): boolean => {
     if (form) {
@@ -102,7 +166,7 @@ export const AuthSubmitButton = <T extends Record<string, unknown> = Record<stri
   };
 
   const finalIsValid = getFormValidation();
-  const finalDisabled = isLoading || !finalIsValid;
+  const finalDisabled = isLoading || !finalIsValid || (preventDoubleClick && isDebouncing);
 
   return (
     <Button
@@ -111,6 +175,7 @@ export const AuthSubmitButton = <T extends Record<string, unknown> = Record<stri
       size={getFinalSize(submitStyle, size)}
       disabled={finalDisabled}
       className={cn(getSubmitStyles(submitStyle), className)}
+      onClick={handleClick}
       {...domProps}
     >
       {getButtonText(children, t, isLoading, submitStyle)}

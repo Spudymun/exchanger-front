@@ -35,6 +35,8 @@
     "db:reset:admin": "dotenv -e apps/web/.env -- npx prisma db execute --file packages/session-management/scripts/reset/admin-reset.sql --schema packages/session-management/prisma/schema.prisma",
     "db:reset:all": "dotenv -e apps/web/.env -- npx prisma db execute --file packages/session-management/scripts/reset/full-reset.sql --schema packages/session-management/prisma/schema.prisma",
     "db:seed:usdt": "dotenv -e apps/web/.env -- npx prisma db execute --file packages/session-management/scripts/seed-usdt-wallets.sql --schema packages/session-management/prisma/schema.prisma",
+    "db:clean:usdt": "dotenv -e apps/web/.env -- npx prisma db execute --file packages/session-management/scripts/clean-reseed-usdt.sql --schema packages/session-management/prisma/schema.prisma",
+    "db:reset:usdt": "dotenv -e apps/web/.env -- npx prisma db execute --file packages/session-management/scripts/reset-usdt-to-available.sql --schema packages/session-management/prisma/schema.prisma",
     "db:studio": "dotenv -e apps/web/.env -- npx prisma studio --schema packages/session-management/prisma/schema.prisma",
     "db:generate": "dotenv -e apps/web/.env -- npx prisma generate --schema packages/session-management/prisma/schema.prisma",
     "db:push": "dotenv -e apps/web/.env -- npx prisma db push --schema packages/session-management/prisma/schema.prisma",
