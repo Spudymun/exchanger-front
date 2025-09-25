@@ -6,6 +6,7 @@ export * from './validation';
 export * from './user';
 export * from './session';
 export * from './prisma-mapping';
+export * from './notification-config';
 
 // ExchangeGO specific exports
 export * from './exchange';

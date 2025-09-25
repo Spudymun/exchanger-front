@@ -7,10 +7,17 @@ export const useUIStoreEnhanced = () => {
   const notifications = useNotifications();
 
   // Методы с интеграцией notification системы
-  const setTheme = (theme: 'light' | 'dark' | 'system') => {
+  const setTheme = (theme: 'light' | 'dark' | 'system', options: { silent?: boolean } = {}) => {
     uiStore.setTheme(theme);
-    const themeNames = { light: 'light', dark: 'dark', system: 'system' };
-    notifications.success('Theme changed', `Switched to ${themeNames[theme]} theme`);
+
+    // Показываем уведомление только если не silent и добавляем категорию/источник
+    if (!options.silent) {
+      const themeNames = { light: 'light', dark: 'dark', system: 'system' };
+      notifications.success('Theme changed', `Switched to ${themeNames[theme]} theme`, {
+        category: 'ui',
+        source: 'theme',
+      });
+    }
   };
 
   const handleError = (error: string | Error, context?: string) => {

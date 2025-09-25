@@ -2,8 +2,30 @@ import { BUSINESS_LIMITS } from '@repo/constants';
 import { createStore, createTimerActions, type TimerState } from '@repo/utils';
 import { nanoid } from 'nanoid';
 
+import {
+  shouldShowNotification,
+  getDefaultCategory,
+  logFilteredNotification,
+} from '../utils/notification-filter';
+
 // Типы уведомлений
 export type NotificationType = 'success' | 'error' | 'warning' | 'info';
+
+// Новые типы для категоризации уведомлений
+export type NotificationCategory = 'ui' | 'business' | 'system' | 'error';
+export type NotificationSource =
+  | 'theme'
+  | 'exchange'
+  | 'auth'
+  | 'api'
+  | 'form'
+  | 'wallet'
+  | 'sidebar'
+  | 'modal'
+  | 'order'
+  | 'validation'
+  | 'network'
+  | 'server';
 
 export interface NotificationAction {
   label: string;
@@ -20,6 +42,9 @@ export interface Notification {
   action?: NotificationAction;
   persistent?: boolean; // не удаляется автоматически
   createdAt: number;
+  // Новые поля для категоризации уведомлений
+  category?: NotificationCategory; // Optional для обратной совместимости
+  source?: NotificationSource; // Optional для обратной совместимости
 }
 
 export interface NotificationStore extends TimerState {
@@ -34,22 +59,30 @@ export interface NotificationStore extends TimerState {
   success: (
     title: string,
     description?: string,
-    options?: Partial<Pick<Notification, 'duration' | 'action' | 'persistent'>>
+    options?: Partial<
+      Pick<Notification, 'duration' | 'action' | 'persistent' | 'category' | 'source'>
+    >
   ) => string;
   error: (
     title: string,
     description?: string,
-    options?: Partial<Pick<Notification, 'duration' | 'action' | 'persistent'>>
+    options?: Partial<
+      Pick<Notification, 'duration' | 'action' | 'persistent' | 'category' | 'source'>
+    >
   ) => string;
   warning: (
     title: string,
     description?: string,
-    options?: Partial<Pick<Notification, 'duration' | 'action' | 'persistent'>>
+    options?: Partial<
+      Pick<Notification, 'duration' | 'action' | 'persistent' | 'category' | 'source'>
+    >
   ) => string;
   info: (
     title: string,
     description?: string,
-    options?: Partial<Pick<Notification, 'duration' | 'action' | 'persistent'>>
+    options?: Partial<
+      Pick<Notification, 'duration' | 'action' | 'persistent' | 'category' | 'source'>
+    >
   ) => string;
 
   // Configuration
@@ -70,11 +103,21 @@ const createAddNotificationAction =
     get: () => NotificationStore
   ) =>
   (notification: Omit<Notification, 'id' | 'createdAt'>) => {
+    // Применяем категорию по умолчанию если не указана
+    const category = notification.category || getDefaultCategory(notification.type);
+
+    // Проверяем, разрешено ли показывать это уведомление
+    if (!shouldShowNotification(category, notification.source)) {
+      logFilteredNotification(category, notification.source, notification.title);
+      return 'filtered'; // Возвращаем специальный ID для отфильтрованных уведомлений
+    }
+
     const id = nanoid();
     const newNotification: Notification = {
       id,
       createdAt: Date.now(),
       duration: notification.duration ?? DEFAULT_DURATION,
+      category, // Устанавливаем категорию
       ...notification,
     };
 
@@ -135,7 +178,9 @@ const createConvenienceMethods = (get: () => NotificationStore) => ({
   success: (
     title: string,
     description?: string,
-    options?: Partial<Pick<Notification, 'duration' | 'action' | 'persistent'>>
+    options?: Partial<
+      Pick<Notification, 'duration' | 'action' | 'persistent' | 'category' | 'source'>
+    >
   ) => {
     return get().addNotification({
       type: 'success',
@@ -148,7 +193,9 @@ const createConvenienceMethods = (get: () => NotificationStore) => ({
   error: (
     title: string,
     description?: string,
-    options?: Partial<Pick<Notification, 'duration' | 'action' | 'persistent'>>
+    options?: Partial<
+      Pick<Notification, 'duration' | 'action' | 'persistent' | 'category' | 'source'>
+    >
   ) => {
     return get().addNotification({
       type: 'error',
@@ -162,7 +209,9 @@ const createConvenienceMethods = (get: () => NotificationStore) => ({
   warning: (
     title: string,
     description?: string,
-    options?: Partial<Pick<Notification, 'duration' | 'action' | 'persistent'>>
+    options?: Partial<
+      Pick<Notification, 'duration' | 'action' | 'persistent' | 'category' | 'source'>
+    >
   ) => {
     return get().addNotification({
       type: 'warning',
@@ -176,7 +225,9 @@ const createConvenienceMethods = (get: () => NotificationStore) => ({
   info: (
     title: string,
     description?: string,
-    options?: Partial<Pick<Notification, 'duration' | 'action' | 'persistent'>>
+    options?: Partial<
+      Pick<Notification, 'duration' | 'action' | 'persistent' | 'category' | 'source'>
+    >
   ) => {
     return get().addNotification({
       type: 'info',
@@ -207,3 +258,6 @@ export const selectNotifications = (state: NotificationStore) => state.notificat
 export const selectNotificationCount = (state: NotificationStore) => state.notifications.length;
 export const selectNotificationsByType = (type: NotificationType) => (state: NotificationStore) =>
   state.notifications.filter(n => n.type === type);
+export const selectNotificationsByCategory =
+  (category: NotificationCategory) => (state: NotificationStore) =>
+    state.notifications.filter(n => n.category === category);
