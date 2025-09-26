@@ -20,8 +20,8 @@ const withBundleAnalyzer = bundleAnalyzer({
   enabled: process.env.ANALYZE === 'true', // eslint-disable-line no-undef
 });
 
-// ✅ Empty module for blocking server-side dependencies in Turbopack
-const EMPTY_MODULE = './lib/empty.js';
+// ✅ Empty module for blocking server-side dependencies in Turbopack (unused after Turbopack disabled)
+// const EMPTY_MODULE = './lib/empty.js';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -33,19 +33,7 @@ const nextConfig = {
     FORCE_MOCK_MODE: process.env.FORCE_MOCK_MODE, // eslint-disable-line no-undef
   },
   
-  // ✅ Turbopack config for dev mode
-  turbopack: {
-    resolveAlias: {
-      // ✅ Block external server-only packages from client bundle in Turbopack  
-      'ioredis': EMPTY_MODULE,
-      '@repo/email-service': EMPTY_MODULE,
-      // ✅ Block Node.js built-ins
-      'dns': EMPTY_MODULE,
-      'net': EMPTY_MODULE, 
-      'tls': EMPTY_MODULE,
-      'fs': EMPTY_MODULE
-    }
-  },
+  // ✅ Turbopack отключен - используем только webpack конфигурацию
   
   // ✅ Webpack config for production builds (fallback when not using Turbopack)
   webpack: (config, { isServer }) => {

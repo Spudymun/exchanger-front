@@ -1,5 +1,4 @@
-// Server-only imports - защищены от client-side bundling
-import 'server-only';
+// Server-only imports - защищены от client-side bundling через next.config.js
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';

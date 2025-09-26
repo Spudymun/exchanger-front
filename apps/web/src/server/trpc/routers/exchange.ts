@@ -234,6 +234,13 @@ async function getWalletByAddress(depositAddress: string, orderEmail: string) {
  * Отправляет email с адресом криптовалюты
  */
 async function sendCryptoAddressEmail(order: Order, orderRequest: { email: string; currency: CryptoCurrency; cryptoAmount: number }, depositAddress: string, sessionMetadata: SessionMetadata) {
+  logger.info('Starting email sending process', {
+    orderId: order.id,
+    email: orderRequest.email,
+    currency: orderRequest.currency,
+    amount: orderRequest.cryptoAmount,
+  });
+  
   try {
     await RateLimitedEmailService.sendCryptoAddress(
       {

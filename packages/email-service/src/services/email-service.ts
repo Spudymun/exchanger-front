@@ -67,7 +67,7 @@ export class EmailService {
       const emailMessage = await EmailTemplateService.generateCryptoAddressEmail(data);
 
       // Get email provider and send
-      const provider = EmailServiceFactory.create(config);
+      const provider = config ? EmailServiceFactory.create(config) : EmailServiceFactory.createFromEnvironment();
       const result = await provider.send(emailMessage);
 
       // ✅ НОВОЕ: Записать результат для мониторинга
