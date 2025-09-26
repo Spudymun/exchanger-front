@@ -13,4 +13,7 @@ export interface AuthFormContextValue {
   onSubmit?: (data?: Record<string, unknown>) => void | Promise<void>;
   validationErrors?: Record<string, string>;
   defaultErrorStyling?: 'auto' | 'disabled' | 'forced';
+  
+  // ✅ Index signature для совместимости с BaseContextValue
+  [key: string]: unknown;
 }

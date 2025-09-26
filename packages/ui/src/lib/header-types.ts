@@ -13,6 +13,9 @@ export interface HeaderContextValue {
     signInShort?: string;
     signOutShort?: string;
   };
+  
+  // ✅ Index signature для совместимости с BaseContextValue
+  [key: string]: unknown;
 }
 
 export interface HeaderCompoundProps {

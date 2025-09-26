@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 
+import { createEnhancementFunction } from '../lib/form-enhancement';
 import { cn } from '../lib/utils';
 
 import AdaptiveContainer, {
@@ -46,6 +47,9 @@ export interface ExchangeFormContextValue {
   exchangeData?: Record<string, unknown>;
   onValueChange?: (field: string, value: unknown) => void;
   defaultErrorStyling?: 'auto' | 'disabled' | 'forced';
+  
+  // ✅ Index signature для совместимости с BaseContextValue
+  [key: string]: unknown;
 }
 
 const ExchangeFormContext = React.createContext<ExchangeFormContextValue | undefined>(undefined);
@@ -308,61 +312,8 @@ ExchangeCard.displayName = 'ExchangeForm.ExchangeCard';
 // ===== ENHANCED CHILD COMPONENTS =====
 // Using the same enhancement pattern as form.tsx
 
-function enhanceChildWithContext(
-  child: React.ReactNode,
-  context: ExchangeFormContextValue | undefined
-) {
-  if (!React.isValidElement(child)) {
-    return child;
-  }
-
-  const childProps = child.props as Record<string, unknown>;
-  const enhancedProps: Record<string, unknown> = {};
-
-  // Получаем имя компонента для проверки
-  const getComponentName = (type: unknown): string => {
-    if (typeof type === 'function') {
-      const func = type as { name?: string; displayName?: string };
-      return func.displayName || func.name || 'Unknown';
-    }
-    return String(type);
-  };
-
-  const componentName = getComponentName(child.type);
-  const isSubmitButton = componentName === 'AuthSubmitButton' || 
-                        componentName === 'SubmitButton' || 
-                        componentName.includes('SubmitButton');
-
-  // 🔍 ДЕБАГ ЛОГИ для отдельной функции enhanceChildWithContext
-  if (isSubmitButton) {
-    console.log('🔍 enhanceChildWithContext for SubmitButton:', {
-      componentName,
-      isSubmitButton,
-      'context?.isSubmitting': context?.isSubmitting,
-      'childProps.isLoading': childProps.isLoading
-    });
-  }
-
-  // ✅ ФИКС: Передаем isSubmitting как isLoading для submit кнопок
-  if (isSubmitButton && context?.isSubmitting !== undefined && !childProps.isLoading) {
-    enhancedProps.isLoading = context.isSubmitting;
-    console.log('🔍 enhanceChildWithContext SETTING isLoading =', context.isSubmitting);
-  }
-
-  // Enhance with exchange form context
-  if (context?.isSubmitting && !childProps.disabled) {
-    enhancedProps.disabled = true;
-  }
-
-  if (context?.onValueChange && !childProps.onChange && childProps.name) {
-    enhancedProps.onChange = (e: React.ChangeEvent<HTMLInputElement> | unknown) => {
-      const value = (e as React.ChangeEvent<HTMLInputElement>)?.target?.value ?? e;
-      context.onValueChange?.(childProps.name as string, value);
-    };
-  }
-
-  return React.cloneElement(child, enhancedProps);
-}
+// ✅ ИСПОЛЬЗУЕМ унифицированную функцию из form-enhancement.ts
+const enhanceChildWithContext = createEnhancementFunction('exchange');
 
 // ===== FIELD WRAPPER =====
 export interface FieldWrapperProps extends React.HTMLAttributes<HTMLDivElement> {

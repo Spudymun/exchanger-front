@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 
+import { createEnhancementFunction } from '../lib/form-enhancement';
 import { cn } from '../lib/utils';
 
 import { BaseErrorBoundary } from './error-boundaries';
@@ -21,6 +22,9 @@ export interface DataTableContextValue<T = Record<string, unknown>> {
   onSearch?: (term: string) => void;
   onSort?: (key: keyof T) => void;
   onPageChange?: (page: number) => void;
+  
+  // ✅ Index signature для совместимости с BaseContextValue
+  [key: string]: unknown;
 }
 
 const DataTableContext = React.createContext<DataTableContextValue | undefined>(undefined);
@@ -311,28 +315,8 @@ Pagination.displayName = 'DataTable.Pagination';
 // ===== ENHANCED CELL COMPONENTS =====
 // Using the same enhancement pattern as ExchangeForm
 
-function enhanceChildWithContext(
-  child: React.ReactNode,
-  context: DataTableContextValue | undefined
-) {
-  if (!React.isValidElement(child)) {
-    return child;
-  }
-
-  const childProps = child.props as Record<string, unknown>;
-  const enhancedProps: Record<string, unknown> = {};
-
-  // Enhance with data table context
-  if (context?.sortConfig && childProps.sortable && !childProps.onClick) {
-    enhancedProps.onClick = () => {
-      if (childProps.sortKey) {
-        context.onSort?.(childProps.sortKey as string);
-      }
-    };
-  }
-
-  return React.cloneElement(child, enhancedProps);
-}
+// ✅ PHASE 1: Заменяем duplicate enhanceChildWithContext на унифицированную систему
+const enhanceChildWithContext = createEnhancementFunction('data-table');
 
 // ===== CELL WRAPPER =====
 export interface CellWrapperProps extends React.HTMLAttributes<HTMLTableCellElement> {
