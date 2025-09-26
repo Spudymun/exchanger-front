@@ -5,7 +5,16 @@ import * as React from 'react';
 import type { AuthFormContextValue } from './auth-form-types';
 
 function shouldEnhanceProp(contextValue: unknown, childProp: unknown): boolean {
-  return contextValue !== undefined && !childProp;
+  // 🔍 ДЕБАГ ЛОГИ для отслеживания проблемы shouldEnhanceProp
+  const shouldEnhance = contextValue !== undefined && (childProp === undefined || childProp === null);
+  console.log('🔍 shouldEnhanceProp DEBUG:', {
+    contextValue,
+    childProp,
+    shouldEnhance,
+    'childProp === undefined': childProp === undefined,
+    'childProp === null': childProp === null
+  });
+  return shouldEnhance;
 }
 
 function addForm(
@@ -23,8 +32,16 @@ function addIsLoading(
   context: AuthFormContextValue | undefined,
   childProps: Record<string, unknown>
 ) {
+  // 🔍 ДЕБАГ ЛОГИ для отслеживания проблемы контекста
+  console.log('🔍 addIsLoading DEBUG:', {
+    'context?.isLoading': context?.isLoading,
+    'childProps.isLoading': childProps.isLoading,
+    'shouldEnhance': shouldEnhanceProp(context?.isLoading, childProps.isLoading),
+  });
+
   if (shouldEnhanceProp(context?.isLoading, childProps.isLoading)) {
     enhancedProps.isLoading = context?.isLoading;
+    console.log('🔍 Enhanced isLoading to:', context?.isLoading);
   }
 }
 
@@ -92,6 +109,15 @@ function addContextProps(
   addValidationErrors(enhancedProps, context, childProps);
 }
 
+function getComponentName(childType: unknown): string {
+  if (typeof childType === 'function') {
+    return (childType as { displayName?: string; name?: string }).displayName || 
+           (childType as { displayName?: string; name?: string }).name || 
+           'Unknown';
+  }
+  return String(childType);
+}
+
 export function enhanceChildWithContext(
   child: React.ReactNode,
   context: AuthFormContextValue | undefined
@@ -102,9 +128,25 @@ export function enhanceChildWithContext(
 
   const childProps = child.props as Record<string, unknown>;
   const enhancedProps: Record<string, unknown> = {};
+  const componentName = getComponentName(child.type);
+  const isAuthSubmitButton = componentName === 'AuthSubmitButton' || componentName.includes('AuthSubmitButton');
+
+  // 🔍 ДЕБАГ ЛОГИ для отслеживания проблемы в модалках
+  if (isAuthSubmitButton) {
+    console.log('🔍 enhanceChildWithContext for AuthSubmitButton:', {
+      componentName,
+      'context?.isLoading': context?.isLoading,
+      'childProps.isLoading': childProps.isLoading,
+      hasContext: !!context
+    });
+  }
 
   // Добавляем пропы контекста только к React компонентам, НЕ к DOM элементам
   addContextProps(enhancedProps, context, childProps);
+
+  if (isAuthSubmitButton) {
+    console.log('🔍 enhancedProps for AuthSubmitButton:', enhancedProps);
+  }
 
   return React.cloneElement(child, enhancedProps);
 }

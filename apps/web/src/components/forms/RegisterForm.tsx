@@ -67,7 +67,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
   return (
     <AuthForm
       form={form as unknown as UseFormReturn<Record<string, unknown>>}
-      isLoading={register.isPending}
+      isLoading={form.isSubmitting || register.isPending}
       t={tValidation}
       fieldId={AUTH_FIELD_IDS.REGISTER.EMAIL}
       formType="register"

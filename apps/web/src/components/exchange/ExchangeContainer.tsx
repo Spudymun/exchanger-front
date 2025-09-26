@@ -26,6 +26,9 @@ import { useRouter } from '../../i18n/navigation';
 
 import { ExchangeLayout } from './ExchangeLayout';
 
+// Время ожидания для завершения навигации к странице ордера
+const ORDER_NAVIGATION_DELAY_MS = 2500;
+
 // ⚡ Используем централизованную debounce константу из архитектуры
 // Заменяет хардкод DEBOUNCE_DELAY_MS = 50
 
@@ -213,7 +216,12 @@ function createOrderSubmission({
       };
 
       const orderData = await exchangeMutation.createOrder.mutateAsync(orderRequest);
+      
+      // ✅ ФИКС: Навигация с задержкой для показа спиннера во время перехода
       router.push(`/order/${orderData.orderId}`);
+      
+      // Ждем завершения навигации (для первого перехода может быть 2-3 сек)
+      await new Promise(resolve => setTimeout(resolve, ORDER_NAVIGATION_DELAY_MS));
     } catch (error) {
       // Handle localized error messages
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';

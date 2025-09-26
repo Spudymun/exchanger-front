@@ -9,3 +9,8 @@ export {
   type StatusConfig,
   type UseOrderStatusConfigResult,
 } from './useOrderStatusConfig';
+export {
+  useEnhancedButton,
+  type UseEnhancedButtonOptions,
+  type UseEnhancedButtonReturn,
+} from './useEnhancedButton';

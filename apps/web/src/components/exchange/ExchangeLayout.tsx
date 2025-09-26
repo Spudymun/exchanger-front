@@ -268,7 +268,14 @@ function AdditionalSections({
       {/* Submit Section - РЕАЛИЗОВАНО */}
       <section className="submit-section">
         <ExchangeForm.ActionArea variant="separated">
-          <SubmitButton form={form} context="exchange" t={t} variant="default" size="lg" />
+          <SubmitButton 
+            form={form} 
+            context="exchange" 
+            t={t} 
+            variant="default" 
+            size="lg"
+            // ✅ ФИКС: НЕ передаем isLoading напрямую - используем контекст ExchangeForm
+          />
         </ExchangeForm.ActionArea>
       </section>
     </div>

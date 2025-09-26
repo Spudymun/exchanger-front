@@ -24,7 +24,7 @@ export interface HeroExchangeFormData extends Record<string, unknown> {
 // ========================================================================================
 
 interface HeroExchangeFormProps {
-  onExchange?: (data: HeroExchangeFormData) => void;
+  onExchange?: (data: HeroExchangeFormData) => Promise<void>;
   className?: string;
 
   // === Adaptive Width Control Props ===
@@ -71,15 +71,18 @@ function ExchangeFormCards({
 interface ExchangeFormActionProps {
   isValid: boolean;
   t: ReturnType<typeof useTranslations>;
+  form: ReturnType<typeof useHeroExchangeForm>['form']; // ✅ ФИКС: добавляем form
 }
 
-function ExchangeFormAction({ isValid, t }: ExchangeFormActionProps) {
+function ExchangeFormAction({ isValid, t, form }: ExchangeFormActionProps) {
   return (
     <ExchangeForm.ActionArea variant="simple">
       <AuthSubmitButton
+        form={form} // ✅ ФИКС: передаем form для обработки submit
         submitStyle="hero" // ✅ Используем новый prop согласно плану
         size="lg"
         isValid={isValid} // ✅ Legacy compatibility
+        isLoading={form.isSubmitting} // ✅ ФИКС: используем form.isSubmitting для показа спинера
         t={t}
         variant="default"
       >
@@ -154,7 +157,7 @@ export function HeroExchangeForm(props: HeroExchangeFormProps) {
   };
 
   const cardsProps = { form, calculatedAmount, banks, constants, t };
-  const actionProps = { isValid, t };
+  const actionProps = { isValid, t, form }; // ✅ ФИКС: передаем form в actionProps
 
   return (
     <div

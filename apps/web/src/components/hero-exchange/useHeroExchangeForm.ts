@@ -35,7 +35,7 @@ function useAutoFillLogic(form: ReturnType<typeof useFormWithNextIntl<HeroExchan
 
 export function useHeroExchangeForm(
   t: (key: string) => string,
-  onExchange?: (data: HeroExchangeFormData) => void
+  onExchange?: (data: HeroExchangeFormData) => Promise<void>
 ) {
   const form = useFormWithNextIntl<HeroExchangeFormData>({
     initialValues: {
@@ -47,7 +47,12 @@ export function useHeroExchangeForm(
     },
     validationSchema: securityEnhancedHeroExchangeFormSchema,
     t,
-    onSubmit: async values => onExchange?.(values),
+    onSubmit: async values => {
+      // ✅ ФИКС: Вызываем асинхронный onExchange  
+      if (onExchange) {
+        await onExchange(values);
+      }
+    },
   });
 
   // Автозаполнение минимального количества

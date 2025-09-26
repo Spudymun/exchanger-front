@@ -109,6 +109,24 @@ export const SUBMIT_BUTTON_STYLES = {
   AUTH_STANDARD: 'submit-button',
 } as const;
 
+// ✅ НОВЫЕ константы для Enhanced Button Loading System
+export const LOADING_BUTTON_CONFIG = {
+  DEFAULT_SPINNER_SIZE: 'sm' as const,
+  DEFAULT_SPINNER_VARIANT: 'default' as const,
+  DEFAULT_POSITION: 'left' as const,
+  DEFAULT_PRESERVE_WIDTH: true,
+  DEFAULT_SHOW_SPINNER: true,
+} as const;
+
+export const LOADING_TEXT_KEYS = {
+  CREATING: 'creating',
+  UPDATING: 'updating',
+  DELETING: 'deleting',
+  SUBMITTING: 'submitting',
+  LOADING: 'loading',
+  PROCESSING: 'processing',
+} as const;
+
 export const BADGE_VARIANTS = {
   DEFAULT: 'default',
   SECONDARY: 'secondary',

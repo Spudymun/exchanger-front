@@ -6,6 +6,24 @@ import { useRouter } from '../i18n/navigation';
 
 import { HeroExchangeForm, type HeroExchangeFormData } from './HeroExchangeForm';
 
+// Время ожидания для завершения первой навигации
+const NAVIGATION_DELAY_MS = 2500;
+
+// ========================================================================================
+// Утилита для навигации с задержкой
+// ========================================================================================
+const navigateWithDelay = async (router: ReturnType<typeof useRouter>, url: string): Promise<void> => {
+  try {
+    // Запускаем навигацию
+    router.push(url);
+    
+    // Ждем достаточно времени для завершения первой навигации (2-3 сек)
+    await new Promise(resolve => setTimeout(resolve, NAVIGATION_DELAY_MS));
+  } catch {
+    // Игнорируем ошибки навигации - пользователь увидит результат в браузере
+  }
+};
+
 // ========================================================================================
 // HeroSection v2.0 - Полная перестройка с адаптивным контролем ширины
 // Интеграция AdaptiveContainer для математического управления размерами
@@ -16,7 +34,7 @@ export function HeroSection() {
   const t = useTranslations('HomePage');
   const router = useRouter();
 
-  const handleHeroExchange = (data: HeroExchangeFormData) => {
+  const handleHeroExchange = async (data: HeroExchangeFormData): Promise<void> => {
     // Handle hero exchange logic - navigate to exchange page with data
     if (data) {
       // Create URL with search parameters for exchange page
@@ -45,7 +63,7 @@ export function HeroSection() {
 
       // Navigate to exchange page with parameters
       const url = `/exchange?${searchParams.toString()}`;
-      router.push(url);
+      await navigateWithDelay(router, url);
     }
   };
 

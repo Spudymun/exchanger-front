@@ -46,6 +46,12 @@ interface UIState {
   globalLoading: boolean;
   setGlobalLoading: (loading: boolean) => void;
 
+  // ✅ НОВЫЕ поля для Enhanced Button Loading System
+  buttonLoadingStates: Record<string, boolean>;
+  setButtonLoading: (buttonId: string, loading: boolean) => void;
+  clearAllButtonLoading: () => void;
+  isAnyButtonLoading: () => boolean;
+
   // Theme
   theme: ThemeMode;
   setTheme: (theme: ThemeMode) => void;
@@ -104,6 +110,21 @@ export const useUIStore = createStore<UIState>('ui-store', (set, _get) => {
 
     // Loading
     globalLoading: false,
+
+    // ✅ НОВЫЕ поля для Enhanced Button Loading System
+    buttonLoadingStates: {},
+    setButtonLoading: (buttonId: string, loading: boolean) =>
+      set(state => ({
+        buttonLoadingStates: {
+          ...state.buttonLoadingStates,
+          [buttonId]: loading,
+        },
+      })),
+    clearAllButtonLoading: () => set({ buttonLoadingStates: {} }),
+    isAnyButtonLoading: () => {
+      const state = _get();
+      return Object.values(state.buttonLoadingStates).some(Boolean);
+    },
 
     // Theme - initialize from localStorage if available
     theme: THEME_MODES.SYSTEM, // Default value, will be updated by initialization

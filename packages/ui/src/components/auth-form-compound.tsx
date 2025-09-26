@@ -47,16 +47,26 @@ const AuthFormProvider = React.forwardRef<HTMLDivElement, AuthFormProviderProps>
     ref
   ) => {
     const contextValue = React.useMemo<AuthFormContextValue>(
-      () => ({
-        form,
-        isLoading,
-        t,
-        fieldId,
-        formType,
-        onSubmit,
-        validationErrors,
-        defaultErrorStyling,
-      }),
+      () => {
+        // 🔍 ДЕБАГ ЛОГИ для отслеживания проблемы в модалках
+        console.log('🔍 AuthFormProvider contextValue DEBUG:', {
+          isLoading,
+          form: !!form,
+          formType,
+          fieldId
+        });
+        
+        return {
+          form,
+          isLoading,
+          t,
+          fieldId,
+          formType,
+          onSubmit,
+          validationErrors,
+          defaultErrorStyling,
+        };
+      },
       [form, isLoading, t, fieldId, formType, onSubmit, validationErrors, defaultErrorStyling]
     );
 

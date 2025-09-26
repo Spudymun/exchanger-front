@@ -89,11 +89,67 @@ const ExchangeForm = React.forwardRef<HTMLFormElement, ExchangeFormProps>(
       [isSubmitting, isValid, exchangeData, onValueChange, defaultErrorStyling]
     );
 
+    // Enhance children with context - РЕКУРСИВНО как в AuthForm
+    const enhanceChildrenRecursively = (children: React.ReactNode): React.ReactNode => {
+      return React.Children.map(children, child => {
+        if (!React.isValidElement(child)) {
+          return child;
+        }
+
+        const childProps = child.props as Record<string, unknown>;
+        const enhancedProps: Record<string, unknown> = {};
+
+        // Получаем имя компонента для проверки (используем компактную версию)
+        const getComponentName = (type: unknown): string => {
+          if (typeof type === 'function') {
+            const func = type as { name?: string; displayName?: string };
+            return func.displayName || func.name || 'Unknown';
+          }
+          return String(type);
+        };
+
+        const componentName = getComponentName(child.type);
+        const isSubmitButton = componentName === 'AuthSubmitButton' || 
+                              componentName === 'SubmitButton' || 
+                              componentName.includes('SubmitButton');
+
+        // 🔍 ДЕБАГ ЛОГИ для ExchangeForm контекста
+        if (isSubmitButton) {
+          console.log('🔍 ExchangeForm enhancement for SubmitButton:', {
+            componentName,
+            isSubmitButton,
+            isSubmitting,
+            'childProps.isLoading': childProps.isLoading,
+            'isSubmitting !== undefined': isSubmitting !== undefined,
+            '!childProps.isLoading': !childProps.isLoading
+          });
+        }
+
+        // Передаем isSubmitting как isLoading только для submit кнопок
+        if (isSubmitButton && isSubmitting !== undefined && !childProps.isLoading) {
+          enhancedProps.isLoading = isSubmitting;
+          console.log('🔍 ExchangeForm SETTING isLoading =', isSubmitting);
+        }
+
+        // РЕКУРСИВНО обрабатываем детей
+        if (childProps.children) {
+          const enhancedGrandChildren = enhanceChildrenRecursively(childProps.children as React.ReactNode);
+          enhancedProps.children = enhancedGrandChildren;
+        }
+
+        return Object.keys(enhancedProps).length > 0 
+          ? React.cloneElement(child, enhancedProps)
+          : child;
+      });
+    };
+
+    const enhancedChildren = enhanceChildrenRecursively(children);
+
     return (
       <ExchangeErrorBoundary>
         <ExchangeFormContext.Provider value={contextValue}>
           <form ref={ref} className={cn('space-y-6', className)} {...props} noValidate>
-            {children}
+            {enhancedChildren}
           </form>
         </ExchangeFormContext.Provider>
       </ExchangeErrorBoundary>
@@ -263,6 +319,36 @@ function enhanceChildWithContext(
   const childProps = child.props as Record<string, unknown>;
   const enhancedProps: Record<string, unknown> = {};
 
+  // Получаем имя компонента для проверки
+  const getComponentName = (type: unknown): string => {
+    if (typeof type === 'function') {
+      const func = type as { name?: string; displayName?: string };
+      return func.displayName || func.name || 'Unknown';
+    }
+    return String(type);
+  };
+
+  const componentName = getComponentName(child.type);
+  const isSubmitButton = componentName === 'AuthSubmitButton' || 
+                        componentName === 'SubmitButton' || 
+                        componentName.includes('SubmitButton');
+
+  // 🔍 ДЕБАГ ЛОГИ для отдельной функции enhanceChildWithContext
+  if (isSubmitButton) {
+    console.log('🔍 enhanceChildWithContext for SubmitButton:', {
+      componentName,
+      isSubmitButton,
+      'context?.isSubmitting': context?.isSubmitting,
+      'childProps.isLoading': childProps.isLoading
+    });
+  }
+
+  // ✅ ФИКС: Передаем isSubmitting как isLoading для submit кнопок
+  if (isSubmitButton && context?.isSubmitting !== undefined && !childProps.isLoading) {
+    enhancedProps.isLoading = context.isSubmitting;
+    console.log('🔍 enhanceChildWithContext SETTING isLoading =', context.isSubmitting);
+  }
+
   // Enhance with exchange form context
   if (context?.isSubmitting && !childProps.disabled) {
     enhancedProps.disabled = true;
@@ -365,6 +451,8 @@ export interface ActionAreaProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const ActionArea = React.forwardRef<HTMLDivElement, ActionAreaProps>(
   ({ className, variant = 'simple', children, ...props }, ref) => {
+    const context = React.useContext(ExchangeFormContext);
+    
     const getVariantClass = (v: 'simple' | 'separated' | 'prominent') => {
       switch (v) {
         case 'simple':
@@ -378,9 +466,14 @@ const ActionArea = React.forwardRef<HTMLDivElement, ActionAreaProps>(
       }
     };
 
+    // ✅ ФИКС: Обрабатываем детей с контекстом
+    const enhancedChildren = React.Children.map(children, child => 
+      enhanceChildWithContext(child, context)
+    );
+
     return (
       <div ref={ref} className={cn(getVariantClass(variant), className)} {...props}>
-        {children}
+        {enhancedChildren}
       </div>
     );
   }

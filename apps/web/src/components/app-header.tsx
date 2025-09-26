@@ -32,8 +32,17 @@ const getNavLinkClass = (pathname: string | null, path: string, isExact = false)
 // Хук для управления аутентификацией в хедере
 function useAuthDialogs() {
   const { data: session } = trpc.auth.getSession.useQuery();
+  const utils = trpc.useUtils();
   const [isLoginDialogOpen, setIsLoginDialogOpen] = React.useState(false);
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = React.useState(false);
+
+  // ✅ ФИКС: Добавляем logout мутацию
+  const logout = trpc.auth.logout.useMutation({
+    onSuccess: () => {
+      // Инвалидируем сессию чтобы кнопка обновилась
+      utils.auth.getSession.invalidate();
+    }
+  });
 
   // ИСПРАВЛЕНИЕ: Мемоизируем все callback функции для предотвращения бесконечного цикла
   const handleOpenLogin = React.useCallback(() => {
@@ -54,6 +63,11 @@ function useAuthDialogs() {
     setIsRegisterDialogOpen(false);
   }, []);
 
+  // ✅ ФИКС: Добавляем обработчик logout
+  const handleSignOut = React.useCallback(() => {
+    logout.mutate();
+  }, [logout]);
+
   return {
     session,
     isLoginDialogOpen,
@@ -63,6 +77,7 @@ function useAuthDialogs() {
     handleCloseLogin,
     handleCloseRegister,
     handleAuthSuccess,
+    handleSignOut, // ✅ ФИКС: возвращаем handleSignOut
   };
 }
 
@@ -70,10 +85,12 @@ function useAuthDialogs() {
 function AppHeaderMobile({
   session,
   handleOpenLogin,
+  handleSignOut,
   t,
 }: {
   session: { user: { id: string; email: string; isVerified: boolean } | null } | undefined;
   handleOpenLogin: () => void;
+  handleSignOut: () => void;
   t: (key: string) => string;
 }) {
   return (
@@ -86,6 +103,7 @@ function AppHeaderMobile({
           <Header.UserMenu
             isAuthenticated={!!session?.user}
             onSignIn={handleOpenLogin}
+            onSignOut={handleSignOut}
             signInText={t('auth.signIn')}
             signOutText={t('auth.signOut')}
           />
@@ -102,11 +120,13 @@ function AppHeaderDesktop({
   t,
   session,
   handleOpenLogin,
+  handleSignOut,
 }: {
   pathname: string | null;
   t: (key: string) => string;
   session: { user: { id: string; email: string; isVerified: boolean } | null } | undefined;
   handleOpenLogin: () => void;
+  handleSignOut: () => void;
 }) {
   return (
     <div className="hidden sm:block">
@@ -121,6 +141,7 @@ function AppHeaderDesktop({
           <Header.UserMenu
             isAuthenticated={!!session?.user}
             onSignIn={handleOpenLogin}
+            onSignOut={handleSignOut}
             signInText={t('auth.signIn')}
             signOutText={t('auth.signOut')}
           />
@@ -144,6 +165,7 @@ export function AppHeader({ className }: AppHeaderProps) {
     handleCloseLogin,
     handleCloseRegister,
     handleAuthSuccess,
+    handleSignOut,
   } = useAuthDialogs();
 
   const handleLocaleChange = (newLocale: string) => {
@@ -153,12 +175,13 @@ export function AppHeader({ className }: AppHeaderProps) {
   return (
     <Header currentLocale={locale} onLocaleChange={handleLocaleChange} className={className}>
       <Header.Container>
-        <AppHeaderMobile session={session} handleOpenLogin={handleOpenLogin} t={t} />
+        <AppHeaderMobile session={session} handleOpenLogin={handleOpenLogin} handleSignOut={handleSignOut} t={t} />
         <AppHeaderDesktop
           pathname={pathname}
           t={t}
           session={session}
           handleOpenLogin={handleOpenLogin}
+          handleSignOut={handleSignOut}
         />
       </Header.Container>
 

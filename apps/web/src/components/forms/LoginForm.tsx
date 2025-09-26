@@ -61,10 +61,19 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
   const { login } = useAuthMutationAdapter();
   const t = useTranslations('Layout.forms.login');
 
+  // 🔍 ДЕБАГ ЛОГИ для отслеживания проблемы в модалках
+  console.log('🔍 LoginForm DEBUG:', {
+    'login.isPending': login.isPending,
+    'login.status': login.status,
+    'form.isSubmitting': form.isSubmitting,
+    'form.isValid': form.isValid,
+    'form.errors': Object.keys(form.errors)
+  });
+
   return (
     <AuthForm
       form={form as unknown as UseFormReturn<Record<string, unknown>>}
-      isLoading={login.isPending}
+      isLoading={form.isSubmitting || login.isPending}
       t={tValidation}
       fieldId={AUTH_FIELD_IDS.LOGIN.EMAIL}
       formType="login"
