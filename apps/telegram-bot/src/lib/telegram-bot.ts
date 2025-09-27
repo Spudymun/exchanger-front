@@ -121,17 +121,19 @@ function handleLoginCommand(update: TelegramUpdate): string {
   logger.debug('RETRIEVING_TELEGRAM_SESSION_FOR_LOGIN', { userId, username });
   const session = getSession(userId);
 
-  // Упрощенная проверка оператора (в production будет через API)
-  const isOperatorUsername = username?.includes('operator') || false;
+  // Проверка оператора по списку авторизованных ID
+  const authorizedOperators = process.env.AUTHORIZED_TELEGRAM_OPERATORS?.split(',') || [];
+  const isAuthorizedOperator = authorizedOperators.includes(String(userId));
   
   logger.debug('TELEGRAM_OPERATOR_VALIDATION', {
     userId,
     username,
-    isOperatorUsername,
-    validationRule: 'username_contains_operator',
+    isAuthorizedOperator,
+    authorizedOperators: authorizedOperators.length,
+    validationRule: 'authorized_telegram_operators',
   });
 
-  if (isOperatorUsername) {
+  if (isAuthorizedOperator) {
     session.isOperator = true;
     session.operatorId = username;
 
@@ -200,7 +202,7 @@ async function handleTakeOrderCommand(update: TelegramUpdate): Promise<string> {
 
   // Извлечение orderId из команды /takeorder ORDER_ID
   const messageText = update.message.text || '';
-  const orderIdMatch = messageText.match(/\/takeorder\s+(\w+)/);
+  const orderIdMatch = messageText.match(/\/takeorder\s+([\w-]+)/);
 
   logger.debug('TELEGRAM_TAKE_ORDER_PARSE_ID', {
     messageText,
@@ -321,8 +323,27 @@ async function handleCallbackQuery(update: TelegramUpdate): Promise<string | nul
 
   const session = getSession(callbackQuery.from.id);
 
+  // Проверка авторизации оператора при callback query
+  const authorizedOperators = process.env.AUTHORIZED_TELEGRAM_OPERATORS?.split(',') || [];
+  const isAuthorizedOperator = authorizedOperators.includes(String(callbackQuery.from.id));
+  
+  if (!isAuthorizedOperator) {
+    logger.warn('UNAUTHORIZED_CALLBACK_QUERY', {
+      userId: callbackQuery.from.id,
+      username: callbackQuery.from.username,
+      authorizedOperators: authorizedOperators.length,
+    });
+    return 'Только авторизованные операторы могут использовать эти кнопки';
+  }
+
+  // Устанавливаем статус оператора если еще не установлен
   if (!session.isOperator) {
-    return 'Только операторы могут использовать эти кнопки';
+    session.isOperator = true;
+    session.operatorId = callbackQuery.from.username || String(callbackQuery.from.id);
+    logger.info('OPERATOR_STATUS_SET_VIA_CALLBACK', {
+      userId: callbackQuery.from.id,
+      operatorId: session.operatorId,
+    });
   }
 
   logger.info('Processing callback query', {

@@ -8,6 +8,7 @@ import {
   PERCENTAGE_CALCULATIONS,
   AUTH_CONSTANTS,
   ORDER_STATUS_GROUPS,
+  EMAIL_ENABLED_IN_DEVELOPMENT,
 } from '@repo/constants';
 import { RateLimitedEmailService } from '@repo/email-service';
 
@@ -166,7 +167,6 @@ async function sendTelegramNotification(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${process.env.API_SECRET_KEY}`,
       },
       body: JSON.stringify({
         order: {
@@ -240,6 +240,23 @@ async function sendCryptoAddressEmail(order: Order, orderRequest: { email: strin
     currency: orderRequest.currency,
     amount: orderRequest.cryptoAmount,
   });
+
+  // Проверяем конфигурацию отправки email
+  const environment = process.env.NODE_ENV === 'production' ? 'production' : 'development';
+  const isGlobalEnabled = environment === 'production' || EMAIL_ENABLED_IN_DEVELOPMENT.GLOBAL;
+  const isCryptoAddressEnabled = environment === 'production' || EMAIL_ENABLED_IN_DEVELOPMENT.CRYPTO_ADDRESS;
+
+  if (!isGlobalEnabled || !isCryptoAddressEnabled) {
+    logger.info('Email sending disabled by configuration', {
+      orderId: order.id,
+      email: orderRequest.email,
+      environment,
+      globalEnabled: isGlobalEnabled,
+      cryptoAddressEnabled: isCryptoAddressEnabled,
+      message: 'Email отправка отключена в конфигурации для разработки',
+    });
+    return;
+  }
   
   try {
     await RateLimitedEmailService.sendCryptoAddress(

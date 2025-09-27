@@ -1,6 +1,65 @@
 version: '3.8'
 
 services:
+  # Main Web Application (Production)
+  web:
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile.prod
+    container_name: exchanger-web-prod
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379
+      - TELEGRAM_BOT_URL=http://telegram-bot:3003
+    ports:
+      - "3000:3000"
+    networks:
+      - exchanger-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Telegram Bot Application (Production, изолированный)
+  telegram-bot:
+    build:
+      context: .
+      dockerfile: ./apps/telegram-bot/Dockerfile.prod
+    container_name: exchanger-telegram-bot-prod
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - WEB_APP_URL=http://web:3000
+    # БЕЗ портов - полная изоляция в production
+    networks:
+      - exchanger-network
+    depends_on:
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/api/health"]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
   # PostgreSQL Database (Production)
   postgres:
     image: postgres:15-alpine

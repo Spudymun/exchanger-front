@@ -1,6 +1,55 @@
 version: '3.8'
 
 services:
+  # Main Web Application
+  web:
+    build: 
+      context: .
+      dockerfile: ./apps/web/Dockerfile
+    container_name: exchanger-web
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-exchanger_user}:${POSTGRES_PASSWORD:-exchanger_password}@postgres:5432/${POSTGRES_DB:-exchanger_db}
+      - REDIS_URL=redis://redis:6379
+      - TELEGRAM_BOT_URL=http://telegram-bot:3003
+    ports:
+      - "3000:3000"
+    networks:
+      - exchanger-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Telegram Bot Application (внутренний доступ только)
+  telegram-bot:
+    build:
+      context: .
+      dockerfile: ./apps/telegram-bot/Dockerfile
+    container_name: exchanger-telegram-bot
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - WEB_APP_URL=http://web:3000
+    # БЕЗ портов - доступен только изнутри Docker сети
+    networks:
+      - exchanger-network
+    depends_on:
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
