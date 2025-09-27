@@ -27,8 +27,27 @@ function getBaseUrl() {
   return '';
 }
 
+// Constants for query configuration
+const QUERY_STALE_TIME_MINUTES = 5;
+const QUERY_STALE_TIME_MS = QUERY_STALE_TIME_MINUTES * 60 * 1000;
+const QUERY_RETRY_ATTEMPTS = 1;
+
 export function TRPCProvider({ children }: { children: React.ReactNode }) {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            staleTime: QUERY_STALE_TIME_MS, // 5 минут - данные считаются свежими
+            refetchOnWindowFocus: false, // Не рефетчить при возврате на вкладку
+            retry: QUERY_RETRY_ATTEMPTS, // Одна попытка для повтора при ошибке
+          },
+          mutations: {
+            retry: QUERY_RETRY_ATTEMPTS, // Одна попытка для mutations
+          },
+        },
+      })
+  );
   const [trpcClient] = useState(() =>
     trpc.createClient({
       links: [

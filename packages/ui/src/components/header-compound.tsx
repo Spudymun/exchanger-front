@@ -302,6 +302,15 @@ const UserMenu = React.forwardRef<HTMLDivElement, UserMenuProps>(
     const context = useHeaderContext();
     const isAuth = propIsAuthenticated ?? context?.isAuthenticated ?? false;
 
+    // Solution 1: Official React/Next.js hydration mismatch fix
+    const [isClient, setIsClient] = React.useState(false);
+
+    React.useEffect(() => {
+      setIsClient(true);
+      // Debug logging (remove in production)
+      console.log('🔄 UserMenu: isClient=true, isAuth=', isAuth);
+    }, [isAuth]);
+
     const renderAuthenticatedButtons = () => (
       <Button variant="outline" size="compact" onClick={onSignOut ?? context?.onSignOut}>
         {signOutText}
@@ -322,9 +331,15 @@ const UserMenu = React.forwardRef<HTMLDivElement, UserMenuProps>(
       );
     }
 
+    // During SSR and initial hydration, show unauthenticated state
+    // After client-side mount, show actual authentication state
     return (
       <div ref={ref} className={cn(FLEX_ITEMS_CENTER_SPACE_X_2, className)} {...props}>
-        {isAuth ? renderAuthenticatedButtons() : renderUnauthenticatedButtons()}
+        {isClient
+          ? isAuth
+            ? renderAuthenticatedButtons()
+            : renderUnauthenticatedButtons()
+          : renderUnauthenticatedButtons()}
       </div>
     );
   }
