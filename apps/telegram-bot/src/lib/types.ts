@@ -35,6 +35,7 @@ export interface TelegramUpdate {
     data?: string;
     message?: {
       message_id: number;
+      text?: string;
       chat: {
         id: number;
       };
