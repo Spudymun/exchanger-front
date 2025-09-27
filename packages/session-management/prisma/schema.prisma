@@ -12,6 +12,7 @@ model User {
   email               String          @unique @db.VarChar(255)
   hashedPassword      String?         @map("hashed_password")
   isVerified          Boolean         @default(false) @map("is_verified")
+  telegramId          String?         @unique @map("telegram_id") @db.VarChar(20)
   createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   lastLoginAt         DateTime?       @map("last_login_at") @db.Timestamptz(6)
   auditLogsPerformed  OrderAuditLog[] @relation("AuditLogPerformer")
@@ -21,6 +22,7 @@ model User {
   appRoles            UserAppRole[]
 
   @@index([email])
+  @@index([telegramId])
   @@index([createdAt])
   @@map("users")
 }
