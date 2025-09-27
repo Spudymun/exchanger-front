@@ -209,6 +209,7 @@ function createOrderSubmission({
         cryptoAmount: Number(values.fromAmount),
         currency: values.fromCurrency as CryptoCurrency,
         uahAmount: submitTimeAmount,
+        tokenStandard: values.tokenStandard, // ✅ ИСПРАВЛЕНО: передача выбранной пользователем сети
         recipientData: {
           cardNumber: values.cardNumber,
           bankId: values.selectedBankId || getDefaultBank(), // ⚡ Centralized fallback

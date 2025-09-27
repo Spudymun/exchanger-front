@@ -19,7 +19,6 @@ export interface Order {
   cryptoAmount: number;
   currency: CryptoCurrency;
   uahAmount: number;
-  tokenStandard?: string;
   status: OrderStatus;
   depositAddress: string;
   recipientData?: RecipientData;
@@ -36,4 +35,14 @@ export interface Order {
   escalatedAt?: Date;
   escalatedBy?: string;
   // ✅ УДАЛЕНО: email - теперь через userId -> User relation
+  // ✅ УДАЛЕНО: tokenStandard - теперь через walletId -> Wallet relation
+}
+
+/**
+ * Extended Order interface for UI components
+ * Includes resolved data from relations (user email, wallet tokenStandard)
+ */
+export interface OrderWithUIData extends Order {
+  email?: string; // From User relation
+  tokenStandard?: string; // From Wallet relation
 }

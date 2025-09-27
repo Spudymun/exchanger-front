@@ -57,6 +57,7 @@ export const sharedRouter = createTRPCRouter({
         // Обычные поиски (как раньше)
         const basicMatches =
           order.id.toLowerCase().includes(searchTerm) ||
+          order.publicId.toLowerCase().includes(searchTerm) || // ✅ ДОБАВЛЕНО: поиск по публичному ID
           order.cryptoAmount.toString().includes(query) ||
           order.uahAmount.toString().includes(query);
 

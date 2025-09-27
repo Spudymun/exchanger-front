@@ -42,17 +42,20 @@ export class WalletPoolManager {
   /**
    * Выделить кошелек для заданной валюты
    * @implements AC3.1 - основной метод для интеграции
+   * ✅ ИСПРАВЛЕНО: поддержка tokenStandard для multi-network токенов
    */
-  async allocateWallet(currency: CryptoCurrency): Promise<AllocationResult> {
+  async allocateWallet(currency: CryptoCurrency, tokenStandard?: string): Promise<AllocationResult> {
     logger.info('WALLET_ALLOCATION_REQUEST', {
       currency,
+      tokenStandard,
       strategyType: this.allocationStrategy.constructor.name,
     });
 
-    const result = await this.allocationStrategy.allocateWallet(currency);
+    const result = await this.allocationStrategy.allocateWallet(currency, tokenStandard);
     
     logger.info('WALLET_ALLOCATION_RESULT', {
       currency,
+      tokenStandard,
       success: result.success,
       address: result.address,
       queuePosition: result.queuePosition,

@@ -8,6 +8,7 @@ export interface WalletInfo {
   assignedOrderId?: string;
   createdAt: Date;
   lastUsedAt?: Date;
+  tokenStandard?: string; // ✅ ИСПРАВЛЕНО: добавляем tokenStandard для получения сети из кошелька
 }
 
 /**
@@ -26,9 +27,11 @@ export interface WalletRepositoryInterface {
   markAsAvailable(address: string): Promise<WalletInfo | null>;
 
   // Поиск для FIFO очереди (задача 2.2)
-  findOldestAvailable(currency: CryptoCurrency): Promise<WalletInfo | null>;
+  // ✅ ИСПРАВЛЕНО: поддержка tokenStandard для multi-network токенов
+  findOldestAvailable(currency: CryptoCurrency, tokenStandard?: string): Promise<WalletInfo | null>;
   findByOrderId(orderId: string): Promise<WalletInfo | null>;
 
   // Поиск самого старого занятого кошелька для умной очереди
-  findOldestOccupied(currency: CryptoCurrency): Promise<WalletInfo | null>;
+  // ✅ ИСПРАВЛЕНО: поддержка tokenStandard для multi-network токенов
+  findOldestOccupied(currency: CryptoCurrency, tokenStandard?: string): Promise<WalletInfo | null>;
 }

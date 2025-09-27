@@ -24,8 +24,9 @@ export type WalletStatus = 'available' | 'occupied' | 'reserved' | 'maintenance'
 export interface WalletAllocationStrategy {
   /**
    * Выделить кошелек для заданной валюты
+   * ✅ ИСПРАВЛЕНО: поддержка tokenStandard для multi-network токенов (USDT)
    */
-  allocateWallet(currency: CryptoCurrency): Promise<AllocationResult>;
+  allocateWallet(currency: CryptoCurrency, tokenStandard?: string): Promise<AllocationResult>;
 
   /**
    * Освободить кошелек по адресу

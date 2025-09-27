@@ -209,6 +209,7 @@ body {
   background: var(--email-bg-card);
   font-family: var(--email-font-mono);
   font-size: 1rem;
+  font-weight: bold;
   border: 1px solid var(--email-border-muted);
   border-radius: var(--email-radius-sm);
   word-break: break-all;
@@ -300,5 +301,6 @@ body {
   .crypto-address-value {
     padding: var(--email-spacing-sm);
     font-size: 0.875rem;
+    font-weight: bold;
   }
 }

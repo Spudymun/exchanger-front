@@ -8,7 +8,7 @@
 
 // Экспорт Repository интерфейсов
 export type { OrderRepositoryInterface } from './order-repository-interface.js';
-export type { WalletRepositoryInterface } from './wallet-repository-interface.js';
+export type { WalletRepositoryInterface, WalletInfo } from './wallet-repository-interface.js';
 export type { QueueRepositoryInterface } from './queue-repository-interface.js';
 export type { AuditRepositoryInterface } from './audit-repository-interface.js';
 

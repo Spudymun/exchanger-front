@@ -10,6 +10,7 @@ import {
   ORDER_STATUS_GROUPS,
   EMAIL_ENABLED_IN_DEVELOPMENT,
 } from '@repo/constants';
+
 import { RateLimitedEmailService } from '@repo/email-service';
 
 // Constants for error messages
@@ -25,6 +26,7 @@ import {
   isAmountWithinLimits,
   type CryptoCurrency,
   type Order,
+  type WalletInfo,
   AutoRegistrationService,
   type AutoRegistrationResult,
 } from '@repo/exchange-core';
@@ -75,6 +77,7 @@ function prepareOrderRequest(input: {
   email: string;
   cryptoAmount: number;
   currency: (typeof CRYPTOCURRENCIES)[number];
+  tokenStandard?: string;
   recipientData?: { cardNumber?: string; bankDetails?: string };
 }) {
   const sanitizedEmail = sanitizeEmail(input.email);
@@ -84,6 +87,7 @@ function prepareOrderRequest(input: {
     email: sanitizedEmail,
     cryptoAmount: input.cryptoAmount,
     currency: input.currency,
+    tokenStandard: input.tokenStandard,
     uahAmount,
     recipientData: input.recipientData,
   };
@@ -91,11 +95,12 @@ function prepareOrderRequest(input: {
 
 /**
  * Выделяет кошелек через WalletPoolManager
+ * ✅ ИСПРАВЛЕНО: учитывает tokenStandard для multi-network токенов (USDT)
  */
-async function allocateWalletForOrder(currency: CryptoCurrency) {
+async function allocateWalletForOrder(currency: CryptoCurrency, tokenStandard?: string) {
   const { WalletPoolManagerFactory } = await import('@repo/exchange-core');
   const walletManager = await WalletPoolManagerFactory.create();
-  return walletManager.allocateWallet(currency);
+  return walletManager.allocateWallet(currency, tokenStandard);
 }
 
 /**
@@ -233,7 +238,14 @@ async function getWalletByAddress(depositAddress: string, orderEmail: string) {
 /**
  * Отправляет email с адресом криптовалюты
  */
-async function sendCryptoAddressEmail(order: Order, orderRequest: { email: string; currency: CryptoCurrency; cryptoAmount: number }, depositAddress: string, sessionMetadata: SessionMetadata) {
+async function sendCryptoAddressEmail(params: {
+  order: Order;
+  orderRequest: { email: string; currency: CryptoCurrency; cryptoAmount: number };
+  depositAddress: string;
+  sessionMetadata: SessionMetadata;
+  walletInfo?: WalletInfo;
+}) {
+  const { order, orderRequest, depositAddress, sessionMetadata, walletInfo } = params;
   logger.info('Starting email sending process', {
     orderId: order.id,
     email: orderRequest.email,
@@ -259,14 +271,24 @@ async function sendCryptoAddressEmail(order: Order, orderRequest: { email: strin
   }
   
   try {
+    // ✅ ИСПРАВЛЕНО: получаем tokenStandard только из кошелька
+    const effectiveTokenStandard = walletInfo?.tokenStandard || 'TRC-20'; // fallback на TRC-20 если не определено
+    
+    logger.info('Token standard resolution for email', {
+      orderId: order.publicId,
+      walletTokenStandard: walletInfo?.tokenStandard,
+      effectiveTokenStandard,
+    });
+
     await RateLimitedEmailService.sendCryptoAddress(
       {
-        orderId: order.id,
+        orderId: order.publicId, // ✅ ИСПРАВЛЕНО: используем публичный ID для внешних коммуникаций
         cryptoAddress: depositAddress,
         currency: orderRequest.currency,
         amount: orderRequest.cryptoAmount,
         expiresAt: new Date(Date.now() + ORDER_EXPIRATION_TIME_MS),
         userEmail: orderRequest.email,
+        tokenStandard: effectiveTokenStandard, // ✅ ИСПРАВЛЕНО: только из кошелька
       },
       sessionMetadata.ip
     );
@@ -324,7 +346,7 @@ async function processSuccessfulOrder(params: {
   });
 
   // Отправка email с адресом
-  await sendCryptoAddressEmail(order, orderRequest, depositAddress, sessionMetadata);
+  await sendCryptoAddressEmail({ order, orderRequest, depositAddress, sessionMetadata, walletInfo });
 
   // Отправка уведомления в Telegram
   await sendTelegramNotification(order, orderRequest, depositAddress, usedOldestOccupiedWallet);
@@ -468,6 +490,7 @@ async function handleWalletAllocation(
     currency: (typeof CRYPTOCURRENCIES)[number];
     uahAmount: number;
     recipientData?: { cardNumber?: string; bankDetails?: string };
+    tokenStandard?: string; // ✅ ИСПРАВЛЕНО: добавляем tokenStandard
   },
   userSession: {
     user: { id: string };
@@ -477,8 +500,8 @@ async function handleWalletAllocation(
   },
   sessionMetadata: SessionMetadata
 ) {
-  logger.debug('ALLOCATING_WALLET_FOR_ORDER', { currency: orderRequest.currency });
-  const allocationResult = await allocateWalletForOrder(orderRequest.currency as CryptoCurrency);
+  logger.debug('ALLOCATING_WALLET_FOR_ORDER', { currency: orderRequest.currency, tokenStandard: orderRequest.tokenStandard });
+  const allocationResult = await allocateWalletForOrder(orderRequest.currency as CryptoCurrency, orderRequest.tokenStandard);
   
   logger.debug('WALLET_ALLOCATION_COMPLETE', {
     success: allocationResult.success,
@@ -534,6 +557,7 @@ async function createOrderInSystem(
     email: string;
     cryptoAmount: number;
     currency: (typeof CRYPTOCURRENCIES)[number];
+    tokenStandard?: string;
     uahAmount: number;
     recipientData?: { cardNumber?: string; bankDetails?: string };
   },
@@ -755,13 +779,28 @@ export const exchangeRouter = createTRPCRouter({
       });
       const userEmail = user?.email || 'unknown@unknown.com';
 
+      // ✅ ИСПРАВЛЕНО: получаем tokenStandard через wallet связь
+      let tokenStandard: string | undefined;
+      if (order.depositAddress) {
+        try {
+          const walletInfo = await getWalletByAddress(order.depositAddress, userEmail);
+          tokenStandard = walletInfo.tokenStandard;
+        } catch (error) {
+          logger.warn('Failed to get wallet info for tokenStandard', {
+            orderId: order.publicId,
+            depositAddress: order.depositAddress,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+
       return {
         id: order.publicId, // ✅ ИЗМЕНЕНО: возвращаем publicId для frontend
         status: order.status,
         cryptoAmount: order.cryptoAmount,
         uahAmount: order.uahAmount,
         currency: order.currency,
-        tokenStandard: order.tokenStandard,
+        tokenStandard, // ✅ ИСПРАВЛЕНО: получаем из кошелька вместо заказа
         depositAddress: order.depositAddress,
         recipientData: order.recipientData,
         email: userEmail, // ✅ ПОЛУЧЕНО через связь userId → User

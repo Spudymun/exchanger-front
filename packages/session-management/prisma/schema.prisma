@@ -71,7 +71,6 @@ model Order {
   cryptoAmount       Decimal         @map("crypto_amount") @db.Decimal(36, 18)
   currency           String          @db.VarChar(10)
   uahAmount          Decimal         @map("uah_amount") @db.Decimal(12, 2)
-  tokenStandard      String?         @map("token_standard") @db.VarChar(20)
   status             OrderStatus     @default(PENDING)
   txHash             String?         @map("tx_hash") @db.VarChar(255)
   recipientData      Json?           @map("recipient_data")

@@ -12,6 +12,7 @@ import { BasePostgresAdapter } from './base-postgres-adapter';
 
 /**
  * Clean Prisma order object matching database schema after migration v3
+ * ✅ ИСПРАВЛЕНО: tokenStandard убран, теперь только в таблице wallets
  */
 interface PrismaOrder {
   id: string;
@@ -20,7 +21,6 @@ interface PrismaOrder {
   cryptoAmount: { toNumber(): number };
   currency: string;
   uahAmount: { toNumber(): number };
-  tokenStandard: string | null;
   status: PrismaOrderStatus;
   walletId?: string | null; // ✅ ВРЕМЕННО: сделано опциональным до обновления кэша TS
   txHash: string | null;
@@ -493,7 +493,6 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
       cryptoAmount: prismaOrder.cryptoAmount.toNumber(),
       currency: prismaOrder.currency as 'BTC' | 'ETH' | 'USDT' | 'LTC',
       uahAmount: prismaOrder.uahAmount.toNumber(),
-      tokenStandard: prismaOrder.tokenStandard || undefined,
       status: prismaOrder.status.toLowerCase() as OrderStatus, // Convert Prisma enum to frontend type
       depositAddress: prismaOrder.wallet?.address || '', // ✅ ИСПРАВЛЕНО: получаем адрес из wallet relation или пустая строка для null
       recipientData: (prismaOrder.recipientData as Record<string, unknown>) || undefined,

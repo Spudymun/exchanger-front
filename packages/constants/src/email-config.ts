@@ -40,7 +40,7 @@ export const EMAIL_SENDING_CONFIG = {
    */
   BY_TYPE: {
     [EMAIL_NOTIFICATION_TYPES.CRYPTO_ADDRESS]: {
-      development: false, // Отключено в разработке
+      development: true, // ✅ ВКЛЮЧЕНО для тестирования в разработке
       staging: true,
       production: true,
       description: 'Email с адресом для пополнения криптовалюты',

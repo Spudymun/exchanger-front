@@ -49,7 +49,7 @@ export const ordersRouter = createTRPCRouter({
 
       return {
         orders: result.items.map(order => ({
-          id: order.id,
+          id: order.publicId, // ✅ ИСПРАВЛЕНО: используем публичный ID для frontend
           status: order.status,
           cryptoAmount: order.cryptoAmount,
           uahAmount: order.uahAmount,
@@ -77,7 +77,7 @@ export const ordersRouter = createTRPCRouter({
       const order = await validateOrderAccess(input.orderId, user.email);
 
       return {
-        id: order.id,
+        id: order.publicId, // ✅ ИСПРАВЛЕНО: используем публичный ID для frontend
         status: order.status,
         cryptoAmount: order.cryptoAmount,
         uahAmount: order.uahAmount,

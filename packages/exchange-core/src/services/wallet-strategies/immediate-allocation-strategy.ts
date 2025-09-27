@@ -14,10 +14,10 @@ import type {
 export class ImmediateAllocationStrategy implements WalletAllocationStrategy {
   constructor(private walletRepository: WalletRepositoryInterface) {}
 
-  async allocateWallet(currency: CryptoCurrency): Promise<AllocationResult> {
+  async allocateWallet(currency: CryptoCurrency, tokenStandard?: string): Promise<AllocationResult> {
     try {
-      // Пытаемся найти свободный кошелек в базе данных (FIFO)
-      const availableWallet = await this.walletRepository.findOldestAvailable(currency);
+      // ✅ ИСПРАВЛЕНО: поиск с учетом tokenStandard для multi-network токенов
+      const availableWallet = await this.walletRepository.findOldestAvailable(currency, tokenStandard);
 
       if (availableWallet) {
         // Отмечаем кошелек как занятый
@@ -34,7 +34,7 @@ export class ImmediateAllocationStrategy implements WalletAllocationStrategy {
       }
 
       // AC2.3: Умная очередь кошельков - используем самый старый занятый кошелек
-      const oldestOccupiedWallet = await this.walletRepository.findOldestOccupied(currency);
+      const oldestOccupiedWallet = await this.walletRepository.findOldestOccupied(currency, tokenStandard);
       
       if (oldestOccupiedWallet) {
         // НЕМЕДЛЕННОЕ создание заявки с занятым кошельком (без изменения статуса кошелька)

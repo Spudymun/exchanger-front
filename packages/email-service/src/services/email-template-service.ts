@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import {
   CURRENCY_FULL_NAMES,
   NETWORK_NAMES,
+  TOKEN_STANDARD_DETAILS,
   COMPANY_INFO,
   TIMEZONE_CONSTANTS,
 } from '@repo/constants';
@@ -103,7 +104,9 @@ export class EmailTemplateService {
       cryptoAddress: data.cryptoAddress,
       currency: data.currency,
       currencyFullName: CURRENCY_FULL_NAMES[data.currency],
-      networkName: NETWORK_NAMES[data.currency],
+      networkName: data.tokenStandard 
+        ? `${TOKEN_STANDARD_DETAILS[data.tokenStandard as keyof typeof TOKEN_STANDARD_DETAILS]?.network} (${data.tokenStandard})`
+        : NETWORK_NAMES[data.currency], // ✅ ИСПРАВЛЕНО: показываем сеть с токен стандартом для мульти-сетевых токенов
       amount: data.amount.toString(),
       expiresAt: this.formatDate(data.expiresAt),
       userEmail: data.userEmail,

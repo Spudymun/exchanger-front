@@ -5,7 +5,7 @@
  */
 
 import { DEFAULT_TOKEN_STANDARDS } from '@repo/constants';
-import type { Order } from '@repo/exchange-core';
+import type { Order, OrderWithUIData } from '@repo/exchange-core';
 import type { StatusConfig } from '@repo/hooks';
 import {
   textStyles,
@@ -130,7 +130,7 @@ export function OrderCryptoInfo({
   userEmail, // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: email передается отдельно
   t,
 }: {
-  orderData: Order;
+  orderData: OrderWithUIData;
   userEmail?: string; // Опциональный для обратной совместимости
   t: ReturnType<typeof useTranslations>;
 }) {

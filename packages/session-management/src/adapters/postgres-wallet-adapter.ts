@@ -25,6 +25,7 @@ interface PrismaWallet {
   createdAt: Date;
   updatedAt: Date;
   disabledAt?: Date | null;
+  tokenStandard: string | null; // ✅ ИСПРАВЛЕНО: добавляем tokenStandard из схемы базы данных
 }
 
 /**
@@ -102,15 +103,27 @@ export class PostgresWalletAdapter
     }
   }
 
-  async findOldestAvailable(currency: CryptoCurrency): Promise<WalletInfo | null> {
+  async findOldestAvailable(currency: CryptoCurrency, tokenStandard?: string): Promise<WalletInfo | null> {
     this.validateRequired(currency, 'currency');
 
     try {
+      // ✅ ИСПРАВЛЕНО: поиск с учетом tokenStandard только для USDT
+      const whereClause: {
+        currency: string;
+        status: WalletStatus;
+        tokenStandard?: string;
+      } = {
+        currency,
+        status: WalletStatus.AVAILABLE,
+      };
+
+      // Добавляем фильтр по tokenStandard только для USDT
+      if (currency === 'USDT' && tokenStandard) {
+        whereClause.tokenStandard = tokenStandard;
+      }
+
       const wallet = await this.prismaClient.wallet.findFirst({
-        where: {
-          currency,
-          status: WalletStatus.AVAILABLE,
-        },
+        where: whereClause,
         orderBy: { lastUsedAt: 'asc' }, // FIFO: oldest used first
       });
 
@@ -187,7 +200,7 @@ export class PostgresWalletAdapter
     }
   }
 
-  async findOldestOccupied(currency: CryptoCurrency): Promise<WalletInfo | null> {
+  async findOldestOccupied(currency: CryptoCurrency, tokenStandard?: string): Promise<WalletInfo | null> {
     this.validateRequired(currency, 'currency');
     
     // Validate currency against supported cryptocurrencies
@@ -196,11 +209,23 @@ export class PostgresWalletAdapter
     }
 
     try {
+      // ✅ ИСПРАВЛЕНО: поиск с учетом tokenStandard только для USDT
+      const whereClause: {
+        currency: string;
+        status: WalletStatus;
+        tokenStandard?: string;
+      } = {
+        currency,
+        status: WalletStatus.ALLOCATED, // Только занятые кошельки
+      };
+
+      // Добавляем фильтр по tokenStandard только для USDT
+      if (currency === 'USDT' && tokenStandard) {
+        whereClause.tokenStandard = tokenStandard;
+      }
+
       const wallet = await this.prismaClient.wallet.findFirst({
-        where: {
-          currency,
-          status: WalletStatus.ALLOCATED, // Только занятые кошельки
-        },
+        where: whereClause,
         orderBy: { lastUsedAt: 'asc' }, // FIFO: самый старый занятый
       });
 
@@ -223,6 +248,7 @@ export class PostgresWalletAdapter
       createdAt: prismaWallet.createdAt,
       assignedOrderId: undefined, // Will be populated through orders relation when needed
       lastUsedAt: prismaWallet.lastUsedAt || undefined,
+      tokenStandard: prismaWallet.tokenStandard || undefined, // ✅ ИСПРАВЛЕНО: маппинг tokenStandard из базы данных
     };
   }
 }

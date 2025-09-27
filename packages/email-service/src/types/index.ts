@@ -46,6 +46,7 @@ export interface BaseCryptoEmailData {
   amount: number;
   expiresAt: Date;
   userEmail: string;
+  tokenStandard?: string; // ✅ ДОБАВЛЕНО: поддержка multi-network токенов для правильного отображения сети
 }
 
 /**
