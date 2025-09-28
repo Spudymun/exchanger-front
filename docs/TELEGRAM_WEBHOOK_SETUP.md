@@ -68,10 +68,16 @@ ngrok http 3003
 https://api.telegram.org/bot8080670068:AAG94FIreDoNJ_xc4aLFkxg0yKdSc-aV0cE/setWebhook?url=https://YOUR_NGROK_URL.ngrok-free.app/api/webhook
 ```
 
+### Пример:
+
+```
+https://api.telegram.org/bot8080670068:AAG94FIreDoNJ_xc4aLFkxg0yKdSc-aV0cE/setWebhook?url=https://YOUR_NGROK_URL.ngrok-free.app/api/webhook
+```
+
 #### Вариант B: Через PowerShell
 
 ```powershell
-Invoke-RestMethod -Uri "https://api.telegram.org/bot8080670068:AAG94FIreDoNJ_xc4aLFkxg0yKdSc-aV0cE/setWebhook?url=https://YOUR_NGROK_URL.ngrok-free.app/api/webhook" -Method Post
+Invoke-RestMethod -Uri "https://api.telegram.org/bot8080670068:AAG1LtOO0INbJFOXhj5--WHWRvImewP866E/setWebhook?url=https://853b1a14d4ba.ngrok-free.app/api/webhook" -Method Post
 ```
 
 #### Вариант C: Через curl
@@ -183,7 +189,7 @@ https://api.telegram.org/bot8080670068:AAG94FIreDoNJ_xc4aLFkxg0yKdSc-aV0cE/getWe
 
 ```bash
 # apps/telegram-bot/.env
-TELEGRAM_BOT_TOKEN=8080670068:AAG94FIreDoNJ_xc4aLFkxg0yKdSc-aV0cE
+TELEGRAM_BOT_TOKEN=8080670068:AAG1LtOO0INbJFOXhj5--WHWRvImewP866E
 TELEGRAM_BOT_USERNAME=exchangego_operators_bot
 AUTHORIZED_TELEGRAM_OPERATORS=621882329
 WEB_APP_URL=http://localhost:3000

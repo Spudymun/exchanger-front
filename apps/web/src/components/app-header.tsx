@@ -1,6 +1,6 @@
 'use client';
 
-import { APP_ROUTES } from '@repo/constants';
+import { APP_ROUTES, UI_REFRESH_INTERVALS } from '@repo/constants';
 import { Header } from '@repo/ui';
 
 import { useTranslations, useLocale } from 'next-intl';
@@ -31,7 +31,9 @@ const getNavLinkClass = (pathname: string | null, path: string, isExact = false)
 
 // Хук для управления аутентификацией в хедере
 function useAuthDialogs() {
-  const { data: session } = trpc.auth.getSession.useQuery();
+  const { data: session } = trpc.auth.getSession.useQuery(undefined, {
+    refetchInterval: UI_REFRESH_INTERVALS.SESSION_STATUS_REFRESH,
+  });
   const utils = trpc.useUtils();
   const [isLoginDialogOpen, setIsLoginDialogOpen] = React.useState(false);
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = React.useState(false);
@@ -41,7 +43,7 @@ function useAuthDialogs() {
     onSuccess: () => {
       // Инвалидируем сессию чтобы кнопка обновилась
       utils.auth.getSession.invalidate();
-    }
+    },
   });
 
   // ИСПРАВЛЕНИЕ: Мемоизируем все callback функции для предотвращения бесконечного цикла
@@ -175,7 +177,12 @@ export function AppHeader({ className }: AppHeaderProps) {
   return (
     <Header currentLocale={locale} onLocaleChange={handleLocaleChange} className={className}>
       <Header.Container>
-        <AppHeaderMobile session={session} handleOpenLogin={handleOpenLogin} handleSignOut={handleSignOut} t={t} />
+        <AppHeaderMobile
+          session={session}
+          handleOpenLogin={handleOpenLogin}
+          handleSignOut={handleSignOut}
+          t={t}
+        />
         <AppHeaderDesktop
           pathname={pathname}
           t={t}

@@ -38,6 +38,8 @@ export const UI_REFRESH_INTERVALS = {
   DASHBOARD_REFRESH: 60000,
   /** Интервал обновления курсов валют (10 секунд) */
   CURRENCY_RATES_REFRESH: 10000,
+  /** Интервал обновления статуса сессии пользователя (5 минут) */
+  SESSION_STATUS_REFRESH: 300000,
 } as const;
 
 /**
