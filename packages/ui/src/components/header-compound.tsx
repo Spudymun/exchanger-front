@@ -312,7 +312,7 @@ const UserMenu = React.forwardRef<HTMLDivElement, UserMenuProps>(
     }, [isAuth]);
 
     const renderAuthenticatedButtons = () => (
-      <Button variant="outline" size="compact" onClick={onSignOut ?? context?.onSignOut}>
+      <Button variant="default" size="compact" onClick={onSignOut ?? context?.onSignOut}>
         {signOutText}
       </Button>
     );
