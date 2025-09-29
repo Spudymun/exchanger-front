@@ -336,14 +336,23 @@ export class SmartPricingService {
     const clientRate = this.applyBusinessLogic(marketRate, config);
     const finalRate = Math.round(clientRate * RATE_CONSTANTS.FORMATTING.KOPECK_MULTIPLIER) / RATE_CONSTANTS.FORMATTING.KOPECK_MULTIPLIER;
 
-    // 📊 Логирование успешного получения курса
-    logger.info(`Rate fetched successfully for ${currency}`, {
-      source,
-      marketRate,
-      clientRate: finalRate,
-      spread: config.staticMargin,
-      competitiveBuffer: config.competitiveBuffer || RATE_CONSTANTS.COMPETITIVE.DEFAULT_BUFFER,
-    });
+    // 📊 Логирование получения курса только для API источников
+    if (source !== 'cache') {
+      logger.info(`Rate fetched successfully for ${currency}`, {
+        source,
+        marketRate,
+        clientRate: finalRate,
+        spread: config.staticMargin,
+        competitiveBuffer: config.competitiveBuffer || RATE_CONSTANTS.COMPETITIVE.DEFAULT_BUFFER,
+      });
+    } else {
+      // Для кеша используем verbose уровень, чтобы не дублировать с логом выше
+      logger.verbose(`Rate processed from cache for ${currency}`, {
+        source,
+        clientRate: finalRate,
+        spread: config.staticMargin,
+      });
+    }
 
     return {
       currency,

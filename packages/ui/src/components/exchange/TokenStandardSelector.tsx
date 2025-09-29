@@ -19,13 +19,18 @@ import {
 interface TokenStandardSelectorProps {
   form: UseFormReturn<Record<string, unknown>>;
   t: (key: string) => string;
+  /**
+   * ✅ ДОБАВЛЕНО: Возможность передать стандарды токенов извне (из API)
+   * Если не передано - используется fallback константы
+   */
+  tokenStandards?: string[];
 }
 
 /**
  * ✅ UNIFIED: Общий селектор token standard для форм обмена
  * Заменяет дублированные компоненты из SendingCard и ExchangeLayout
  */
-export function TokenStandardSelector({ form, t }: TokenStandardSelectorProps) {
+export function TokenStandardSelector({ form, t, tokenStandards }: TokenStandardSelectorProps) {
   const currency = form.values.fromCurrency as string;
   const isMultiNetwork = isMultiNetworkToken(currency);
 
@@ -33,7 +38,7 @@ export function TokenStandardSelector({ form, t }: TokenStandardSelectorProps) {
     return <div className="h-[76px]"></div>;
   }
 
-  const standards = getTokenStandards(currency);
+  const standards = tokenStandards || getTokenStandards(currency);
 
   return (
     <ExchangeForm.FieldWrapper>

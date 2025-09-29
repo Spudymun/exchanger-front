@@ -34,4 +34,9 @@ export interface WalletRepositoryInterface {
   // Поиск самого старого занятого кошелька для умной очереди
   // ✅ ИСПРАВЛЕНО: поддержка tokenStandard для multi-network токенов
   findOldestOccupied(currency: CryptoCurrency, tokenStandard?: string): Promise<WalletInfo | null>;
+
+  // ✅ ДОБАВЛЕНО: методы для получения уникальных валют и стандартов токенов из БД
+  // Для миграции CRYPTO_SELECTOR_DATABASE_MIGRATION_PLAN.md
+  findDistinctCurrencies(): Promise<CryptoCurrency[]>;
+  findDistinctTokenStandards(): Promise<string[]>;
 }

@@ -235,6 +235,43 @@ export class PostgresWalletAdapter
     }
   }
 
+  // ✅ ДОБАВЛЕНО: методы для получения уникальных валют и стандартов токенов из БД
+  // Для миграции CRYPTO_SELECTOR_DATABASE_MIGRATION_PLAN.md
+  async findDistinctCurrencies(): Promise<CryptoCurrency[]> {
+    try {
+      const result = await this.prismaClient.wallet.findMany({
+        select: { currency: true },
+        distinct: ['currency'],
+      });
+
+      return result
+        .map(item => item.currency as CryptoCurrency)
+        .filter(currency => CRYPTOCURRENCIES.includes(currency as typeof CRYPTOCURRENCIES[number]));
+    } catch (error) {
+      this.handleError(error, 'findDistinctCurrencies');
+    }
+  }
+
+  async findDistinctTokenStandards(): Promise<string[]> {
+    try {
+      const result = await this.prismaClient.wallet.findMany({
+        select: { tokenStandard: true },
+        distinct: ['tokenStandard'],
+        where: {
+          tokenStandard: { not: null },
+        },
+      });
+
+      return result
+        .map(item => item.tokenStandard)
+        .filter((standard): standard is string => 
+          standard !== null && standard !== undefined && standard.length > 0
+        );
+    } catch (error) {
+      this.handleError(error, 'findDistinctTokenStandards');
+    }
+  }
+
   /**
    * ✅ Map Prisma wallet object to domain WalletInfo
    * Follows existing mapping patterns from PostgresOrderAdapter

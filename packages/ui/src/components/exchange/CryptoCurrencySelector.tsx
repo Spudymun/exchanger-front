@@ -33,6 +33,18 @@ interface CryptoCurrencySelectorProps {
    * Для интеграции с business логикой (например, auto-fill минимальной суммы)
    */
   onCurrencyChange?: (currency: string) => void;
+  /**
+   * ✅ ДОБАВЛЕНО: Возможность передать валюты извне (из API)
+   * Если не передано - используется fallback константы
+   */
+  currencies?: Array<{
+    symbol: string;
+    name: string;
+    rate: number;
+    commission: number;
+    limits: unknown;
+    isActive: boolean;
+  }>;
 }
 
 /**
@@ -47,6 +59,7 @@ export function CryptoCurrencySelector({
   autoSetTokenStandard = false,
   placeholder,
   onCurrencyChange,
+  currencies,
 }: CryptoCurrencySelectorProps) {
   const handleCurrencyChange = (currency: string) => {
     form.setValue('fromCurrency', currency);
@@ -64,6 +77,9 @@ export function CryptoCurrencySelector({
     onCurrencyChange?.(currency);
   };
 
+  // ✅ ИСПОЛЬЗУЕМ API данные если переданы, иначе fallback на константы
+  const availableCurrencies = currencies?.map(c => c.symbol) || CRYPTOCURRENCIES;
+
   return (
     <ExchangeForm.FieldWrapper>
       <FormField name="fromCurrency" error={form.errors.fromCurrency}>
@@ -74,7 +90,7 @@ export function CryptoCurrencySelector({
               <SelectValue placeholder={placeholder || t('sending.selectCurrency')} />
             </SelectTrigger>
             <SelectContent>
-              {CRYPTOCURRENCIES.map(currency => (
+              {availableCurrencies.map(currency => (
                 <SelectItem key={currency} value={currency}>
                   {currency}
                 </SelectItem>

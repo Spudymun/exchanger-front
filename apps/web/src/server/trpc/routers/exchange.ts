@@ -18,7 +18,6 @@ const UNKNOWN_ERROR_MESSAGE = 'Unknown error' as const;
 import {
   calculateUahAmountAsync,
   calculateCryptoAmount,
-  getExchangeRate,
   getExchangeRateAsync,
   getCurrencyLimits,
   sanitizeEmail,
@@ -639,7 +638,9 @@ export const exchangeRouter = createTRPCRouter({
       });
 
       // Fallback на старую систему при критических ошибках
-      const rates = CRYPTOCURRENCIES.map(currency => getExchangeRate(currency));
+      const rates = await Promise.all(
+        CRYPTOCURRENCIES.map(async currency => await getExchangeRateAsync(currency))
+      );
 
       return {
         rates,
@@ -661,7 +662,7 @@ export const exchangeRouter = createTRPCRouter({
       await assertValidCurrency(input.currency, ctx);
       const currency = input.currency as CryptoCurrency;
       const limits = getCurrencyLimits(currency);
-      const rate = getExchangeRate(currency);
+      const rate = await getExchangeRateAsync(currency);
 
       return {
         currency: input.currency,
@@ -696,7 +697,7 @@ export const exchangeRouter = createTRPCRouter({
           };
         } else {
           const cryptoAmount = calculateCryptoAmount(amount, validCurrency);
-          const rate = getExchangeRate(validCurrency);
+          const rate = await getExchangeRateAsync(validCurrency);
 
           return {
             cryptoAmount,
@@ -901,20 +902,106 @@ export const exchangeRouter = createTRPCRouter({
       };
     }),
 
-  // Получить поддерживаемые криптовалюты
+  // Получить поддерживаемые криптовалюты из базы данных с fallback
   getSupportedCurrencies: publicProcedure.query(async () => {
-    return CRYPTOCURRENCIES.map(currency => {
-      const rate = getExchangeRate(currency);
-      const limits = getCurrencyLimits(currency);
+    try {
+      // ✅ MIGRATION: Получаем валюты из базы данных через WalletRepository
+      const { PostgresWalletAdapter, getPrismaClient } = await import('@repo/session-management');
+      const { SESSION_CONSTANTS } = await import('@repo/constants');
+      const databaseUrl = process.env.DATABASE_URL;
+      if (!databaseUrl) {
+        throw new Error('DATABASE_URL environment variable is required');
+      }
+      
+      const prisma = getPrismaClient({
+        url: databaseUrl,
+        maxConnections: SESSION_CONSTANTS.DATABASE.MAX_CONNECTIONS,
+      });
+      const walletRepository = new PostgresWalletAdapter(prisma);
+      
+      // Получаем уникальные валюты из базы данных
+      const dbCurrencies = await walletRepository.findDistinctCurrencies();
+      
+      // Если в БД есть валюты, используем их
+      if (dbCurrencies.length > 0) {
+        return await Promise.all(
+          dbCurrencies.map(async currency => {
+            const rate = await getExchangeRateAsync(currency);
+            const limits = getCurrencyLimits(currency);
 
-      return {
-        symbol: currency,
-        name: CURRENCY_NAMES[currency as keyof typeof CURRENCY_NAMES],
-        rate: rate.uahRate,
-        commission: rate.commission,
-        limits,
-        isActive: true,
-      };
-    });
+            return {
+              symbol: currency,
+              name: CURRENCY_NAMES[currency as keyof typeof CURRENCY_NAMES],
+              rate: rate.uahRate,
+              commission: rate.commission,
+              limits,
+              isActive: true,
+            };
+          })
+        );
+      }
+      
+      // ✅ FALLBACK: Если база данных пуста, используем константы
+      return await Promise.all(
+        CRYPTOCURRENCIES.map(async currency => {
+          const rate = await getExchangeRateAsync(currency);
+          const limits = getCurrencyLimits(currency);
+
+          return {
+            symbol: currency,
+            name: CURRENCY_NAMES[currency as keyof typeof CURRENCY_NAMES],
+            rate: rate.uahRate,
+            commission: rate.commission,
+            limits,
+            isActive: true,
+          };
+        })
+      );
+    } catch (error) {
+      // ✅ ERROR FALLBACK: При ошибке БД используем константы
+      console.warn('Database query failed, falling back to constants:', error);
+      return Promise.all(
+        CRYPTOCURRENCIES.map(async currency => {
+          const rate = await getExchangeRateAsync(currency);
+          const limits = getCurrencyLimits(currency);
+
+          return {
+            symbol: currency,
+            name: CURRENCY_NAMES[currency as keyof typeof CURRENCY_NAMES],
+            rate: rate.uahRate,
+            commission: rate.commission,
+            limits,
+            isActive: true,
+          };
+        })
+      );
+    }
+  }),
+
+  // ✅ ДОБАВЛЕНО: Получить поддерживаемые стандарты токенов из базы данных с fallback
+  getSupportedTokenStandards: publicProcedure.query(async () => {
+    try {
+      // ✅ MIGRATION: Получаем стандарты токенов из базы данных через WalletRepository
+      const { PostgresWalletAdapter, getPrismaClient } = await import('@repo/session-management');
+      const { SESSION_CONSTANTS } = await import('@repo/constants');
+      const databaseUrl = process.env.DATABASE_URL;
+      if (!databaseUrl) {
+        throw new Error('DATABASE_URL environment variable is required');
+      }
+      
+      const prisma = getPrismaClient({
+        url: databaseUrl,
+        maxConnections: SESSION_CONSTANTS.DATABASE.MAX_CONNECTIONS,
+      });
+      const walletRepository = new PostgresWalletAdapter(prisma);
+      
+      // Получаем уникальные стандарты токенов из базы данных
+      // ✅ РЕЗУЛЬТАТ: Возвращаем массив стандартов
+      return await walletRepository.findDistinctTokenStandards();
+    } catch (error) {
+      // ✅ ERROR FALLBACK: При ошибке БД возвращаем пустой массив (компонент использует fallback константы)
+      console.warn('Database query failed in getSupportedTokenStandards, falling back to empty array:', error);
+      return [];
+    }
   }),
 });

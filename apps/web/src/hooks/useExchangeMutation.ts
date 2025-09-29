@@ -93,6 +93,22 @@ export function useExchangeRates(): ReturnType<typeof trpc.exchange.getRates.use
   });
 }
 
+// Centralized hook for getting supported currencies from database
+export function useSupportedCurrencies(): ReturnType<typeof trpc.exchange.getSupportedCurrencies.useQuery> {
+  return trpc.exchange.getSupportedCurrencies.useQuery(undefined, {
+    staleTime: 300000, // 5 minutes cache
+    refetchOnWindowFocus: false,
+  });
+}
+
+// ✅ ДОБАВЛЕНО: Хук для получения сетей токенов из базы данных
+export function useSupportedTokenStandards(): ReturnType<typeof trpc.exchange.getSupportedTokenStandards.useQuery> {
+  return trpc.exchange.getSupportedTokenStandards.useQuery(undefined, {
+    staleTime: 300000, // 5 minutes cache
+    refetchOnWindowFocus: false,
+  });
+}
+
 // Centralized hook for getting order status
 export function useOrderStatus(
   orderId: string,

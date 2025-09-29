@@ -16,6 +16,8 @@ import {
 } from '@repo/ui';
 import React from 'react';
 
+import { useSupportedCurrencies, useSupportedTokenStandards } from '../../hooks/useExchangeMutation';
+
 import type { HeroExchangeFormData } from '../HeroExchangeForm';
 
 interface SendingCardProps {
@@ -25,6 +27,11 @@ interface SendingCardProps {
 }
 
 export function SendingCard({ form, t, minAmount }: SendingCardProps) {
+  // ✅ ИСПОЛЬЗУЕМ API для получения валют
+  const { data: supportedCurrencies } = useSupportedCurrencies();
+  // ✅ ИСПОЛЬЗУЕМ API для получения стандартов токенов
+  const { data: supportedTokenStandards } = useSupportedTokenStandards();
+
   // Функция для автоматического обновления суммы при смене валюты
   const handleCurrencyChange = (newCurrency: string) => {
     // Получаем минимальную сумму для новой валюты напрямую
@@ -46,10 +53,12 @@ export function SendingCard({ form, t, minAmount }: SendingCardProps) {
             t={t}
             autoSetTokenStandard={true}
             onCurrencyChange={handleCurrencyChange}
+            currencies={supportedCurrencies}
           />
           <TokenStandardSelector
             form={form as unknown as UseFormReturn<Record<string, unknown>>}
             t={t}
+            tokenStandards={supportedTokenStandards}
           />
         </div>
         <CryptoAmountInput

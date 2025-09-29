@@ -24,6 +24,8 @@ import {
 import { type SecurityEnhancedFullExchangeForm } from '@repo/utils';
 import React from 'react';
 
+import { useSupportedCurrencies, useSupportedTokenStandards } from '../../hooks/useExchangeMutation';
+
 interface ExchangeLayoutProps {
   form: UseFormReturn<SecurityEnhancedFullExchangeForm>;
   t: (key: string) => string;
@@ -41,6 +43,11 @@ function SendingSection({
   form: UseFormReturn<SecurityEnhancedFullExchangeForm>;
   t: (key: string) => string;
 }) {
+  // ✅ ИСПОЛЬЗУЕМ API для получения валют
+  const { data: supportedCurrencies } = useSupportedCurrencies();
+  // ✅ ИСПОЛЬЗУЕМ API для получения стандартов токенов
+  const { data: supportedTokenStandards } = useSupportedTokenStandards();
+
   // Функция для автоматического обновления суммы при смене валюты
   const handleCurrencyChange = (newCurrency: string) => {
     // Получаем минимальную сумму для новой валюты напрямую
@@ -63,12 +70,14 @@ function SendingSection({
           t={t}
           autoSetTokenStandard={false}
           onCurrencyChange={handleCurrencyChange}
+          currencies={supportedCurrencies}
         />
 
         {/* Token Standard */}
         <TokenStandardSelector
           form={form as unknown as UseFormReturn<Record<string, unknown>>}
           t={t}
+          tokenStandards={supportedTokenStandards}
         />
 
         {/* Amount Input */}
