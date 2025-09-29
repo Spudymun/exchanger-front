@@ -4,9 +4,25 @@ import {
   sortOrders,
   filterOrders,
   paginateOrders,
-  createOrderError,
+  createBadRequestError,
+  createInternalServerError,
   securityEnhancedOrderStatusSchema,
   securityEnhancedUserOrdersPaginationSchema,
+  /*
+  // ⚠️ LEGACY IMPORTS - ЗАКОММЕНТИРОВАНЫ ДЛЯ BACKWARD COMPATIBILITY
+  // 
+  // ВАЖНО: В данном файле legacy error creators не использовались напрямую
+  // User orders router использует только стандартные error creators
+  // 
+  // ПОТЕНЦИАЛЬНЫЕ LEGACY FUNCTIONS (если бы использовались):
+  // - createOrderError('not_found') → createNotFoundError('Order not found')
+  // - createOrderError('cannot_cancel') → createBadRequestError('Order cannot be cancelled')
+  // - createOrderError('update_failed') → createInternalServerError('Order update failed')
+  // - createUserError('not_found') → createNotFoundError('User not found')
+  //
+  // createOrderError,
+  // createUserError,
+  */
 } from '@repo/utils';
 
 import { z } from 'zod';
@@ -113,7 +129,7 @@ export const ordersRouter = createTRPCRouter({
           order.status as (typeof CANCELLABLE_ORDER_STATUSES)[number]
         )
       ) {
-        throw createOrderError('cannot_cancel');
+        throw createBadRequestError('Order cannot be cancelled in current status');
       }
 
       // Отменяем заявку
@@ -122,7 +138,7 @@ export const ordersRouter = createTRPCRouter({
       });
 
       if (!updatedOrder) {
-        throw createOrderError('update_failed');
+        throw createInternalServerError('Order update failed');
       }
 
       console.log(`❌ Заявка ${order.id} отменена пользователем ${user.email}`);

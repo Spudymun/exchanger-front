@@ -1,7 +1,25 @@
 // Security utilities for XSS protection and validation
 import { VALIDATION_LIMITS } from '@repo/constants';
 
-import { PASSWORD_MIN_LENGTH, PASSWORD_MAX_LENGTH, SEARCH_QUERY_MAX_LENGTH } from './schemas-basic';
+/*
+// ⚠️ LEGACY IMPORTS - ЗАКОММЕНТИРОВАНЫ ДЛЯ BACKWARD COMPATIBILITY
+// 
+// ВАЖНО: Ранее использовались re-export константы из schemas-basic.ts
+// Заменены на прямой импорт из @repo/constants для упрощения архитектуры
+// 
+// ОРИГИНАЛЬНЫЕ IMPORTS (удалены):
+// import {
+//   PASSWORD_MIN_LENGTH,
+//   PASSWORD_MAX_LENGTH,
+//   EMAIL_MAX_LENGTH,
+//   SEARCH_QUERY_MAX_LENGTH,
+// } from './schemas-basic';
+//
+// ПРИЧИНА ЗАМЕНЫ:
+// - Устранение цепочки re-exports
+// - Прямой импорт из источника truth (constants)
+// - Упрощение dependency graph
+*/
 
 /**
  * Advanced XSS detection patterns following OWASP guidelines
@@ -41,8 +59,8 @@ export function containsPotentialXSS(value: string): boolean {
  */
 export const SECURITY_VALIDATION_LIMITS = {
   // Authentication limits - imported from centralized constants
-  PASSWORD_MIN_LENGTH, // Используем импорт из schemas-basic
-  PASSWORD_MAX_LENGTH, // Используем импорт из schemas-basic
+  PASSWORD_MIN_LENGTH: VALIDATION_LIMITS.PASSWORD_MIN_LENGTH,
+  PASSWORD_MAX_LENGTH: VALIDATION_LIMITS.PASSWORD_MAX_LENGTH,
   EMAIL_MAX_LENGTH: VALIDATION_LIMITS.EMAIL_MAX_LENGTH, // was: 254, now 255 (unified)
   NAME_MAX_LENGTH: 100,
   NAME_MIN_LENGTH: 2,
@@ -58,7 +76,7 @@ export const SECURITY_VALIDATION_LIMITS = {
   // System limits
   TAG_MAX_LENGTH: 50,
   AUTH_CODE_MAX_LENGTH: 10,
-  SEARCH_QUERY_MAX_LENGTH, // Используем импорт из schemas-basic
+  SEARCH_QUERY_MAX_LENGTH: VALIDATION_LIMITS.SEARCH_QUERY_MAX_LENGTH,
 
   // Additional validation limits
   AMOUNT_MAX_LENGTH: 50,

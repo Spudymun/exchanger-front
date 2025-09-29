@@ -34,7 +34,7 @@ The session management system implements a **dual-layer storage architecture** w
 - **Redis Namespacing**: Context-specific session keys (session:web:_, session:admin:_)
 - **Type Safety**: Full TypeScript support with comprehensive interface definitions and ApplicationContext
 - **Performance Optimization**: Cached instances and optimized session validation with context awareness
-- **Backward Compatibility**: Legacy sessions continue to work during multi-app migration
+- **Modern Approach**: Session management with context isolation
 
 ## Architecture Pattern
 
@@ -268,7 +268,6 @@ SESSION_CONSTANTS.APPLICATION_CONTEXT = {
 
 - **Web Application**: `session:web:sessionId`
 - **Admin Panel**: `session:admin:sessionId`
-- **Legacy Support**: `session:sessionId` (backward compatibility)
 
 **Benefits**:
 
@@ -276,7 +275,7 @@ SESSION_CONSTANTS.APPLICATION_CONTEXT = {
 - ✅ **Security**: Admin panel sessions isolated from web application
 - ✅ **Scalability**: Each application can have different session policies
 - ✅ **Monitoring**: Easy to track sessions per application
-- ✅ **Backward Compatibility**: Legacy sessions continue to work
+- ✅ **Modern Approach**: Context-aware session management
 
 ### Multi-App Session Flow
 
@@ -417,7 +416,7 @@ interface SessionData {
 // Context-aware key patterns:
 // Web application: session:web:abc123xyz
 // Admin panel: session:admin:xyz789abc
-// Legacy (backward compatibility): session:abc123xyz
+// Legacy (backward compatibility): session:abc123xyz - ОБРАТНАЯ СОВМЕСТИМОСТЬ УДАЛЕНА!
 ```
 
 **Redis Key Examples**:
@@ -430,9 +429,6 @@ session:web:x7y8z9a1b2c3 → {"user_id": "uuid", "created_at": 1694598100, ...}
 # Admin panel sessions
 session:admin:m4n5o6p7q8r9 → {"user_id": "uuid", "created_at": 1694598200, ...}
 session:admin:s1t2u3v4w5x6 → {"user_id": "uuid", "created_at": 1694598300, ...}
-
-# Legacy sessions (backward compatibility)
-session:legacy123session → {"user_id": "uuid", "created_at": 1694598400, ...}
 ```
 
 **PostgreSQL Fallback**:
@@ -949,9 +945,9 @@ This session management system provides a **production-ready, multi-app scalable
 ✅ **Graceful Degradation**: Fallback mechanisms for development environments  
 ✅ **Factory Pattern**: Centralized context-aware user manager creation and configuration  
 ✅ **Redis Namespacing**: session:web:_ and session:admin:_ key isolation  
-✅ **Backward Compatibility**: Legacy sessions continue to work during migration
+✅ **Modern Migration**: Clean session architecture without legacy dependencies
 
-The architecture is designed for **zero-assumption multi-app operation** - all components support application context while maintaining backward compatibility. The system provides complete session lifecycle management from creation through validation to cleanup across multiple applications.
+The architecture is designed for **zero-assumption multi-app operation** - all components support application context with clean modern session management. The system provides complete session lifecycle management from creation through validation to cleanup across multiple applications.
 
 ---
 
@@ -1066,11 +1062,10 @@ UserManagerFactory.create(); // Uses default context
 3. **For Types**: Import `ApplicationContext` type from `@repo/constants`
 4. **For Sessions**: All session operations automatically use context namespacing
 5. **For Database**: Full Sessions table with applicationContext field available
-6. **For Migration**: Legacy sessions continue to work during transition period
+6. **Modern Approach**: Clean session management without transition complexity
 
 ### 🔮 **Future Architecture Considerations**
 
-- **Legacy Support**: Continue supporting legacy sessions during migration
 - **Enhanced Contexts**: Could add more application types beyond web/admin
 - **Session Analytics**: Context tracking enables per-app session analytics
 - **Performance**: Context caching could be enhanced for multi-tenancy

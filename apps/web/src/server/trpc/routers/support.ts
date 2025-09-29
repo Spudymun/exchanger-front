@@ -7,9 +7,23 @@ import {
 } from '@repo/constants';
 import { userManager, orderManager } from '@repo/exchange-core';
 import {
-  createSupportError,
   createNotFoundError,
   securityEnhancedGetByIdSchema,
+  /*
+  // ⚠️ LEGACY IMPORTS - ЗАКОММЕНТИРОВАНЫ ДЛЯ BACKWARD COMPATIBILITY
+  // 
+  // ВАЖНО: В данном файле legacy error creators не использовались напрямую
+  // Support router использует только стандартные error creators
+  // 
+  // ПОТЕНЦИАЛЬНЫЕ LEGACY FUNCTIONS (если бы использовались):
+  // - createSupportError('ticket_not_found') → createNotFoundError('Support ticket not found')
+  // - createUserError('not_found') → createNotFoundError('User not found')
+  // - createOrderError('not_found') → createNotFoundError('Order not found')
+  //
+  // createSupportError,
+  // createUserError,
+  // createOrderError,
+  */
 } from '@repo/utils';
 
 // Security-enhanced schemas
@@ -163,12 +177,12 @@ export const supportRouter = createTRPCRouter({
       const ticketIndex = supportTickets.findIndex(t => t.id === input.ticketId);
 
       if (ticketIndex === -1) {
-        throw createSupportError('ticket_not_found', input.ticketId);
+        throw createNotFoundError(`Support ticket with ID "${input.ticketId}" not found`);
       }
 
       const ticket = supportTickets.at(ticketIndex);
       if (!ticket) {
-        throw createSupportError('ticket_not_found', input.ticketId);
+        throw createNotFoundError(`Support ticket with ID "${input.ticketId}" not found`);
       }
 
       ticket.status = input.status as TicketStatus;

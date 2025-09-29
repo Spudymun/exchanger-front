@@ -2,7 +2,12 @@
 
 Централизованная ├── validation/ # Модульная система валидации
 ├── index.ts # Экспорты validation подсистемы
-├── zod-helpers.ts # Централизованные Zod utilities
+├── zod-hel// Для UI компонентов (boolean + error)
+const validation = validateWithZodSchemaUI(securityEnhancedLoginSchema, formData);
+
+```
+
+### 🏠 Store Factoryизованные Zod utilities
 ├── constants.ts # Константы валидациилиотека утилитарных функций для ExchangeGO монорепозитория. Предоставляет чистые функции без побочных эффектов для валидации, форматирования, вычислений и управления состоянием.
 
 ## 🎯 Обзор
@@ -21,41 +26,43 @@
 ### Структура файлов
 
 ```
+
 packages/utils/src/
-├── index.ts                    # Главные экспорты пакета
-├── calculations.ts             # Математические вычисления и комиссии
-├── formatting.ts               # Форматирование для UI отображения
-├── input-validation.ts         # Валидация пользовательского ввода
-├── next-intl-validation.ts     # Адаптер валидации для next-intl
-├── order-status.ts             # Утилиты для работы со статусами
-├── order-utils.ts              # Помощники для заказов
-├── scroll-utils.ts             # Управление скроллом
-├── store-factory.ts            # Фабрика Zustand stores
-├── trpc-errors.ts              # Генерация tRPC ошибок
-├── validation-helpers.ts       # Базовые валидационные утилиты
-├── validation-schemas.ts       # 🚨 LEGACY schemas (DEPRECATED)
-└── validation/                 # 🛡️ Security-Enhanced Validation System
-    ├── index.ts               # Экспорты validation подсистемы
-    ├── constants.ts           # Константы валидации
-    ├── core.ts                # Ядро валидационной системы
-    ├── field-validation.ts    # Валидация отдельных полей
-    ├── handlers.ts            # Обработчики validation events
-    ├── hooks.ts               # React hooks для validation
-    ├── schema-helpers.ts      # Помощники для Zod схем
-    ├── zod-helpers.ts         # Централизованные Zod utilities
-    ├── security-utils.ts      # 🛡️ XSS protection utilities
-    ├── single-field.ts        # Single-field validation
-    ├── validation-utils.ts    # Общие validation utilities
-    │
-    ├── 📁 Building Blocks (базовые схемы)
-    ├── schemas-basic.ts       # Базовые схемы (email, password, username)
-    ├── schemas-crypto.ts      # Криптовалютные схемы (currency, addresses)
-    │
-    └── 📁 Security-Enhanced Schemas (🛡️ XSS Protected)
-        ├── security-enhanced-schemas.ts    # Основные security-enhanced schemas
-        ├── security-enhanced-operator.ts   # Операторские schemas
-        └── security-enhanced-utils.ts      # Утилитарные security schemas
-```
+├── index.ts # Главные экспорты пакета
+├── calculations.ts # Математические вычисления и комиссии
+├── formatting.ts # Форматирование для UI отображения
+├── input-validation.ts # Валидация пользовательского ввода
+├── next-intl-validation.ts # Адаптер валидации для next-intl
+├── order-status.ts # Утилиты для работы со статусами
+├── order-utils.ts # Помощники для заказов
+├── scroll-utils.ts # Управление скроллом
+├── store-factory.ts # Фабрика Zustand stores
+├── trpc-errors.ts # Генерация tRPC ошибок
+├── validation-helpers.ts # Базовые валидационные утилиты
+├── validation-schemas.ts # 🚨 LEGACY schemas (DEPRECATED)
+└── validation/ # 🛡️ Security-Enhanced Validation System
+├── index.ts # Экспорты validation подсистемы
+├── constants.ts # Константы валидации
+├── core.ts # Ядро валидационной системы
+├── field-validation.ts # Валидация отдельных полей
+├── handlers.ts # Обработчики validation events
+├── hooks.ts # React hooks для validation
+├── schema-helpers.ts # Помощники для Zod схем
+├── zod-helpers.ts # Централизованные Zod utilities
+├── security-utils.ts # 🛡️ XSS protection utilities
+├── single-field.ts # Single-field validation
+├── validation-utils.ts # Общие validation utilities
+│
+├── 📁 Building Blocks (базовые схемы)
+├── schemas-basic.ts # Базовые схемы (email, password, username)
+├── schemas-crypto.ts # Криптовалютные схемы (currency, addresses)
+│
+└── 📁 Security-Enhanced Schemas (🛡️ XSS Protected)
+├── security-enhanced-schemas.ts # Основные security-enhanced schemas
+├── security-enhanced-operator.ts # Операторские schemas
+└── security-enhanced-utils.ts # Утилитарные security schemas
+
+````
 
 ### 🛡️ Security-Enhanced Architecture
 
@@ -88,7 +95,7 @@ import { calculateCommissionAmount, calculateNetAmount } from '@repo/utils';
 // Расчет комиссии
 const commission = calculateCommissionAmount(1000, 0.02); // 20
 const netAmount = calculateNetAmount(1000, 0.02); // 980
-```
+````
 
 ### 🎨 Formatting
 
@@ -137,7 +144,11 @@ const emailValidation = validateWithZodSchema(emailSchema, 'user@example.com');
 const validation = validateWithZodSchemaUI(securityEnhancedLoginSchema, formData);
 ```
 
-### ⚠️ Legacy Validation (DEPRECATED)
+<!--
+### ⚠️ Legacy Validation (DEPRECATED) - СЕКЦИЯ ЗАКОММЕНТИРОВАНА
+
+ВАЖНО: Эта секция содержала устаревшие примеры validation
+НЕ УДАЛЯТЬ полностью до проверки всех зависимостей
 
 ```typescript
 // ❌ НЕ используй legacy schemas без security enhancement
@@ -148,6 +159,7 @@ import {
 
 // 📚 Используй Security-Enhanced Validation Guide для миграции
 ```
+-->
 
 ### 🏪 Store Factory
 
@@ -222,21 +234,6 @@ const form = useFormWithNextIntl({
 });
 ```
 
-### Legacy Validation (DEPRECATED)
-
-```typescript
-// ❌ DEPRECATED: Legacy validation без XSS protection
-import { useNextIntlValidation } from '@repo/utils';
-
-const { validation, errors } = useNextIntlValidation({
-  schema: createOrderSchema, // DEPRECATED - уязвимо к XSS!
-  data: formData,
-  locale: 'ru',
-});
-
-// 📚 Миграция: используй securityEnhancedCreateExchangeOrderSchema
-```
-
 ## 🔧 Installation
 
 Пакет является частью монорепозитория:
@@ -289,20 +286,6 @@ const customSchema = z.object({
   currency: currencySchema, // Базовая схема ОК
   comment: createXSSProtectedString(0, 500), // XSS protected поле
 });
-```
-
-### ❌ Legacy Validation (DEPRECATED)
-
-```typescript
-// ❌ НЕ используй legacy schemas без security enhancement
-import { validateCryptoAmountWithZod, validateUahAmountWithZod } from '@repo/utils';
-
-// ❌ DEPRECATED methods - ищи security-enhanced альтернативы
-const cryptoResult = validateCryptoAmountWithZod('1.234'); // DEPRECATED
-const uahResult = validateUahAmountWithZod('1000.50'); // DEPRECATED
-
-// 📚 Миграция: используй securityEnhancedCreateExchangeOrderSchema
-// для полных form schemas с XSS protection
 ```
 
 ### Advanced Store Usage

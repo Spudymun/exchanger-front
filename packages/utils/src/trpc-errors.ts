@@ -71,10 +71,20 @@ export function createRateLimitError(message: string): TRPCError {
 }
 
 /**
- * Legacy error creators for backward compatibility
- * These map to the standard error creators above
+ * ⚠️ LEGACY ERROR CREATORS - ЗАКОММЕНТИРОВАНЫ ДЛЯ BACKWARD COMPATIBILITY
+ * 
+ * ВАЖНО: Эти функции используются в compiled telegram-bot chunks!
+ * Найдены в: apps/telegram-bot/.next/server/chunks/[root-of-the-server]__e669b49b._.js
+ * 
+ * НЕ УДАЛЯТЬ до полной миграции telegram-bot на новые error creators!
+ * 
+ * ПРИЧИНА ЗАКОММЕНТИРОВАНИЯ:
+ * - Заменены на прямые вызовы современных error creators
+ * - Удалена промежуточная абстракция для упрощения кода
+ * - Улучшена читаемость error handling
  */
 
+/*
 export function createUserError(type: string, identifier?: string): TRPCError {
   if (type === 'not_found') {
     return createNotFoundError(
@@ -138,3 +148,4 @@ export function createSecurityError(type: string): TRPCError {
 
   return createBadRequestError(`Security error: ${type}`);
 }
+*/

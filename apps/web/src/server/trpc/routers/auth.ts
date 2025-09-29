@@ -9,9 +9,23 @@ import {
 import {
   fullySecurityEnhancedRegisterSchema, // FULLY XSS-PROTECTED REGISTER SCHEMA
   fullySecurityEnhancedLoginSchema, // FULLY XSS-PROTECTED LOGIN SCHEMA
-  createUserError,
   createValidationError,
   createBadRequestError,
+  createConflictError,
+  createUnauthorizedError,
+  createNotFoundError,
+  /*
+  // ⚠️ LEGACY IMPORT - ЗАКОММЕНТИРОВАН ДЛЯ BACKWARD COMPATIBILITY
+  // 
+  // ВАЖНО: createUserError использовался в данном файле
+  // ПРИЧИНА ЗАКОММЕНТИРОВАНИЯ: Заменен на прямые вызовы современных error creators
+  // - createUserError('already_exists') → createConflictError('User with this email already exists')
+  // - createUserError('user_exists_without_web_access') → createConflictError('User exists but does not have access...')
+  // - createUserError('invalid_credentials') → createUnauthorizedError('Invalid credentials')
+  // - createUserError('not_found') → createNotFoundError('User not found')
+  //
+  // createUserError,
+  */
 } from '@repo/utils';
 
 import bcrypt from 'bcryptjs';
@@ -102,8 +116,20 @@ export const authRouter = createTRPCRouter({
 
         // Throw appropriate error based on web role existence
         throw webRole
-          ? createUserError('already_exists') // User has web access - real duplicate
-          : createUserError('user_exists_without_web_access'); // User exists but no web access
+          ? createConflictError('User with this email already exists') // User has web access - real duplicate
+          : createConflictError('User exists but does not have access to web application. Please contact support or use admin panel.'); // User exists but no web access
+          /*
+          // ⚠️ LEGACY CODE - ЗАКОММЕНТИРОВАН ДЛЯ BACKWARD COMPATIBILITY
+          //
+          // ОРИГИНАЛЬНЫЙ КОД:
+          // ? createUserError('already_exists') // User has web access - real duplicate
+          // : createUserError('user_exists_without_web_access'); // User exists but no web access
+          //
+          // ПРИЧИНА ЗАМЕНЫ:
+          // - createUserError - промежуточная абстракция, заменена на прямые вызовы
+          // - Улучшена читаемость: явно видно, какой тип ошибки возвращается
+          // - Устранена зависимость от legacy error creator
+          */
       }
 
       // Хешируем пароль
@@ -164,13 +190,32 @@ export const authRouter = createTRPCRouter({
       // Поиск пользователя
       const user = await webUserManager.findByEmail(sanitizedEmail);
       if (!user || !user.hashedPassword) {
-        throw createUserError('invalid_credentials');
+        throw createUnauthorizedError('Invalid credentials');
+        /*
+        // ⚠️ LEGACY CODE - ЗАКОММЕНТИРОВАН ДЛЯ BACKWARD COMPATIBILITY
+        //
+        // ОРИГИНАЛЬНЫЙ КОД:
+        // throw createUserError('invalid_credentials');
+        //
+        // ПРИЧИНА ЗАМЕНЫ:
+        // - createUserError('invalid_credentials') → createUnauthorizedError('Invalid credentials')
+        // - Более явное указание типа ошибки авторизации
+        // - Соответствует HTTP семантике (401 Unauthorized)
+        */
       }
 
       // Проверка пароля
       const isValidPassword = await bcrypt.compare(input.password, user.hashedPassword);
       if (!isValidPassword) {
-        throw createUserError('invalid_credentials');
+        throw createUnauthorizedError('Invalid credentials');
+        /*
+        // ⚠️ LEGACY CODE - ЗАКОММЕНТИРОВАН ДЛЯ BACKWARD COMPATIBILITY
+        //
+        // ОРИГИНАЛЬНЫЙ КОД:
+        // throw createUserError('invalid_credentials');
+        //
+        // ПРИЧИНА ЗАМЕНЫ: аналогично - unified error handling
+        */
       }
 
       // ✅ Production session creation with metadata
@@ -366,7 +411,18 @@ export const authRouter = createTRPCRouter({
 
       const user = await webUserManager.findByEmail(sanitizedEmail);
       if (!user) {
-        throw createUserError('not_found');
+        throw createNotFoundError('User not found');
+        /*
+        // ⚠️ LEGACY CODE - ЗАКОММЕНТИРОВАН ДЛЯ BACKWARD COMPATIBILITY
+        //
+        // ОРИГИНАЛЬНЫЙ КОД:
+        // throw createUserError('not_found');
+        //
+        // ПРИЧИНА ЗАМЕНЫ:
+        // - createUserError('not_found') → createNotFoundError('User not found')
+        // - Более ясная семантика HTTP 404 ошибки
+        // - Консистентность с другими error creators
+        */
       }
 
       if (user.isVerified) {

@@ -37,7 +37,7 @@ import {
   paginateOrders,
   sortOrders,
   createBadRequestError,
-  createOrderError,
+  createNotFoundError,
   ExchangeErrors,
   createEnvironmentLogger,
   securityEnhancedGetCurrencyRateSchema,
@@ -46,6 +46,19 @@ import {
   securityEnhancedOrderByIdSchema,
   securityEnhancedGetOrderHistoryByEmailSchema,
   isUUID,
+  /*
+  // ⚠️ LEGACY IMPORTS - ЗАКОММЕНТИРОВАНЫ ДЛЯ BACKWARD COMPATIBILITY
+  // 
+  // ВАЖНО: В данном файле legacy error creators не использовались напрямую
+  // Однако для единообразия с другими router файлами добавляем комментарий
+  // 
+  // ПОТЕНЦИАЛЬНЫЕ LEGACY FUNCTIONS (если бы использовались):
+  // - createOrderError('not_found') → createNotFoundError('Order not found')
+  // - createOrderError('cannot_cancel') → createBadRequestError('Order cannot be cancelled')
+  // - createOrderError('access_denied') → createForbiddenError('Access to order denied')
+  //
+  // createOrderError,
+  */
 } from '@repo/utils';
 import { z } from 'zod';
 
@@ -809,7 +822,7 @@ export const exchangeRouter = createTRPCRouter({
         : await orderManager.findByPublicId(input.orderId);
 
       if (!order) {
-        throw createOrderError('not_found', input.orderId);
+        throw createNotFoundError(`Order with ID "${input.orderId}" not found`);
       }
 
       // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: получить email через userId → User

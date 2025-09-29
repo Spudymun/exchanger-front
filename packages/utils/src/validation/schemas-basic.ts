@@ -10,6 +10,21 @@ import { z } from 'zod';
 // АРХИТЕКТУРНОЕ РЕШЕНИЕ: Используем централизованные константы из @repo/constants
 // Локальные константы удалены для устранения дублирования и единого источника истины
 
+/**
+ * ⚠️ LEGACY RE-EXPORTS - ЗАКОММЕНТИРОВАНЫ ДЛЯ BACKWARD COMPATIBILITY
+ * 
+ * ВАЖНО: Эти re-exports используются в compiled telegram-bot chunks!
+ * Найдены в: apps/telegram-bot/.next/server/chunks/[root-of-the-server]__e669b49b._.js:4276
+ * 
+ * НЕ УДАЛЯТЬ до полной миграции telegram-bot на прямые импорты из @repo/constants!
+ * 
+ * ПРИЧИНА ЗАКОММЕНТИРОВАНИЯ:
+ * - Устранение дублирования констант
+ * - Централизация всех validation limits в @repo/constants
+ * - Упрощение архитектуры импортов
+ */
+
+/*
 // Для обратной совместимости экспортируем константы из централизованного источника
 export const PASSWORD_MIN_LENGTH = VALIDATION_LIMITS.PASSWORD_MIN_LENGTH;
 export const PASSWORD_MAX_LENGTH = VALIDATION_LIMITS.PASSWORD_MAX_LENGTH;
@@ -17,11 +32,10 @@ export const USERNAME_MIN_LENGTH = VALIDATION_LIMITS.USERNAME_MIN_LENGTH;
 export const USERNAME_MAX_LENGTH = VALIDATION_LIMITS.USERNAME_MAX_LENGTH;
 export const SEARCH_QUERY_MAX_LENGTH = VALIDATION_LIMITS.SEARCH_QUERY_MAX_LENGTH;
 
-/**
- * АРХИТЕКТУРНОЕ РЕШЕНИЕ: Regex паттерны перенесены в @repo/constants
- * Для обратной совместимости экспортируем PATTERNS как алиас
- */
+// АРХИТЕКТУРНОЕ РЕШЕНИЕ: Regex паттерны перенесены в @repo/constants
+// Для обратной совместимости экспортируем PATTERNS как алиас
 export const PATTERNS = VALIDATION_PATTERNS;
+*/
 
 // === БАЗОВЫЕ ТИПЫ ===
 export const idSchema = z.string().min(1);

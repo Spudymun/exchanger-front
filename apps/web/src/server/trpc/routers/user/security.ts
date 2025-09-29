@@ -12,10 +12,22 @@ import {
   generateVerificationCode,
 } from '@repo/exchange-core';
 import {
-  createUserError,
-  createSecurityError,
   createBadRequestError,
+  createNotFoundError,
+  createUnauthorizedError,
   passwordSchema,
+  /*
+  // ⚠️ LEGACY IMPORTS - ЗАКОММЕНТИРОВАНЫ ДЛЯ BACKWARD COMPATIBILITY
+  // 
+  // ВАЖНО: В данном файле использовались legacy error creators
+  // Найдены замены:
+  // - createSecurityError('invalid_password') → createUnauthorizedError('Invalid current password')
+  // - createUserError('not_found') → createNotFoundError('User not found')
+  // 
+  // LEGACY FUNCTIONS заменены на:
+  // createSecurityError,
+  // createUserError,
+  */
 } from '@repo/utils';
 
 import bcrypt from 'bcryptjs';
@@ -35,7 +47,18 @@ export const securityRouter = createTRPCRouter({
       const user = await validateUserAccess(ctx.user.id);
 
       if (!user.hashedPassword) {
-        throw createUserError('not_found');
+        throw createNotFoundError('User not found');
+        /*
+        // ⚠️ LEGACY CODE - ЗАКОММЕНТИРОВАН ДЛЯ BACKWARD COMPATIBILITY
+        //
+        // ОРИГИНАЛЬНЫЙ КОД:
+        // throw createUserError('not_found');
+        //
+        // ПРИЧИНА ЗАМЕНЫ:
+        // - createUserError('not_found') → createNotFoundError('User not found')
+        // - Более явная семантика ошибки поиска
+        // - Соответствует HTTP семантике (404 Not Found)
+        */
       }
 
       // Проверяем текущий пароль
@@ -44,7 +67,18 @@ export const securityRouter = createTRPCRouter({
         user.hashedPassword
       );
       if (!isValidCurrentPassword) {
-        throw createSecurityError('invalid_password');
+        throw createUnauthorizedError('Invalid current password');
+        /*
+        // ⚠️ LEGACY CODE - ЗАКОММЕНТИРОВАН ДЛЯ BACKWARD COMPATIBILITY
+        //
+        // ОРИГИНАЛЬНЫЙ КОД:
+        // throw createSecurityError('invalid_password');
+        //
+        // ПРИЧИНА ЗАМЕНЫ:
+        // - createSecurityError('invalid_password') → createUnauthorizedError('Invalid current password')
+        // - Более точная категоризация ошибки авторизации
+        // - Соответствует HTTP семантике (401 Unauthorized)
+        */
       }
 
       // Валидация происходит автоматически через securityEnhancedChangePasswordSchema input
@@ -102,13 +136,13 @@ export const securityRouter = createTRPCRouter({
       const user = await validateUserAccess(ctx.user.id);
 
       if (!user.hashedPassword) {
-        throw createUserError('not_found');
+        throw createNotFoundError('User not found');
       }
 
       // Проверяем пароль
       const isValidPassword = await bcrypt.compare(input.password, user.hashedPassword);
       if (!isValidPassword) {
-        throw createSecurityError('invalid_password');
+        throw createUnauthorizedError('Invalid current password');
       }
 
       // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: проверяем активные заявки через userId

@@ -5,8 +5,9 @@ import {
   filterOrders,
   sortOrders,
   getOrdersStatistics,
-  createOrderError,
   createBadRequestError,
+  createNotFoundError,
+  createInternalServerError,
   filterOrdersForOperator,
   canTransitionStatus,
   isFinalStatus,
@@ -15,6 +16,19 @@ import {
   orderIdSchema,
   SECURITY_VALIDATION_LIMITS,
   createEnvironmentLogger,
+  /*
+  // ⚠️ LEGACY IMPORTS - ЗАКОММЕНТИРОВАНЫ ДЛЯ BACKWARD COMPATIBILITY
+  // 
+  // ВАЖНО: В данном файле legacy error creators не использовались напрямую
+  // Operator router использует только стандартные error creators
+  // 
+  // ПОТЕНЦИАЛЬНЫЕ LEGACY FUNCTIONS (если бы использовались):
+  // - createOrderError('not_found') → createNotFoundError('Order not found')
+  // - createOrderError('update_failed') → createInternalServerError('Order update failed')
+  // - createOrderError('cannot_cancel') → createBadRequestError('Order cannot be cancelled')
+  //
+  // createOrderError,
+  */
 } from '@repo/utils';
 import { z } from 'zod';
 
@@ -104,7 +118,7 @@ export const operatorRouter = createTRPCRouter({
 
       if (!order) {
         logger.warn('ORDER_NOT_FOUND', { orderId: input.orderId });
-        throw createOrderError('not_found', input.orderId);
+        throw createNotFoundError(`Order with ID "${input.orderId}" not found`);
       }
 
       if (order.status !== ORDER_STATUSES.PENDING) {
@@ -175,7 +189,7 @@ export const operatorRouter = createTRPCRouter({
 
       if (!order) {
         logger.warn('ORDER_NOT_FOUND_FOR_STATUS_UPDATE', { orderId: input.orderId });
-        throw createOrderError('not_found', input.orderId);
+        throw createNotFoundError(`Order with ID "${input.orderId}" not found`);
       }
 
       // Проверка валидных переходов статусов
@@ -214,7 +228,7 @@ export const operatorRouter = createTRPCRouter({
 
       if (!updatedOrder) {
         logger.error('ORDER_STATUS_UPDATE_FAILED', { orderId: input.orderId });
-        throw createOrderError('update_failed');
+        throw createInternalServerError('Order update failed');
       }
 
       logger.info('ORDER_STATUS_UPDATED_SUCCESSFULLY', {
@@ -352,7 +366,7 @@ export const operatorRouter = createTRPCRouter({
 
       const order = await orderManager.findById(orderId);
       if (!order) {
-        throw createOrderError('not_found', orderId);
+        throw createNotFoundError(`Order with ID "${orderId}" not found`);
       }
 
       // Проверка что заявка назначена этому оператору

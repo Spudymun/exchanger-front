@@ -77,7 +77,7 @@ https://api.telegram.org/bot8080670068:AAG94FIreDoNJ_xc4aLFkxg0yKdSc-aV0cE/setWe
 #### Вариант B: Через PowerShell
 
 ```powershell
-Invoke-RestMethod -Uri "https://api.telegram.org/bot8080670068:AAG1LtOO0INbJFOXhj5--WHWRvImewP866E/setWebhook?url=https://853b1a14d4ba.ngrok-free.app/api/webhook" -Method Post
+Invoke-RestMethod -Uri "https://api.telegram.org/bot8080670068:AAG1LtOO0INbJFOXhj5--WHWRvImewP866E/setWebhook?url=https://c9c182061a39.ngrok-free.app/api/webhook" -Method Post
 ```
 
 #### Вариант C: Через curl
