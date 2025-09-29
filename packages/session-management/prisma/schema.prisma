@@ -205,3 +205,51 @@ enum QueuePriority {
   HIGH   @map("high")
   URGENT @map("urgent")
 }
+
+model Bank {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  externalId String   @unique @map("external_id") @db.VarChar(50)
+  name       String   @db.VarChar(100)
+  shortName  String   @map("short_name") @db.VarChar(50)
+  logoUrl    String?  @map("logo_url") @db.VarChar(255)
+  isActive   Boolean  @default(true) @map("is_active")
+  isDefault  Boolean  @default(false) @map("is_default")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  fiatCurrencies BankFiatCurrency[]
+  reserves       BankReserve[]
+
+  @@index([externalId])
+  @@index([isActive, isDefault])
+  @@map("banks")
+}
+
+model BankFiatCurrency {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bankId       String   @map("bank_id") @db.Uuid
+  fiatCurrency String   @map("fiat_currency") @db.VarChar(10)
+  minAmount    Decimal  @default(100) @map("min_amount") @db.Decimal(12, 2)
+  maxAmount    Decimal  @default(100000) @map("max_amount") @db.Decimal(12, 2)
+  isEnabled    Boolean  @default(true) @map("is_enabled")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  bank Bank @relation(fields: [bankId], references: [id], onDelete: Cascade)
+
+  @@unique([bankId, fiatCurrency])
+  @@index([fiatCurrency, isEnabled])
+  @@map("bank_fiat_currencies")
+}
+
+model BankReserve {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  bankId       String   @map("bank_id") @db.Uuid
+  fiatCurrency String   @map("fiat_currency") @db.VarChar(10)
+  amount       Decimal  @default(0) @db.Decimal(15, 2)
+  lastUpdated  DateTime @default(now()) @map("last_updated") @db.Timestamptz(6)
+
+  bank Bank @relation(fields: [bankId], references: [id], onDelete: Cascade)
+
+  @@unique([bankId, fiatCurrency])
+  @@index([fiatCurrency, amount])
+  @@map("bank_reserves")
+}
