@@ -13,5 +13,8 @@ export * from './wallet-strategies/immediate-allocation-strategy';
 // ✅ Task 3.1: Auto Registration Service для flexible authentication
 export * from './auto-registration-service';
 
+// ✅ Smart Pricing Service для гибридной системы ценообразования
+export * from './smart-pricing-service';
+
 // NOTE: wallet-alerts-service и wallet-monitoring-process перенесены в server.ts для предотвращения frontend bundle проблем
 // NOTE: queue-email-notifier НЕ экспортируется для предотвращения frontend bundle проблем

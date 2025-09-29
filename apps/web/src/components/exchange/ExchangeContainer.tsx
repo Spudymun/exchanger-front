@@ -9,7 +9,7 @@ import {
   CRYPTOCURRENCIES,
   TOKEN_STANDARDS,
 } from '@repo/constants';
-import { calculateUahAmount, getCurrencyLimits } from '@repo/exchange-core';
+import { calculateUahAmountAsync, getCurrencyLimits } from '@repo/exchange-core';
 import { useFormWithNextIntl } from '@repo/hooks';
 import { useAutoMinAmount, useNotifications } from '@repo/hooks/src/client-hooks';
 import { ExchangeForm, ExchangeErrorBoundary } from '@repo/ui';
@@ -19,7 +19,7 @@ import {
 } from '@repo/utils';
 
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useExchangeMutation } from '../../hooks/useExchangeMutation';
 import { useRouter } from '../../i18n/navigation';
@@ -153,12 +153,40 @@ function useExchangeFormData(initialParams?: ExchangeContainerProps['initialPara
   }, [initialParams]);
 }
 
-// ✅ Хук для расчета обмена
+// 🚀 Smart Caching: Асинхронный хук для расчета обмена
 function useExchangeCalculations(fromAmount: string, fromCurrency: string) {
-  return useMemo(() => {
+  const [calculatedAmount, setCalculatedAmount] = useState(0);
+
+  useEffect(() => {
     const amount = Number(fromAmount);
-    return amount > 0 ? calculateUahAmount(amount, fromCurrency as CryptoCurrency) : 0;
+    if (amount <= 0) {
+      setCalculatedAmount(0);
+      return;
+    }
+
+    let isCancelled = false;
+
+    const calculateAmount = async () => {
+      try {
+        const result = await calculateUahAmountAsync(amount, fromCurrency as CryptoCurrency);
+        if (!isCancelled) {
+          setCalculatedAmount(result);
+        }
+      } catch {
+        if (!isCancelled) {
+          setCalculatedAmount(0);
+        }
+      }
+    };
+
+    void calculateAmount();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [fromAmount, fromCurrency]);
+
+  return calculatedAmount;
 }
 
 // ⚡ Refactored: выделен хук для auto-fill логики (снижение размера основной функции)
@@ -199,7 +227,7 @@ function createOrderSubmission({
   return async (values: SecurityEnhancedFullExchangeForm) => {
     try {
       // Calculate amount at submit time to get the most up-to-date value
-      const submitTimeAmount = calculateUahAmount(
+      const submitTimeAmount = await calculateUahAmountAsync(
         Number(values.fromAmount),
         values.fromCurrency as CryptoCurrency
       );

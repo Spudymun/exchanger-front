@@ -16,9 +16,10 @@ import { RateLimitedEmailService } from '@repo/email-service';
 // Constants for error messages
 const UNKNOWN_ERROR_MESSAGE = 'Unknown error' as const;
 import {
-  calculateUahAmount,
+  calculateUahAmountAsync,
   calculateCryptoAmount,
   getExchangeRate,
+  getExchangeRateAsync,
   getCurrencyLimits,
   sanitizeEmail,
   orderManager,
@@ -29,6 +30,7 @@ import {
   type WalletInfo,
   AutoRegistrationService,
   type AutoRegistrationResult,
+  SmartPricingService,
 } from '@repo/exchange-core';
 import { UserManagerFactory, type SessionMetadata } from '@repo/session-management';
 import {
@@ -73,7 +75,7 @@ async function assertValidCurrency(currency: string, ctx: Context): Promise<void
 /**
  * Подготавливает данные для создания заявки
  */
-function prepareOrderRequest(input: {
+async function prepareOrderRequest(input: {
   email: string;
   cryptoAmount: number;
   currency: (typeof CRYPTOCURRENCIES)[number];
@@ -81,7 +83,7 @@ function prepareOrderRequest(input: {
   recipientData?: { cardNumber?: string; bankDetails?: string };
 }) {
   const sanitizedEmail = sanitizeEmail(input.email);
-  const uahAmount = calculateUahAmount(input.cryptoAmount, input.currency);
+  const uahAmount = await calculateUahAmountAsync(input.cryptoAmount, input.currency);
 
   return {
     email: sanitizedEmail,
@@ -585,17 +587,58 @@ async function createOrderInSystem(
 }
 
 export const exchangeRouter = createTRPCRouter({
-  // Получить текущие курсы валют
+  // Получить текущие курсы валют (ОБНОВЛЕНО: поддержка гибридной системы ценообразования)
   getRates: publicProcedure.query(async () => {
-    // Имитация задержки API
+    // Имитация задержки API (сохраняем для UX)
     await new Promise(resolve => setTimeout(resolve, API_DELAY_MS));
 
-    const rates = CRYPTOCURRENCIES.map(currency => getExchangeRate(currency));
+    try {
+      const pricingService = new SmartPricingService();
 
-    return {
-      rates,
-      timestamp: new Date(),
-    };
+      // Получаем курсы параллельно для производительности
+      const ratePromises = CRYPTOCURRENCIES.map(currency =>
+        pricingService.getSafeExchangeRate(currency)
+      );
+
+      const rates = await Promise.all(ratePromises);
+
+      return {
+        rates: rates.map(rate => ({
+          currency: rate.currency,
+          usdRate: rate.usdRate,
+          uahRate: rate.uahRate,
+          commission: rate.commission,
+          lastUpdated: rate.lastUpdated,
+          source: rate.source,        // Новое поле: источник данных
+          spread: rate.spread,        // Новое поле: маржа
+        })),
+        timestamp: new Date(),
+        metadata: {
+          realTimeCount: rates.filter(r => r.source === 'api').length,
+          fallbackCount: rates.filter(r => r.source === 'fallback').length,
+          mockCount: rates.filter(r => r.source === 'mock').length,
+        }
+      };
+
+    } catch (error) {
+      logger.error('Smart pricing service failed, using legacy rates:', { 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+
+      // Fallback на старую систему при критических ошибках
+      const rates = CRYPTOCURRENCIES.map(currency => getExchangeRate(currency));
+
+      return {
+        rates,
+        timestamp: new Date(),
+        metadata: {
+          realTimeCount: 0,
+          fallbackCount: 0,
+          mockCount: rates.length,
+          error: 'SMART_PRICING_UNAVAILABLE'
+        }
+      };
+    }
   }),
 
   // Получить лимиты для криптовалюты
@@ -627,8 +670,8 @@ export const exchangeRouter = createTRPCRouter({
 
       try {
         if (direction === 'crypto-to-uah') {
-          const uahAmount = calculateUahAmount(amount, validCurrency);
-          const rate = getExchangeRate(validCurrency);
+          const uahAmount = await calculateUahAmountAsync(amount, validCurrency);
+          const rate = await getExchangeRateAsync(validCurrency);
 
           return {
             cryptoAmount: amount,
@@ -711,7 +754,7 @@ export const exchangeRouter = createTRPCRouter({
       logger.debug('CURRENCY_VALIDATED', { currency: input.currency });
 
       // Подготовка данных
-      const orderRequest = prepareOrderRequest({
+      const orderRequest = await prepareOrderRequest({
         ...input,
         currency: input.currency as CryptoCurrency,
       });

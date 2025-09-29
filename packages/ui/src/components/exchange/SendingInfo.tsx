@@ -1,8 +1,8 @@
 'use client';
 
-import { getCurrencyLimits, calculateUahAmount, type CryptoCurrency } from '@repo/exchange-core';
+import { getCurrencyLimits, calculateUahAmountAsync, type CryptoCurrency } from '@repo/exchange-core';
 import type { UseFormReturn } from '@repo/hooks';
-import { useMemo } from 'react';
+import { useState, useEffect } from 'react';
 
 interface SendingInfoProps {
   form: UseFormReturn<Record<string, unknown>>;
@@ -33,27 +33,47 @@ export function SendingInfo({
 }: SendingInfoProps) {
   const fromCurrency = form.values[currencyFieldName as keyof typeof form.values] as CryptoCurrency;
 
-  const { minAmount, exchangeRate } = useMemo(() => {
+  const [exchangeRate, setExchangeRate] = useState(0);
+  const [minAmount, setMinAmount] = useState(externalMinAmount || 0);
+
+  useEffect(() => {
     if (!fromCurrency) {
-      return { minAmount: 0, exchangeRate: 0 };
+      setExchangeRate(0);
+      setMinAmount(externalMinAmount || 0);
+      return;
     }
 
-    const rate = calculateUahAmount(1, fromCurrency);
+    let isCancelled = false;
 
+    // Асинхронное получение курса через SmartPricingService
+    const fetchRate = async () => {
+      try {
+        const rate = await calculateUahAmountAsync(1, fromCurrency);
+        if (!isCancelled) {
+          setExchangeRate(rate);
+        }
+      } catch {
+        if (!isCancelled) {
+          setExchangeRate(0);
+        }
+      }
+    };
+
+    // Установка minAmount
     if (externalMinAmount !== undefined) {
-      // Используем переданный minAmount (hero форма)
-      return {
-        minAmount: externalMinAmount,
-        exchangeRate: rate,
-      };
+      // Hero форма - используем переданный minAmount
+      setMinAmount(externalMinAmount);
     } else {
-      // Вычисляем minAmount автоматически (exchange форма)
+      // Exchange форма - вычисляем автоматически
       const limits = getCurrencyLimits(fromCurrency);
-      return {
-        minAmount: limits.minCrypto,
-        exchangeRate: rate,
-      };
+      setMinAmount(limits.minCrypto);
     }
+
+    fetchRate();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [fromCurrency, externalMinAmount]);
 
   if (!fromCurrency) {

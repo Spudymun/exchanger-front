@@ -11,8 +11,8 @@ import {
   PERCENTAGE_CALCULATIONS,
 } from '@repo/constants';
 import {
-  calculateUahAmount,
-  getExchangeRate,
+  calculateUahAmountAsync,
+  getExchangeRateAsync,
   type CryptoCurrency,
   type FiatCurrency,
 } from '@repo/exchange-core';
@@ -143,8 +143,8 @@ export const fiatRouter = createTRPCRouter({
       }
 
       // Получаем базовый курс криптовалюты в UAH
-      const cryptoRate = getExchangeRate(fromCurrency as CryptoCurrency);
-      const uahAmount = calculateUahAmount(cryptoAmount as number, fromCurrency as CryptoCurrency);
+      const cryptoRate = await getExchangeRateAsync(fromCurrency as CryptoCurrency);
+      const uahAmount = await calculateUahAmountAsync(cryptoAmount as number, fromCurrency as CryptoCurrency);
 
       // Конвертируем в целевую фиатную валюту
       const fiatRate = MOCK_FIAT_RATES[toCurrency as keyof typeof MOCK_FIAT_RATES];

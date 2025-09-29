@@ -16,7 +16,8 @@ import {
   formatCryptoAmountForUI,
 } from '@repo/utils';
 
-import type { ExchangeRate } from '../types';
+import { SmartPricingService } from '../services/smart-pricing-service';
+import type { ExchangeRate, HybridExchangeRate } from '../types';
 
 /**
  * Получить текущий курс криптовалюты
@@ -165,4 +166,81 @@ export function getCurrencyLimits(currency: CryptoCurrency) {
 export function getMinCryptoAmountForUI(currency: CryptoCurrency): number {
   const limits = getCurrencyLimits(currency);
   return limits.minCrypto;
+}
+
+// ========================================
+// НОВЫЕ АСИНХРОННЫЕ ФУНКЦИИ ДЛЯ ГИБРИДНОЙ СИСТЕМЫ ЦЕНООБРАЗОВАНИЯ
+// ========================================
+
+// Singleton instance для переиспользования
+let pricingServiceInstance: SmartPricingService | null = null;
+
+function getPricingService(): SmartPricingService {
+  if (!pricingServiceInstance) {
+    pricingServiceInstance = new SmartPricingService();
+  }
+  return pricingServiceInstance;
+}
+
+/**
+ * НОВАЯ АСИНХРОННАЯ ВЕРСИЯ getExchangeRate
+ * Использует гибридную систему ценообразования с real-time курсами для USDT
+ * 
+ * @param currency - Тип криптовалюты
+ * @returns Расширенный объект с курсом валюты, включая источник данных
+ * @example
+ * const rate = await getExchangeRateAsync('USDT');
+ * console.log(rate.source); // 'api' | 'fallback' | 'mock'
+ * console.log(rate.uahRate); // 41.20 (real-time курс)
+ */
+export async function getExchangeRateAsync(currency: CryptoCurrency): Promise<HybridExchangeRate> {
+  const pricingService = getPricingService();
+  return await pricingService.getSafeExchangeRate(currency);
+}
+
+/**
+ * НОВАЯ АСИНХРОННАЯ ВЕРСИЯ calculateUahAmount
+ * Использует real-time курсы для более точных расчетов
+ * 
+ * @param cryptoAmount - Количество криптовалюты
+ * @param currency - Тип криптовалюты
+ * @returns Сумма в гривнах после вычета комиссии
+ * @example
+ * const uahAmount = await calculateUahAmountAsync(1000, 'USDT');
+ * console.log(uahAmount); // 40620.00 (с real-time курсом и комиссией)
+ */
+export async function calculateUahAmountAsync(
+  cryptoAmount: number,
+  currency: CryptoCurrency
+): Promise<number> {
+  const rate = await getExchangeRateAsync(currency);
+  const grossAmount = cryptoAmount * rate.uahRate;
+  const netAmount = calculateNetAmount(grossAmount, rate.commission);
+  return parseFormattedAmount(formatUahAmount(netAmount));
+}
+
+/**
+ * НОВАЯ АСИНХРОННАЯ ВЕРСИЯ calculateCryptoAmount
+ * Использует real-time курсы для более точных расчетов
+ * 
+ * @param uahAmount - Сумма в гривнах
+ * @param currency - Тип криптовалюты
+ * @returns Количество криптовалюты с учетом комиссии
+ * @example
+ * const usdtAmount = await calculateCryptoAmountAsync(40000, 'USDT');
+ * console.log(usdtAmount); // 985.23 (с real-time курсом и комиссией)
+ */
+export async function calculateCryptoAmountAsync(
+  uahAmount: number,
+  currency: CryptoCurrency
+): Promise<number> {
+  const rate = await getExchangeRateAsync(currency);
+  const grossAmount = calculateGrossAmountFromNet(uahAmount, rate.commission);
+  const cryptoAmount = grossAmount / rate.uahRate;
+  const decimals = getCurrencyDecimals(currency);
+  const formattedAmount = formatCryptoAmountForUI(
+    cryptoAmount,
+    Math.min(decimals, DECIMAL_PRECISION.UI_MAX_DECIMAL_PLACES)
+  );
+  return parseFormattedAmount(formattedAmount);
 }
