@@ -12,6 +12,7 @@ import {
   BANKS_BY_CURRENCY,
   EXCHANGE_DEFAULTS,
   AMOUNT_LIMITS,
+  FIAT_CURRENCIES,
 } from '@repo/constants';
 import { isAmountWithinLimits, type CryptoCurrency } from '@repo/exchange-core';
 import { z } from 'zod';
@@ -40,7 +41,6 @@ import { containsPotentialXSS, SECURITY_VALIDATION_LIMITS } from './security-uti
 
 // ✅ Whitelist validation против существующих констант (10/10 security)
 const VALID_CURRENCIES = [...CRYPTOCURRENCIES] as const;
-const VALID_FIAT_CURRENCIES = ['UAH'] as const;
 const VALID_BANKS = BANKS_BY_CURRENCY.UAH.map(bank => bank.id) as [string, ...string[]];
 const VALID_TOKEN_STANDARDS = ['TRC-20', 'ERC-20', 'BEP-20'] as const;
 
@@ -50,7 +50,7 @@ const VALID_TOKEN_STANDARDS = ['TRC-20', 'ERC-20', 'BEP-20'] as const;
  */
 export const urlSearchParamsSchema = z.object({
   from: z.enum(VALID_CURRENCIES).default(EXCHANGE_DEFAULTS.FROM_CURRENCY),
-  to: z.enum(VALID_FIAT_CURRENCIES).default(EXCHANGE_DEFAULTS.TO_CURRENCY),
+  to: z.enum(FIAT_CURRENCIES).default(EXCHANGE_DEFAULTS.TO_CURRENCY),
   bank: z.enum(VALID_BANKS).default('monobank'),
   tokenStandard: z.enum(VALID_TOKEN_STANDARDS).optional(),
   amount: z
