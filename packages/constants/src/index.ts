@@ -29,6 +29,14 @@ export type { AllocationPriority, AllocationStatus, OperationType } from './wall
 // Linter configuration constants
 export * from './linter-limits';
 
+// Pricing system constants
+export * from './pricing-config';
+export * from './api-endpoints';
+
+// Explicit type re-exports for TypeScript compatibility
+export type { CurrencyConfig, CachedRate, BinanceResponse, CoinGeckoResponse } from './pricing-config';
+export type { ApiProvider } from './api-endpoints';
+
 // Semantic constants for magic numbers elimination
 export * from './decimal-precision';
 export * from './validation-bounds';

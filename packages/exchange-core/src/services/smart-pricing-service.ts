@@ -1,12 +1,22 @@
 import {
   COMMISSION_RATES,
   type CryptoCurrency,
+  // Pricing configuration constants
+  LOG_JSON_INDENT,
+  RATE_CONSTANTS,
+  API_CURRENCY_SYMBOLS,
+  CURRENCY_PRICING_CONFIG,
+  SMART_CACHE_CONFIG,
+  type CurrencyConfig,
+  type CachedRate,
+  type BinanceResponse,
+  type CoinGeckoResponse,
+  // API configuration
+  API_PROVIDERS,
+  type ApiProvider,
 } from '@repo/constants';
 
 import type { HybridExchangeRate } from '../types/currency';
-
-// Простой логгер без внешних зависимостей
-const LOG_JSON_INDENT = 2; // Константа для форматирования JSON
 
 const logger = {
   info: (message: string, data?: Record<string, unknown>) => {
@@ -40,125 +50,9 @@ const logger = {
   },
 };
 
-// Константы для избежания magic numbers
-const RATE_CONSTANTS = {
-  VALIDATION: {
-    MIN_RATE: 0,
-  },
-  FORMATTING: {
-    KOPECK_MULTIPLIER: 100, // Для округления до копеек
-    USD_FALLBACK_RATE: 1,
-  },
-  BUSINESS_LOGIC: {
-    BASE_MULTIPLIER: 1, // Базовый множитель для расчета клиентского курса
-    FALLBACK_SPREAD_BASE: 1, // База для расчета spread в fallback режиме
-  },
-  DATES: {
-    EPOCH_START: 0, // Начальная дата для обозначения отсутствия данных
-  },
-  FALLBACK: {
-    DEFAULT_SPREAD: 0, // Дефолтный spread для валют без настроек
-    FALLBACK_MULTIPLIER: 1.05, // 5% надбавка в fallback режиме
-  },
-  COMPETITIVE: {
-    DEFAULT_BUFFER: 0, // Дефолтный конкурентный буфер
-  },
-  CACHE: {
-    MAX_AGE_MS: 300000, // 5 минут максимальное время жизни кеша
-    FRESH_MAX_AGE_MS: 30000, // 30 секунд свежий кеш
-  },
-} as const;
+// Константы теперь импортируются из @repo/constants
 
-/**
- * Конфигурация API провайдеров в порядке приоритета
- */
-interface ApiProvider {
-  name: 'binance' | 'coingecko';
-  priority: number;
-  timeout: number;
-  reliability: 'HIGH' | 'MEDIUM';
-  getUrl: (currency: CryptoCurrency) => string;
-}
-
-/**
- * Мапинг символов валют для различных API
- */
-const CURRENCY_SYMBOLS = {
-  binance: {
-    BTC: 'BTCUAH',
-    ETH: 'ETHUAH', 
-    USDT: 'USDTUAH',
-    LTC: 'LTCUAH',
-  },
-  coingecko: {
-    BTC: 'bitcoin',
-    ETH: 'ethereum',
-    USDT: 'tether',
-    LTC: 'litecoin',
-  },
-} as const;
-
-/**
- * Конфигурация API провайдеров с полной иерархией Binance → CoinGecko
- */
-const API_PROVIDERS: ApiProvider[] = [
-  {
-    name: 'binance',
-    priority: 1,
-    timeout: 5000,
-    reliability: 'HIGH',
-    getUrl: (currency: CryptoCurrency) => {
-      const symbol = CURRENCY_SYMBOLS.binance[currency as keyof typeof CURRENCY_SYMBOLS.binance];
-      return `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`;
-    },
-  },
-  {
-    name: 'coingecko',
-    priority: 2,
-    timeout: 8000,
-    reliability: 'HIGH',
-    getUrl: (currency: CryptoCurrency) => {
-      const coinId = CURRENCY_SYMBOLS.coingecko[currency as keyof typeof CURRENCY_SYMBOLS.coingecko];
-      return `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd,uah`;
-    },
-  },
-];
-
-/**
- * Кешированный курс с метаданными
- */
-interface CachedRate {
-  rate: number;
-  timestamp: number;
-  source: 'binance' | 'coingecko';
-}
-
-/**
- * Ответ от Binance API
- */
-interface BinanceResponse {
-  symbol: string;
-  price: string;
-}
-
-/**
- * Ответ от CoinGecko API
- */
-interface CoinGeckoResponse {
-  [key: string]: {
-    usd?: number;
-    uah?: number;
-  };
-}
-
-/**
- * Конфигурация для каждой валюты
- */
-interface CurrencyConfig {
-  staticMargin: number;
-  competitiveBuffer?: number;
-  fallbackRate: number; // Резервный курс UAH
-}
+// Все интерфейсы и константы теперь импортируются из @repo/constants
 
 /**
  * Smart Pricing Service - Полная гибридная система ценообразования
@@ -170,31 +64,13 @@ interface CurrencyConfig {
  * - Кеширование и graceful degradation
  */
 export class SmartPricingService {
-  private readonly config: Record<CryptoCurrency, CurrencyConfig> = {
-    USDT: {
-      staticMargin: 0.025, // 2.5% базовая маржа
-      competitiveBuffer: 0.003, // 0.3% буфер для конкурентности
-      fallbackRate: 41.32, // Резервный курс USDT/UAH
-    },
-    BTC: {
-      staticMargin: 0.01, // 1% маржа
-      fallbackRate: 1800000, // Резервный курс BTC/UAH
-    },
-    ETH: {
-      staticMargin: 0.012, // 1.2% маржа
-      fallbackRate: 120000, // Резервный курс ETH/UAH
-    },
-    LTC: {
-      staticMargin: 0.012, // 1.2% маржа
-      fallbackRate: 4000, // Резервный курс LTC/UAH
-    },
-  };
+  private readonly config = CURRENCY_PRICING_CONFIG;
 
   private rateCache = new Map<CryptoCurrency, CachedRate>();
   
-  // 🚀 SMART CACHING для быстрого переключения селекторов
-  private readonly CACHE_FRESH_MS = RATE_CONSTANTS.CACHE.FRESH_MAX_AGE_MS; // 30 секунд - свежий кеш
-  private readonly CACHE_STALE_MS = RATE_CONSTANTS.CACHE.MAX_AGE_MS; // 5 минут - устаревший но валидный
+  // 🚀 SMART CACHING для быстрого переключения селекторов  
+  private readonly CACHE_FRESH_MS = SMART_CACHE_CONFIG.FRESH_MS;
+  private readonly CACHE_STALE_MS = SMART_CACHE_CONFIG.STALE_MS;
   private backgroundUpdatePromises = new Map<CryptoCurrency, Promise<void>>();
 
   /**
@@ -410,7 +286,7 @@ export class SmartPricingService {
    */
   private parseCoinGeckoResponse(data: unknown, currency: CryptoCurrency): number | null {
     const coinGeckoData = data as CoinGeckoResponse;
-    const coinId = CURRENCY_SYMBOLS.coingecko[currency as keyof typeof CURRENCY_SYMBOLS.coingecko];
+    const coinId = API_CURRENCY_SYMBOLS.coingecko[currency as keyof typeof API_CURRENCY_SYMBOLS.coingecko];
     
     // Безопасная проверка наличия ключа
     if (!(coinId in coinGeckoData)) {
