@@ -2,7 +2,7 @@ import {
   FIAT_CURRENCIES,
   FIAT_MIN_AMOUNTS,
   FIAT_MAX_AMOUNTS,
-  MOCK_FIAT_RATES,
+  // MOCK_FIAT_RATES, // ВРЕМЕННО ЗАКОММЕНТИРОВАНО: мультивалютная конвертация
   getBanksForCurrency,
   getBankById,
   getBankReserve,
@@ -146,9 +146,13 @@ export const fiatRouter = createTRPCRouter({
       const cryptoRate = await getExchangeRateAsync(fromCurrency as CryptoCurrency);
       const uahAmount = await calculateUahAmountAsync(cryptoAmount as number, fromCurrency as CryptoCurrency);
 
-      // Конвертируем в целевую фиатную валюту
-      const fiatRate = MOCK_FIAT_RATES[toCurrency as keyof typeof MOCK_FIAT_RATES];
-      const finalAmount = toCurrency === 'UAH' ? uahAmount : uahAmount / fiatRate;
+      // ВРЕМЕННО ЗАКОММЕНТИРОВАНО: Мультивалютная конвертация (только UAH пока)
+      // const fiatRate = MOCK_FIAT_RATES[toCurrency as keyof typeof MOCK_FIAT_RATES];
+      // const finalAmount = toCurrency === 'UAH' ? uahAmount : uahAmount / fiatRate;
+      
+      // ТЕКУЩАЯ ЛОГИКА: Только UAH
+      const finalAmount = uahAmount; // Всегда UAH
+      const fiatRate = 1; // UAH базовая валюта
 
       // Проверяем резерв банка
       const bankReserve = getBankReserve(bankId, toCurrency as FiatCurrency);

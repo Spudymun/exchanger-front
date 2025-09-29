@@ -141,7 +141,7 @@ const createCalculationActions = (
   set: (fn: (state: ExchangeStore) => Partial<ExchangeStore>) => void,
   get: () => ExchangeStore
 ) => ({
-  calculateExchange: () => {
+  calculateExchange: async () => {
     const { formData, availableRates } = get();
 
     if (!formData.fromCurrency || formData.fromAmount <= 0) {
@@ -152,7 +152,7 @@ const createCalculationActions = (
     set(() => ({ isCalculating: true }));
 
     try {
-      const calculation = calculateExchangeRate(formData, availableRates);
+      const calculation = await calculateExchangeRate(formData, availableRates);
       set(() => ({
         calculation,
         isCalculating: false,

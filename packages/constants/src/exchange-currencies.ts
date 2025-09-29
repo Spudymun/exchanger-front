@@ -45,6 +45,17 @@ export const MIN_TRANSACTION_AMOUNTS = {
   LTC: 0.001,
 } as const;
 
+/**
+ * БИЗНЕС ЛИМИТЫ для UI (статичные константы)
+ * Заменяют динамические getCurrencyLimits() на основе моков
+ */
+export const CRYPTO_BUSINESS_LIMITS = {
+  BTC: { minCrypto: 0.0002, maxCrypto: 0.11 },    // $10-$5000 при ~$45k
+  ETH: { minCrypto: 0.003, maxCrypto: 1.67 },     // $10-$5000 при ~$3k  
+  USDT: { minCrypto: 10, maxCrypto: 5000 },       // $10-$5000 при $1
+  LTC: { minCrypto: 0.1, maxCrypto: 50 },         // $10-$5000 при ~$100
+} as const;
+
 // Currency symbols for display
 export const CURRENCY_SYMBOLS = {
   BTC: '₿',
@@ -123,26 +134,6 @@ export function getDefaultTokenStandard(currency: string): string | null {
   }
   return DEFAULT_TOKEN_STANDARDS[currency as keyof typeof DEFAULT_TOKEN_STANDARDS] || null;
 }
-
-// Mock exchange rates (в реальном приложении будут браться с API)
-export const MOCK_EXCHANGE_RATES = {
-  BTC: {
-    usdRate: 45000,
-    uahRate: 1800000, // 45000 * 40 (примерный курс UAH/USD)
-  },
-  ETH: {
-    usdRate: 3000,
-    uahRate: 120000,
-  },
-  USDT: {
-    usdRate: 1,
-    uahRate: 40,
-  },
-  LTC: {
-    usdRate: 100,
-    uahRate: 4000,
-  },
-} as const;
 
 // Mock crypto addresses for testing/demo purposes
 export const MOCK_CRYPTO_ADDRESSES = {

@@ -15,9 +15,10 @@ import { RateLimitedEmailService } from '@repo/email-service';
 
 // Constants for error messages
 const UNKNOWN_ERROR_MESSAGE = 'Unknown error' as const;
+const DATABASE_URL_REQUIRED_ERROR = 'DATABASE_URL environment variable is required' as const;
 import {
   calculateUahAmountAsync,
-  calculateCryptoAmount,
+  calculateCryptoAmountAsync,
   getExchangeRateAsync,
   getCurrencyLimits,
   sanitizeEmail,
@@ -223,7 +224,7 @@ async function getWalletByAddress(depositAddress: string, orderEmail: string) {
   const { SESSION_CONSTANTS } = await import('@repo/constants');
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) {
-    throw new Error('DATABASE_URL environment variable is required');
+    throw new Error(DATABASE_URL_REQUIRED_ERROR);
   }
   
   const prisma = getPrismaClient({
@@ -628,7 +629,6 @@ export const exchangeRouter = createTRPCRouter({
         metadata: {
           realTimeCount: rates.filter(r => r.source === 'api').length,
           fallbackCount: rates.filter(r => r.source === 'fallback').length,
-          mockCount: rates.filter(r => r.source === 'mock').length,
         }
       };
 
@@ -647,8 +647,7 @@ export const exchangeRouter = createTRPCRouter({
         timestamp: new Date(),
         metadata: {
           realTimeCount: 0,
-          fallbackCount: 0,
-          mockCount: rates.length,
+          fallbackCount: rates.length, // Все курсы через fallback при ошибке
           error: 'SMART_PRICING_UNAVAILABLE'
         }
       };
@@ -696,7 +695,7 @@ export const exchangeRouter = createTRPCRouter({
               amount * rate.uahRate * (rate.commission / PERCENTAGE_CALCULATIONS.PERCENT_BASE),
           };
         } else {
-          const cryptoAmount = calculateCryptoAmount(amount, validCurrency);
+          const cryptoAmount = await calculateCryptoAmountAsync(amount, validCurrency);
           const rate = await getExchangeRateAsync(validCurrency);
 
           return {
@@ -910,7 +909,7 @@ export const exchangeRouter = createTRPCRouter({
       const { SESSION_CONSTANTS } = await import('@repo/constants');
       const databaseUrl = process.env.DATABASE_URL;
       if (!databaseUrl) {
-        throw new Error('DATABASE_URL environment variable is required');
+        throw new Error(DATABASE_URL_REQUIRED_ERROR);
       }
       
       const prisma = getPrismaClient({
@@ -986,7 +985,7 @@ export const exchangeRouter = createTRPCRouter({
       const { SESSION_CONSTANTS } = await import('@repo/constants');
       const databaseUrl = process.env.DATABASE_URL;
       if (!databaseUrl) {
-        throw new Error('DATABASE_URL environment variable is required');
+        throw new Error(DATABASE_URL_REQUIRED_ERROR);
       }
       
       const prisma = getPrismaClient({

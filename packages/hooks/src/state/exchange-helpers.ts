@@ -1,13 +1,13 @@
-import { calculateUahAmount, calculateCommission } from '@repo/exchange-core';
+import { calculateUahAmountAsync, calculateCommissionAsync } from '@repo/exchange-core';
 import type { ExchangeRate } from '@repo/exchange-core';
 
 import type { ExchangeCalculation, ExchangeFormData } from './exchange-store';
 
-// Вспомогательные функции для расчетов using centralized utilities
-export const calculateExchangeRate = (
+// Вспомогательные функции для расчетов using centralized async utilities
+export const calculateExchangeRate = async (
   formData: ExchangeFormData,
   availableRates: ExchangeRate[]
-): ExchangeCalculation | null => {
+): Promise<ExchangeCalculation | null> => {
   if (!formData.fromCurrency || !formData.fromAmount) {
     return null;
   }
@@ -40,9 +40,9 @@ export const calculateExchangeRate = (
     };
   }
 
-  // Use centralized calculation utilities instead of local logic
-  const toAmount = calculateUahAmount(formData.fromAmount, formData.fromCurrency);
-  const commissionAmount = calculateCommission(formData.fromAmount, formData.fromCurrency);
+  // Use centralized async calculation utilities instead of local logic
+  const toAmount = await calculateUahAmountAsync(formData.fromAmount, formData.fromCurrency);
+  const commissionAmount = await calculateCommissionAsync(formData.fromAmount, formData.fromCurrency);
   const finalAmount = toAmount;
 
   return {
