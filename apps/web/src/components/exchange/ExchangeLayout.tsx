@@ -17,6 +17,7 @@ import {
   FormControl,
   FormMessage,
   Input,
+  Checkbox,
   FormEmailField,
   FormCaptchaField,
   SubmitButton,
@@ -110,47 +111,86 @@ function ReceivingSection({
 
   return (
     <ExchangeForm.ExchangeCard type="receiving">
-      <header className="section-header mb-6">
-        <h2 className="text-xl font-semibold text-foreground">{t('receiving.title')}</h2>
-        <p className="text-sm text-muted-foreground mt-1">{t('receiving.subtitle')}</p>
-      </header>
-
-      <div className="receive-content space-y-4">
-        {/* Bank Selection */}
-        <ExchangeBankSelector
-          form={form as unknown as UseFormReturn<Record<string, unknown>>}
-          t={t}
-          banks={banks}
-        />
-
-        {/* Card Number */}
-        {/* Card Number Input with validation */}
-        <CardNumberInput form={form as unknown as UseFormReturn<Record<string, unknown>>} t={t} />
-
-        {/* Amount Display */}
-        <ExchangeForm.FieldWrapper>
-          <FormField name="toAmount" error={form.errors.toAmount}>
-            <ExchangeForm.FieldLabel>{t('receiving.amount')}</ExchangeForm.FieldLabel>
-            <FormControl>
-              <Input
-                value={calculatedAmount.toFixed(2)}
-                readOnly
-                className="bg-muted/50 text-foreground cursor-default pointer-events-none transition-none focus-visible:ring-0 focus-visible:border-input border-input"
-              />
-            </FormControl>
-            <FormMessage />
-          </FormField>
-        </ExchangeForm.FieldWrapper>
-
-        {/* ✅ NEW: ReceivingInfo component */}
-        <ReceivingInfo
-          form={form as unknown as UseFormReturn<Record<string, unknown>>}
-          t={t}
-          currencyFieldName="toCurrency"
-          bankFieldName="selectedBankId"
-        />
-      </div>
+      <ReceivingSectionHeader t={t} />
+      <ReceivingSectionContent form={form} t={t} banks={banks} calculatedAmount={calculatedAmount} />
     </ExchangeForm.ExchangeCard>
+  );
+}
+
+// Header component for receiving section
+function ReceivingSectionHeader({ t }: { t: (key: string) => string }) {
+  return (
+    <header className="section-header mb-6">
+      <h2 className="text-xl font-semibold text-foreground">{t('receiving.title')}</h2>
+      <p className="text-sm text-muted-foreground mt-1">{t('receiving.subtitle')}</p>
+    </header>
+  );
+}
+
+// Content component for receiving section
+function ReceivingSectionContent({
+  form,
+  t,
+  banks,
+  calculatedAmount,
+}: {
+  form: UseFormReturn<SecurityEnhancedFullExchangeForm>;
+  t: (key: string) => string;
+  banks: Array<{
+    id: string;
+    name: string;
+    shortName: string;
+    logoUrl: string;
+    isActive: boolean;
+    isDefault: boolean;
+    priority: number;
+    reserve: number;
+  }> | undefined;
+  calculatedAmount: number;
+}) {
+  return (
+    <div className="receive-content space-y-4">
+      <ExchangeBankSelector
+        form={form as unknown as UseFormReturn<Record<string, unknown>>}
+        t={t}
+        banks={banks}
+      />
+      <CardNumberInput form={form as unknown as UseFormReturn<Record<string, unknown>>} t={t} />
+      <ReceivingAmountField calculatedAmount={calculatedAmount} t={t} form={form} />
+      <ReceivingInfo
+        form={form as unknown as UseFormReturn<Record<string, unknown>>}
+        t={t}
+        currencyFieldName="toCurrency"
+        bankFieldName="selectedBankId"
+      />
+    </div>
+  );
+}
+
+// Amount display field component
+function ReceivingAmountField({
+  calculatedAmount,
+  t,
+  form,
+}: {
+  calculatedAmount: number;
+  t: (key: string) => string;
+  form: UseFormReturn<SecurityEnhancedFullExchangeForm>;
+}) {
+  return (
+    <ExchangeForm.FieldWrapper>
+      <FormField name="toAmount" error={form.errors.toAmount}>
+        <ExchangeForm.FieldLabel>{t('receiving.amount')}</ExchangeForm.FieldLabel>
+        <FormControl>
+          <Input
+            value={calculatedAmount.toFixed(2)}
+            readOnly
+            className="bg-muted/50 text-foreground cursor-default pointer-events-none transition-none focus-visible:ring-0 focus-visible:border-input border-input"
+          />
+        </FormControl>
+        <FormMessage />
+      </FormField>
+    </ExchangeForm.FieldWrapper>
   );
 }
 
@@ -201,16 +241,27 @@ function SecuritySection({
         />
 
         {/* Terms Agreement */}
-        <FormField name="agreeToTerms">
+        <FormField name="agreeToTerms" error={form.errors.agreeToTerms}>
           <div className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={form.values.agreeToTerms || false}
-              onChange={e => form.setValue('agreeToTerms', e.target.checked)}
-              className="h-4 w-4 rounded border-border"
-            />
+            <FormControl>
+              <Checkbox
+                checked={form.values.agreeToTerms || false}
+                onChange={(e) => {
+                  // Обновляем значение
+                  form.setValue('agreeToTerms', e.target.checked);
+                  
+                  // 🎯 UX IMPROVEMENT: Только убираем ошибку при постановке галочки
+                  // НЕ показываем ошибку при снятии - это слишком агрессивно
+                  if (e.target.checked) {
+                    form.clearError('agreeToTerms');
+                  }
+                  // Ошибка появится только при submit, если галочка не поставлена
+                }}
+              />
+            </FormControl>
             <FormLabel className="text-sm">{t('security.terms.agreement')}</FormLabel>
           </div>
+          <FormMessage />
         </FormField>
       </div>
     </section>

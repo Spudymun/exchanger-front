@@ -275,7 +275,7 @@ const unifiedExchangeBaseSchema = z.object({
   email: xssProtectedEmailSchema, // ✅ XSS PROTECTION: Exchange-specific XSS protection
   cardNumber: z.string().min(1), // Требуем заполнения - система замапит на validation.cardNumber.required
   captcha: securityEnhancedCaptchaSchema, // Та же валидация, что в модальных окнах
-  agreeToTerms: z.boolean().optional(), // Не требуем сразу, валидируем при submit
+  agreeToTerms: z.boolean().refine(value => value === true), // ✅ ФИКС: Убираем хардкод message для локализации
 });
 
 /**

@@ -43,7 +43,7 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
             retry: QUERY_RETRY_ATTEMPTS, // Одна попытка для повтора при ошибке
           },
           mutations: {
-            retry: QUERY_RETRY_ATTEMPTS, // Одна попытка для mutations
+            retry: 0, // Mutations НЕ повторяются (критично для CREATE_ORDER)
           },
         },
       })
