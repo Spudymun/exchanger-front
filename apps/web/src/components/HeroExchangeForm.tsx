@@ -41,7 +41,6 @@ interface HeroExchangeFormProps {
 interface ExchangeFormCardsProps {
   form: ReturnType<typeof useHeroExchangeForm>['form'];
   calculatedAmount: ReturnType<typeof useHeroExchangeForm>['calculatedAmount'];
-  banks: ReturnType<typeof useHeroExchangeForm>['banks'];
   constants: ReturnType<typeof useHeroExchangeForm>['constants'];
   t: ReturnType<typeof useTranslations>;
 }
@@ -49,7 +48,6 @@ interface ExchangeFormCardsProps {
 function ExchangeFormCards({
   form,
   calculatedAmount,
-  banks,
   constants,
   t,
 }: ExchangeFormCardsProps) {
@@ -62,7 +60,7 @@ function ExchangeFormCards({
       <ExchangeForm.Arrow direction="horizontal" />
 
       <ExchangeForm.FieldWrapper>
-        <ReceivingCard form={form} banks={banks} calculatedAmount={calculatedAmount} t={t} />
+        <ReceivingCard form={form} calculatedAmount={calculatedAmount} t={t} />
       </ExchangeForm.FieldWrapper>
     </ExchangeForm.CardPair>
   );
@@ -145,7 +143,7 @@ export function HeroExchangeForm(props: HeroExchangeFormProps) {
   } = props;
 
   const t = useTranslations('AdvancedExchangeForm');
-  const { form, calculatedAmount, banks, isValid, constants } = useHeroExchangeForm(t, onExchange);
+  const { form, calculatedAmount, isValid, constants } = useHeroExchangeForm(t, onExchange);
 
   // Настройки для AdaptiveContainer
   const adaptiveProps: AdaptiveWidthProps = {
@@ -156,7 +154,7 @@ export function HeroExchangeForm(props: HeroExchangeFormProps) {
     growthFactor,
   };
 
-  const cardsProps = { form, calculatedAmount, banks, constants, t };
+  const cardsProps = { form, calculatedAmount, constants, t };
   const actionProps = { isValid, t, form }; // ✅ ФИКС: передаем form в actionProps
 
   return (

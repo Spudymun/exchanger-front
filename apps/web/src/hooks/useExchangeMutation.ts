@@ -109,6 +109,25 @@ export function useSupportedTokenStandards(): ReturnType<typeof trpc.exchange.ge
   });
 }
 
+// ✅ MIGRATION: Hooks для fiat API - получение данных из БД
+export function useSupportedFiatCurrencies(): ReturnType<typeof trpc.fiat.getSupportedFiatCurrencies.useQuery> {
+  return trpc.fiat.getSupportedFiatCurrencies.useQuery(undefined, {
+    staleTime: 300000, // 5 minutes cache
+    refetchOnWindowFocus: false,
+  });
+}
+
+export function useBanksForCurrency(currency: string): ReturnType<typeof trpc.fiat.getBanksForFiatCurrency.useQuery> {
+  return trpc.fiat.getBanksForFiatCurrency.useQuery(
+    { currency: currency as 'UAH' | 'USD' | 'EUR' }, // Type assertion for currency validation
+    {
+      staleTime: 300000, // 5 minutes cache
+      refetchOnWindowFocus: false,
+      enabled: !!currency, // Only fetch if currency is provided
+    }
+  );
+}
+
 // Centralized hook for getting order status
 export function useOrderStatus(
   orderId: string,

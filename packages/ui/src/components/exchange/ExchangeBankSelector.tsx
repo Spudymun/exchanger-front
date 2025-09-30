@@ -1,7 +1,5 @@
 'use client';
 
-import { getBanksForCurrency, type FiatCurrency, FIAT_CURRENCIES } from '@repo/constants';
-
 import type { UseFormReturn } from '@repo/hooks';
 
 import {
@@ -16,13 +14,25 @@ import {
   SelectValue,
 } from '../..';
 
+// ✅ MIGRATION: Типы для банков из API
+interface BankData {
+  id: string;
+  name: string;
+  shortName: string;
+  logoUrl: string;
+  isActive: boolean;
+  isDefault: boolean; // ✅ MIGRATION: Добавляем поле is_default
+  priority: number;
+  reserve: number;
+}
+
 interface ExchangeBankSelectorProps {
   form: UseFormReturn<Record<string, unknown>>;
   t: (key: string) => string;
   /**
-   * Массив банков для отображения (если не передан, будет вычислен автоматически из toCurrency)
+   * ✅ MIGRATION: Банки из API вместо getBanksForCurrency
    */
-  banks?: ReturnType<typeof getBanksForCurrency>;
+  banks?: BankData[];
   /**
    * Поле в форме для хранения выбранного банка
    * @default 'selectedBankId'
@@ -35,36 +45,29 @@ interface ExchangeBankSelectorProps {
 }
 
 /**
- * ✅ UNIFIED: Общий селектор банков для форм обмена
- * Заменяет дублированные BankSelector из ReceivingCard и ExchangeLayout
+ * ✅ MIGRATION: Общий селектор банков для форм обмена
+ * Теперь получает данные из API вместо static констант
  *
- * @param banks - если передан, использует эти банки, иначе вычисляет из toCurrency
+ * @param banks - банки из API
  * @param fieldName - имя поля в форме (по умолчанию 'selectedBankId')
  */
 export function ExchangeBankSelector({
   form,
   t,
-  banks: providedBanks,
+  banks = [],
   fieldName = 'selectedBankId',
   placeholder,
 }: ExchangeBankSelectorProps) {
-  // Если банки не переданы, вычисляем из toCurrency (как в ExchangeLayout)
-  const banks =
-    providedBanks ||
-    (() => {
-      const currency = form.values.toCurrency;
-      return FIAT_CURRENCIES.includes(currency as (typeof FIAT_CURRENCIES)[number])
-        ? getBanksForCurrency(currency as FiatCurrency)
-        : [];
-    })();
+  const selectedBankId = form.values[fieldName as keyof typeof form.values] as string;
+  const bankError = form.errors[fieldName as keyof typeof form.errors];
 
   return (
     <ExchangeForm.FieldWrapper>
-      <FormField name={fieldName} error={form.errors[fieldName as keyof typeof form.errors]}>
+      <FormField name={fieldName} error={bankError}>
         <ExchangeForm.FieldLabel>{t('receiving.bank')}</ExchangeForm.FieldLabel>
         <FormControl>
           <Select
-            value={form.values[fieldName as keyof typeof form.values] as string}
+            value={selectedBankId}
             onValueChange={v => form.setValue(fieldName as keyof typeof form.values, v)}
           >
             <SelectTrigger className="w-full">

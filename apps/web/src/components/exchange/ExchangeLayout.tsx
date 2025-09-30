@@ -24,7 +24,7 @@ import {
 import { type SecurityEnhancedFullExchangeForm } from '@repo/utils';
 import React from 'react';
 
-import { useSupportedCurrencies, useSupportedTokenStandards } from '../../hooks/useExchangeMutation';
+import { useSupportedCurrencies, useSupportedTokenStandards, useBanksForCurrency } from '../../hooks/useExchangeMutation';
 
 interface ExchangeLayoutProps {
   form: UseFormReturn<SecurityEnhancedFullExchangeForm>;
@@ -104,6 +104,10 @@ function ReceivingSection({
   t: (key: string) => string;
   calculatedAmount?: number;
 }) {
+  // ✅ MIGRATION: Получаем данные банков из API
+  const selectedCurrency = form.values.toCurrency as string;
+  const { data: banks } = useBanksForCurrency(selectedCurrency);
+
   return (
     <ExchangeForm.ExchangeCard type="receiving">
       <header className="section-header mb-6">
@@ -116,6 +120,7 @@ function ReceivingSection({
         <ExchangeBankSelector
           form={form as unknown as UseFormReturn<Record<string, unknown>>}
           t={t}
+          banks={banks}
         />
 
         {/* Card Number */}

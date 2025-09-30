@@ -4,7 +4,6 @@ import {
   EXCHANGE_DEFAULTS,
   getDefaultTokenStandard,
   UI_DEBOUNCE_CONSTANTS,
-  BANKS_BY_CURRENCY,
   type CryptoCurrency,
   CRYPTOCURRENCIES,
   TOKEN_STANDARDS,
@@ -21,7 +20,7 @@ import {
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 
-import { useExchangeMutation } from '../../hooks/useExchangeMutation';
+import { useExchangeMutation, useBanksForCurrency } from '../../hooks/useExchangeMutation';
 import { useRouter } from '../../i18n/navigation';
 
 import { ExchangeLayout } from './ExchangeLayout';
@@ -32,15 +31,12 @@ const ORDER_NAVIGATION_DELAY_MS = 2500;
 // ⚡ Используем централизованную debounce константу из архитектуры
 // Заменяет хардкод DEBOUNCE_DELAY_MS = 50
 
-// ⚡ Helper: получить дефолтный банк из централизованной константы (вместо хардкода 'privatbank')
-const getDefaultBank = () => BANKS_BY_CURRENCY.UAH[1]?.id || 'monobank';
-
 // ⚡ Helper: создать дефолтные данные формы (выделено для снижения complexity)
 const createDefaultFormData = () => ({
   fromCurrency: EXCHANGE_DEFAULTS.FROM_CURRENCY,
   tokenStandard: getDefaultTokenStandard(EXCHANGE_DEFAULTS.FROM_CURRENCY) || 'TRC-20',
   toCurrency: EXCHANGE_DEFAULTS.TO_CURRENCY,
-  selectedBankId: getDefaultBank(),
+  selectedBankId: 'monobank', // ✅ MIGRATION: Простое дефолтное значение
   fromAmount: '',
   // Дополнительные поля для полной формы
   email: '',
@@ -80,11 +76,8 @@ const parseValidatedTokenStandard = (fromParam: string | undefined): string | un
 
 // ⚡ Helper: валидация bank ID
 const parseValidatedBank = (bankParam: string | undefined): string => {
-  const isValidBankId = (id: string): id is (typeof BANKS_BY_CURRENCY.UAH)[number]['id'] => {
-    return BANKS_BY_CURRENCY.UAH.some(bank => bank.id === id);
-  };
-
-  return bankParam && isValidBankId(bankParam) ? bankParam : getDefaultBank();
+  // ✅ MIGRATION: Упрощенная валидация - API сам проверит существование
+  return bankParam || 'monobank';
 };
 
 // ⚡ Helper: валидация amount с правильными per-currency лимитами
@@ -240,7 +233,7 @@ function createOrderSubmission({
         tokenStandard: values.tokenStandard, // ✅ ИСПРАВЛЕНО: передача выбранной пользователем сети
         recipientData: {
           cardNumber: values.cardNumber,
-          bankId: values.selectedBankId || getDefaultBank(), // ⚡ Centralized fallback
+          bankId: values.selectedBankId || 'monobank', // ✅ MIGRATION: Простое дефолтное значение
         },
       };
 
@@ -278,6 +271,13 @@ function useExchangeForm(
   const exchangeMutation = useExchangeMutation();
   const notifications = useNotifications();
 
+  // ✅ MIGRATION: Получаем банки для UAH чтобы найти дефолтный
+  const { data: uahBanks } = useBanksForCurrency('UAH');
+  const defaultBank = useMemo(() => {
+    if (!uahBanks || !Array.isArray(uahBanks)) return undefined;
+    return uahBanks.find((bank: { isDefault?: boolean }) => bank.isDefault);
+  }, [uahBanks]);
+
   const initialFormData = useExchangeFormData(initialParams);
 
   const form = useFormWithNextIntl<SecurityEnhancedFullExchangeForm>({
@@ -292,6 +292,13 @@ function useExchangeForm(
       notificationsT,
     }),
   });
+
+  // ✅ MIGRATION: Устанавливаем дефолтный банк когда загрузятся данные
+  useEffect(() => {
+    if (defaultBank?.id && form.values.selectedBankId === 'monobank') {
+      form.setValue('selectedBankId', defaultBank.id);
+    }
+  }, [defaultBank]); // ✅ ФИКС: убираем form из зависимостей чтобы избежать бесконечного цикла
 
   return { form };
 }

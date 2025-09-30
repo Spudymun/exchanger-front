@@ -3,9 +3,6 @@ import {
   FIAT_MIN_AMOUNTS,
   FIAT_MAX_AMOUNTS,
   // MOCK_FIAT_RATES, // ВРЕМЕННО ЗАКОММЕНТИРОВАНО: мультивалютная конвертация
-  getBanksForCurrency,
-  getBankById,
-  getBankReserve,
   API_DELAY_MS,
   CRYPTOCURRENCIES,
   PERCENTAGE_CALCULATIONS,
@@ -21,6 +18,10 @@ import { z } from 'zod';
 
 import { type Context } from '../context';
 import { createTRPCRouter, publicProcedure } from '../init';
+
+// === CONSTANTS ===
+
+const DATABASE_URL_ERROR = 'DATABASE_URL not configured';
 
 // === TYPE GUARDS ===
 
@@ -41,11 +42,25 @@ export const fiatRouter = createTRPCRouter({
     // Имитация задержки API
     await new Promise(resolve => setTimeout(resolve, API_DELAY_MS));
 
-    return FIAT_CURRENCIES.map((currency: FiatCurrency) => ({
-      symbol: currency,
-      name: currency === 'UAH' ? 'Українська гривня' : currency === 'USD' ? 'US Dollar' : 'Euro',
-      minAmount: FIAT_MIN_AMOUNTS[currency as keyof typeof FIAT_MIN_AMOUNTS],
-      maxAmount: FIAT_MAX_AMOUNTS[currency as keyof typeof FIAT_MAX_AMOUNTS],
+    // Получаем данные из БД
+    const { getPrismaClient } = await import('@repo/session-management');
+    const databaseUrl = process.env.DATABASE_URL;
+    if (!databaseUrl) {
+      throw new Error(DATABASE_URL_ERROR);
+    }
+    const prisma = getPrismaClient({ url: databaseUrl });
+
+    const currencies = await prisma.bankFiatCurrency.findMany({
+      where: { isEnabled: true },
+      select: { fiatCurrency: true },
+      distinct: ['fiatCurrency'],
+    });
+
+    return currencies.map(({ fiatCurrency }) => ({
+      symbol: fiatCurrency as FiatCurrency,
+      name: fiatCurrency === 'UAH' ? 'Українська гривня' : fiatCurrency === 'USD' ? 'US Dollar' : 'Euro',
+      minAmount: FIAT_MIN_AMOUNTS[fiatCurrency as keyof typeof FIAT_MIN_AMOUNTS],
+      maxAmount: FIAT_MAX_AMOUNTS[fiatCurrency as keyof typeof FIAT_MAX_AMOUNTS],
       isActive: true,
     }));
   }),
@@ -57,25 +72,45 @@ export const fiatRouter = createTRPCRouter({
       // Имитация задержки API
       await new Promise(resolve => setTimeout(resolve, API_DELAY_MS));
 
-      const banks = getBanksForCurrency(input.currency as FiatCurrency);
-      return banks.map(
-        (bank: {
-          id: string;
-          name: string;
-          shortName: string;
-          logoUrl: string;
-          isActive: boolean;
-          priority: number;
-        }) => ({
-          id: bank.id,
-          name: bank.name,
-          shortName: bank.shortName,
-          logoUrl: bank.logoUrl,
-          isActive: bank.isActive,
-          priority: bank.priority,
-          reserve: getBankReserve(bank.id, input.currency as FiatCurrency),
-        })
-      );
+      // Получаем данные из БД
+      const { getPrismaClient } = await import('@repo/session-management');
+      const databaseUrl = process.env.DATABASE_URL;
+      if (!databaseUrl) {
+        throw new Error(DATABASE_URL_ERROR);
+      }
+      const prisma = getPrismaClient({ url: databaseUrl });
+
+      const banksWithCurrency = await prisma.bank.findMany({
+        where: {
+          isActive: true,
+          fiatCurrencies: {
+            some: {
+              fiatCurrency: input.currency,
+              isEnabled: true,
+            },
+          },
+        },
+        include: {
+          reserves: {
+            where: { fiatCurrency: input.currency },
+          },
+        },
+        orderBy: [
+          { isDefault: 'desc' },
+          { createdAt: 'asc' },
+        ],
+      });
+
+      return banksWithCurrency.map((bank, index) => ({
+        id: bank.externalId,
+        name: bank.name,
+        shortName: bank.shortName,
+        logoUrl: bank.logoUrl || '',
+        isActive: bank.isActive,
+        isDefault: bank.isDefault, // ✅ MIGRATION: Добавляем поле is_default из БД
+        priority: index + 1, // Dynamic priority based on order
+        reserve: bank.reserves[0]?.amount ? Number(bank.reserves[0].amount) : 0,
+      }));
     }),
 
   // Получить информацию о банке и его резервах
@@ -90,21 +125,37 @@ export const fiatRouter = createTRPCRouter({
       // Имитация задержки API
       await new Promise(resolve => setTimeout(resolve, API_DELAY_MS));
 
-      const bank = getBankById(input.bankId);
+      // Получаем данные из БД
+      const { getPrismaClient } = await import('@repo/session-management');
+      const databaseUrl = process.env.DATABASE_URL;
+      if (!databaseUrl) {
+        throw new Error(DATABASE_URL_ERROR);
+      }
+      const prisma = getPrismaClient({ url: databaseUrl });
+
+      const bank = await prisma.bank.findUnique({
+        where: { externalId: input.bankId },
+        include: {
+          reserves: {
+            where: { fiatCurrency: input.currency },
+          },
+        },
+      });
+
       if (!bank) {
         throw createBadRequestError(
           await ctx.getErrorMessage('server.errors.business.bankNotFound', { bankId: input.bankId })
         );
       }
 
-      const reserve = getBankReserve(input.bankId, input.currency as FiatCurrency);
+      const reserve = bank.reserves[0]?.amount ? Number(bank.reserves[0].amount) : 0;
       const minAmount = FIAT_MIN_AMOUNTS[input.currency as keyof typeof FIAT_MIN_AMOUNTS];
 
       return {
-        id: bank.id,
+        id: bank.externalId,
         name: bank.name,
         shortName: bank.shortName,
-        logoUrl: bank.logoUrl,
+        logoUrl: bank.logoUrl || '',
         isActive: bank.isActive,
         currency: input.currency,
         reserve,
@@ -134,8 +185,24 @@ export const fiatRouter = createTRPCRouter({
 
       await assertValidCurrency(fromCurrency as string, ctx);
 
-      // Проверяем банк
-      const bank = getBankById(bankId);
+      // Получаем данные из БД
+      const { getPrismaClient } = await import('@repo/session-management');
+      const databaseUrl = process.env.DATABASE_URL;
+      if (!databaseUrl) {
+        throw new Error(DATABASE_URL_ERROR);
+      }
+      const prisma = getPrismaClient({ url: databaseUrl });
+
+      // Проверяем банк и получаем резерв
+      const bank = await prisma.bank.findUnique({
+        where: { externalId: bankId },
+        include: {
+          reserves: {
+            where: { fiatCurrency: toCurrency },
+          },
+        },
+      });
+
       if (!bank) {
         throw createBadRequestError(
           await ctx.getErrorMessage('server.errors.business.bankNotFound', { bankId })
@@ -154,8 +221,8 @@ export const fiatRouter = createTRPCRouter({
       const finalAmount = uahAmount; // Всегда UAH
       const fiatRate = 1; // UAH базовая валюта
 
-      // Проверяем резерв банка
-      const bankReserve = getBankReserve(bankId, toCurrency as FiatCurrency);
+      // Проверяем резерв банка из БД
+      const bankReserve = bank.reserves[0]?.amount ? Number(bank.reserves[0].amount) : 0;
       const hasEnoughReserve = finalAmount <= bankReserve;
 
       return {

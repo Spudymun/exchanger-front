@@ -14,6 +14,8 @@ import { useAutoMinAmount } from '@repo/hooks/src/client-hooks';
 import { securityEnhancedHeroExchangeFormSchema } from '@repo/utils';
 import { useMemo, useEffect, useState } from 'react';
 
+import { useBanksForCurrency } from '../../hooks/useExchangeMutation';
+
 import type { HeroExchangeFormData } from '../HeroExchangeForm';
 
 /**
@@ -75,13 +77,20 @@ export function useHeroExchangeForm(
   t: (key: string) => string,
   onExchange?: (data: HeroExchangeFormData) => Promise<void>
 ) {
+  // ✅ MIGRATION: Получаем банки для UAH чтобы найти дефолтный
+  const { data: uahBanks } = useBanksForCurrency('UAH');
+  const defaultBank = useMemo(() => {
+    if (!uahBanks || !Array.isArray(uahBanks)) return undefined;
+    return uahBanks.find((bank: { isDefault?: boolean }) => bank.isDefault);
+  }, [uahBanks]);
+
   const form = useFormWithNextIntl<HeroExchangeFormData>({
     initialValues: {
       fromAmount: '',
       fromCurrency: EXCHANGE_DEFAULTS.FROM_CURRENCY,
       tokenStandard: getDefaultTokenStandard(EXCHANGE_DEFAULTS.FROM_CURRENCY) || '',
       toCurrency: EXCHANGE_DEFAULTS.TO_CURRENCY,
-      selectedBankId: '',
+      selectedBankId: '', // ✅ MIGRATION: Устанавливается в useEffect ниже
     },
     validationSchema: securityEnhancedHeroExchangeFormSchema,
     t,
@@ -108,6 +117,13 @@ export function useHeroExchangeForm(
       ? getBanksForCurrency(currency as FiatCurrency)
       : [];
   }, [form.values.toCurrency]);
+
+  // ✅ MIGRATION: Устанавливаем дефолтный банк когда загрузятся данные
+  useEffect(() => {
+    if (defaultBank?.id && !form.values.selectedBankId) {
+      form.setValue('selectedBankId', defaultBank.id);
+    }
+  }, [defaultBank]); // ✅ ФИКС: убираем form из зависимостей чтобы избежать бесконечного цикла
 
   // Динамические лимиты для текущей криптовалюты
   const limits = useMemo(() => {

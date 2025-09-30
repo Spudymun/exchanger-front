@@ -1,6 +1,5 @@
 'use client';
 
-import { FIAT_CURRENCIES } from '@repo/constants';
 import type { UseFormReturn } from '@repo/hooks';
 
 import {
@@ -15,9 +14,22 @@ import {
   SelectValue,
 } from '../..';
 
+// ✅ MIGRATION: Типы для fiat валют из API
+interface FiatCurrencyData {
+  symbol: string;
+  name: string;
+  minAmount: number;
+  maxAmount: number;
+  isActive: boolean;
+}
+
 interface FiatCurrencySelectorProps {
   form: UseFormReturn<Record<string, unknown>>;
   t: (key: string) => string;
+  /**
+   * ✅ MIGRATION: Валюты из API вместо static FIAT_CURRENCIES
+   */
+  currencies?: FiatCurrencyData[];
   /**
    * Поле в форме для хранения валюты
    * @default 'toCurrency'
@@ -31,15 +43,17 @@ interface FiatCurrencySelectorProps {
 }
 
 /**
- * ✅ UNIFIED: Общий селектор фиатных валют для форм обмена
- * Заменяет дублированные FiatCurrencySelector из ReceivingCard
+ * ✅ MIGRATION: Общий селектор фиатных валют для форм обмена
+ * Теперь получает данные из API вместо static констант
  *
+ * @param currencies - валюты из API
  * @param fieldName - имя поля в форме (по умолчанию 'toCurrency')
  * @param resetBankOnChange - сбрасывать ли выбранный банк при смене валюты
  */
 export function FiatCurrencySelector({
   form,
   t,
+  currencies = [],
   fieldName = 'toCurrency',
   resetBankOnChange = true,
 }: FiatCurrencySelectorProps) {
@@ -64,9 +78,9 @@ export function FiatCurrencySelector({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {FIAT_CURRENCIES.map(c => (
-                <SelectItem key={c} value={c}>
-                  {c}
+              {currencies.map(currency => (
+                <SelectItem key={currency.symbol} value={currency.symbol}>
+                  {currency.symbol}
                 </SelectItem>
               ))}
             </SelectContent>
