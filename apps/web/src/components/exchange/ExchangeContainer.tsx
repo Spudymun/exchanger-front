@@ -270,8 +270,8 @@ function useExchangeForm(initialParams?: ExchangeContainerProps['initialParams']
   const exchangeMutation = useExchangeMutation();
   const notifications = useNotifications();
 
-  // ✅ CENTRALIZED: Используем централизованный хук для получения дефолтного банка
-  const { defaultBank } = useDefaultBank();
+  // ✅ ERROR BOUNDARY: Используем централизованный хук с обработкой ошибок
+  const { defaultBank, fallbackBankId } = useDefaultBank();
 
   const initialFormData = useExchangeFormData(initialParams);
 
@@ -288,12 +288,13 @@ function useExchangeForm(initialParams?: ExchangeContainerProps['initialParams']
     }),
   });
 
-  // ✅ MIGRATION: Устанавливаем дефолтный банк когда загрузятся данные
+  // ✅ ERROR BOUNDARY: Устанавливаем дефолтный банк с fallback механизмом
   useEffect(() => {
-    if (defaultBank?.id && form.values.selectedBankId === EXCHANGE_DEFAULTS.DEFAULT_BANK_ID) {
-      form.setValue('selectedBankId', defaultBank.id);
+    const bankIdToSet = defaultBank?.id || fallbackBankId;
+    if (bankIdToSet && form.values.selectedBankId === EXCHANGE_DEFAULTS.DEFAULT_BANK_ID) {
+      form.setValue('selectedBankId', bankIdToSet);
     }
-  }, [defaultBank]); // ✅ ФИКС: убираем form из зависимостей чтобы избежать бесконечного цикла
+  }, [defaultBank, fallbackBankId]); // ✅ ФИКС: убираем form из зависимостей чтобы избежать бесконечного цикла
 
   return { form };
 }

@@ -102,7 +102,9 @@ export interface Bank {
   shortName: string;
   logoUrl: string;
   isActive: boolean;
+  isDefault?: boolean; // ✅ UNIFIED: Добавляем поле для дефолтного банка
   priority: number;
+  reserve?: number; // ✅ UNIFIED: Резерв может быть включен в ответе API
 }
 
 // Helper to get all bank IDs

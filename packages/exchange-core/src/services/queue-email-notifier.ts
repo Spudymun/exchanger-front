@@ -81,9 +81,8 @@ export class ServerQueueEmailNotifier implements QueueEmailNotifier {
         expiresAt.getHours() + WALLET_POOL_CONFIG.EMAIL_CONSTANTS.WALLET_EXPIRY_HOURS
       );
 
-      // Динамический импорт через переменную чтобы webpack не анализировал
-      const emailServicePath = '@repo/email-service';
-      const emailModule = await import(emailServicePath);
+      // ✅ FIXED: Прямой импорт вместо динамического через переменную
+      const emailModule = await import('@repo/email-service');
       await emailModule.EmailService.sendCryptoAddress({
         orderId: order.id,
         cryptoAddress: address,

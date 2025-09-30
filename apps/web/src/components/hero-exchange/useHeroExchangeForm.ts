@@ -77,8 +77,8 @@ export function useHeroExchangeForm(
   t: (key: string) => string,
   onExchange?: (data: HeroExchangeFormData) => Promise<void>
 ) {
-  // ✅ CENTRALIZED: Используем централизованный хук для получения дефолтного банка
-  const { defaultBank } = useDefaultBank();
+  // ✅ ERROR BOUNDARY: Используем централизованный хук с обработкой ошибок
+  const { defaultBank, fallbackBankId } = useDefaultBank();
 
   const form = useFormWithNextIntl<HeroExchangeFormData>({
     initialValues: {
@@ -114,12 +114,13 @@ export function useHeroExchangeForm(
       : [];
   }, [form.values.toCurrency]);
 
-  // ✅ MIGRATION: Устанавливаем дефолтный банк когда загрузятся данные
+  // ✅ ERROR BOUNDARY: Устанавливаем дефолтный банк с fallback механизмом
   useEffect(() => {
-    if (defaultBank?.id && !form.values.selectedBankId) {
-      form.setValue('selectedBankId', defaultBank.id);
+    const bankIdToSet = defaultBank?.id || fallbackBankId;
+    if (bankIdToSet && !form.values.selectedBankId) {
+      form.setValue('selectedBankId', bankIdToSet);
     }
-  }, [defaultBank]); // ✅ ФИКС: убираем form из зависимостей чтобы избежать бесконечного цикла
+  }, [defaultBank, fallbackBankId]); // ✅ ФИКС: убираем form из зависимостей чтобы избежать бесконечного цикла
 
   // Динамические лимиты для текущей криптовалюты
   const limits = useMemo(() => {
