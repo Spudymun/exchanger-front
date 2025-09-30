@@ -36,7 +36,7 @@ const createDefaultFormData = () => ({
   fromCurrency: EXCHANGE_DEFAULTS.FROM_CURRENCY,
   tokenStandard: getDefaultTokenStandard(EXCHANGE_DEFAULTS.FROM_CURRENCY) || 'TRC-20',
   toCurrency: EXCHANGE_DEFAULTS.TO_CURRENCY,
-  selectedBankId: 'monobank', // ✅ MIGRATION: Простое дефолтное значение
+  selectedBankId: EXCHANGE_DEFAULTS.DEFAULT_BANK_ID, // ✅ MIGRATION: Централизованная константа
   fromAmount: '',
   // Дополнительные поля для полной формы
   email: '',
@@ -77,7 +77,7 @@ const parseValidatedTokenStandard = (fromParam: string | undefined): string | un
 // ⚡ Helper: валидация bank ID
 const parseValidatedBank = (bankParam: string | undefined): string => {
   // ✅ MIGRATION: Упрощенная валидация - API сам проверит существование
-  return bankParam || 'monobank';
+  return bankParam || EXCHANGE_DEFAULTS.DEFAULT_BANK_ID;
 };
 
 // ⚡ Helper: валидация amount с правильными per-currency лимитами
@@ -233,7 +233,7 @@ function createOrderSubmission({
         tokenStandard: values.tokenStandard, // ✅ ИСПРАВЛЕНО: передача выбранной пользователем сети
         recipientData: {
           cardNumber: values.cardNumber,
-          bankId: values.selectedBankId || 'monobank', // ✅ MIGRATION: Простое дефолтное значение
+          bankId: values.selectedBankId || EXCHANGE_DEFAULTS.DEFAULT_BANK_ID, // ✅ MIGRATION: Централизованная константа
         },
       };
 
@@ -295,7 +295,7 @@ function useExchangeForm(
 
   // ✅ MIGRATION: Устанавливаем дефолтный банк когда загрузятся данные
   useEffect(() => {
-    if (defaultBank?.id && form.values.selectedBankId === 'monobank') {
+    if (defaultBank?.id && form.values.selectedBankId === EXCHANGE_DEFAULTS.DEFAULT_BANK_ID) {
       form.setValue('selectedBankId', defaultBank.id);
     }
   }, [defaultBank]); // ✅ ФИКС: убираем form из зависимостей чтобы избежать бесконечного цикла

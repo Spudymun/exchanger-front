@@ -75,7 +75,10 @@ export const EXCHANGE_DEFAULTS = {
   FROM_CURRENCY: 'USDT' as const,
   /** Валюта по умолчанию для получения - заменяет хардкод 'UAH' */
   TO_CURRENCY: 'UAH' as const,
+  /** Банк по умолчанию - заменяет хардкод 'monobank' */
+  DEFAULT_BANK_ID: 'monobank' as const,
 } as const;
 
 export type DefaultFromCurrency = typeof EXCHANGE_DEFAULTS.FROM_CURRENCY;
 export type DefaultToCurrency = typeof EXCHANGE_DEFAULTS.TO_CURRENCY;
+export type DefaultBankId = typeof EXCHANGE_DEFAULTS.DEFAULT_BANK_ID;

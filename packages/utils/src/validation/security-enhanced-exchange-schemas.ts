@@ -51,7 +51,7 @@ const VALID_TOKEN_STANDARDS = ['TRC-20', 'ERC-20', 'BEP-20'] as const;
 export const urlSearchParamsSchema = z.object({
   from: z.enum(VALID_CURRENCIES).default(EXCHANGE_DEFAULTS.FROM_CURRENCY),
   to: z.enum(FIAT_CURRENCIES).default(EXCHANGE_DEFAULTS.TO_CURRENCY),
-  bank: z.enum(VALID_BANKS).default('monobank'),
+  bank: z.enum(VALID_BANKS).default(EXCHANGE_DEFAULTS.DEFAULT_BANK_ID),
   tokenStandard: z.enum(VALID_TOKEN_STANDARDS).optional(),
   amount: z
     .string()
