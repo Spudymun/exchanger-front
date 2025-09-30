@@ -75,7 +75,7 @@ async function processEmailQueue(): Promise<EmailWorkerStats> {
 
   // ✅ Проверяем доступность email notifier
   const { createQueueEmailNotifier } = await import(
-    '@repo/exchange-core/src/services/queue-email-notifier'
+    '@repo/exchange-core/server'
   );
   const emailNotifier = createQueueEmailNotifier();
 

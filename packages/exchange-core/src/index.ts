@@ -1,25 +1,31 @@
-// Экспорт всех типов
-export * from './types';
+/**
+ * ОСНОВНОЙ ЭКСПОРТ ФАЙЛ - ОБРАТНАЯ СОВМЕСТИМОСТЬ
+ * 
+ * ⚠️ ВНИМАНИЕ: Этот файл сохраняет обратную совместимость, но теперь экспортирует
+ * ТОЛЬКО client-safe функции для предотвращения проблем с frontend сборкой.
+ * 
+ * Для правильной архитектуры используйте:
+ * - '@repo/exchange-core/client' - для frontend приложений
+ * - '@repo/exchange-core/server' - для server-side кода
+ */
 
-// Экспорт Repository интерфейсов
-export * from './repositories';
+// ✅ БЕЗОПАСНО: Re-export всех client-safe экспортов
+export * from './client';
 
-// TASK 2.2: Redis FIFO Queue components
-export * from './adapters';
-export * from './factories';
-
-// Экспорт утилит
-export * from './utils/calculations';
-export * from './utils/crypto';
-export * from './utils/data-sanitizers';
-export * from './utils/composite-validators';
-export * from './utils/type-guards';
-export * from './utils/access-validators';
-export * from './utils/user-role-helpers';
-export * from './utils/monitoring-utils';
-
-// Экспорт сервисов
-export * from './services';
-
-// Экспорт data managers
-export * from './data';
+/**
+ * МИГРАЦИОННАЯ ИНФОРМАЦИЯ:
+ * 
+ * Если ваш код использует server-only функции, обновите импорты:
+ * 
+ * БЫЛО:
+ * import { QueueEmailNotifier } from '@repo/exchange-core';
+ * 
+ * СТАЛО:
+ * import { QueueEmailNotifier } from '@repo/exchange-core/server';
+ * 
+ * БЫЛО:
+ * import { WalletPoolManager } from '@repo/exchange-core';
+ * 
+ * СТАЛО:
+ * import { WalletPoolManager } from '@repo/exchange-core/server';
+ */

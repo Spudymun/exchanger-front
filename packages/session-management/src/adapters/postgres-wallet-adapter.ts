@@ -5,7 +5,7 @@ import { CRYPTOCURRENCIES } from '@repo/constants';
 import type {
   WalletRepositoryInterface,
   WalletInfo,
-} from '@repo/exchange-core/src/repositories/wallet-repository-interface';
+} from '@repo/exchange-core';
 import { createEnvironmentLogger } from '@repo/utils';
 
 import { BasePostgresAdapter } from './base-postgres-adapter';

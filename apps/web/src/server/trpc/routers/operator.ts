@@ -1,5 +1,6 @@
 import { ORDER_STATUS_CONFIG, VALIDATION_LIMITS, ORDER_STATUSES } from '@repo/constants';
-import { orderManager, WalletPoolManagerFactory } from '@repo/exchange-core';
+import { orderManager } from '@repo/exchange-core';
+import { WalletPoolManagerFactory } from '@repo/exchange-core/server';
 import {
   paginateOrders,
   filterOrders,

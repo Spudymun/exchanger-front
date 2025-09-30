@@ -28,10 +28,12 @@ import {
   type CryptoCurrency,
   type Order,
   type WalletInfo,
-  AutoRegistrationService,
-  type AutoRegistrationResult,
-  SmartPricingService,
 } from '@repo/exchange-core';
+import {
+  AutoRegistrationService,
+  SmartPricingService,
+  type AutoRegistrationResult,
+} from '@repo/exchange-core/server';
 import { UserManagerFactory, type SessionMetadata } from '@repo/session-management';
 import {
   paginateOrders,
@@ -113,7 +115,7 @@ async function prepareOrderRequest(input: {
  * ✅ ИСПРАВЛЕНО: учитывает tokenStandard для multi-network токенов (USDT)
  */
 async function allocateWalletForOrder(currency: CryptoCurrency, tokenStandard?: string) {
-  const { WalletPoolManagerFactory } = await import('@repo/exchange-core');
+  const { WalletPoolManagerFactory } = await import('@repo/exchange-core/server');
   const walletManager = await WalletPoolManagerFactory.create();
   return walletManager.allocateWallet(currency, tokenStandard);
 }

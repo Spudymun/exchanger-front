@@ -2,7 +2,7 @@ import { PrismaClient, QueuePriority } from '@prisma/client';
 
 import type { CryptoCurrency } from '@repo/constants';
 import { SESSION_CONSTANTS } from '@repo/constants';
-import type { QueueRepositoryInterface } from '@repo/exchange-core/src/repositories/queue-repository-interface';
+import type { QueueRepositoryInterface } from '@repo/exchange-core';
 import { createEnvironmentLogger } from '@repo/utils';
 
 import { BasePostgresAdapter } from './base-postgres-adapter';

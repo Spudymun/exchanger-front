@@ -11,13 +11,13 @@ import {
   orderManager,
   userManager,
   type Order,
-  WalletPoolManagerFactory,
 } from '@repo/exchange-core';
 import {
+  WalletPoolManagerFactory,
   WalletAlertsService,
   WalletMonitoringProcess,
   type AlertCheckResult,
-} from '@repo/exchange-core/src/server';
+} from '@repo/exchange-core/server';
 import { UserManagerFactory } from '@repo/session-management';
 import {
   paginateOrders,
