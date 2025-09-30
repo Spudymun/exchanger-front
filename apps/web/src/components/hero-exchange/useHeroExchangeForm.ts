@@ -14,7 +14,7 @@ import { useAutoMinAmount } from '@repo/hooks/src/client-hooks';
 import { securityEnhancedHeroExchangeFormSchema } from '@repo/utils';
 import { useMemo, useEffect, useState } from 'react';
 
-import { useBanksForCurrency } from '../../hooks/useExchangeMutation';
+import { useDefaultBank } from '../../hooks/useDefaultBank';
 
 import type { HeroExchangeFormData } from '../HeroExchangeForm';
 
@@ -77,12 +77,8 @@ export function useHeroExchangeForm(
   t: (key: string) => string,
   onExchange?: (data: HeroExchangeFormData) => Promise<void>
 ) {
-  // ✅ MIGRATION: Получаем банки для UAH чтобы найти дефолтный
-  const { data: uahBanks } = useBanksForCurrency('UAH');
-  const defaultBank = useMemo(() => {
-    if (!uahBanks || !Array.isArray(uahBanks)) return undefined;
-    return uahBanks.find((bank: { isDefault?: boolean }) => bank.isDefault);
-  }, [uahBanks]);
+  // ✅ CENTRALIZED: Используем централизованный хук для получения дефолтного банка
+  const { defaultBank } = useDefaultBank();
 
   const form = useFormWithNextIntl<HeroExchangeFormData>({
     initialValues: {
@@ -95,7 +91,7 @@ export function useHeroExchangeForm(
     validationSchema: securityEnhancedHeroExchangeFormSchema,
     t,
     onSubmit: async values => {
-      // ✅ ФИКС: Вызываем асинхронный onExchange  
+      // ✅ ФИКС: Вызываем асинхронный onExchange
       if (onExchange) {
         await onExchange(values);
       }
@@ -130,9 +126,11 @@ export function useHeroExchangeForm(
     return getCurrencyLimits(form.values.fromCurrency as CryptoCurrency);
   }, [form.values.fromCurrency]);
 
-  const isValid = form.isValid &&
+  const isValid =
+    form.isValid &&
     Number(form.values.fromAmount) >= limits.minCrypto &&
-    calculatedAmount >= 100 && Boolean(form.values.selectedBankId);
+    calculatedAmount >= 100 &&
+    Boolean(form.values.selectedBankId);
 
   const constants = { minCryptoAmount: limits.minCrypto, minUahAmount: 100, limits };
 

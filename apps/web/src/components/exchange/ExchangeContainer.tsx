@@ -20,7 +20,8 @@ import {
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 
-import { useExchangeMutation, useBanksForCurrency } from '../../hooks/useExchangeMutation';
+import { useDefaultBank } from '../../hooks/useDefaultBank';
+import { useExchangeMutation } from '../../hooks/useExchangeMutation';
 import { useRouter } from '../../i18n/navigation';
 
 import { ExchangeLayout } from './ExchangeLayout';
@@ -238,16 +239,16 @@ function createOrderSubmission({
       };
 
       const orderData = await exchangeMutation.createOrder.mutateAsync(orderRequest);
-      
+
       // ✅ ФИКС: Навигация с задержкой для показа спиннера во время перехода
       router.push(`/order/${orderData.orderId}`);
-      
+
       // Ждем завершения навигации (для первого перехода может быть 2-3 сек)
       await new Promise(resolve => setTimeout(resolve, ORDER_NAVIGATION_DELAY_MS));
     } catch (error) {
       // Handle localized error messages
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      
+
       // Check if error message is a localization key
       if (errorMessage.startsWith('server.errors.')) {
         const localizedMessage = serverErrorT(errorMessage.replace('server.errors.', ''));
@@ -261,9 +262,7 @@ function createOrderSubmission({
 }
 
 // Hook для инициализации формы
-function useExchangeForm(
-  initialParams?: ExchangeContainerProps['initialParams']
-) {
+function useExchangeForm(initialParams?: ExchangeContainerProps['initialParams']) {
   const t = useTranslations('AdvancedExchangeForm');
   const serverErrorT = useTranslations('server.errors');
   const notificationsT = useTranslations('notifications');
@@ -271,12 +270,8 @@ function useExchangeForm(
   const exchangeMutation = useExchangeMutation();
   const notifications = useNotifications();
 
-  // ✅ MIGRATION: Получаем банки для UAH чтобы найти дефолтный
-  const { data: uahBanks } = useBanksForCurrency('UAH');
-  const defaultBank = useMemo(() => {
-    if (!uahBanks || !Array.isArray(uahBanks)) return undefined;
-    return uahBanks.find((bank: { isDefault?: boolean }) => bank.isDefault);
-  }, [uahBanks]);
+  // ✅ CENTRALIZED: Используем централизованный хук для получения дефолтного банка
+  const { defaultBank } = useDefaultBank();
 
   const initialFormData = useExchangeFormData(initialParams);
 
