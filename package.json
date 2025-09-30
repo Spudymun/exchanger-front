@@ -42,6 +42,7 @@
     "db:seed:usdt": "dotenv -e apps/web/.env -- npx prisma db execute --file packages/session-management/scripts/seed-usdt-wallets.sql --schema packages/session-management/prisma/schema.prisma",
     "db:seed:operator": "dotenv -e apps/web/.env -- npx prisma db execute --file packages/session-management/scripts/seed-default-operator.sql --schema packages/session-management/prisma/schema.prisma",
     "db:seed:banks": "dotenv -e apps/web/.env -- npx prisma db execute --file packages/session-management/scripts/seed-uah-banks.sql --schema packages/session-management/prisma/schema.prisma",
+    "db:seeds": "npm run db:seed:usdt && npm run db:seed:operator && npm run db:seed:banks",
     "db:clean:usdt": "dotenv -e apps/web/.env -- npx prisma db execute --file packages/session-management/scripts/clean-reseed-usdt.sql --schema packages/session-management/prisma/schema.prisma",
     "db:reset:usdt": "dotenv -e apps/web/.env -- npx prisma db execute --file packages/session-management/scripts/reset-usdt-to-available.sql --schema packages/session-management/prisma/schema.prisma",
     "db:studio": "dotenv -e apps/web/.env -- npx prisma studio --schema packages/session-management/prisma/schema.prisma",

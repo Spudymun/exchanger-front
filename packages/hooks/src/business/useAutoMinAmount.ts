@@ -32,6 +32,28 @@ function getSafeMinAmount(currency: CryptoCurrency): number {
 }
 
 /**
+ * Hook для отслеживания взаимодействия пользователя с полем
+ */
+function useUserInteractionTracking(currency: CryptoCurrency, currentAmount: string) {
+  const hasUserInteracted = useRef(false);
+
+  // Сброс при смене валюты
+  useEffect(() => {
+    hasUserInteracted.current = false;
+  }, [currency]);
+
+  // Отслеживание ввода пользователя
+  useEffect(() => {
+    const isEmpty = !currentAmount || currentAmount.trim() === '';
+    if (!isEmpty && !hasUserInteracted.current) {
+      hasUserInteracted.current = true;
+    }
+  }, [currentAmount]);
+
+  return hasUserInteracted;
+}
+
+/**
  * Hook для автоматического заполнения минимального количества криптовалюты
  *
  * PRODUCTION-READY ENHANCEMENTS:
@@ -53,6 +75,9 @@ export function useAutoMinAmount(currency: CryptoCurrency, currentAmount: string
   const hasAutoFilled = useRef(false);
   const isUnmounted = useRef(false);
 
+  // Используем отдельный хук для отслеживания взаимодействия
+  const hasUserInteracted = useUserInteractionTracking(currency, currentAmount);
+
   // Cleanup на unmount для предотвращения memory leaks
   useEffect(() => {
     return () => {
@@ -60,7 +85,7 @@ export function useAutoMinAmount(currency: CryptoCurrency, currentAmount: string
     };
   }, []);
 
-  // Сброс флага при изменении валюты с защитой от unmounted component
+  // Сброс флага автозаполнения при изменении валюты
   useEffect(() => {
     if (!isUnmounted.current) {
       hasAutoFilled.current = false;
@@ -74,7 +99,7 @@ export function useAutoMinAmount(currency: CryptoCurrency, currentAmount: string
   // Memoized calculation для избежания перевычислений
   const minAmount = useMemo(() => getSafeMinAmount(currency), [currency]);
 
-  // Callback для получения минимальной суммы (используется в форме)
+  // Callback для получения минимальной суммы
   const getMinAmount = useCallback(() => {
     if (process.env.NODE_ENV === 'development') {
       // eslint-disable-next-line no-console
@@ -87,7 +112,8 @@ export function useAutoMinAmount(currency: CryptoCurrency, currentAmount: string
   const shouldAutoFill = useMemo(() => {
     const isEmpty = !currentAmount || currentAmount.trim() === '';
     const notFilledYet = !hasAutoFilled.current;
-    const result = isEmpty && notFilledYet;
+    const noUserInteraction = !hasUserInteracted.current;
+    const result = isEmpty && notFilledYet && noUserInteraction;
 
     if (result && !isUnmounted.current) {
       hasAutoFilled.current = true;
@@ -98,7 +124,7 @@ export function useAutoMinAmount(currency: CryptoCurrency, currentAmount: string
     }
 
     return result;
-  }, [currentAmount, minAmount]);
+  }, [currentAmount, minAmount, hasUserInteracted]);
 
   return {
     shouldAutoFill,
