@@ -15,6 +15,9 @@ export * from './logger';
 export * from './context-mappers';
 export * from './graceful-handler';
 
+// ✅ Link Parsing Utilities
+export * from './link-parsing';
+
 // Core validation functionality
 export * from './validation/core';
 export * from './validation/handlers';
