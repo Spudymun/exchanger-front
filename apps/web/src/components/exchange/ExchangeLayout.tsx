@@ -27,6 +27,8 @@ import React from 'react';
 
 import { useSupportedCurrencies, useSupportedTokenStandards, useBanksForCurrency } from '../../hooks/useExchangeMutation';
 
+import { TermsAgreementText } from './TermsAgreementText';
+
 interface ExchangeLayoutProps {
   form: UseFormReturn<SecurityEnhancedFullExchangeForm>;
   t: (key: string) => string;
@@ -259,7 +261,9 @@ function SecuritySection({
                 }}
               />
             </FormControl>
-            <FormLabel className="text-sm">{t('security.terms.agreement')}</FormLabel>
+            <FormLabel className="text-sm">
+              <TermsAgreementText t={t} />
+            </FormLabel>
           </div>
           <FormMessage />
         </FormField>

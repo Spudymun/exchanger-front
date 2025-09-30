@@ -118,7 +118,7 @@
         "invalid": "Неверный номер карты"
       },
       "terms": {
-        "required": "Вы должны согласиться с условиями"
+        "required": "Вы должны согласиться с Правилами сервиса и AML Политикой"
       }
     },
     "fiatNames": {
@@ -134,7 +134,7 @@
     "security": {
       "title": "Безопасность и проверка",
       "terms": {
-        "agreement": "Я согласен с условиями использования и политикой конфиденциальности"
+        "agreement": "Я согласен с [LINK_RULES_START]Правилами сервиса[LINK_RULES_END] и [LINK_AML_START]AML Политикой[LINK_AML_END]"
       }
     },
     "exchangeTerms": {

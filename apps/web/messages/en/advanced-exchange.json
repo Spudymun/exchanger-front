@@ -118,7 +118,7 @@
         "invalid": "Invalid card number"
       },
       "terms": {
-        "required": "You must agree to the terms"
+        "required": "You must agree to the Terms of Service and AML Policy"
       }
     },
     "fiatNames": {
@@ -134,7 +134,7 @@
     "security": {
       "title": "Security and Verification",
       "terms": {
-        "agreement": "I agree to the terms of use and privacy policy"
+        "agreement": "I agree to the [LINK_RULES_START]Terms of Service[LINK_RULES_END] and [LINK_AML_START]AML Policy[LINK_AML_END]"
       }
     },
     "exchangeTerms": {
