@@ -10,6 +10,8 @@ export interface CreateOrderRequest {
   uahAmount: number;
   recipientData?: RecipientData;
   walletId?: string; // ✅ ДОБАВЛЕНО: для привязки кошелька при создании
+  bankId?: string; // ✅ ДОБАВЛЕНО: ID банка получателя
+  fixedExchangeRate?: number; // ✅ ДОБАВЛЕНО: курс фиксации с frontend
 }
 
 export interface Order {
@@ -34,6 +36,10 @@ export interface Order {
   escalationPriority?: 'low' | 'medium' | 'high';
   escalatedAt?: Date;
   escalatedBy?: string;
+  // ✅ BANK AND RATE FIELDS: поля для банка получателя и курса фиксации
+  bankId?: string; // UUID банка получателя
+  bankName?: string; // Название банка для UI (из relation)
+  fixedExchangeRate?: number; // Курс на момент создания ордера
   // ✅ УДАЛЕНО: email - теперь через userId -> User relation
   // ✅ УДАЛЕНО: tokenStandard - теперь через walletId -> Wallet relation
 }
@@ -45,4 +51,7 @@ export interface Order {
 export interface OrderWithUIData extends Order {
   email?: string; // From User relation
   tokenStandard?: string; // From Wallet relation
+  // ✅ BANK UI DATA: данные банка для отображения в UI
+  bankName?: string; // Название банка (из relation)
+  bankShortName?: string; // Короткое название банка
 }

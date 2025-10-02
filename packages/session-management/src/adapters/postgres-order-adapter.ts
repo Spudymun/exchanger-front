@@ -30,8 +30,15 @@ interface PrismaOrder {
   createdAt: Date;
   updatedAt: Date;
   processedAt: Date | null;
+  bankId?: string | null; // ✅ UUID банка (не externalId)
+  fixedExchangeRate?: { toNumber(): number } | null; // ✅ ДОБАВЛЕНО: зафиксированный курс
   wallet?: {
     address: string;
+  } | null;
+  bank?: {
+    id: string;
+    name: string;
+    externalId: string;
   } | null;
 }
 
@@ -56,6 +63,8 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
         userId: orderData.userId,
         currency: orderData.currency,
         walletId: orderData.walletId,
+        bankId: orderData.bankId,
+        fixedExchangeRate: orderData.fixedExchangeRate,
       });
 
       const publicId = generatePublicOrderId();
@@ -68,12 +77,14 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
           currency: orderData.currency,
           uahAmount: orderData.uahAmount,
           walletId: orderData.walletId || null, // ✅ ИСПРАВЛЕНО: поддержка привязки кошелька
+          bankId: orderData.bankId || null,    // ✅ ДОБАВЛЕНО: поддержка банка
+          fixedExchangeRate: orderData.fixedExchangeRate || null, // ✅ ДОБАВЛЕНО: фиксированный курс
           recipientData: orderData.recipientData
             ? JSON.parse(JSON.stringify(orderData.recipientData))
             : undefined,
           status: 'PENDING', // Default status
         },
-        include: { wallet: true }, // ✅ ИСПРАВЛЕНО: для получения depositAddress
+        include: { wallet: true, bank: true }, // ✅ ИСПРАВЛЕНО: для получения depositAddress и bankName
       });
 
       this.logger.info('Order created successfully', { orderId: prismaOrder.id });
@@ -93,8 +104,20 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
     try {
       const prismaOrder = await this.prisma.order.findUnique({
         where: { id },
-        include: { wallet: true }, // ✅ ИСПРАВЛЕНО: загружаем wallet relation для depositAddress
+        include: { wallet: true, bank: true }, // ✅ ИСПРАВЛЕНО: загружаем wallet и bank relations
       });
+
+      // 🐛 DEBUG LOG: Проверяем что загружается из базы
+      if (prismaOrder) {
+        this.logger.info('🔍 DEBUG findById - loaded order data', {
+          orderId: id,
+          publicId: prismaOrder.publicId,
+          bankId: prismaOrder.bankId,
+          bankLoaded: !!prismaOrder.bank,
+          bankName: prismaOrder.bank?.name,
+          fixedExchangeRate: prismaOrder.fixedExchangeRate ? prismaOrder.fixedExchangeRate.toNumber() : null,
+        });
+      }
 
       return prismaOrder ? this.mapPrismaToOrder(prismaOrder as any) : null;
     } catch (error) {
@@ -110,7 +133,7 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
     try {
       const prismaOrder = await this.prisma.order.findUnique({
         where: { publicId },
-        include: { wallet: true }, // ✅ ИСПРАВЛЕНО: загружаем wallet relation для depositAddress
+        include: { wallet: true, bank: true }, // ✅ ИСПРАВЛЕНО: загружаем wallet и bank relations
       });
 
       return prismaOrder ? this.mapPrismaToOrder(prismaOrder as any) : null;
@@ -127,7 +150,10 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
     try {
       const prismaOrders = await this.prisma.order.findMany({
         where: { userId },
-        include: { wallet: true }, // ✅ ИСПРАВЛЕНО: загружаем wallet relation для depositAddress
+        include: { 
+          wallet: true, 
+          bank: true 
+        }, // ✅ ИСПРАВЛЕНО: загружаем wallet и bank relations
         orderBy: { createdAt: 'desc' },
       });
 
@@ -156,7 +182,7 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
       const prismaOrder = await this.prisma.order.update({
         where: { id },
         data: updateData,
-        include: { wallet: true }, // ✅ ИСПРАВЛЕНО: загружаем wallet relation для depositAddress
+        include: { wallet: true, bank: true }, // ✅ ИСПРАВЛЕНО: загружаем wallet и bank relations
       });
 
       // Create audit log for status change
@@ -500,6 +526,9 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
       updatedAt: prismaOrder.updatedAt,
       processedAt: prismaOrder.processedAt || undefined,
       txHash: prismaOrder.txHash || undefined,
+      bankId: prismaOrder.bankId || undefined, // ✅ UUID банка
+      bankName: prismaOrder.bank?.name || undefined, // ✅ ДОБАВЛЕНО: название банка из relation
+      fixedExchangeRate: prismaOrder.fixedExchangeRate ? prismaOrder.fixedExchangeRate.toNumber() : undefined, // ✅ ДОБАВЛЕНО: зафиксированный курс
     };
   }
 }

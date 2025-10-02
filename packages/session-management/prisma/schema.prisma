@@ -80,10 +80,13 @@ model Order {
   updatedAt          DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
   processedAt        DateTime?       @map("processed_at") @db.Timestamptz(6)
   walletId           String?         @map("wallet_id") @db.Uuid
+  bankId             String?         @map("bank_id") @db.Uuid
+  fixedExchangeRate  Decimal?        @map("fixed_exchange_rate") @db.Decimal(15, 8)
   auditLogs          OrderAuditLog[]
   assignedOperator   User?           @relation("OperatorAssignments", fields: [assignedOperatorId], references: [id])
   user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   wallet             Wallet?         @relation(fields: [walletId], references: [id])
+  bank               Bank?           @relation(fields: [bankId], references: [id], onDelete: SetNull)
   queueEntries       WalletQueue?
 
   @@index([userId])
@@ -95,6 +98,7 @@ model Order {
   @@index([assignedOperatorId])
   @@index([txHash])
   @@index([publicId])
+  @@index([bankId])
   @@index([userId, status], name: "idx_user_status_for_duplicate_check")
   @@map("orders")
 }
@@ -218,6 +222,7 @@ model Bank {
 
   fiatCurrencies BankFiatCurrency[]
   reserves       BankReserve[]
+  orders         Order[]
 
   @@index([externalId])
   @@index([isActive, isDefault])

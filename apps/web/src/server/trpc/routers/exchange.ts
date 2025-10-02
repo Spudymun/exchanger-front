@@ -9,6 +9,7 @@ import {
   AUTH_CONSTANTS,
   ORDER_STATUS_GROUPS,
   EMAIL_ENABLED_IN_DEVELOPMENT,
+  EXCHANGE_DEFAULTS,
 } from '@repo/constants';
 
 import { RateLimitedEmailService } from '@repo/email-service';
@@ -98,7 +99,13 @@ async function prepareOrderRequest(input: {
   recipientData?: { cardNumber?: string; bankDetails?: string };
 }) {
   const sanitizedEmail = sanitizeEmail(input.email);
+  
+  // ✅ ОПТИМАЛЬНО: ОДИН вызов к кешу SmartPricingService
   const uahAmount = await calculateUahAmountAsync(input.cryptoAmount, input.currency);
+  
+  // ✅ КУРС ДЛЯ ФИКСАЦИИ: курс С комиссией как на главной странице
+  // calculateUahAmountAsync(1, currency) = чистый курс - маржа компании - комиссия
+  const fixedExchangeRate = await calculateUahAmountAsync(1, input.currency);
 
   return {
     email: sanitizedEmail,
@@ -107,6 +114,7 @@ async function prepareOrderRequest(input: {
     tokenStandard: input.tokenStandard,
     uahAmount,
     recipientData: input.recipientData,
+    fixedExchangeRate, // ✅ Курс с комиссией, тот же что на главной
   };
 }
 
@@ -328,7 +336,8 @@ async function processSuccessfulOrder(params: {
     cryptoAmount: number;
     currency: (typeof CRYPTOCURRENCIES)[number];
     uahAmount: number;
-    recipientData?: { cardNumber?: string; bankDetails?: string };
+    recipientData?: { cardNumber?: string; bankDetails?: string; bankId?: string };
+    fixedExchangeRate?: number;
   };
   depositAddress: string;
   userSession: {
@@ -351,6 +360,33 @@ async function processSuccessfulOrder(params: {
   // Получение информации о кошельке
   const walletInfo = await getWalletByAddress(depositAddress, orderRequest.email);
 
+  // Используем зафиксированный курс из prepareOrderRequest (избегаем дублирующего API вызова)
+  const fixedExchangeRate = orderRequest.fixedExchangeRate;
+
+  // ✅ КОНВЕРТИРУЕМ externalId В UUID - получаем банк из БД
+  let bankUuid: string | undefined;
+  const bankExternalId = orderRequest.recipientData?.bankId || EXCHANGE_DEFAULTS.DEFAULT_BANK_ID;
+  
+  if (bankExternalId) {
+    try {
+      const { getPrismaClient } = await import('@repo/session-management');
+      const databaseUrl = process.env.DATABASE_URL;
+      if (databaseUrl) {
+        const prisma = getPrismaClient({ url: databaseUrl });
+        const bank = await prisma.bank.findUnique({
+          where: { externalId: bankExternalId },
+          select: { id: true }
+        });
+        bankUuid = bank?.id;
+      }
+    } catch (error) {
+      logger.warn('BANK_UUID_LOOKUP_FAILED', { 
+        bankExternalId, 
+        error: error instanceof Error ? error.message : String(error) 
+      });
+    }
+  }
+
   // Создание заказа
   const order = await orderManager.create({
     userId: userSession.user.id,
@@ -360,6 +396,8 @@ async function processSuccessfulOrder(params: {
     uahAmount: orderRequest.uahAmount,
     recipientData: orderRequest.recipientData,
     walletId: walletInfo.id,
+    bankId: bankUuid,                    // ✅ ИСПОЛЬЗУЕМ UUID банка
+    fixedExchangeRate,                   // ✅ ДОБАВИТЬ (из frontend)
   });
 
   // Отправка email с адресом
@@ -576,7 +614,8 @@ async function createOrderInSystem(
     currency: (typeof CRYPTOCURRENCIES)[number];
     tokenStandard?: string;
     uahAmount: number;
-    recipientData?: { cardNumber?: string; bankDetails?: string };
+    recipientData?: { cardNumber?: string; bankDetails?: string; bankId?: string };
+    fixedExchangeRate?: number;
   },
   sessionMetadata: SessionMetadata,
   userSession: AutoRegistrationResult
@@ -686,6 +725,7 @@ export const exchangeRouter = createTRPCRouter({
       try {
         if (direction === 'crypto-to-uah') {
           const uahAmount = await calculateUahAmountAsync(amount, validCurrency);
+          // rate.uahRate = чистый курс БЕЗ маржи компании (только курс от SmartPricingService)
           const rate = await getExchangeRateAsync(validCurrency);
 
           return {
@@ -698,6 +738,7 @@ export const exchangeRouter = createTRPCRouter({
           };
         } else {
           const cryptoAmount = await calculateCryptoAmountAsync(amount, validCurrency);
+          // rate.uahRate = чистый курс БЕЗ маржи компании (только курс от SmartPricingService)
           const rate = await getExchangeRateAsync(validCurrency);
 
           return {
@@ -723,6 +764,7 @@ export const exchangeRouter = createTRPCRouter({
           .object({
             cardNumber: z.string().optional(),
             bankDetails: z.string().optional(),
+            bankId: z.string().optional(), // ✅ ДОБАВЛЕНО: bankId из frontend
           })
           .optional(),
       })
@@ -866,6 +908,10 @@ export const exchangeRouter = createTRPCRouter({
         updatedAt: order.updatedAt,
         processedAt: order.processedAt,
         txHash: order.txHash,
+        // ✅ ДОБАВЛЕНО: поля банка и курса для отображения в UI
+        bankId: order.bankId,
+        bankName: order.bankName,
+        fixedExchangeRate: order.fixedExchangeRate,
       };
     }),
 

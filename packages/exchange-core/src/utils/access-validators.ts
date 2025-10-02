@@ -1,7 +1,9 @@
-import { createNotFoundError, createForbiddenError } from '@repo/utils';
+import { createNotFoundError, createForbiddenError, createEnvironmentLogger } from '@repo/utils';
 
 import { userManager, orderManager } from '../data';
 import type { User, Order } from '../types';
+
+const logger = createEnvironmentLogger('AccessValidators');
 
 /**
  * Access validation functions for user and order operations
@@ -30,7 +32,18 @@ export async function validateUserAccess(userId: string): Promise<User> {
  * @throws TRPCError if order not found or access denied
  */
 export async function validateOrderAccess(orderId: string, userEmail: string): Promise<Order> {
-  const order = await orderManager.findById(orderId);
+  logger.info('🔍 DEBUG validateOrderAccess called', { orderId, userEmail });
+
+  // ✅ ИСПРАВЛЕНО: Поддержка как publicId, так и внутреннего id
+  const order = await orderManager.findByPublicId(orderId) || await orderManager.findById(orderId);
+  
+  logger.info('🔍 DEBUG validateOrderAccess result', {
+    found: !!order,
+    bankId: order?.bankId,
+    bankName: order?.bankName,
+    fixedExchangeRate: order?.fixedExchangeRate,
+  });
+
   if (!order) {
     throw createNotFoundError(`Order with ID "${orderId}" not found`);
   }

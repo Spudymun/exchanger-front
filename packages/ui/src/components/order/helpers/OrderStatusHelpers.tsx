@@ -177,20 +177,52 @@ export function OrderFinancialInfo({
   locale: string;
   t: ReturnType<typeof useTranslations>;
 }) {
+  // 🐛 DEBUG LOG: Проверяем данные в UI компоненте
+  console.log('🔍 DEBUG OrderFinancialInfo - orderData:', {
+    id: orderData.id,
+    publicId: orderData.publicId,
+    bankId: orderData.bankId,
+    bankName: orderData.bankName,
+    fixedExchangeRate: orderData.fixedExchangeRate,
+  });
+
   return (
     <div className="space-y-4">
-      {/* Сумма обмена */}
+      {/* Сумма обмена - остается отдельно */}
       <AmountDisplayWithCopy orderData={orderData} locale={locale} t={t} />
 
-      {/* Карта получателя - рядом с суммой (куда поступает фиат) */}
-      {orderData.recipientData?.cardNumber && (
-        <div>
-          <p className={textStyles.heading.sm}>{t('recipientCard')}</p>
-          <p className={combineStyles(textStyles.body.md, 'font-mono')}>
-            {maskCardNumber(orderData.recipientData.cardNumber)}
-          </p>
-        </div>
-      )}
+      {/* ✅ НОВАЯ СЕТКА: банк + курс + карта на одном уровне */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {/* Банк получателя */}
+        {orderData.bankName && (
+          <div>
+            <p className={textStyles.heading.sm}>{t('recipientBank')}</p>
+            <p className={combineStyles(textStyles.body.md, 'font-medium text-primary')}>
+              {orderData.bankName}
+            </p>
+          </div>
+        )}
+
+        {/* ✅ ДОБАВЛЕНО: Зафиксированный курс обмена */}
+        {orderData.fixedExchangeRate && (
+          <div>
+            <p className={textStyles.heading.sm}>{t('fixedRate')}</p>
+            <p className={combineStyles(textStyles.body.md, 'font-mono font-medium text-primary')}>
+              1 {orderData.currency} = {orderData.fixedExchangeRate.toLocaleString(locale)} UAH
+            </p>
+          </div>
+        )}
+
+        {/* Карта получателя - перемещена в общую сетку */}
+        {orderData.recipientData?.cardNumber && (
+          <div>
+            <p className={textStyles.heading.sm}>{t('recipientCard')}</p>
+            <p className={combineStyles(textStyles.body.md, 'font-mono font-medium text-primary')}>
+              {maskCardNumber(orderData.recipientData.cardNumber)}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

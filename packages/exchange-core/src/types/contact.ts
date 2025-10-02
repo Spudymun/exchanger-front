@@ -32,6 +32,8 @@ export interface RecipientData {
   recipientName?: string;
   /** Телефон получателя */
   phone?: string;
+  /** ID банка получателя */
+  bankId?: string;
 }
 
 /**

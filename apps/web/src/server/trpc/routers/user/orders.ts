@@ -82,36 +82,6 @@ export const ordersRouter = createTRPCRouter({
     }),
 
   // Получить детальную информацию о заявке
-  getOrderDetails: protectedProcedure
-    .input(
-      z.object({
-        orderId: z.string(),
-      })
-    )
-    .query(async ({ input, ctx }) => {
-      const user = await validateUserAccess(ctx.user.id);
-      const order = await validateOrderAccess(input.orderId, user.email);
-
-      return {
-        id: order.publicId, // ✅ ИСПРАВЛЕНО: используем публичный ID для frontend
-        status: order.status,
-        cryptoAmount: order.cryptoAmount,
-        uahAmount: order.uahAmount,
-        currency: order.currency,
-        depositAddress: order.depositAddress,
-        recipientData: order.recipientData,
-        createdAt: order.createdAt,
-        updatedAt: order.updatedAt,
-        processedAt: order.processedAt,
-        txHash: order.txHash,
-        // История статусов (в будущем)
-        statusHistory: [
-          { status: ORDER_STATUSES.PENDING, timestamp: order.createdAt },
-          ...(order.processedAt ? [{ status: order.status, timestamp: order.processedAt }] : []),
-        ],
-      };
-    }),
-
   // Отменить заявку (если возможно)
   cancelOrder: protectedProcedure
     .input(

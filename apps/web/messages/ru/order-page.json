@@ -24,6 +24,8 @@
     "blockchainNetwork": "Блокчейн сеть",
     "copyNetworkInfo": "Копировать информацию о сети",
     "recipientCard": "Карта получателя",
+    "recipientBank": "Банк получателя",
+    "fixedRate": "Зафиксированный курс",
     "statuses": {
       "pending": "Ожидание оплаты",
       "paid": "Оплачено",

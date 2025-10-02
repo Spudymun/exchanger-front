@@ -129,6 +129,7 @@ export const securityEnhancedCreateExchangeOrderSchema = z.object({
   uahAmount: z.number().positive('AMOUNT_POSITIVE_REQUIRED').finite('UAH_AMOUNT_MUST_BE_FINITE'),
   currency: currencySchema,
   tokenStandard: z.enum(VALID_TOKEN_STANDARDS).optional(), // ✅ ДОБАВЛЕНО: поддержка multi-network токенов
+  fixedExchangeRate: z.number().positive().finite().optional(), // ✅ ДОБАВЛЕНО: курс с frontend
   paymentDetails: z
     .object({
       cardNumber: securityEnhancedCardNumberSchema.optional(), // Используем security-enhanced схему

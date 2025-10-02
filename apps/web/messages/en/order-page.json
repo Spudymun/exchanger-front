@@ -24,6 +24,8 @@
     "blockchainNetwork": "Blockchain Network",
     "copyNetworkInfo": "Copy network information",
     "recipientCard": "Recipient Card",
+    "recipientBank": "Recipient Bank",
+    "fixedRate": "Fixed Exchange Rate",
     "statuses": {
       "pending": "Awaiting payment",
       "paid": "Paid",
