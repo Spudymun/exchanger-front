@@ -105,7 +105,7 @@ Test-Component -Name "Database Schema" -Points 2 -TestScript {
     }
     
     try {
-        $tables = @('users', 'orders', 'wallets', 'wallet_queue', 'sessions')
+        $tables = @('users', 'orders', 'wallets', 'sessions')
         foreach ($table in $tables) {
             $result = psql $DatabaseUrl -c "SELECT count(*) FROM $table LIMIT 1;" 2>$null
             if ($LASTEXITCODE -ne 0) {

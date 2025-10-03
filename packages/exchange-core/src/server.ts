@@ -27,7 +27,6 @@ export * from './services/wallet-pool-manager-factory';
 // ✅ SERVER-ONLY: Wallet strategies (могут содержать server dependencies)
 export * from './services/wallet-strategies/wallet-allocation-strategy';
 export * from './services/wallet-strategies/immediate-allocation-strategy';
-export * from './services/wallet-strategies/queue-allocation-strategy';
 
 // ✅ SERVER-ONLY: Business services для tRPC роутеров
 export * from './services/auto-registration-service';

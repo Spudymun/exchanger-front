@@ -1,4 +1,4 @@
-import type { QueueRepositoryInterface, WalletRepositoryInterface } from '../repositories';
+import type { WalletRepositoryInterface } from '../repositories';
 
 import { WalletPoolManager } from './wallet-pool-manager';
 
@@ -37,19 +37,12 @@ export class WalletPoolManagerFactory {
   private static async createWalletPoolManager(
     useProductionConfig: boolean = false
   ): Promise<WalletPoolManager> {
-    const { PostgresWalletAdapter, PostgresQueueAdapter, getPrismaClient } = await import(
-      '@repo/session-management'
-    );
+    const { PostgresWalletAdapter, getPrismaClient } = await import('@repo/session-management');
 
     const config = await this.getDatabaseConfig(useProductionConfig);
     const prisma = getPrismaClient(config);
-    const { WALLET_POOL_CONFIG } = await import('@repo/constants');
 
-    return new WalletPoolManager(
-      new PostgresWalletAdapter(prisma),
-      new PostgresQueueAdapter(prisma),
-      WALLET_POOL_CONFIG.DEFAULT_MODE
-    );
+    return new WalletPoolManager(new PostgresWalletAdapter(prisma));
   }
 
   /**
@@ -91,11 +84,7 @@ export class WalletPoolManagerFactory {
    * Создать простой WalletPoolManager с переданными зависимостями
    * Для тестирования и прямого использования
    */
-  static createWithDependencies(
-    walletRepository: WalletRepositoryInterface,
-    queueRepository?: QueueRepositoryInterface,
-    mode: 'immediate' | 'queue' | 'hybrid' = 'immediate'
-  ): WalletPoolManager {
-    return new WalletPoolManager(walletRepository, queueRepository, mode);
+  static createWithDependencies(walletRepository: WalletRepositoryInterface): WalletPoolManager {
+    return new WalletPoolManager(walletRepository);
   }
 }

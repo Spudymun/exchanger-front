@@ -87,7 +87,6 @@ model Order {
   user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   wallet             Wallet?         @relation(fields: [walletId], references: [id])
   bank               Bank?           @relation(fields: [bankId], references: [id], onDelete: SetNull)
-  queueEntries       WalletQueue?
 
   @@index([userId])
   @@index([status])
@@ -138,7 +137,6 @@ model Wallet {
   updatedAt     DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
   disabledAt    DateTime?     @map("disabled_at") @db.Timestamptz(6)
   orders        Order[]
-  queueEntries  WalletQueue[]
 
   @@index([currency, status])
   @@index([status])
@@ -148,32 +146,6 @@ model Wallet {
   @@index([createdAt])
   @@index([address])
   @@map("wallets")
-}
-
-model WalletQueue {
-  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  orderId     String        @unique @map("order_id") @db.Uuid
-  walletId    String?       @map("wallet_id") @db.Uuid
-  currency    String        @db.VarChar(10)
-  priority    QueuePriority @default(NORMAL)
-  position    Int           @map("queue_position")
-  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  processedAt DateTime?     @map("processed_at") @db.Timestamptz(6)
-  expiresAt   DateTime?     @map("expires_at") @db.Timestamptz(6)
-  retryCount  Int           @default(0) @map("retry_count")
-  lastError   String?       @map("last_error")
-  metadata    Json?
-  order       Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  wallet      Wallet?       @relation(fields: [walletId], references: [id])
-
-  @@index([currency, priority, createdAt])
-  @@index([processedAt])
-  @@index([expiresAt])
-  @@index([orderId])
-  @@index([walletId])
-  @@index([createdAt])
-  @@index([priority, createdAt])
-  @@map("wallet_queue")
 }
 
 enum UserRole {
@@ -201,13 +173,6 @@ enum WalletStatus {
   AVAILABLE @map("available")
   ALLOCATED @map("allocated")
   DISABLED  @map("disabled")
-}
-
-enum QueuePriority {
-  LOW    @map("low")
-  NORMAL @map("normal")
-  HIGH   @map("high")
-  URGENT @map("urgent")
 }
 
 model Bank {

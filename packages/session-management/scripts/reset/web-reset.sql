@@ -33,8 +33,7 @@ SELECT
 -- This will also cascade delete OrderAuditLog entries
 DELETE FROM orders;
 
--- 2. Delete all Wallets (web-specific infrastructure)  
--- This will also cascade delete WalletQueue entries
+-- 2. Delete all Wallets (web-specific infrastructure)
 DELETE FROM wallets;
 
 -- 3. Delete all users who have web roles
@@ -62,7 +61,7 @@ SELECT
 
 -- ✅ INFO: This reset DELETES ALL web application data:
 -- 1. ALL Orders and OrderAuditLogs (web-specific business data)
--- 2. ALL Wallets and WalletQueues (web-specific infrastructure) 
+-- 2. ALL Wallets (web-specific infrastructure)
 -- 3. Users who had web application access (preserves admin-only users)
 -- Users with ONLY admin access remain intact
 -- Users with BOTH web and admin access are DELETED (because they had web access)

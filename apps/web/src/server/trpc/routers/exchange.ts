@@ -129,53 +129,6 @@ async function allocateWalletForOrder(currency: CryptoCurrency, tokenStandard?: 
 }
 
 /**
- * Обрабатывает заявку в очереди при недоступности кошелька
- */
-async function processQueuedOrder(
-  orderRequest: {
-    email: string;
-    cryptoAmount: number;
-    currency: (typeof CRYPTOCURRENCIES)[number];
-    uahAmount: number;
-    recipientData?: { cardNumber?: string; bankDetails?: string };
-  },
-  queuePosition: number,
-  userSession: { // 🔥 ИСПРАВЛЕНО: принимаем готовую userSession
-    user: { id: string };
-    sessionId: string;
-    isNewUser: boolean;
-    authenticationMethod: string;
-  }
-) {
-  const { WALLET_POOL_CONFIG } = await import('@repo/constants');
-
-  const queuedOrder = await orderManager.create({
-    userId: userSession.user.id,
-    email: orderRequest.email,
-    cryptoAmount: orderRequest.cryptoAmount,
-    currency: orderRequest.currency,
-    uahAmount: orderRequest.uahAmount,
-    recipientData: orderRequest.recipientData,
-  });
-
-  return {
-    order: queuedOrder,
-    depositAddress: '', // Адрес будет назначен позже
-    sessionInfo: {
-      sessionId: userSession.sessionId,
-      isNewUser: userSession.isNewUser,
-    },
-    queueInfo: {
-      inQueue: true,
-      position: queuePosition,
-      estimatedWaitTime: Math.ceil(
-        (queuePosition * WALLET_POOL_CONFIG.QUEUE_CONFIG.QUEUE_TIMEOUT) / (60 * 1000)
-      ), // Минуты (60 * 1000 = 60000 ms)
-    },
-  };
-}
-
-/**
  * 🆕 TASK 9.3: Send Telegram notification to operators
  */
 async function sendTelegramNotification(
@@ -489,7 +442,7 @@ async function ensureUserSessionWithCookie(
 /**
  * Обрабатывает неуспешные результаты wallet allocation
  */
-async function handleFailedAllocation(
+function handleFailedAllocation(
   orderRequest: {
     email: string;
     cryptoAmount: number;
@@ -503,23 +456,8 @@ async function handleFailedAllocation(
     isNewUser: boolean;
     authenticationMethod: string;
   },
-  allocationResult: { success: false; error?: string; queuePosition?: number }
-) {
-  logger.warn('WALLET_ALLOCATION_FAILED', {
-    email: orderRequest.email,
-    currency: orderRequest.currency,
-    error: allocationResult.error,
-    queuePosition: allocationResult.queuePosition,
-  });
-
-  if (allocationResult.queuePosition) {
-    logger.info('PROCESSING_QUEUED_ORDER', {
-      email: orderRequest.email,
-      queuePosition: allocationResult.queuePosition,
-    });
-    return processQueuedOrder(orderRequest, allocationResult.queuePosition, userSession);
-  }
-
+  allocationResult: { success: false; error?: string }
+): never {
   const errorMessage = allocationResult.error || 'Unknown error';
   logger.error('CRITICAL_WALLET_ALLOCATION_ERROR', {
     email: orderRequest.email,

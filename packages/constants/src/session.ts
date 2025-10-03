@@ -19,9 +19,6 @@ export const SESSION_CONSTANTS = {
     WEB_SESSION_PREFIX: 'session:web:',
     ADMIN_SESSION_PREFIX: 'session:admin:',
 
-    // ✅ НОВЫЕ константы для Wallet Queue (TASK 2.2)
-    WALLET_QUEUE_PREFIX: 'wallet:queue:',
-
     // ✅ Redis операционные лимиты с высоким качеством
     REDIS_OPERATION_LIMITS: {
       /** TTL для wallet очередей в секундах (1 час) */

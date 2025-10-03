@@ -41,7 +41,6 @@ function Get-DatabaseMetrics {
             
             WalletStatus      = "SELECT status, count(*) as count FROM wallets GROUP BY status ORDER BY status;"
             OrderStatus       = "SELECT status, count(*) as count FROM orders WHERE created_at > NOW() - INTERVAL '10 minutes' GROUP BY status ORDER BY status;"
-            QueueLength       = "SELECT count(*) as queue_length FROM wallet_queue WHERE processed_at IS NULL;"
             
             LockedQueries     = @"
 SELECT count(*) as locked_queries 

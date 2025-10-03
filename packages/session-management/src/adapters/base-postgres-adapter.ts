@@ -6,7 +6,7 @@
 // Централизованные error messages - избегаем дублирования
 export const POSTGRES_ERRORS = {
   SCHEMA_ERROR:
-    'CRITICAL: Required Prisma models (Wallet, WalletQueue) are missing from schema.prisma. Please add these models before using PostgreSQL adapters.',
+    'CRITICAL: Required Prisma models (Wallet) are missing from schema.prisma. Please add these models before using PostgreSQL adapters.',
   CONNECTION_ERROR: 'Database connection failed',
   TRANSACTION_ERROR: 'Database transaction failed',
   VALIDATION_ERROR: 'Data validation failed',
@@ -35,7 +35,7 @@ export abstract class BasePostgresAdapter {
    * @throws Error если модели отсутствуют
    */
   protected validateSchema(): void {
-    // ✅ FIXED: Модели Wallet и WalletQueue добавлены в schema.prisma
+    // ✅ FIXED: Модель Wallet добавлена в schema.prisma
     // Проверка больше не требуется
   }
 
