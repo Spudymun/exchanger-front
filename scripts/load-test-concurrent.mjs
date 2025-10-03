@@ -57,9 +57,10 @@ function generateUniqueTestOrders(count) {
       currency: currency,
       tokenStandard: 'TRC-20', // Always TRC-20 for USDT
       fixedExchangeRate: 41.0,
-      paymentDetails: {
+      recipientData: {
         cardNumber: cardNumber,
-        bankDetails: ['ПриватБанк', 'Монобанк', 'ПУМБ', 'Райффайзен'][i % 4]
+        bankId: ['privatbank', 'monobank', 'pumb', 'oschadbank'][(i-1) % 4], // ✅ ИСПРАВЛЕНО: bankId в recipientData!
+        bankDetails: ['ПриватБанк', 'Монобанк', 'ПУМБ', 'Ощадбанк'][(i-1) % 4] // Для отображения
       }
     });
   }
@@ -97,6 +98,12 @@ async function createOrder(orderData, orderIndex) {
       }),
       timeout: TIMEOUT_MS
     });
+    
+    // Логируем отправленные данные для первого ордера
+    if (orderIndex === 0) {
+      colorLog(`🔍 DEBUG: Sending order data:`, 'cyan');
+      colorLog(JSON.stringify({ json: orderData }, null, 2), 'gray');
+    }
     
     const responseTime = Date.now() - startTime;
     const responseText = await response.text();
