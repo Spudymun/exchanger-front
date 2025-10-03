@@ -1,6 +1,7 @@
 import { createEnvironmentLogger } from '@repo/utils';
 import { z } from 'zod';
 
+import { getConfiguredPrismaClient } from '../../utils/get-prisma';
 import { createTRPCRouter } from '../init';
 import { systemApiMiddleware } from '../middleware/auth';
 
@@ -9,12 +10,7 @@ const logger = createEnvironmentLogger('telegram-bot-router');
 
 // Helper function to validate telegram operator
 async function validateTelegramOperator(telegramOperatorId: string) {
-  const { getPrismaClient } = await import('@repo/session-management');
-  const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) {
-    throw new Error('DATABASE_URL not configured');
-  }
-  const prisma = getPrismaClient({ url: databaseUrl });
+  const prisma = getConfiguredPrismaClient();
 
   const operator = await prisma.user.findFirst({
     where: { telegramId: telegramOperatorId },

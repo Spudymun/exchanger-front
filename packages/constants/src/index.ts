@@ -23,7 +23,6 @@ export * from './wallet-allocation';
 // Type exports for new types
 export type { TokenStandard } from './exchange-currencies';
 export type { BankId } from './banks';
-export type { WalletPoolMode } from './wallet-pool-config';
 export type { AllocationPriority, AllocationStatus, OperationType } from './wallet-allocation';
 
 // Linter configuration constants
@@ -34,7 +33,12 @@ export * from './pricing-config';
 export * from './api-endpoints';
 
 // Explicit type re-exports for TypeScript compatibility
-export type { CurrencyConfig, CachedRate, BinanceResponse, CoinGeckoResponse } from './pricing-config';
+export type {
+  CurrencyConfig,
+  CachedRate,
+  BinanceResponse,
+  CoinGeckoResponse,
+} from './pricing-config';
 export type { ApiProvider } from './api-endpoints';
 
 // Semantic constants for magic numbers elimination

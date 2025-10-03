@@ -16,6 +16,7 @@ import {
 import { createBadRequestError } from '@repo/utils';
 import { z } from 'zod';
 
+import { getConfiguredPrismaClient } from '../../utils/get-prisma';
 import { type Context } from '../context';
 import { createTRPCRouter, publicProcedure } from '../init';
 
@@ -43,12 +44,7 @@ export const fiatRouter = createTRPCRouter({
     await new Promise(resolve => setTimeout(resolve, API_DELAY_MS));
 
     // Получаем данные из БД
-    const { getPrismaClient } = await import('@repo/session-management');
-    const databaseUrl = process.env.DATABASE_URL;
-    if (!databaseUrl) {
-      throw new Error(DATABASE_URL_ERROR);
-    }
-    const prisma = getPrismaClient({ url: databaseUrl });
+    const prisma = getConfiguredPrismaClient();
 
     const currencies = await prisma.bankFiatCurrency.findMany({
       where: { isEnabled: true },
@@ -58,7 +54,12 @@ export const fiatRouter = createTRPCRouter({
 
     return currencies.map(({ fiatCurrency }) => ({
       symbol: fiatCurrency as FiatCurrency,
-      name: fiatCurrency === 'UAH' ? 'Українська гривня' : fiatCurrency === 'USD' ? 'US Dollar' : 'Euro',
+      name:
+        fiatCurrency === 'UAH'
+          ? 'Українська гривня'
+          : fiatCurrency === 'USD'
+            ? 'US Dollar'
+            : 'Euro',
       minAmount: FIAT_MIN_AMOUNTS[fiatCurrency as keyof typeof FIAT_MIN_AMOUNTS],
       maxAmount: FIAT_MAX_AMOUNTS[fiatCurrency as keyof typeof FIAT_MAX_AMOUNTS],
       isActive: true,
@@ -73,12 +74,7 @@ export const fiatRouter = createTRPCRouter({
       await new Promise(resolve => setTimeout(resolve, API_DELAY_MS));
 
       // Получаем данные из БД
-      const { getPrismaClient } = await import('@repo/session-management');
-      const databaseUrl = process.env.DATABASE_URL;
-      if (!databaseUrl) {
-        throw new Error(DATABASE_URL_ERROR);
-      }
-      const prisma = getPrismaClient({ url: databaseUrl });
+      const prisma = getConfiguredPrismaClient();
 
       const banksWithCurrency = await prisma.bank.findMany({
         where: {
@@ -95,10 +91,7 @@ export const fiatRouter = createTRPCRouter({
             where: { fiatCurrency: input.currency },
           },
         },
-        orderBy: [
-          { isDefault: 'desc' },
-          { createdAt: 'asc' },
-        ],
+        orderBy: [{ isDefault: 'desc' }, { createdAt: 'asc' }],
       });
 
       return banksWithCurrency.map((bank, index) => ({
@@ -126,13 +119,9 @@ export const fiatRouter = createTRPCRouter({
       await new Promise(resolve => setTimeout(resolve, API_DELAY_MS));
 
       // Получаем данные из БД
-      const { getPrismaClient } = await import('@repo/session-management');
-      const databaseUrl = process.env.DATABASE_URL;
-      if (!databaseUrl) {
-        throw new Error(DATABASE_URL_ERROR);
-      }
-      const prisma = getPrismaClient({ url: databaseUrl });
+      const prisma = getConfiguredPrismaClient();
 
+      // Проверяем банк и получаем резерв
       const bank = await prisma.bank.findUnique({
         where: { externalId: input.bankId },
         include: {
@@ -211,12 +200,15 @@ export const fiatRouter = createTRPCRouter({
 
       // Получаем базовый курс криптовалюты в UAH
       const cryptoRate = await getExchangeRateAsync(fromCurrency as CryptoCurrency);
-      const uahAmount = await calculateUahAmountAsync(cryptoAmount as number, fromCurrency as CryptoCurrency);
+      const uahAmount = await calculateUahAmountAsync(
+        cryptoAmount as number,
+        fromCurrency as CryptoCurrency
+      );
 
       // ВРЕМЕННО ЗАКОММЕНТИРОВАНО: Мультивалютная конвертация (только UAH пока)
       // const fiatRate = MOCK_FIAT_RATES[toCurrency as keyof typeof MOCK_FIAT_RATES];
       // const finalAmount = toCurrency === 'UAH' ? uahAmount : uahAmount / fiatRate;
-      
+
       // ТЕКУЩАЯ ЛОГИКА: Только UAH
       const finalAmount = uahAmount; // Всегда UAH
       const fiatRate = 1; // UAH базовая валюта

@@ -58,8 +58,23 @@ export const SESSION_CONSTANTS = {
   } as const,
 
   DATABASE: {
-    MAX_CONNECTIONS: 10,
+    // ✅ Environment-based connection limits:
+    // - Development: 5 connections × ~20-25 processes (hot-reload) = ~100-125 theoretical
+    // - Production: 20 connections × ~3-5 instances = 60-100 connections
+    MAX_CONNECTIONS:
+      process.env.NODE_ENV === 'production'
+        ? 20 // eslint-disable-line no-magic-numbers
+        : 5, // eslint-disable-line no-magic-numbers
+
+    // ✅ Таймаут установки нового соединения (в миллисекундах)
     CONNECTION_TIMEOUT: 5000,
+
+    // ✅ Pool timeout - максимальное время ожидания свободного соединения из пула (в миллисекундах)
+    // Если все соединения заняты, запрос подождёт это время перед выбросом ошибки P2024
+    POOL_TIMEOUT:
+      process.env.NODE_ENV === 'production'
+        ? 20000 // eslint-disable-line no-magic-numbers
+        : 10000, // eslint-disable-line no-magic-numbers
   } as const,
 
   // ✅ НОВЫЕ константы для application context

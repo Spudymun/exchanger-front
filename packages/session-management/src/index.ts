@@ -26,3 +26,11 @@ export { RedisSessionAdapter } from './adapters/redis-session-adapter';
 export { PostgresOrderAdapter } from './adapters/postgres-order-adapter';
 export { PostgresWalletAdapter } from './adapters/postgres-wallet-adapter';
 export { BasePostgresAdapter, POSTGRES_ERRORS } from './adapters/base-postgres-adapter';
+
+// ✅ ДОБАВЛЕНО: Connection monitoring для health checks
+export {
+  monitorConnections,
+  isConnectionPoolHealthy,
+  getDetailedConnectionInfo,
+  type ConnectionStats,
+} from './monitoring/connection-monitor';
