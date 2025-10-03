@@ -5,7 +5,7 @@
 // Rate limiting конфигурация
 export const RATE_LIMITS = {
   CREATE_ORDER: {
-    points: 3,
+    points: 100, // TEMPORARY: Increased for load testing (production: 3-5)
     duration: 3600, // 1 час
     blockDuration: 3600,
   },
