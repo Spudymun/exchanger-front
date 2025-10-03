@@ -48,6 +48,7 @@ INSERT INTO wallets (address, currency, token_standard, updated_at) VALUES
 -- TRC-20 USDT (Tron) - низкие комиссии
 ('TQn9Y2khEsLJW1ChVWFMSMeRDow5oNDMHh', 'USDT', 'TRC-20', NOW()),
 ('TSMKhyfd7E3UaQ3C5vbJqQybcBCvJqmgqh', 'USDT', 'TRC-20', NOW()),
+('TXYZabcd1234567890efghijklmnopqrstuv', 'USDT', 'TRC-20', NOW()),
 -- BEP-20 USDT (BSC) - Binance Smart Chain  
 ('0x1f573d6fb3f13d689ff844b4ce37794d79a7ff1c', 'USDT', 'BEP-20', NOW()),
 -- Solana USDT (SPL Token)
