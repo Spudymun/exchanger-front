@@ -28,18 +28,6 @@ interface PrismaWallet {
 /**
  * ✅ PostgreSQL adapter for Wallet repository operations
  * Наследует от BasePostgresAdapter для устранения дублирования (Rule 20)
- *
- * NOTE: Requires Wallet model in Prisma schema:
- * model Wallet {
- *   id              String    @id @default(cuid())
- *   address         String    @unique
- *   currency        String
- *   isOccupied      Boolean   @default(false)
- *   assignedOrderId String?
- *   createdAt       DateTime  @default(now())
- *   lastUsedAt      DateTime?
- *   @@map("wallets")
- * }
  */
 export class PostgresWalletAdapter
   extends BasePostgresAdapter
@@ -107,7 +95,6 @@ export class PostgresWalletAdapter
     this.validateRequired(currency, 'currency');
 
     try {
-      // ✅ ИСПРАВЛЕНО: поиск с учетом tokenStandard только для USDT
       const whereClause: {
         currency: string;
         status: WalletStatus;
@@ -117,14 +104,13 @@ export class PostgresWalletAdapter
         status: WalletStatus.AVAILABLE,
       };
 
-      // Добавляем фильтр по tokenStandard только для USDT
       if (currency === 'USDT' && tokenStandard) {
         whereClause.tokenStandard = tokenStandard;
       }
 
       const wallet = await this.prismaClient.wallet.findFirst({
         where: whereClause,
-        orderBy: { lastUsedAt: 'asc' }, // FIFO: oldest used first
+        orderBy: { lastUsedAt: 'asc' },
       });
 
       return wallet ? this.mapPrismaToWallet(wallet) : null;
@@ -143,7 +129,6 @@ export class PostgresWalletAdapter
         data: {
           status: WalletStatus.ALLOCATED,
           lastUsedAt: new Date(),
-          // totalOrders обновляется в findLeastUsedOccupied атомарно
         },
       });
 
@@ -244,6 +229,8 @@ export class PostgresWalletAdapter
   /**
    * 🎯 ПРАВИЛЬНАЯ РЕАЛИЗАЦИЯ: Находит кошелек с минимальным количеством заказов
    * и атомарно инкрементирует счетчик. Работает ТОЛЬКО с total_orders, игнорирует статусы.
+   * 
+   * Использует простой Prisma подход без raw SQL для избежания connection pool exhaustion
    */
   async findLeastUsedOccupied(
     currency: CryptoCurrency,
@@ -258,53 +245,92 @@ export class PostgresWalletAdapter
     }
 
     try {
-      return await this.prismaClient.$transaction(async tx => {
-        // 1. Поиск кошелька с минимальным total_orders (без учета статуса!)
-        const whereClause: {
-          currency: string;
-          tokenStandard?: string;
-          disabledAt?: null;
-        } = {
-          currency,
-          disabledAt: null, // Исключаем только отключенные кошельки
-        };
+      const whereClause = this.buildWhereClause(currency, tokenStandard);
+      const selectedWallet = await this.selectLeastUsedWallet(whereClause);
+      
+      if (!selectedWallet) {
+        return null;
+      }
 
-        // Фильтр по tokenStandard для multi-network токенов
-        if (currency === 'USDT' && tokenStandard) {
-          whereClause.tokenStandard = tokenStandard;
-        }
-
-        const wallet = await tx.wallet.findFirst({
-          where: whereClause,
-          orderBy: [
-            { totalOrders: 'asc' }, // Основной критерий: минимум заказов
-            { createdAt: 'asc' }, // При равенстве: старший кошелек
-          ],
-        });
-
-        if (!wallet) {
-          return null;
-        }
-
-        // 2. Атомарно инкрементируем total_orders И меняем статус только если был available
-        const updatedWallet = await tx.wallet.update({
-          where: { id: wallet.id },
-          data: {
-            totalOrders: { increment: 1 },
-            lastUsedAt: new Date(),
-            // Меняем статус на ALLOCATED только если кошелек был AVAILABLE
-            ...(wallet.status === WalletStatus.AVAILABLE && {
-              status: WalletStatus.ALLOCATED,
-            }),
-          },
-        });
-
-        return this.mapPrismaToWallet(updatedWallet);
-      });
+      return await this.incrementWalletUsage(selectedWallet);
     } catch (error) {
       this.handleError(error, 'findLeastUsedOccupied');
       return null;
     }
+  }
+
+  /**
+   * Строит WHERE условие для поиска кошельков
+   */
+  private buildWhereClause(currency: CryptoCurrency, tokenStandard?: string) {
+    const whereClause: {
+      currency: string;
+      tokenStandard?: string;
+      disabledAt?: null;
+    } = {
+      currency,
+      disabledAt: null,
+    };
+
+    if (currency === 'USDT' && tokenStandard) {
+      whereClause.tokenStandard = tokenStandard;
+    }
+
+    return whereClause;
+  }
+
+  /**
+   * Выбирает случайный кошелек с минимальным total_orders
+   */
+  private async selectLeastUsedWallet(whereClause: {
+    currency: string;
+    tokenStandard?: string;
+    disabledAt?: null;
+  }) {
+    const wallets = await this.prismaClient.wallet.findMany({
+      where: whereClause,
+      orderBy: { totalOrders: 'asc' },
+      take: 10,
+    });
+
+    if (!wallets || wallets.length === 0) {
+      return null;
+    }
+
+    const firstWallet = wallets[0];
+    if (!firstWallet) {
+      return null;
+    }
+
+    const candidateWallets = wallets.filter(
+      w => w.totalOrders === firstWallet.totalOrders
+    );
+
+    if (candidateWallets.length === 0) {
+      return null;
+    }
+
+    const randomIndex = Math.floor(Math.random() * candidateWallets.length);
+    const selected = candidateWallets.at(randomIndex);
+    return selected ?? null;
+  }
+
+  /**
+   * Атомарно инкрементирует счетчик использования кошелька
+   */
+  private async incrementWalletUsage(wallet: PrismaWallet) {
+    const updatedWallet = await this.prismaClient.wallet.update({
+      where: { id: wallet.id },
+      data: {
+        totalOrders: { increment: 1 },
+        lastUsedAt: new Date(),
+        ...(wallet.status === WalletStatus.AVAILABLE && {
+          status: WalletStatus.ALLOCATED,
+        }),
+      },
+    });
+
+    return this.mapPrismaToWallet(updatedWallet);
   }
 
   // ✅ ДОБАВЛЕНО: методы для получения уникальных валют и стандартов токенов из БД
