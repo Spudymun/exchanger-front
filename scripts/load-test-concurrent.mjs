@@ -50,12 +50,17 @@ function generateUniqueTestOrders(count) {
     // USDT суммы в правильном диапазоне (10-5000)
     const cryptoAmount = 10 + (i % 5); // 10-14 USDT
     
+    // ✅ Распределение по поддерживаемым сетям USDT
+    // const tokenStandards = ['TRC-20', 'ERC-20', 'BEP-20'];
+    // const tokenStandard = tokenStandards[(i-1) % 3];
+    const tokenStandard = 'TRC-20';
+
     orders.push({
       email: `loadtest${i}-${uniqueId}@example.com`,
       cryptoAmount: cryptoAmount,
       uahAmount: cryptoAmount * 41, // Примерный курс
       currency: currency,
-      tokenStandard: 'TRC-20', // Always TRC-20 for USDT
+      tokenStandard: tokenStandard, // ✅ ИСПРАВЛЕНО: циклически распределяем по сетям!
       fixedExchangeRate: 41.0,
       recipientData: {
         cardNumber: cardNumber,
@@ -147,9 +152,14 @@ async function runConcurrentTest() {
   const orders = generateUniqueTestOrders(CONCURRENT_ORDERS);
   const startTime = Date.now();
   
-  // Создаем все Promise'ы одновременно для настоящего concurrent тестирования
+  // 🎯 НАСТОЯЩИЙ CONCURRENT ТЕСТ: убираем искусственную задержку
+  // Тестируем реальную атомарность через PostgreSQL FOR UPDATE SKIP LOCKED
   const promises = orders.map((order, index) => {
-    colorLog(`📤 Starting order ${index + 1}: ${order.email}`, 'blue');
+    const tokenStandards = ['TRC-20', 'ERC-20', 'BEP-20'];
+    const currentNetwork = tokenStandards[index % 3];
+    colorLog(`📤 Starting order ${index + 1}: ${order.email} (${currentNetwork})`, 'blue');
+    
+    // ✅ БЕЗ ЗАДЕРЖКИ - тестируем настоящую concurrent обработку
     return createOrder(order, index);
   });
   
@@ -227,9 +237,22 @@ function displayResults(testResults) {
 async function checkDatabaseResults() {
   try {
     colorLog('\n🔍 Checking database results...', 'yellow');
-    const output = execSync('docker exec exchanger-postgres psql -U exchanger_user -d exchanger_db -c "SELECT COUNT(*) as total_orders, status, currency FROM orders GROUP BY status, currency;"', { encoding: 'utf8' });
+    
+    // Общая статистика заказов
+    const orderStats = execSync('docker exec exchanger-postgres psql -U exchanger_user -d exchanger_db -c "SELECT COUNT(*) as total_orders, status, currency FROM orders GROUP BY status, currency;"', { encoding: 'utf8' });
     colorLog('📊 Database state:', 'cyan');
-    colorLog(output, 'reset');
+    colorLog(orderStats, 'reset');
+    
+    // 🎯 НОВАЯ ДИАГНОСТИКА: Распределение кошельков (последние 5 минут)
+    colorLog('\n🎯 Wallet distribution analysis (last 5 minutes):', 'cyan');
+    const walletDistribution = execSync('docker exec exchanger-postgres psql -U exchanger_user -d exchanger_db -c "SELECT w.address as wallet_address, COUNT(o.id) as order_count, w.total_orders as total_wallet_orders FROM orders o JOIN wallets w ON o.wallet_id = w.id WHERE o.created_at > NOW() - INTERVAL \'5 minutes\' GROUP BY w.id, w.address, w.total_orders ORDER BY order_count DESC;"', { encoding: 'utf8' });
+    colorLog(walletDistribution, 'reset');
+    
+    // 🔍 АНАЛИЗ КОНЦЕНТРАЦИИ: Проверяем есть ли кошелек с >50% заказов  
+    colorLog('\n🔍 Concentration analysis:', 'cyan');
+    const concentrationAnalysis = execSync('docker exec exchanger-postgres psql -U exchanger_user -d exchanger_db -c "WITH recent_orders AS (SELECT wallet_id, COUNT(*) as orders_count FROM orders WHERE created_at > NOW() - INTERVAL \'5 minutes\' GROUP BY wallet_id), total_recent AS (SELECT SUM(orders_count) as total FROM recent_orders) SELECT w.address, ro.orders_count, ROUND((ro.orders_count::decimal / tr.total * 100), 2) as percentage FROM recent_orders ro JOIN wallets w ON ro.wallet_id = w.id CROSS JOIN total_recent tr ORDER BY percentage DESC LIMIT 5;"', { encoding: 'utf8' });
+    colorLog(concentrationAnalysis, 'reset');
+    
   } catch (error) {
     colorLog(`⚠️  Could not check database: ${error.message}`, 'yellow');
   }

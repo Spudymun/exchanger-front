@@ -9,6 +9,7 @@ export interface WalletInfo {
   createdAt: Date;
   lastUsedAt?: Date;
   tokenStandard?: string; // ✅ ИСПРАВЛЕНО: добавляем tokenStandard для получения сети из кошелька
+  totalOrders?: number; // ✅ ДОБАВЛЕНО: для балансировки нагрузки в Balanced Round-Robin
 }
 
 /**
@@ -34,6 +35,13 @@ export interface WalletRepositoryInterface {
   // Поиск самого старого занятого кошелька для умной очереди
   // ✅ ИСПРАВЛЕНО: поддержка tokenStandard для multi-network токенов
   findOldestOccupied(currency: CryptoCurrency, tokenStandard?: string): Promise<WalletInfo | null>;
+
+  // ✅ НОВОЕ: Поиск наименее используемого занятого кошелька для балансировки нагрузки
+  // Устраняет Race Condition через распределение по totalOrders
+  findLeastUsedOccupied(
+    currency: CryptoCurrency,
+    tokenStandard?: string
+  ): Promise<WalletInfo | null>;
 
   // ✅ ДОБАВЛЕНО: методы для получения уникальных валют и стандартов токенов из БД
   // Для миграции CRYPTO_SELECTOR_DATABASE_MIGRATION_PLAN.md

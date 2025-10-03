@@ -2,10 +2,7 @@ import { PrismaClient, WalletStatus } from '@prisma/client';
 
 import type { CryptoCurrency } from '@repo/constants';
 import { CRYPTOCURRENCIES } from '@repo/constants';
-import type {
-  WalletRepositoryInterface,
-  WalletInfo,
-} from '@repo/exchange-core';
+import type { WalletRepositoryInterface, WalletInfo } from '@repo/exchange-core';
 import { createEnvironmentLogger } from '@repo/utils';
 
 import { BasePostgresAdapter } from './base-postgres-adapter';
@@ -103,7 +100,10 @@ export class PostgresWalletAdapter
     }
   }
 
-  async findOldestAvailable(currency: CryptoCurrency, tokenStandard?: string): Promise<WalletInfo | null> {
+  async findOldestAvailable(
+    currency: CryptoCurrency,
+    tokenStandard?: string
+  ): Promise<WalletInfo | null> {
     this.validateRequired(currency, 'currency');
 
     try {
@@ -143,6 +143,7 @@ export class PostgresWalletAdapter
         data: {
           status: WalletStatus.ALLOCATED,
           lastUsedAt: new Date(),
+          // totalOrders обновляется в findLeastUsedOccupied атомарно
         },
       });
 
@@ -200,12 +201,17 @@ export class PostgresWalletAdapter
     }
   }
 
-  async findOldestOccupied(currency: CryptoCurrency, tokenStandard?: string): Promise<WalletInfo | null> {
+  async findOldestOccupied(
+    currency: CryptoCurrency,
+    tokenStandard?: string
+  ): Promise<WalletInfo | null> {
     this.validateRequired(currency, 'currency');
-    
+
     // Validate currency against supported cryptocurrencies
-    if (!CRYPTOCURRENCIES.includes(currency as typeof CRYPTOCURRENCIES[number])) {
-      throw new Error(`Unsupported currency: ${currency}. Supported currencies: ${CRYPTOCURRENCIES.join(', ')}`);
+    if (!CRYPTOCURRENCIES.includes(currency as (typeof CRYPTOCURRENCIES)[number])) {
+      throw new Error(
+        `Unsupported currency: ${currency}. Supported currencies: ${CRYPTOCURRENCIES.join(', ')}`
+      );
     }
 
     try {
@@ -235,6 +241,72 @@ export class PostgresWalletAdapter
     }
   }
 
+  /**
+   * 🎯 ПРАВИЛЬНАЯ РЕАЛИЗАЦИЯ: Находит кошелек с минимальным количеством заказов
+   * и атомарно инкрементирует счетчик. Работает ТОЛЬКО с total_orders, игнорирует статусы.
+   */
+  async findLeastUsedOccupied(
+    currency: CryptoCurrency,
+    tokenStandard?: string
+  ): Promise<WalletInfo | null> {
+    this.validateRequired(currency, 'currency');
+
+    if (!CRYPTOCURRENCIES.includes(currency as (typeof CRYPTOCURRENCIES)[number])) {
+      throw new Error(
+        `Unsupported currency: ${currency}. Supported currencies: ${CRYPTOCURRENCIES.join(', ')}`
+      );
+    }
+
+    try {
+      return await this.prismaClient.$transaction(async tx => {
+        // 1. Поиск кошелька с минимальным total_orders (без учета статуса!)
+        const whereClause: {
+          currency: string;
+          tokenStandard?: string;
+          disabledAt?: null;
+        } = {
+          currency,
+          disabledAt: null, // Исключаем только отключенные кошельки
+        };
+
+        // Фильтр по tokenStandard для multi-network токенов
+        if (currency === 'USDT' && tokenStandard) {
+          whereClause.tokenStandard = tokenStandard;
+        }
+
+        const wallet = await tx.wallet.findFirst({
+          where: whereClause,
+          orderBy: [
+            { totalOrders: 'asc' }, // Основной критерий: минимум заказов
+            { createdAt: 'asc' }, // При равенстве: старший кошелек
+          ],
+        });
+
+        if (!wallet) {
+          return null;
+        }
+
+        // 2. Атомарно инкрементируем total_orders И меняем статус только если был available
+        const updatedWallet = await tx.wallet.update({
+          where: { id: wallet.id },
+          data: {
+            totalOrders: { increment: 1 },
+            lastUsedAt: new Date(),
+            // Меняем статус на ALLOCATED только если кошелек был AVAILABLE
+            ...(wallet.status === WalletStatus.AVAILABLE && {
+              status: WalletStatus.ALLOCATED,
+            }),
+          },
+        });
+
+        return this.mapPrismaToWallet(updatedWallet);
+      });
+    } catch (error) {
+      this.handleError(error, 'findLeastUsedOccupied');
+      return null;
+    }
+  }
+
   // ✅ ДОБАВЛЕНО: методы для получения уникальных валют и стандартов токенов из БД
   // Для миграции CRYPTO_SELECTOR_DATABASE_MIGRATION_PLAN.md
   async findDistinctCurrencies(): Promise<CryptoCurrency[]> {
@@ -246,7 +318,9 @@ export class PostgresWalletAdapter
 
       return result
         .map(item => item.currency as CryptoCurrency)
-        .filter(currency => CRYPTOCURRENCIES.includes(currency as typeof CRYPTOCURRENCIES[number]));
+        .filter(currency =>
+          CRYPTOCURRENCIES.includes(currency as (typeof CRYPTOCURRENCIES)[number])
+        );
     } catch (error) {
       this.handleError(error, 'findDistinctCurrencies');
     }
@@ -264,8 +338,9 @@ export class PostgresWalletAdapter
 
       return result
         .map(item => item.tokenStandard)
-        .filter((standard): standard is string => 
-          standard !== null && standard !== undefined && standard.length > 0
+        .filter(
+          (standard): standard is string =>
+            standard !== null && standard !== undefined && standard.length > 0
         );
     } catch (error) {
       this.handleError(error, 'findDistinctTokenStandards');

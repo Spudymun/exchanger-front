@@ -14,39 +14,24 @@ import type {
 export class ImmediateAllocationStrategy implements WalletAllocationStrategy {
   constructor(private walletRepository: WalletRepositoryInterface) {}
 
-  async allocateWallet(currency: CryptoCurrency, tokenStandard?: string): Promise<AllocationResult> {
+  async allocateWallet(
+    currency: CryptoCurrency,
+    tokenStandard?: string
+  ): Promise<AllocationResult> {
     try {
-      // ✅ ИСПРАВЛЕНО: поиск с учетом tokenStandard для multi-network токенов
-      const availableWallet = await this.walletRepository.findOldestAvailable(currency, tokenStandard);
+      // 🎯 ПРАВИЛЬНОЕ РЕШЕНИЕ: ВСЕГДА используем балансированное распределение
+      // Ищем кошелек с минимальным total_orders (игнорируем статусы)
+      const wallet = await this.walletRepository.findLeastUsedOccupied(currency, tokenStandard);
 
-      if (availableWallet) {
-        // Отмечаем кошелек как занятый
-        const walletInfo = await this.walletRepository.markAsOccupied(
-          availableWallet.address,
-          `allocation-${Date.now()}`
-        );
-
+      if (wallet) {
         return {
           success: true,
-          address: availableWallet.address,
-          walletInfo: walletInfo || availableWallet,
+          address: wallet.address,
+          walletInfo: wallet,
         };
       }
 
-      // AC2.3: Умная очередь кошельков - используем самый старый занятый кошелек
-      const oldestOccupiedWallet = await this.walletRepository.findOldestOccupied(currency, tokenStandard);
-      
-      if (oldestOccupiedWallet) {
-        // НЕМЕДЛЕННОЕ создание заявки с занятым кошельком (без изменения статуса кошелька)
-        return {
-          success: true,
-          address: oldestOccupiedWallet.address,
-          walletInfo: oldestOccupiedWallet,
-          usedOldestOccupiedWallet: true, // Флаг для индикации режима повторного использования
-        };
-      }
-
-      // Нет ни свободных, ни занятых кошельков - критическая ошибка
+      // Если совсем нет кошельков - критическая ошибка
       return {
         success: false,
         error: `No wallets available for currency ${currency}. Wallet pool is empty.`,
