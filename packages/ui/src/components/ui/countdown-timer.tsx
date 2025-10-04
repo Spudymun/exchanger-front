@@ -72,13 +72,13 @@ export function CountdownTimer({ createdAt, className, onExpired }: CountdownTim
         className
       )}
     >
-      <div className="space-y-2">
-        <p className="text-sm text-muted-foreground">
+      <div className="flex items-center gap-4">
+        <p className="text-sm text-muted-foreground flex-1">
           В случаях задержки или не совершения оплаты — Ваша заявка будет удалена через:
         </p>
         <div
           className={cn(
-            'text-3xl font-mono font-bold tabular-nums',
+            'text-3xl font-mono font-bold tabular-nums flex-shrink-0',
             isWarning ? 'text-destructive' : 'text-foreground'
           )}
           role="timer"
