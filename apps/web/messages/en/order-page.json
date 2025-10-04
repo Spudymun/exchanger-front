@@ -53,6 +53,10 @@
       "cancelConfirmMessage": "Are you sure you want to cancel this order? This action cannot be undone.",
       "confirmCancel": "Yes, Cancel",
       "cancelAction": "No, Keep Order"
+    },
+    "countdown": {
+      "warning": "In case of delays or non-payment — Your order will be deleted in:",
+      "expired": "Payment time has expired"
     }
   }
 }

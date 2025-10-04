@@ -1,6 +1,7 @@
 'use client';
 
 import { ORDER_EXPIRATION_TIME_MS } from '@repo/constants';
+import { useTranslations } from 'next-intl';
 import * as React from 'react';
 
 import { cn } from '../../lib/utils';
@@ -34,6 +35,7 @@ interface TimeRemaining {
  * ```
  */
 export function CountdownTimer({ createdAt, className, onExpired }: CountdownTimerProps) {
+  const t = useTranslations('OrderStatus');
   const [timeRemaining, setTimeRemaining] = React.useState<TimeRemaining>(() =>
     calculateTimeRemaining(createdAt)
   );
@@ -59,7 +61,7 @@ export function CountdownTimer({ createdAt, className, onExpired }: CountdownTim
   if (isExpired) {
     return (
       <div className={cn('rounded-lg border border-destructive bg-destructive/10 p-4', className)}>
-        <p className="text-sm font-medium text-destructive">Время на оплату истекло</p>
+        <p className="text-sm font-medium text-destructive">{t('countdown.expired')}</p>
       </div>
     );
   }
@@ -73,9 +75,7 @@ export function CountdownTimer({ createdAt, className, onExpired }: CountdownTim
       )}
     >
       <div className="flex items-center gap-4">
-        <p className="text-sm text-muted-foreground flex-1">
-          В случаях задержки или не совершения оплаты — Ваша заявка будет удалена через:
-        </p>
+        <p className="text-sm text-muted-foreground flex-1">{t('countdown.warning')}</p>
         <div
           className={cn(
             'text-3xl font-mono font-bold tabular-nums flex-shrink-0',
