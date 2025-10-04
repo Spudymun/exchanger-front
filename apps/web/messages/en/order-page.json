@@ -45,6 +45,14 @@
     "addressVerificationWarning": {
       "title": "Important: Verify Payment Address",
       "description": "Please verify the payment address we generate for the order with the one sent to the email specified in the order. We recommend checking your email from another device (smartphone)."
+    },
+    "actions": {
+      "markAsPaid": "I Paid",
+      "cancelOrder": "Cancel Order",
+      "cancelConfirmTitle": "Cancel order?",
+      "cancelConfirmMessage": "Are you sure you want to cancel this order? This action cannot be undone.",
+      "confirmCancel": "Yes, Cancel",
+      "cancelAction": "No, Keep Order"
     }
   }
 }

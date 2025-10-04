@@ -95,8 +95,12 @@ export const PAGINATION_CONSTANTS = {
  */
 export const OPERATION_TIME_CONSTANTS = {
   /** Время жизни заявки на обмен в минутах */
-  ORDER_EXPIRATION_MINUTES: 30,
+  ORDER_EXPIRATION_MINUTES: 90,
 } as const;
+
+/**
+ * Константы для временных зон и локализации времени
+```
 
 /**
  * Константы для временных зон и локализации времени

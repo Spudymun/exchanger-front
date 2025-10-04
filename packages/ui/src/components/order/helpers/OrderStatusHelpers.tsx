@@ -22,7 +22,10 @@ import { maskCardNumber } from '@repo/utils';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
+import { CountdownTimer } from '../../ui/countdown-timer';
+
 import { AddressVerificationWarning } from './AddressVerificationWarning';
+import { OrderActions } from './OrderActions';
 
 /**
  * Переиспользуемый компонент для отображения deposit address
@@ -329,6 +332,43 @@ export function TechnicalDetailsCollapsible({
           </CardContent>
         )}
       </Card>
+    </div>
+  );
+}
+
+/**
+ * Секция таймера обратного отсчета и кнопок действий
+ * Отображается ТОЛЬКО для PENDING статуса (проверка в родителе)
+ */
+export function OrderActionsSection({
+  orderData,
+  onMarkAsPaid,
+  onCancelOrder,
+  t,
+}: {
+  orderData: Order;
+  onMarkAsPaid: () => void;
+  onCancelOrder: () => void;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  return (
+    <div className="space-y-4">
+      {/* Таймер обратного отсчета */}
+      <CountdownTimer createdAt={orderData.createdAt} />
+
+      {/* Кнопки действий */}
+      <OrderActions
+        onMarkAsPaid={onMarkAsPaid}
+        onCancelOrder={onCancelOrder}
+        labels={{
+          markAsPaid: t('actions.markAsPaid'),
+          cancelOrder: t('actions.cancelOrder'),
+          cancelConfirmTitle: t('actions.cancelConfirmTitle'),
+          cancelConfirmMessage: t('actions.cancelConfirmMessage'),
+          confirmCancel: t('actions.confirmCancel'),
+          cancelAction: t('actions.cancelAction'),
+        }}
+      />
     </div>
   );
 }

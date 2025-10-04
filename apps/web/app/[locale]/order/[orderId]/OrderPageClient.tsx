@@ -31,6 +31,21 @@ export function OrderPageClient({ orderId }: OrderPageClientProps) {
     };
   };
 
+  // ✅ НОВЫЕ HANDLERS для действий пользователя
+  const handleMarkAsPaid = () => {
+    // eslint-disable-next-line no-console -- Временный debug для визуального демо
+    console.log('User marked order as paid:', orderId);
+    // eslint-disable-next-line no-warning-comments -- Заглушка для визуального демо
+    // TODO: Implement tRPC mutation для обновления статуса
+  };
+
+  const handleCancelOrder = () => {
+    // eslint-disable-next-line no-console -- Временный debug для визуального демо
+    console.log('User cancelled order:', orderId);
+    // eslint-disable-next-line no-warning-comments -- Заглушка для визуального демо
+    // TODO: Implement tRPC mutation для отмены заказа
+  };
+
   return (
     <>
       <OrderStatus
@@ -38,6 +53,8 @@ export function OrderPageClient({ orderId }: OrderPageClientProps) {
         showDetails={true}
         collapsibleTechnicalDetails={true}
         useOrderStatusHook={orderStatusHook}
+        onMarkAsPaid={handleMarkAsPaid}
+        onCancelOrder={handleCancelOrder}
       />
       <OrderDevTools
         orderId={orderId}

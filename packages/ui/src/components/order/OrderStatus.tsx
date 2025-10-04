@@ -24,6 +24,7 @@ import {
   OrderMetadataInfo,
   OrderCryptoInfo,
   OrderFinancialInfo,
+  OrderActionsSection,
 } from './helpers/OrderStatusHelpers';
 
 interface OrderStatusProps {
@@ -32,6 +33,9 @@ interface OrderStatusProps {
   collapsibleTechnicalDetails?: boolean;
   // ДОБАВЛЕНО: Хук передается как проп для избежания coupling
   useOrderStatusHook: UseOrderStatusHook;
+  // НОВОЕ: Callbacks для действий пользователя
+  onMarkAsPaid?: () => void;
+  onCancelOrder?: () => void;
 }
 
 // ✅ ИСПРАВЛЕНО: Используем централизованную функцию getStatusColorClass
@@ -70,15 +74,124 @@ function OrderStatusHeader({
   );
 }
 
+function OrderInformationSection({
+  orderData,
+  statusConfig,
+  onMarkAsPaid,
+  onCancelOrder,
+  locale,
+  t,
+}: {
+  orderData: Order;
+  statusConfig: StatusConfig;
+  onMarkAsPaid?: () => void;
+  onCancelOrder?: () => void;
+  locale: string;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  return (
+    <>
+      {/* Priority Information Group */}
+      <OrderPriorityInfo orderData={orderData} statusConfig={statusConfig} t={t} />
+
+      {/* Crypto & Financial Information Groups - на одном уровне */}
+      <div className={responsiveStyles.spacing.groupDivider}>
+        <div className={responsiveStyles.spacing.columnGap}>
+          {/* Crypto Information Group - адрес + сеть + email */}
+          <div className="flex-1">
+            <OrderCryptoInfo
+              orderData={orderData}
+              userEmail={(orderData as Order & { email?: string })?.email}
+              t={t}
+            />
+          </div>
+
+          {/* Financial Information Group - сумма + карта получателя */}
+          <div className={responsiveStyles.spacing.sideSection}>
+            <OrderFinancialInfo orderData={orderData} locale={locale} t={t} />
+          </div>
+        </div>
+      </div>
+
+      {/* ✅ НОВАЯ СЕКЦИЯ: Таймер обратного отсчета и кнопки действий */}
+      {onMarkAsPaid && onCancelOrder && orderData.status === ORDER_STATUSES.PENDING && (
+        <div className={responsiveStyles.spacing.groupDivider}>
+          <OrderActionsSection
+            orderData={orderData}
+            onMarkAsPaid={onMarkAsPaid}
+            onCancelOrder={onCancelOrder}
+            t={t}
+          />
+        </div>
+      )}
+    </>
+  );
+}
+
+function OrderMetadataSection({
+  orderData,
+  collapsibleTechnicalDetails,
+  isTechnicalExpanded,
+  setIsTechnicalExpanded,
+  locale,
+  t,
+}: {
+  orderData: Order;
+  collapsibleTechnicalDetails: boolean;
+  isTechnicalExpanded: boolean;
+  setIsTechnicalExpanded: (expanded: boolean) => void;
+  locale: string;
+  t: ReturnType<typeof useTranslations>;
+}) {
+  return (
+    <>
+      {/* Metadata Information Group - только даты */}
+      <div
+        className={`${!collapsibleTechnicalDetails && !orderData.txHash ? responsiveStyles.spacing.sectionTop : `border-t ${responsiveStyles.spacing.sectionTop}`}`}
+      >
+        <OrderMetadataInfo orderData={orderData} locale={locale} t={t} />
+      </div>
+
+      {/* Technical details with collapsible functionality */}
+      {collapsibleTechnicalDetails && (
+        <div className={responsiveStyles.spacing.sectionTop}>
+          <TechnicalDetailsCollapsible
+            orderData={orderData}
+            isTechnicalExpanded={isTechnicalExpanded}
+            setIsTechnicalExpanded={setIsTechnicalExpanded}
+            t={t}
+          />
+        </div>
+      )}
+
+      {/* Fallback for non-collapsible mode */}
+      {orderData.txHash && !collapsibleTechnicalDetails && (
+        <div className={responsiveStyles.spacing.sectionTop}>
+          <div>
+            <p className={textStyles.heading.sm}>{t('txHash')}</p>
+            <p className={combineStyles(textStyles.body.md, textStyles.utility.monoBreakAll)}>
+              {orderData.txHash}
+            </p>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
 function OrderStatusDetails({
   orderData,
   statusConfig,
   collapsibleTechnicalDetails = false,
+  onMarkAsPaid,
+  onCancelOrder,
   t,
 }: {
   orderData: Order;
   statusConfig: StatusConfig;
   collapsibleTechnicalDetails?: boolean;
+  onMarkAsPaid?: () => void;
+  onCancelOrder?: () => void;
   t: ReturnType<typeof useTranslations>;
 }) {
   const locale = useLocale();
@@ -87,58 +200,23 @@ function OrderStatusDetails({
   return (
     <div className={cardStyles.base}>
       <div className={responsiveStyles.spacing.content}>
-        {/* Priority Information Group */}
-        <OrderPriorityInfo orderData={orderData} statusConfig={statusConfig} t={t} />
+        <OrderInformationSection
+          orderData={orderData}
+          statusConfig={statusConfig}
+          onMarkAsPaid={onMarkAsPaid}
+          onCancelOrder={onCancelOrder}
+          locale={locale}
+          t={t}
+        />
 
-        {/* Crypto & Financial Information Groups - на одном уровне */}
-        <div className={responsiveStyles.spacing.groupDivider}>
-          <div className={responsiveStyles.spacing.columnGap}>
-            {/* Crypto Information Group - адрес + сеть + email */}
-            <div className="flex-1">
-              <OrderCryptoInfo 
-                orderData={orderData} 
-                userEmail={(orderData as Order & { email?: string })?.email}
-                t={t} 
-              />
-            </div>
-
-            {/* Financial Information Group - сумма + карта получателя */}
-            <div className={responsiveStyles.spacing.sideSection}>
-              <OrderFinancialInfo orderData={orderData} locale={locale} t={t} />
-            </div>
-          </div>
-        </div>
-
-        {/* Metadata Information Group - только даты */}
-        <div
-          className={`${!collapsibleTechnicalDetails && !orderData.txHash ? responsiveStyles.spacing.sectionTop : `border-t ${responsiveStyles.spacing.sectionTop}`}`}
-        >
-          <OrderMetadataInfo orderData={orderData} locale={locale} t={t} />
-        </div>
-
-        {/* Technical details with collapsible functionality */}
-        {collapsibleTechnicalDetails && (
-          <div className={responsiveStyles.spacing.sectionTop}>
-            <TechnicalDetailsCollapsible
-              orderData={orderData}
-              isTechnicalExpanded={isTechnicalExpanded}
-              setIsTechnicalExpanded={setIsTechnicalExpanded}
-              t={t}
-            />
-          </div>
-        )}
-
-        {/* Fallback for non-collapsible mode */}
-        {orderData.txHash && !collapsibleTechnicalDetails && (
-          <div className={responsiveStyles.spacing.sectionTop}>
-            <div>
-              <p className={textStyles.heading.sm}>{t('txHash')}</p>
-              <p className={combineStyles(textStyles.body.md, textStyles.utility.monoBreakAll)}>
-                {orderData.txHash}
-              </p>
-            </div>
-          </div>
-        )}
+        <OrderMetadataSection
+          orderData={orderData}
+          collapsibleTechnicalDetails={collapsibleTechnicalDetails}
+          isTechnicalExpanded={isTechnicalExpanded}
+          setIsTechnicalExpanded={setIsTechnicalExpanded}
+          locale={locale}
+          t={t}
+        />
       </div>
     </div>
   );
@@ -149,6 +227,8 @@ export function OrderStatus({
   showDetails = false,
   collapsibleTechnicalDetails = false,
   useOrderStatusHook,
+  onMarkAsPaid,
+  onCancelOrder,
 }: OrderStatusProps) {
   const t = useTranslations('OrderStatus');
 
@@ -193,6 +273,8 @@ export function OrderStatus({
             orderData={orderData}
             statusConfig={statusConfig}
             collapsibleTechnicalDetails={collapsibleTechnicalDetails}
+            onMarkAsPaid={onMarkAsPaid}
+            onCancelOrder={onCancelOrder}
             t={t}
           />
         )}
