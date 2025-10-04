@@ -70,11 +70,11 @@ export function AddressVerificationWarning() {
   return (
     <Notification
       variant="warning"
+      size="sm"
       title={t('addressVerificationWarning.title')}
       description={t('addressVerificationWarning.description')}
       showIcon={true}
       closable={false}
-      className="border-2"
     />
   );
 }
