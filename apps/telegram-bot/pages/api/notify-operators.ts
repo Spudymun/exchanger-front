@@ -12,9 +12,12 @@ interface NotificationPayload {
     cryptoAmount: string;
     currency: string;
     uahAmount: string;
+    status?: string; // 🆕 Опциональное поле для отмены
+    createdAt?: string;
   };
   depositAddress: string;
   walletType: 'fresh' | 'reused';
+  notificationType?: 'new_order' | 'order_cancelled'; // 🆕 Новое поле для типа уведомления
 }
 
 interface PayloadValidationResult {
@@ -105,8 +108,14 @@ function validatePayload(body: unknown): PayloadValidationResult {
  * Создание сообщения для операторов
  */
 function createOperatorMessage(payload: NotificationPayload): string {
-  const { order, depositAddress, walletType } = payload;
+  const { order, depositAddress, walletType, notificationType } = payload;
 
+  // 🆕 TASK: Обработка уведомления об отмене заявки
+  if (notificationType === 'order_cancelled') {
+    return TELEGRAM_OPERATOR_MESSAGES.TEMPLATES.ORDER_CANCELLED_MESSAGE(order);
+  }
+
+  // Существующая логика для новых заявок
   const baseInfo = TELEGRAM_OPERATOR_MESSAGES.TEMPLATES.ORDER_INFO(
     {
       id: order.id,

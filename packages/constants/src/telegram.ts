@@ -44,6 +44,9 @@ export const TELEGRAM_OPERATOR_MESSAGES = {
     RATE_COINGECKO: '🦎',
     RATE_FALLBACK: '⚠️',
     RATE_MOCK: '🔧',
+    // 🆕 TASK: Иконки для отмены заявки
+    CANCELLED: '❌',
+    USER_ACTION: '👤',
   },
   
   // Заголовки сообщений
@@ -51,6 +54,8 @@ export const TELEGRAM_OPERATOR_MESSAGES = {
     NEW_ORDER: (orderId: string) => `💰 Новая заявка #${orderId}`,
     FRESH_WALLET_ASSIGNED: '✅ **Выделен свободный кошелек**',
     REUSED_WALLET_ASSIGNED: '⚠️ **Переиспользован занятый кошелек**',
+    // 🆕 TASK: Заголовок для отмены заявки
+    ORDER_CANCELLED: (orderId: string) => `❌ Заявка #${orderId} отменена пользователем`,
   },
   
   // Статусы и состояния
@@ -110,6 +115,25 @@ export const TELEGRAM_OPERATOR_MESSAGES = {
       `⚡ Приоритет: Повышенный`,
       ``,
       `Используйте /takeorder ${orderId} для принятия заявки`,
+    ].join('\n'),
+
+    // 🆕 TASK: Шаблон для уведомления об отмене заявки
+    ORDER_CANCELLED_MESSAGE: (order: {
+      id: string;
+      email: string;
+      cryptoAmount: string;
+      currency: string;
+      uahAmount: string;
+    }) => [
+      `❌ **Заявка отменена пользователем**`,
+      ``,
+      `📋 Заявка: #${order.id}`,
+      `📧 Email: ${order.email}`,
+      `💎 Сумма: ${order.cryptoAmount} ${order.currency}`,
+      `💰 Эквивалент: ${order.uahAmount} UAH`,
+      `👤 Инициатор: Пользователь`,
+      ``,
+      `ℹ️ Заявка была отменена до завершения обработки`,
     ].join('\n'),
   },
 } as const;

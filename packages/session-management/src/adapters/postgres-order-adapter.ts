@@ -488,9 +488,15 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
     updates: Partial<Omit<Order, 'id' | 'createdAt'>>
   ): Promise<Order | null> {
     try {
+      // 🆕 TASK: Правильный маппинг статуса для Prisma enum
+      const prismaUpdates: any = { ...updates };
+      if (updates.status) {
+        prismaUpdates.status = mapToPrismaStatus(updates.status);
+      }
+
       const updated = await this.prisma.order.update({
         where: { id },
-        data: updates as any,
+        data: prismaUpdates,
         include: {
           wallet: true,
         },

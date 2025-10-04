@@ -52,7 +52,10 @@
       "cancelConfirmTitle": "Cancel order?",
       "cancelConfirmMessage": "Are you sure you want to cancel this order? This action cannot be undone.",
       "confirmCancel": "Yes, Cancel",
-      "cancelAction": "No, Keep Order"
+      "cancelAction": "No, Keep Order",
+      "orderCancelled": "Order cancelled",
+      "orderCancelledDescription": "Your order has been successfully cancelled",
+      "orderCancelError": "Failed to cancel order"
     },
     "countdown": {
       "warning": "In case of delays or non-payment — Your order will be deleted in:",

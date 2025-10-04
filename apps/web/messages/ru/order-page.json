@@ -52,7 +52,10 @@
       "cancelConfirmTitle": "Отменить заявку?",
       "cancelConfirmMessage": "Вы уверены, что хотите отменить эту заявку? Это действие нельзя отменить.",
       "confirmCancel": "Да, отменить",
-      "cancelAction": "Нет, оставить заявку"
+      "cancelAction": "Нет, оставить заявку",
+      "orderCancelled": "Заявка отменена",
+      "orderCancelledDescription": "Ваша заявка успешно отменена",
+      "orderCancelError": "Не удалось отменить заявку"
     },
     "countdown": {
       "warning": "В случаях задержки или не совершения оплаты — Ваша заявка будет удалена через:",

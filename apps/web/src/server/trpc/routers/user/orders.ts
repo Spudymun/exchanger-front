@@ -1,5 +1,5 @@
 import { USER_SUCCESS_MESSAGES, CANCELLABLE_ORDER_STATUSES, ORDER_STATUSES } from '@repo/constants';
-import { orderManager, validateUserAccess, validateOrderAccess } from '@repo/exchange-core';
+import { orderManager, validateUserAccess, validateOrderAccess, type Order } from '@repo/exchange-core';
 import {
   sortOrders,
   filterOrders,
@@ -29,6 +29,50 @@ import { z } from 'zod';
 
 import { createTRPCRouter } from '../../init';
 import { protectedProcedure } from '../../middleware/auth';
+
+/**
+ * 🆕 TASK: Отправка уведомления операторам об отмене заявки пользователем
+ * Паттерн скопирован из apps/web/src/server/trpc/routers/exchange.ts:sendTelegramNotification
+ */
+async function sendCancellationNotification(order: Order, userEmail: string) {
+  const telegramBotUrl = process.env.TELEGRAM_BOT_URL;
+  if (!telegramBotUrl) {
+    console.warn('TELEGRAM_BOT_URL not configured, skipping cancellation notification');
+    return;
+  }
+
+  try {
+    await fetch(`${telegramBotUrl}/api/notify-operators`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        order: {
+          id: order.id,
+          email: userEmail,
+          cryptoAmount: order.cryptoAmount,
+          currency: order.currency,
+          uahAmount: order.uahAmount,
+          status: 'cancelled',
+        },
+        // ⚠️ ВАЖНО: depositAddress ОБЯЗАТЕЛЕН в payload схеме
+        depositAddress: order.depositAddress || 'N/A',
+        walletType: 'fresh', // Неважно для отмены, но обязательно по схеме
+        // 🆕 НОВЫЙ флаг для определения типа уведомления
+        notificationType: 'order_cancelled',
+      }),
+    });
+
+    console.log(`✅ Telegram notification sent for cancelled order ${order.id}`);
+  } catch (error) {
+    console.error('Failed to send Telegram cancellation notification', {
+      orderId: order.id,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+    // НЕ прерываем выполнение - отмена заявки успешна даже без уведомления
+  }
+}
 
 export const ordersRouter = createTRPCRouter({
   // Получить историю заявок пользователя
@@ -112,6 +156,9 @@ export const ordersRouter = createTRPCRouter({
       }
 
       console.log(`❌ Заявка ${order.id} отменена пользователем ${user.email}`);
+
+      // 🆕 TASK: Отправка уведомления операторам об отмене
+      await sendCancellationNotification(updatedOrder, user.email);
 
       return {
         id: updatedOrder.id,

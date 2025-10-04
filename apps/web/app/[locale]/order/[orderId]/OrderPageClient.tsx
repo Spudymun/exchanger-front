@@ -1,7 +1,9 @@
 'use client';
 
 import { type Order } from '@repo/exchange-core';
+import { useNotifications } from '@repo/hooks/src/client-hooks';
 import { OrderStatus, OrderDevTools, type PublicOrderData } from '@repo/ui';
+import { useTranslations } from 'next-intl';
 
 import { trpc } from '../../../../lib/trpc-provider';
 import { useOrderStatus } from '../../../../src/hooks/useExchangeMutation';
@@ -12,6 +14,23 @@ interface OrderPageClientProps {
 
 export function OrderPageClient({ orderId }: OrderPageClientProps) {
   const utils = trpc.useUtils();
+  const notifications = useNotifications();
+  const t = useTranslations('OrderPage.OrderStatus');
+
+  // 🆕 Mutation для отмены заказа
+  const cancelOrderMutation = trpc.user.orders.cancelOrder.useMutation({
+    onSuccess: () => {
+      notifications.success(
+        t('actions.orderCancelled'),
+        t('actions.orderCancelledDescription')
+      );
+      // Инвалидируем кэш для обновления статуса заказа
+      utils.exchange.getOrderStatus.invalidate({ orderId });
+    },
+    onError: (error: unknown) => {
+      notifications.handleApiError(error, t('actions.orderCancelError'));
+    },
+  });
 
   // Получаем данные заказа
   const { data: orderData } = useOrderStatus(orderId, {
@@ -40,10 +59,7 @@ export function OrderPageClient({ orderId }: OrderPageClientProps) {
   };
 
   const handleCancelOrder = () => {
-    // eslint-disable-next-line no-console -- Временный debug для визуального демо
-    console.log('User cancelled order:', orderId);
-    // eslint-disable-next-line no-warning-comments -- Заглушка для визуального демо
-    // TODO: Implement tRPC mutation для отмены заказа
+    cancelOrderMutation.mutate({ orderId });
   };
 
   return (
