@@ -25,16 +25,27 @@ const withBundleAnalyzer = bundleAnalyzer({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ['@repo/exchange-core', '@repo/constants', '@repo/ui', '@repo/utils'],
-  serverExternalPackages: ['@trpc/server', '@repo/session-management', '@repo/email-service', 'ioredis'],
+  transpilePackages: [
+    '@repo/exchange-core',
+    '@repo/constants',
+    '@repo/ui',
+    '@repo/utils',
+    '@repo/hooks',
+  ],
+  serverExternalPackages: [
+    '@trpc/server',
+    '@repo/session-management',
+    '@repo/email-service',
+    'ioredis',
+  ],
   env: {
     DATABASE_URL: process.env.DATABASE_URL, // eslint-disable-line no-undef
     REDIS_URL: process.env.REDIS_URL, // eslint-disable-line no-undef
     FORCE_MOCK_MODE: process.env.FORCE_MOCK_MODE, // eslint-disable-line no-undef
   },
-  
+
   // ✅ Turbopack отключен - используем только webpack конфигурацию
-  
+
   // ✅ Webpack config for production builds (fallback when not using Turbopack)
   webpack: (config, { isServer }) => {
     if (!isServer) {
@@ -44,19 +55,19 @@ const nextConfig = {
         net: false,
         tls: false,
         fs: false,
-        'ioredis': false
+        ioredis: false,
       };
-      
+
       // ✅ Полностью исключаем server-only пакеты из client bundle
       config.resolve.alias = {
         ...config.resolve.alias,
         '@repo/session-management': false,
         '@repo/email-service': false,
-        'ioredis': false
+        ioredis: false,
       };
     }
     return config;
-  }
+  },
 };
 
 export default withBundleAnalyzer(withNextIntl(nextConfig));

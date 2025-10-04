@@ -41,6 +41,10 @@
       "completed": "Funds transferred to your account",
       "cancelled": "Order cancelled",
       "failed": "Order processing failed"
+    },
+    "addressVerificationWarning": {
+      "title": "⚠️ Important: Verify Payment Address",
+      "description": "Please verify the payment address we generate for the order with the one sent to the email specified in the order. We recommend checking your email from another device (smartphone)."
     }
   }
 }

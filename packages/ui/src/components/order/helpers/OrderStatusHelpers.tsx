@@ -22,6 +22,8 @@ import { maskCardNumber } from '@repo/utils';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
+import { AddressVerificationWarning } from './AddressVerificationWarning';
+
 /**
  * Переиспользуемый компонент для отображения deposit address
  * ИСПРАВЛЕНО: Устраняет дублирование кода через выделение в отдельный компонент
@@ -138,6 +140,10 @@ export function OrderCryptoInfo({
     <div className="space-y-4">
       {/* ИСПРАВЛЕНО: Используем переиспользуемый компонент вместо дублированного кода */}
       <DepositAddressBlock depositAddress={orderData.depositAddress} t={t} />
+
+      {/* ✅ НОВОЕ: Предупреждение о проверке адреса 
+          Отображается ТОЛЬКО когда email с адресом отправляется */}
+      <AddressVerificationWarning />
 
       {/* Email и Blockchain Network на одном уровне */}
       <div className="flex flex-col gap-4 sm:flex-row sm:gap-6">

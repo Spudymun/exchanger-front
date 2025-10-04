@@ -1,7 +1,7 @@
 /**
  * Email Service Configuration Constants
  * Централизованная конфигурация системы отправки email
- * 
+ *
  * @description Константы для управления поведением email отправки в разных окружениях
  * @category Email Service
  * @since 1.0.0
@@ -18,7 +18,8 @@ export const EMAIL_NOTIFICATION_TYPES = {
   MARKETING: 'MARKETING', // Маркетинговые email
 } as const;
 
-export type EmailNotificationType = (typeof EMAIL_NOTIFICATION_TYPES)[keyof typeof EMAIL_NOTIFICATION_TYPES];
+export type EmailNotificationType =
+  (typeof EMAIL_NOTIFICATION_TYPES)[keyof typeof EMAIL_NOTIFICATION_TYPES];
 
 /**
  * Конфигурация включения/отключения email отправки
@@ -30,9 +31,9 @@ export const EMAIL_SENDING_CONFIG = {
    * При false - все email будут отключены независимо от других настроек
    */
   GLOBAL_ENABLED: {
-    development: false, // В разработке по умолчанию отключено
-    staging: true,     // В staging включено для тестирования
-    production: true,  // В production всегда включено
+    development: true, // В разработке по умолчанию отключено
+    staging: true, // В staging включено для тестирования
+    production: true, // В production всегда включено
   },
 
   /**
@@ -61,7 +62,7 @@ export const EMAIL_SENDING_CONFIG = {
     },
 
     [EMAIL_NOTIFICATION_TYPES.SYSTEM_ALERT]: {
-      development: true,  // Системные алерты важны даже в разработке
+      development: true, // Системные алерты важны даже в разработке
       staging: true,
       production: true,
       description: 'Критические системные уведомления',
@@ -83,12 +84,12 @@ export const EMAIL_SENDING_CONFIG = {
      * Что делать если email отправка отключена
      */
     DISABLED_ACTION: 'LOG_ONLY', // LOG_ONLY | SILENT | THROW_ERROR
-    
+
     /**
      * Логировать ли отключенные email в консоль
      */
     LOG_DISABLED_EMAILS: true,
-    
+
     /**
      * Префикс для логов отключенных email
      */
@@ -100,7 +101,7 @@ export const EMAIL_SENDING_CONFIG = {
  * Типы для TypeScript
  */
 export type Environment = keyof typeof EMAIL_SENDING_CONFIG.GLOBAL_ENABLED;
-export type EmailTypeConfig = typeof EMAIL_SENDING_CONFIG.BY_TYPE[EmailNotificationType];
+export type EmailTypeConfig = (typeof EMAIL_SENDING_CONFIG.BY_TYPE)[EmailNotificationType];
 export type FallbackAction = typeof EMAIL_SENDING_CONFIG.FALLBACK.DISABLED_ACTION;
 
 /**
@@ -148,12 +149,12 @@ export const EMAIL_ENABLED_IN_PRODUCTION = {
  * Константы для логирования
  */
 export const EMAIL_LOG_MESSAGES = {
-  GLOBALLY_DISABLED: (env: Environment) => 
+  GLOBALLY_DISABLED: (env: Environment) =>
     `${EMAIL_SENDING_CONFIG.FALLBACK.LOG_PREFIX} Email отправка глобально отключена для окружения: ${env}`,
-  
-  TYPE_DISABLED: (type: EmailNotificationType, env: Environment) => 
+
+  TYPE_DISABLED: (type: EmailNotificationType, env: Environment) =>
     `${EMAIL_SENDING_CONFIG.FALLBACK.LOG_PREFIX} Email типа "${type}" отключен для окружения: ${env}`,
-  
-  WOULD_SEND: (type: EmailNotificationType, to: string) => 
+
+  WOULD_SEND: (type: EmailNotificationType, to: string) =>
     `${EMAIL_SENDING_CONFIG.FALLBACK.LOG_PREFIX} Был бы отправлен email типа "${type}" на: ${to}`,
 } as const;
