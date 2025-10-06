@@ -32,6 +32,21 @@ export function OrderPageClient({ orderId }: OrderPageClientProps) {
     },
   });
 
+  // 🆕 TASK: Mutation для отметки заказа как оплаченного
+  const markAsPaidMutation = trpc.user.orders.markAsPaid.useMutation({
+    onSuccess: () => {
+      notifications.success(
+        t('actions.orderMarkedPaid'),
+        t('actions.orderMarkedPaidDescription')
+      );
+      // Инвалидируем кэш для обновления статуса заказа
+      utils.exchange.getOrderStatus.invalidate({ orderId });
+    },
+    onError: (error: unknown) => {
+      notifications.handleApiError(error, t('actions.orderMarkPaidError'));
+    },
+  });
+
   // Получаем данные заказа
   const { data: orderData } = useOrderStatus(orderId, {
     refetchInterval: 30000, // 30 секунд
@@ -52,10 +67,7 @@ export function OrderPageClient({ orderId }: OrderPageClientProps) {
 
   // ✅ НОВЫЕ HANDLERS для действий пользователя
   const handleMarkAsPaid = () => {
-    // eslint-disable-next-line no-console -- Временный debug для визуального демо
-    console.log('User marked order as paid:', orderId);
-    // eslint-disable-next-line no-warning-comments -- Заглушка для визуального демо
-    // TODO: Implement tRPC mutation для обновления статуса
+    markAsPaidMutation.mutate({ orderId });
   };
 
   const handleCancelOrder = () => {

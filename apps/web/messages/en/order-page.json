@@ -55,7 +55,10 @@
       "cancelAction": "No, Keep Order",
       "orderCancelled": "Order cancelled",
       "orderCancelledDescription": "Your order has been successfully cancelled",
-      "orderCancelError": "Failed to cancel order"
+      "orderCancelError": "Failed to cancel order",
+      "orderMarkedPaid": "Payment marked",
+      "orderMarkedPaidDescription": "We have notified the operators about your payment. Processing will start shortly.",
+      "orderMarkPaidError": "Failed to mark payment"
     },
     "countdown": {
       "warning": "In case of delays or non-payment — Your order will be deleted in:",

@@ -55,7 +55,10 @@
       "cancelAction": "Нет, оставить заявку",
       "orderCancelled": "Заявка отменена",
       "orderCancelledDescription": "Ваша заявка успешно отменена",
-      "orderCancelError": "Не удалось отменить заявку"
+      "orderCancelError": "Не удалось отменить заявку",
+      "orderMarkedPaid": "Платеж отмечен",
+      "orderMarkedPaidDescription": "Мы уведомили операторов о вашем платеже. Обработка начнется в ближайшее время.",
+      "orderMarkPaidError": "Не удалось отметить платеж"
     },
     "countdown": {
       "warning": "В случаях задержки или не совершения оплаты — Ваша заявка будет удалена через:",

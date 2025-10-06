@@ -17,7 +17,7 @@ interface NotificationPayload {
   };
   depositAddress: string;
   walletType: 'fresh' | 'reused';
-  notificationType?: 'new_order' | 'order_cancelled'; // 🆕 Новое поле для типа уведомления
+  notificationType?: 'new_order' | 'order_cancelled' | 'order_paid'; // 🆕 ДОБАВИЛИ 'order_paid'
 }
 
 interface PayloadValidationResult {
@@ -113,6 +113,11 @@ function createOperatorMessage(payload: NotificationPayload): string {
   // 🆕 TASK: Обработка уведомления об отмене заявки
   if (notificationType === 'order_cancelled') {
     return TELEGRAM_OPERATOR_MESSAGES.TEMPLATES.ORDER_CANCELLED_MESSAGE(order);
+  }
+
+  // 🆕 TASK: Обработка уведомления об оплате заявки
+  if (notificationType === 'order_paid') {
+    return TELEGRAM_OPERATOR_MESSAGES.TEMPLATES.ORDER_PAID_MESSAGE(order);
   }
 
   // Существующая логика для новых заявок

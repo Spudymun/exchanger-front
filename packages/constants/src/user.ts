@@ -47,6 +47,7 @@ export const USER_SUCCESS_MESSAGES = {
   PASSWORD_CHANGED: 'Пароль успешно изменен',
   PROFILE_UPDATED: 'Настройки профиля обновлены',
   ORDER_CANCELLED: 'Заявка успешно отменена',
+  ORDER_MARKED_PAID: 'Платеж успешно отмечен', // 🆕 TASK: Сообщение об успешной отметке оплаты
   VERIFICATION_SENT: 'Код подтверждения отправлен на ваш email',
   ACCOUNT_DELETED: 'Аккаунт успешно удален',
 } as const;
@@ -64,3 +65,7 @@ export type { ApplicationContext } from './session';
 
 // Statuses that allow order cancellation - using exchange.ts values
 export const CANCELLABLE_ORDER_STATUSES = ['pending', 'processing'] as const;
+
+// 🆕 TASK: Статусы, в которых можно отметить заказ как оплаченный
+// Только pending заказы могут быть отмечены пользователем как оплаченные
+export const MARKABLE_AS_PAID_STATUSES = ['pending'] as const;
