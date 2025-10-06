@@ -2,18 +2,32 @@ import { publicProcedure } from '../init';
 
 /**
  * In-memory idempotency cache for development
- * 
+ *
  * LIMITATIONS:
  * - Data is lost on server restart
  * - Does not scale across multiple server instances
  * - Not suitable for production use
- * 
+ *
  * PRODUCTION ALTERNATIVES:
  * - Redis-based idempotency cache (recommended)
  * - Database-backed idempotency storage
  * - External caching services
+ *
+ * HOT-RELOAD PROTECTION:
+ * - Uses global singleton pattern to preserve cache across hot-reloads
+ * - Same approach as global.__prismaInstance
+ * - Prevents idempotency bypass during development
  */
-const idempotencyCache = new Map<string, { response: unknown; timestamp: number }>();
+
+// ✅ Global singleton pattern для hot-reload environments
+// Предотвращает idempotency bypass при hot-reload в development
+// Использует тот же подход что и global.__prismaInstance
+declare global {
+  var __idempotencyCache: Map<string, { response: unknown; timestamp: number }> | undefined;
+}
+
+const idempotencyCache =
+  global.__idempotencyCache || new Map<string, { response: unknown; timestamp: number }>();
 
 // TTL для idempotency cache (5 секунд)
 const IDEMPOTENCY_TTL_MS = 5000;
@@ -21,17 +35,24 @@ const IDEMPOTENCY_TTL_MS = 5000;
 // Cleanup interval для предотвращения утечек памяти
 const CLEANUP_INTERVAL_MS = 60000; // 1 минута
 
-// Периодическая очистка истекших записей
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, record] of idempotencyCache.entries()) {
-    if (now - record.timestamp > IDEMPOTENCY_TTL_MS) {
-      idempotencyCache.delete(key);
+if (!global.__idempotencyCache) {
+  console.log(`🚀 [IDEMPOTENCY MODULE] Creating NEW cache at ${new Date().toISOString()}`);
+  global.__idempotencyCache = idempotencyCache;
+
+  // Периодическая очистка истекших записей ТОЛЬКО для нового cache
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, record] of idempotencyCache.entries()) {
+      if (now - record.timestamp > IDEMPOTENCY_TTL_MS) {
+        idempotencyCache.delete(key);
+      }
     }
-  }
-}, CLEANUP_INTERVAL_MS);
-
-
+  }, CLEANUP_INTERVAL_MS);
+} else {
+  console.log(
+    `♻️ [IDEMPOTENCY MODULE] Reusing EXISTING cache at ${new Date().toISOString()}, size: ${idempotencyCache.size}`
+  );
+}
 
 /**
  * Функция создания idempotency middleware
