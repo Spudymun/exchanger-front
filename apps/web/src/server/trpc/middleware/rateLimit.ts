@@ -17,7 +17,31 @@ import { publicProcedure } from '../init';
  * - Database-backed rate limiting
  * - External services like Cloudflare or AWS API Gateway
  */
-const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+// ✅ Global singleton pattern для hot-reload environments
+// Предотвращает сброс rate limit store при hot-reload в development
+// Использует тот же подход что и global.__prismaInstance
+declare global {
+  var __rateLimitStore: Map<string, { count: number; resetTime: number }> | undefined;
+}
+
+// В development используем global для сохранения между hot-reloads
+const rateLimitStore =
+  global.__rateLimitStore || new Map<string, { count: number; resetTime: number }>();
+
+if (!global.__rateLimitStore) {
+  console.log(`🚀 [RATE LIMIT MODULE] Creating NEW store at ${new Date().toISOString()}`);
+  global.__rateLimitStore = rateLimitStore;
+} else {
+  console.log(
+    `♻️ [RATE LIMIT MODULE] Reusing EXISTING store at ${new Date().toISOString()}, size: ${rateLimitStore.size}`
+  );
+}
+
+console.log(`🗄️ [RATE LIMIT MODULE] Store status:`, {
+  size: rateLimitStore.size,
+  keys: Array.from(rateLimitStore.keys()),
+});
 
 // Cleanup interval for expired records (prevent memory leaks)
 const CLEANUP_INTERVAL =
@@ -39,8 +63,11 @@ setInterval(() => {
  * Get client IP address from context
  * Handles various proxy scenarios and provides fallback
  */
+// Helper function to safely get client IP
 function getClientIp(ip: string | undefined): string {
-  return ip || 'unknown';
+  const result = ip || 'unknown';
+  console.log(`🌐 [RATE LIMIT] getClientIp called: input="${ip}" → result="${result}"`);
+  return result;
 }
 
 export function createRateLimiter(
@@ -55,27 +82,41 @@ export function createRateLimiter(
     const key = `${action}:${clientIp}`;
     const now = Date.now();
 
+    console.log(`🔍 [RATE LIMIT] Action: ${action}, IP: ${clientIp}, Key: ${key}`);
+    console.log(`📊 [RATE LIMIT] Store size: ${rateLimitStore.size}`);
+    console.log(`🗂️ [RATE LIMIT] All keys in store:`, Array.from(rateLimitStore.keys()));
+
     // Получаем текущее состояние
     const current = rateLimitStore.get(key);
 
+    console.log(`📝 [RATE LIMIT] Current state:`, current);
+
     // Если записи нет или время сброса прошло
     if (!current || now > current.resetTime) {
+      const newResetTime = now + config.duration * TIME_CONSTANTS.MILLISECONDS_IN_SECOND;
+      console.log(
+        `✨ [RATE LIMIT] Creating NEW record: count=1, resetTime=${new Date(newResetTime).toISOString()}`
+      );
       rateLimitStore.set(key, {
         count: 1,
-        resetTime: now + config.duration * TIME_CONSTANTS.MILLISECONDS_IN_SECOND,
+        resetTime: newResetTime,
       });
+      console.log(`✅ [RATE LIMIT] Request ALLOWED (new window)`);
       return;
     }
 
     // Если превышен лимит
     if (current.count >= config.points) {
-      const errorKey = `server.errors.rateLimit.${action}`;
+      console.log(`❌ [RATE LIMIT] LIMIT EXCEEDED! count=${current.count}, limit=${config.points}`);
+      const errorKey = `rateLimit.${action}`;
       throw createRateLimitError(await getErrorMessage(errorKey));
     }
 
     // Увеличиваем счетчик
     current.count++;
     rateLimitStore.set(key, current);
+    console.log(`➕ [RATE LIMIT] Incremented: count=${current.count}/${config.points}`);
+    console.log(`✅ [RATE LIMIT] Request ALLOWED`);
   };
 }
 
