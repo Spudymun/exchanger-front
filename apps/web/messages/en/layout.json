@@ -10,6 +10,7 @@
       "signUp": "Sign Up",
       "signOut": "Sign Out",
       "close": "Close",
+      "resetPassword": "Reset Password",
       "loginTitle": "Sign In to Your Account",
       "registerTitle": "Create Account",
       "loginSubtitle": "Enter your credentials to continue",
@@ -49,6 +50,7 @@
         },
         "submit": "Sign In",
         "submitting": "Signing in...",
+        "forgotPassword": "Forgot password?",
         "switchToRegister": "Don't have an account? Sign up"
       },
       "register": {
@@ -67,6 +69,35 @@
         "successMessage": "Check your email to confirm your account",
         "errorTitle": "Registration error",
         "errorMessage": "Please try again"
+      },
+      "forgotPassword": {
+        "requestStep": {
+          "title": "Reset Password",
+          "description": "Enter your email address to receive a reset code",
+          "email": {
+            "label": "Email",
+            "placeholder": "your@email.com"
+          },
+          "submit": "Send Reset Code",
+          "submitting": "Sending..."
+        },
+        "confirmStep": {
+          "title": "Enter Reset Code",
+          "description": "Check your email and enter the code below",
+          "resetCode": {
+            "label": "Reset Code",
+            "placeholder": "Enter 6-digit code"
+          },
+          "newPassword": {
+            "label": "New Password",
+            "placeholder": "Enter new password"
+          },
+          "submit": "Reset Password",
+          "submitting": "Resetting...",
+          "codeExpires": "Code expires in 15 minutes",
+          "resendCode": "Resend code"
+        },
+        "backToLogin": "Back to login"
       }
     },
     "footer": {

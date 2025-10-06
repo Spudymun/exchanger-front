@@ -56,19 +56,10 @@ function useLoginForm(onSuccess?: () => void) {
   return { form, tValidation };
 }
 
-export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
+export function LoginForm({ onSuccess, onSwitchToRegister, onSwitchToForgotPassword }: LoginFormProps) {
   const { form, tValidation } = useLoginForm(onSuccess);
   const { login } = useAuthMutationAdapter();
   const t = useTranslations('Layout.forms.login');
-
-  // 🔍 ДЕБАГ ЛОГИ для отслеживания проблемы в модалках
-  console.log('🔍 LoginForm DEBUG:', {
-    'login.isPending': login.isPending,
-    'login.status': login.status,
-    'form.isSubmitting': form.isSubmitting,
-    'form.isValid': form.isValid,
-    'form.errors': Object.keys(form.errors)
-  });
 
   return (
     <AuthForm
@@ -83,6 +74,16 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
         <AuthForm.FieldWrapper>
           <FormEmailField />
           <AuthPasswordField />
+          {onSwitchToForgotPassword && (
+            <button
+              type="button"
+              onClick={onSwitchToForgotPassword}
+              className="text-sm text-primary hover:underline block w-full text-right -mt-1"
+              disabled={login.isPending}
+            >
+              {t('forgotPassword')}
+            </button>
+          )}
           <FormCaptchaField />
         </AuthForm.FieldWrapper>
         <AuthForm.ActionsWrapper>

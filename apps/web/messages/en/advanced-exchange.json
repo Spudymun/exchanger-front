@@ -50,6 +50,18 @@
       "label": "Password",
       "placeholder": "Enter password"
     },
+    "newPassword": {
+      "label": "New Password",
+      "placeholder": "Enter new password"
+    },
+    "confirmNewPassword": {
+      "label": "Confirm New Password",
+      "placeholder": "Confirm new password"
+    },
+    "resetCode": {
+      "label": "Reset Code",
+      "placeholder": "Enter 6-digit code"
+    },
     "confirmPassword": {
       "label": "Confirm Password",
       "placeholder": "Confirm password"
@@ -78,6 +90,13 @@
       "confirmPassword": {
         "noMatch": "Passwords do not match",
         "required": "Password confirmation is required"
+      },
+      "resetCode": {
+        "required": "Reset code is required"
+      },
+      "confirmNewPassword": {
+        "noMatch": "Passwords do not match",
+        "required": "Password confirmation required"
       },
       "username": {
         "minLength": "Username must contain at least {min} characters",

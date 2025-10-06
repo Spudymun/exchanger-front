@@ -33,6 +33,7 @@ export type {
   CryptoAddressEmailData,
   WalletReadyEmailData,
   SystemAlertEmailData,
+  PasswordResetEmailData, // 🆕 НОВЫЙ тип для password reset
   EmailEnvironment,
   EmailTemplateType,
 } from './types/index';

@@ -1,8 +1,10 @@
 import { AUTH_CONSTANTS, VALIDATION_LIMITS } from '@repo/constants';
+import { EmailService, type PasswordResetEmailData } from '@repo/email-service';
 import { generateSessionId, sanitizeEmail, isAuthenticatedUser } from '@repo/exchange-core';
 import {
   UserManagerFactory,
   ProductionUserManager,
+  PasswordResetTokenService,
   type UserManagerInterface,
   type User,
 } from '@repo/session-management';
@@ -33,7 +35,7 @@ import bcrypt from 'bcryptjs';
 // Temporary direct imports for new schemas
 import {
   securityEnhancedResetPasswordSchema,
-  securityEnhancedConfirmResetPasswordSchema,
+  fullySecurityEnhancedConfirmResetPasswordSchema,
   securityEnhancedConfirmEmailSchema,
 } from '../../../../../../packages/utils/src/validation/security-enhanced-schemas';
 
@@ -85,6 +87,36 @@ async function createUserWithSession(
 
     return { user, sessionId: finalSessionId };
   }
+}
+
+// ✅ Helper function to verify password reset token and get user
+async function verifyResetTokenAndGetUser(
+  resetCode: string,
+  expectedEmail: string
+): Promise<{ user: User; webUserManager: UserManagerInterface }> {
+  // Проверить токен через PasswordResetTokenService
+  const userId = await PasswordResetTokenService.verifyToken(resetCode);
+
+  if (!userId) {
+    throw createBadRequestError('Invalid or expired recovery code');
+  }
+
+  const webUserManager = await UserManagerFactory.createForWeb();
+  const user = await webUserManager.findById(userId);
+
+  if (!user) {
+    throw createBadRequestError('User not found');
+  }
+
+  // Дополнительная проверка: email из токена совпадает с email из запроса
+  if (user.email !== expectedEmail) {
+    console.error(
+      `❌ Email mismatch: token userId=${userId}, request email=${expectedEmail}`
+    );
+    throw createBadRequestError('Invalid recovery code');
+  }
+
+  return { user, webUserManager };
 }
 
 export const authRouter = createTRPCRouter({
@@ -303,26 +335,44 @@ export const authRouter = createTRPCRouter({
 
       const sanitizedEmail = sanitizeEmail(input.email);
 
-      // ✅ Get web user manager instance
-      const webUserManager = await UserManagerFactory.createForWeb(); // ✅ БЫЛО: .create()
+      try {
+        // ✅ PRODUCTION: Создать токен через PasswordResetTokenService
+        // - Автоматически проверит существование пользователя
+        // - Сгенерирует crypto-safe 6-значный токен
+        // - Сохранит в БД с TTL 15 минут
+        // - Удалит старые неиспользованные токены этого пользователя
+        const token = await PasswordResetTokenService.createToken(sanitizedEmail);
 
-      // Проверяем, существует ли пользователь
-      const user = await webUserManager.findByEmail(sanitizedEmail);
-      if (!user) {
-        // Не раскрываем информацию о существовании пользователя
-        console.log(`🔒 Password reset attempt for non-existent email: ${sanitizedEmail}`);
-      } else {
-        console.log(`🔑 Password reset request for: ${sanitizedEmail}`);
+        if (token) {
+          // ✅ PRODUCTION: Отправить email через EmailService
+          const MINUTES_15 = 15;
+          const MINUTES_TO_MS = 60 * 1000;
+          const expiresAt = new Date(Date.now() + MINUTES_15 * MINUTES_TO_MS);
 
-        // Имитация отправки email с кодом восстановления
-        const resetCode = Math.random()
-          .toString(AUTH_CONSTANTS.RESET_CODE_BASE)
-          .substring(AUTH_CONSTANTS.RESET_CODE_START, AUTH_CONSTANTS.RESET_CODE_END)
-          .toUpperCase();
-        console.log(`📧 Recovery code for ${sanitizedEmail}: ${resetCode}`);
+          const emailData: PasswordResetEmailData = {
+            token,
+            expiresAt,
+            userEmail: sanitizedEmail,
+          };
+
+          const emailResult = await EmailService.sendPasswordReset(emailData);
+
+          // Логирование результата
+          console.log(
+            emailResult.success
+              ? `✅ Password reset email sent to: ${sanitizedEmail}`
+              : `❌ Failed to send password reset email to: ${sanitizedEmail}. Error: ${emailResult.error || 'Unknown'}`
+          );
+        } else {
+          // Пользователь не существует - не раскрываем это
+          console.log(`� Password reset attempt for non-existent email: ${sanitizedEmail}`);
+        }
+      } catch (error) {
+        console.error('Error in requestPasswordReset:', error);
+        // Не пробрасываем ошибку наружу для security
       }
 
-      // Всегда возвращаем успешный ответ для безопасности
+      // ✅ Всегда возвращаем успешный ответ (security best practice)
       return {
         message: 'If the specified email exists, a recovery code will be sent to it',
       };
@@ -330,32 +380,21 @@ export const authRouter = createTRPCRouter({
 
   // Восстановление пароля (шаг 2 - сброс с кодом)
   resetPassword: publicProcedure
-    .input(securityEnhancedConfirmResetPasswordSchema) // SECURITY-ENHANCED VALIDATION
+    .input(fullySecurityEnhancedConfirmResetPasswordSchema) // FULLY XSS-PROTECTED VALIDATION
     .mutation(async ({ input, ctx }) => {
       // Имитация задержки
       await createDelay(AUTH_CONSTANTS.LOGIN_REQUEST_DELAY_MS);
 
       const sanitizedEmail = sanitizeEmail(input.email);
 
-      // Валидация нового пароля с помощью Security Enhanced Zod схемы
-      const passwordResult = securityEnhancedConfirmResetPasswordSchema.shape.newPassword.safeParse(
-        input.newPassword
+      // ✅ ВАЖНО: input уже прошел валидацию через fullySecurityEnhancedConfirmResetPasswordSchema
+      // Дополнительная валидация НЕ НУЖНА - это избыточность (Rule 20)
+      
+      // ✅ PRODUCTION: Верификация токена и получение пользователя
+      const { user, webUserManager } = await verifyResetTokenAndGetUser(
+        input.resetCode,
+        sanitizedEmail
       );
-      if (!passwordResult.success) {
-        throw createValidationError(
-          passwordResult.error.issues[0]?.message || 'Invalid new password format'
-        );
-      }
-
-      // ✅ Get web user manager instance
-      const webUserManager = await UserManagerFactory.createForWeb(); // ✅ БЫЛО: .create()
-
-      // В реальном приложении здесь была бы проверка кода из базы/Redis
-      // Для мока просто проверяем существование пользователя
-      const user = await webUserManager.findByEmail(sanitizedEmail);
-      if (!user) {
-        throw createBadRequestError('Invalid recovery code');
-      }
 
       // Хешируем новый пароль
       const hashedPassword = await bcrypt.hash(
@@ -363,14 +402,20 @@ export const authRouter = createTRPCRouter({
         VALIDATION_LIMITS.BCRYPT_SALT_ROUNDS
       );
 
-      // ✅ Production session creation with metadata after password reset
-      let finalSessionId = generateSessionId();
-      const sessionMetadata = createSessionMetadata(ctx.ip, ctx.req.headers);
-
-      // Обновляем пользователя (без sessionId в новой архитектуре)
+      // Обновляем пользователя
       await webUserManager.update(user.id, {
         hashedPassword,
       });
+
+      // ✅ PRODUCTION: Пометить токен как использованный
+      const marked = await PasswordResetTokenService.markTokenAsUsed(input.resetCode);
+      if (!marked) {
+        console.warn(`⚠️ Failed to mark token as used: ${input.resetCode}`);
+      }
+
+      // ✅ Production session creation with metadata after password reset
+      let finalSessionId = generateSessionId();
+      const sessionMetadata = createSessionMetadata(ctx.ip, ctx.req.headers);
 
       // Phase 4: Production session creation with metadata
       if (webUserManager instanceof ProductionUserManager) {
@@ -387,7 +432,7 @@ export const authRouter = createTRPCRouter({
         `sessionId=${finalSessionId}; HttpOnly; Path=/; Max-Age=${AUTH_CONSTANTS.SESSION_MAX_AGE_SECONDS}; SameSite=Lax`
       );
 
-      console.log(`🔓 Password changed for user: ${sanitizedEmail}`);
+      console.log(`✅ Password reset completed for user: ${sanitizedEmail}`);
 
       return {
         user: {

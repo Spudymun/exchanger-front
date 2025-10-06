@@ -74,6 +74,15 @@ export interface SystemAlertEmailData {
 }
 
 /**
+ * Password reset email template data
+ */
+export interface PasswordResetEmailData {
+  token: string;
+  expiresAt: Date;
+  userEmail: string;
+}
+
+/**
  * Environment types for email service
  */
 export type EmailEnvironment = 'development' | 'production' | 'test';

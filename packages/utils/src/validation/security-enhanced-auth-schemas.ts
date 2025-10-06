@@ -74,7 +74,7 @@ export const fullySecurityEnhancedRegisterSchema = z
   })
   .refine(data => data.password === data.confirmPassword, {
     path: ['confirmPassword'],
-    message: 'PASSWORD_CONFIRMATION_MISMATCH',
+    // FIX: Убран message чтобы error проходил через errorMap и локализовался через handler
   });
 
 /**
@@ -92,6 +92,29 @@ export const securityEnhancedConfirmResetPasswordSchema = z.object({
   ).refine((val: string) => val.length > 0, 'RESET_CODE_REQUIRED'),
   newPassword: passwordSchema,
 });
+
+/**
+ * AUTH FORMS SCHEMAS
+ */
+
+/**
+ * FULLY XSS-PROTECTED CONFIRM RESET PASSWORD SCHEMA
+ * Следует паттерну fullySecurityEnhancedRegisterSchema с полной XSS защитой
+ */
+export const fullySecurityEnhancedConfirmResetPasswordSchema = z
+  .object({
+    email: xssProtectedEmailSchema,
+    resetCode: createXSSProtectedStringWithLength(
+      1,
+      SECURITY_VALIDATION_LIMITS.AUTH_CODE_MAX_LENGTH
+    ).refine((val: string) => val.length > 0, 'RESET_CODE_REQUIRED'),
+    newPassword: enhancedPasswordSchema, // ← УНИФИЦИРОВАННАЯ СХЕМА с XSS защитой
+    confirmNewPassword: enhancedPasswordSchema, // ← УНИФИЦИРОВАННАЯ СХЕМА с XSS защитой
+  })
+  .refine(data => data.newPassword === data.confirmNewPassword, {
+    path: ['confirmNewPassword'],
+    // FIX: Убран message чтобы error проходил через errorMap и локализовался через handler
+  });
 
 export const securityEnhancedConfirmEmailSchema = z.object({
   email: emailSchema,
@@ -118,6 +141,9 @@ export const securityEnhancedChangePasswordSchema = z
 export type SecurityEnhancedResetPassword = z.infer<typeof securityEnhancedResetPasswordSchema>;
 export type SecurityEnhancedConfirmResetPassword = z.infer<
   typeof securityEnhancedConfirmResetPasswordSchema
+>;
+export type FullySecurityEnhancedConfirmResetPassword = z.infer<
+  typeof fullySecurityEnhancedConfirmResetPasswordSchema
 >;
 export type SecurityEnhancedConfirmEmail = z.infer<typeof securityEnhancedConfirmEmailSchema>;
 export type SecurityEnhancedChangePassword = z.infer<typeof securityEnhancedChangePasswordSchema>;

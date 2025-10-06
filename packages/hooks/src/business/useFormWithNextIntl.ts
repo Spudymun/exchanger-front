@@ -61,6 +61,13 @@ function createFieldValidator<T extends Record<string, unknown>>(
 
       const result = validationSchema.safeParse(values, { errorMap });
 
+      // eslint-disable-next-line no-console
+      console.warn('[DEBUG] validateField:', { 
+        field, 
+        success: result.success, 
+        allErrors: result.success ? [] : result.error.errors.map(e => ({ path: e.path, message: e.message, code: e.code }))
+      });
+
       if (result.success) {
         setErrors(prev => {
           const newErrors = { ...prev };
@@ -73,6 +80,10 @@ function createFieldValidator<T extends Record<string, unknown>>(
       const fieldError = result.error.errors.find(
         error => error.path.length > 0 && error.path[0] === field
       );
+      
+      // eslint-disable-next-line no-console
+      console.warn('[DEBUG] validateField found error for field:', { field, fieldError });
+      
       if (fieldError) {
         // Есть ошибка для этого поля - устанавливаем её
         setErrors(prev => ({ ...prev, [field]: fieldError.message }));
@@ -104,6 +115,13 @@ function createFormValidatorFn<T extends Record<string, unknown>>(
     if (!validationSchema) return true;
 
     const result = validationSchema.safeParse(values, { errorMap });
+    
+    // eslint-disable-next-line no-console
+    console.warn('[DEBUG] validateForm result:', { 
+      success: result.success, 
+      errors: result.success ? [] : result.error.errors.map(e => ({ path: e.path, message: e.message, code: e.code }))
+    });
+    
     if (result.success) {
       setErrors({});
       return true;
@@ -116,6 +134,10 @@ function createFormValidatorFn<T extends Record<string, unknown>>(
         newErrors[field] = error.message;
       }
     }
+    
+    // eslint-disable-next-line no-console
+    console.warn('[DEBUG] validateForm newErrors:', newErrors);
+    
     setErrors(newErrors);
     return false;
   }, [validationSchema, values, errorMap, setErrors]);

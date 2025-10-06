@@ -34,6 +34,12 @@ export const AUTH_FIELD_IDS = {
     CONFIRM_PASSWORD: 'auth-register-confirm-password',
     CAPTCHA: 'auth-register-captcha',
   },
+  FORGOT_PASSWORD: {
+    EMAIL: 'auth-forgot-password-email',
+    RESET_CODE: 'auth-forgot-password-reset-code',
+    NEW_PASSWORD: 'auth-forgot-password-new-password',
+    CONFIRM_NEW_PASSWORD: 'auth-forgot-password-confirm-new-password',
+  },
 } as const;
 
 /**

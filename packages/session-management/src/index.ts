@@ -34,3 +34,6 @@ export {
   getDetailedConnectionInfo,
   type ConnectionStats,
 } from './monitoring/connection-monitor';
+
+// ✅ ДОБАВЛЕНО: Password Reset Token Service
+export { PasswordResetTokenService } from './services/password-reset-token-service';

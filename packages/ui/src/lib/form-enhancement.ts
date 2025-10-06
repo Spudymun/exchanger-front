@@ -1,6 +1,14 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable complexity */
+/* eslint-disa  // 🔍 ДЕБАГ ЛОГИ для отслеживания проблемы shouldEnhanceProp - ВЫКЛЮЧЕНЫ
+  const shouldEnhance = contextValue !== undefined && (childProp === undefined || childProp === null);
+  // console.log('🔍 shouldEnhanceProp DEBUG:', {
+  //   contextValue,
+  //   childProp,
+  //   shouldEnhance,
+  //   'childProp === undefined': childProp === undefined,
+  //   'childProp === null': childProp === null,
+  // });exity */
  
 
 /**
@@ -140,7 +148,7 @@ function enhanceForAuth(
 
   if (shouldEnhancePropAuth(context?.isLoading, childProps.isLoading)) {
     enhancedProps.isLoading = context?.isLoading;
-    console.log('🔍 Enhanced isLoading to:', context?.isLoading);
+    // console.log('🔍 Enhanced isLoading to:', context?.isLoading);
   }
 
   if (shouldEnhancePropAuth(context?.t, childProps.t)) {
@@ -164,7 +172,7 @@ function enhanceForAuth(
   }
 
   if (isAuthSubmitButton) {
-    console.log('🔍 enhancedProps for AuthSubmitButton:', enhancedProps);
+    // console.log('🔍 enhancedProps for AuthSubmitButton:', enhancedProps);
   }
 }
 
@@ -195,7 +203,7 @@ function enhanceForExchange(
   // ✅ ТОЧНАЯ логика из exchange-form.tsx
   if (isSubmitButton && context?.isSubmitting !== undefined && !childProps.isLoading) {
     enhancedProps.isLoading = context.isSubmitting;
-    console.log('🔍 enhanceChildWithContext SETTING isLoading =', context.isSubmitting);
+    // console.log('🔍 enhanceChildWithContext SETTING isLoading =', context.isSubmitting);
   }
 
   // ✅ ДОПОЛНИТЕЛЬНАЯ логика из exchange-form.tsx

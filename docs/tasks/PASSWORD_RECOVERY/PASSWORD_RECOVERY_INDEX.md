@@ -1,12 +1,224 @@
-# Password Recovery Feature - Documentation Index
+# 📋 PASSWORD RECOVERY IMPLEMENTATION - INDEX
 
-> **Дата создания**: 2025-10-04  
-> **Роль**: Агент-кодер  
-> **Статус**: План реализации декомпозирован на 7 файлов
+**Дата создания**: 4 октября 2025  
+**Последнее обновление**: 5 октября 2025  
+**Роль**: Агент-кодер  
+**Статус проекта**: Phase 3 Complete ✅ | Phase 4 Ready to Start ⏳
 
 ---
 
-## 📋 Созданные файлы
+## 📂 ДОКУМЕНТАЦИЯ (UPDATED)
+
+### Аналитические документы
+
+- **PASSWORD_RECOVERY_IMPACT_ANALYSIS.md** - Анализ влияния на существующую систему (100% verified)
+- **PASSWORD_RECOVERY_ARCHITECTURE_PLAN.md** - Архитектурные решения и patterns (100% verified)
+
+### Планы реализации (Legacy)
+
+- **PASSWORD_RECOVERY_IMPLEMENTATION_PLAN.md** - Основной план (7-частей декомпозиция)
+- **PASSWORD_RECOVERY_SUMMARY.md** - Quick reference
+- **PASSWORD_RECOVERY_PHASE_1_DATABASE.md** - Database layer plan
+- **PASSWORD_RECOVERY_PHASE_2_BUSINESS_LOGIC.md** - Business logic plan
+- **PASSWORD_RECOVERY_PHASE_3_BACKEND_API.md** - Backend API plan
+
+### Phase 3 Completion
+
+- **PASSWORD_RECOVERY_PHASE_3_DETAILED_EXPLANATION.md** - Детальное объяснение Backend API изменений
+- **PASSWORD_RECOVERY_PHASE_3_COMPLETION_REPORT.md** - Отчёт о завершении Phase 3
+
+### Phase 4 Frontend UI Implementation Plan ✨ NEW
+
+- **PASSWORD_RECOVERY_PHASE_4_QUICK_START.md** - ⚡ Quick start guide (5 min read, START HERE!)
+- **PASSWORD_RECOVERY_PHASE_4_PLAN_PART_1.md** - Анализ существующих patterns (100% verified)
+- **PASSWORD_RECOVERY_PHASE_4_PLAN_PART_2.md** - Implementation: New components + Updates (detailed code)
+- **PASSWORD_RECOVERY_PHASE_4_PLAN_PART_3.md** - Localization + Testing + Final checklist
+
+---
+
+## ✅ COMPLETED PHASES
+
+### Phase 1: Database Layer ✅
+
+**Статус**: 100% Complete  
+**Дата**: 3-4 октября 2025
+
+**Что сделано**:
+
+- ✅ Prisma schema: `password_reset_tokens` table
+- ✅ Migration applied
+- ✅ Indexes created (token, userId, expiresAt, used)
+- ✅ CASCADE delete on user deletion
+
+**Файлы**:
+
+- `packages/session-management/prisma/schema.prisma`
+- `packages/session-management/prisma/migrations/xxx_add_password_reset_tokens/`
+
+---
+
+### Phase 2: Business Logic Layer ✅
+
+**Статус**: 100% Complete  
+**Дата**: 3-4 октября 2025
+
+**Что сделано**:
+
+- ✅ `PasswordResetTokenService` - token management (create, verify, markUsed, cleanup)
+- ✅ `EmailService.sendPasswordReset()` - email sending
+- ✅ Email templates (HTML + TXT)
+- ✅ Type exports (PasswordResetEmailData)
+
+**Файлы**:
+
+- `packages/session-management/src/services/password-reset-token-service.ts` (NEW)
+- `packages/email-service/src/services/email-service.ts` (UPDATED)
+- `packages/email-service/src/services/email-template-service.ts` (UPDATED)
+- `packages/email-service/src/templates/password-reset.html` (NEW)
+- `packages/email-service/src/templates/password-reset.txt` (NEW)
+- `packages/email-service/src/types/index.ts` (UPDATED)
+
+---
+
+### Phase 3: Backend API Layer ✅
+
+**Статус**: 100% Complete  
+**Дата**: 4 октября 2025
+
+**Что сделано**:
+
+- ✅ `auth.requestPasswordReset` - MOCK → PRODUCTION (token creation + email)
+- ✅ `auth.resetPassword` - MOCK → PRODUCTION (token verification + password update)
+- ✅ Helper function: `verifyResetTokenAndGetUser()`
+- ✅ All ESLint errors fixed
+- ✅ All TypeScript errors resolved
+
+**Файлы**:
+
+- `apps/web/src/server/trpc/routers/auth.ts` (UPDATED)
+
+**Документы**:
+
+- `PASSWORD_RECOVERY_PHASE_3_DETAILED_EXPLANATION.md`
+- `PASSWORD_RECOVERY_PHASE_3_COMPLETION_REPORT.md`
+
+---
+
+## ⏳ CURRENT PHASE
+
+### Phase 4: Frontend UI Layer 🚧
+
+**Статус**: Ready to Start  
+**Дата**: 5 октября 2025
+
+**План**:
+
+- **Part 1**: Анализ существующих patterns (COMPLETE ✅)
+- **Part 2**: Детальный план реализации (COMPLETE ✅)
+- **Part 3**: Локализация + тестирование + чеклист (COMPLETE ✅)
+
+**Что нужно создать**:
+
+1. ❌ FormResetCodeField component (NEW)
+2. ❌ RequestResetForm component (NEW)
+3. ❌ ConfirmResetForm component (NEW)
+4. ❌ ForgotPasswordForms container (NEW)
+
+**Что нужно обновить**: 5. ⚠️ AUTH_FIELD_IDS constants 6. ⚠️ AuthDialogs component 7. ⚠️ app-header.tsx (useAuthDialogs hook) 8. ⚠️ LoginForm component ("Forgot password?" link) 9. ⚠️ AuthForms component (pass callback) 10. ⚠️ layout.json (en + ru translations) 11. ⚠️ form-fields/index.ts (export)
+
+**Документы**:
+
+- `PASSWORD_RECOVERY_PHASE_4_PLAN_PART_1.md` - Patterns analysis
+- `PASSWORD_RECOVERY_PHASE_4_PLAN_PART_2.md` - Implementation details
+- `PASSWORD_RECOVERY_PHASE_4_PLAN_PART_3.md` - Localization + Testing
+
+**Estimated time**: 2-3 hours  
+**Complexity**: LOW (95% reuse)
+
+---
+
+## 📊 OVERALL PROGRESS
+
+```
+Phase 1: Database Layer          ████████████████████ 100% ✅
+Phase 2: Business Logic          ████████████████████ 100% ✅
+Phase 3: Backend API             ████████████████████ 100% ✅
+Phase 4: Frontend UI             ░░░░░░░░░░░░░░░░░░░░   0% ⏳
+Phase 5: Integration Testing     ░░░░░░░░░░░░░░░░░░░░   0% 🔜
+
+Overall Progress:                 ████████████░░░░░░░░  60%
+```
+
+---
+
+## 🎯 NEXT STEPS
+
+### Immediate Actions (Phase 4 Implementation)
+
+**Step 1: Foundation** (30 min)
+
+1. Update `AUTH_FIELD_IDS` in `packages/constants/src/auth.ts`
+2. Create `FormResetCodeField.tsx` (copy FormEmailField pattern)
+3. Update localization files (en + ru)
+
+**Step 2: Forms** (1 hour) 4. Create `RequestResetForm.tsx` (copy LoginForm pattern) 5. Create `ConfirmResetForm.tsx` (copy LoginForm pattern) 6. Create `ForgotPasswordForms.tsx` (container)
+
+**Step 3: Integration** (45 min) 7. Update `AuthDialogs` component 8. Update `useAuthDialogs` hook in app-header 9. Update `LoginForm` + `AuthForms`
+
+**Step 4: Testing** (30 min) 10. Manual testing (full flow) 11. Error scenarios 12. UI/UX verification
+
+---
+
+## 📚 KEY DOCUMENTS TO READ BEFORE IMPLEMENTATION
+
+**START HERE** ⚡:
+
+1. `PASSWORD_RECOVERY_PHASE_4_QUICK_START.md` - Quick start guide (5 min, must read!)
+
+**MUST READ** (Phase 4 - Detailed): 2. `PASSWORD_RECOVERY_PHASE_4_PLAN_PART_1.md` - Существующие patterns (100% verified facts) 3. `PASSWORD_RECOVERY_PHASE_4_PLAN_PART_2.md` - Exact code implementations 4. `PASSWORD_RECOVERY_PHASE_4_PLAN_PART_3.md` - Localization + testing
+
+**REFERENCE** (Architecture): 5. `PASSWORD_RECOVERY_ARCHITECTURE_PLAN.md` - Architectural decisions 6. `PASSWORD_RECOVERY_IMPACT_ANALYSIS.md` - Impact analysis
+
+---
+
+## 🔍 VERIFICATION CHECKLIST
+
+**Before starting Phase 4**:
+
+- [x] Phase 1 completed and verified
+- [x] Phase 2 completed and verified
+- [x] Phase 3 completed and verified
+- [x] All dependencies exist (schemas, hooks, components)
+- [x] Documentation complete (Part 1, 2, 3)
+
+**After completing Phase 4**:
+
+- [ ] No ESLint errors
+- [ ] No TypeScript errors
+- [ ] All files compile
+- [ ] Manual testing passes
+- [ ] User flow works end-to-end
+
+---
+
+## 📞 SUPPORT
+
+**Questions about implementation?**
+
+- Check Part 1 for pattern verification
+- Check Part 2 for exact code
+- Check Part 3 for localization keys
+
+**Issues during implementation?**
+
+- Verify all dependencies exist
+- Check imports are correct
+- Test incrementally (file by file)
+- Follow existing patterns strictly
+
+---
+
+## 📋 LEGACY FILES (OLD STRUCTURE)
 
 ### 1. Основной план (Executive Summary)
 

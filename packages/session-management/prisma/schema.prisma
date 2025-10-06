@@ -8,18 +8,19 @@ datasource db {
 }
 
 model User {
-  id                  String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email               String          @unique @db.VarChar(255)
-  hashedPassword      String?         @map("hashed_password")
-  isVerified          Boolean         @default(false) @map("is_verified")
-  telegramId          String?         @unique @map("telegram_id") @db.VarChar(20)
-  createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  lastLoginAt         DateTime?       @map("last_login_at") @db.Timestamptz(6)
-  auditLogsPerformed  OrderAuditLog[] @relation("AuditLogPerformer")
-  operatorAssignments Order[]         @relation("OperatorAssignments")
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email               String                @unique @db.VarChar(255)
+  hashedPassword      String?               @map("hashed_password")
+  isVerified          Boolean               @default(false) @map("is_verified")
+  telegramId          String?               @unique @map("telegram_id") @db.VarChar(20)
+  createdAt           DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastLoginAt         DateTime?             @map("last_login_at") @db.Timestamptz(6)
+  auditLogsPerformed  OrderAuditLog[]       @relation("AuditLogPerformer")
+  operatorAssignments Order[]               @relation("OperatorAssignments")
   orders              Order[]
   sessions            Session[]
   appRoles            UserAppRole[]
+  passwordResetTokens PasswordResetToken[]
 
   @@index([email])
   @@index([telegramId])
@@ -47,6 +48,23 @@ model Session {
   @@index([createdAt])
   @@index([revoked])
   @@map("sessions")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  token     String   @unique @db.VarChar(6)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  used      Boolean  @default(false)
+  usedAt    DateTime? @map("used_at") @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([used, expiresAt])
+  @@map("password_reset_tokens")
 }
 
 model UserAppRole {

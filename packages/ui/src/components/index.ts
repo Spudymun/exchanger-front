@@ -247,8 +247,8 @@ export {
 } from './error-boundaries';
 
 // Form Fields - Universal components
-export { FormEmailField, FormCaptchaField } from './form-fields';
-export type { EmailFormFields, CaptchaFormFields } from './form-fields';
+export { FormEmailField, FormCaptchaField, FormResetCodeField } from './form-fields';
+export type { EmailFormFields, CaptchaFormFields, ResetCodeFormFields } from './form-fields';
 
 // Order Components - ДОБАВЛЕНО: Новые компоненты для работы с заявками
 export { OrderStatus } from './order/OrderStatus';

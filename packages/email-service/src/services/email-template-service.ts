@@ -211,6 +211,40 @@ export class EmailTemplateService {
   }
 
   /**
+   * Generate password reset email content
+   */
+  static async generatePasswordResetEmail(
+    data: import('../types/index').PasswordResetEmailData
+  ): Promise<EmailMessage> {
+    const subject = `🔐 Восстановление пароля - ${COMPANY_INFO.NAME}`;
+
+    const variables = {
+      companyName: COMPANY_INFO.NAME,
+      token: data.token,
+      expiresAt: this.formatDate(data.expiresAt),
+    };
+
+    const logContext = {
+      tokenLength: data.token.length.toString(),
+      expiresAt: data.expiresAt.toISOString(),
+    };
+
+    const { html, text } = await this.generateUniversalTemplateEmail(
+      'password-reset',
+      subject,
+      variables,
+      logContext
+    );
+
+    return {
+      to: data.userEmail,
+      subject,
+      html,
+      text,
+    };
+  }
+
+  /**
    * Clear template cache (useful for development)
    */
   static clearCache(): void {

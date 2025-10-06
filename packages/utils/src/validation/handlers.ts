@@ -189,6 +189,96 @@ function handleConfirmPasswordInvalidString(
 }
 
 /**
+ * Обрабатывает валидацию resetCode поля (для password recovery)
+ */
+export function handleResetCodeValidation(
+  issue: z.ZodIssueOptionalMessage,
+  t: NextIntlValidationConfig['t']
+): { message: string } | null {
+  if (issue.path?.length !== 1 || issue.path[0] !== 'resetCode') {
+    return null;
+  }
+
+  if (issue.code === z.ZodIssueCode.too_small || issue.code === z.ZodIssueCode.custom) {
+    return { message: t(VALIDATION_KEYS.RESET_CODE_REQUIRED) };
+  }
+
+  return null;
+}
+
+/**
+ * Обрабатывает валидацию newPassword поля (для password recovery/change)
+ * Переиспользует логику handlePasswordValidation
+ */
+// eslint-disable-next-line complexity, max-statements
+export function handleNewPasswordValidation(
+  issue: z.ZodIssueOptionalMessage,
+  t: NextIntlValidationConfig['t']
+): { message: string } | null {
+  if (issue.path?.length !== 1 || issue.path[0] !== 'newPassword') {
+    return null;
+  }
+
+  if (issue.code === z.ZodIssueCode.too_small) {
+    return handlePasswordTooSmall(issue, t);
+  }
+
+  // ЗАЩИТА: Если поле пустое, но пришел invalid_string - показываем "обязательно"
+  if (issue.code === z.ZodIssueCode.invalid_string && isEmptyFieldError(issue)) {
+    return { message: t(VALIDATION_KEYS.PASSWORD_REQUIRED) };
+  }
+
+  if (issue.code === z.ZodIssueCode.invalid_string) {
+    return handlePasswordInvalidString(issue, t);
+  }
+
+  // НОВОЕ: Обработка refine валидации (слабый пароль)
+  if (issue.code === z.ZodIssueCode.custom) {
+    return { message: t(VALIDATION_KEYS.PASSWORD_WEAK) };
+  }
+
+  return null;
+}
+
+/**
+ * Обрабатывает валидацию confirmNewPassword поля (для password recovery/change)
+ * Переиспользует логику handleConfirmPasswordValidation
+ */
+export function handleConfirmNewPasswordValidation(
+  issue: z.ZodIssueOptionalMessage,
+  t: NextIntlValidationConfig['t']
+): { message: string } | null {
+  if (issue.path?.length !== 1 || issue.path[0] !== 'confirmNewPassword') {
+    return null;
+  }
+
+  // FIX: Обработка XSS validation (спецсимволы в пароле)
+  if (issue.code === z.ZodIssueCode.custom && issue.message === 'INVALID_CHARACTERS_DETECTED') {
+    // eslint-disable-next-line no-console
+    console.warn('[DEBUG] confirmNewPassword XSS validation failed');
+    return { message: t(VALIDATION_KEYS.XSS_DETECTED) };
+  }
+
+  // FIX: Обработка refine validation (пароли не совпадают)
+  if (issue.code === z.ZodIssueCode.custom) {
+    // eslint-disable-next-line no-console
+    console.warn('[DEBUG] handleConfirmNewPasswordValidation CALLED', { code: issue.code });
+    return { message: t(VALIDATION_KEYS.CONFIRM_NEW_PASSWORD_NO_MATCH) };
+  }
+
+  if (issue.code === z.ZodIssueCode.too_small) {
+    return { message: t(VALIDATION_KEYS.CONFIRM_NEW_PASSWORD_REQUIRED) };
+  }
+
+  // Обработка regex валидации (переиспользуем логику password поля)
+  if (issue.code === z.ZodIssueCode.invalid_string) {
+    return handleConfirmPasswordInvalidString(issue, t);
+  }
+
+  return null;
+}
+
+/**
  * Обрабатывает валидацию полей с суммами (fromAmount, amount, etc.)
  */
 export function handleAmountValidation(

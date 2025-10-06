@@ -21,6 +21,7 @@ import { EmailTemplateService } from './email-template-service';
 export class EmailService {
   private static logger = createEnvironmentLogger('EmailService');
   private static readonly UNKNOWN_ERROR = 'Unknown error';
+  private static readonly EMAIL_SERVICE_ERROR = 'Email service error';
 
   /**
    * ✅ НОВОЕ: Вспомогательный метод для записи результата email в мониторинг
@@ -94,7 +95,7 @@ export class EmailService {
       // ✅ НОВОЕ: Записать ошибку для мониторинга
       this.recordEmailErrorForMonitoring(config, errorMessage);
 
-      this.logger.error('Email service error', {
+      this.logger.error(this.EMAIL_SERVICE_ERROR, {
         orderId: data.orderId,
         to: data.userEmail,
         error: errorMessage,
@@ -152,8 +153,61 @@ export class EmailService {
       // ✅ НОВОЕ: Записать ошибку для мониторинга
       this.recordEmailErrorForMonitoring(config, errorMessage);
 
-      this.logger.error('Email service error', {
+      this.logger.error(this.EMAIL_SERVICE_ERROR, {
         orderId: data.orderId,
+        to: data.userEmail,
+        error: errorMessage,
+      });
+
+      return {
+        success: false,
+        error: errorMessage,
+      };
+    }
+  }
+
+  /**
+   * Send password reset email to user
+   */
+  static async sendPasswordReset(
+    data: import('../types/index').PasswordResetEmailData,
+    config?: Partial<EmailProviderConfig>
+  ): Promise<EmailSendResult> {
+    try {
+      this.logger.info('Sending password reset email', {
+        to: data.userEmail,
+      });
+
+      // Generate email content from template
+      const emailMessage = await EmailTemplateService.generatePasswordResetEmail(data);
+
+      // Get email provider and send
+      const provider = config ? EmailServiceFactory.create(config) : EmailServiceFactory.createFromEnvironment();
+      const result = await provider.send(emailMessage);
+
+      // ✅ НОВОЕ: Записать результат для мониторинга
+      this.recordEmailResultForMonitoring(config, result, result.error);
+
+      if (result.success) {
+        this.logger.info('Password reset email sent successfully', {
+          to: data.userEmail,
+          messageId: result.messageId,
+        });
+      } else {
+        this.logger.error('Failed to send password reset email', {
+          to: data.userEmail,
+          error: result.error,
+        });
+      }
+
+      return result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : this.UNKNOWN_ERROR;
+
+      // ✅ НОВОЕ: Записать ошибку для мониторинга
+      this.recordEmailErrorForMonitoring(config, errorMessage);
+
+      this.logger.error(this.EMAIL_SERVICE_ERROR, {
         to: data.userEmail,
         error: errorMessage,
       });

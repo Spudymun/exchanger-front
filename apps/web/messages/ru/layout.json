@@ -10,6 +10,7 @@
       "signUp": "Регистрация",
       "signOut": "Выход",
       "close": "Закрыть",
+      "resetPassword": "Восстановление пароля",
       "loginTitle": "Вход в систему",
       "registerTitle": "Регистрация",
       "loginSubtitle": "Войдите в свой аккаунт для продолжения",
@@ -49,6 +50,7 @@
         },
         "submit": "Войти",
         "submitting": "Вход...",
+        "forgotPassword": "Забыли пароль?",
         "switchToRegister": "Нет аккаунта? Зарегистрироваться"
       },
       "register": {
@@ -67,6 +69,35 @@
         "successMessage": "Проверьте email для подтверждения аккаунта",
         "errorTitle": "Ошибка регистрации",
         "errorMessage": "Попробуйте снова"
+      },
+      "forgotPassword": {
+        "requestStep": {
+          "title": "Восстановление пароля",
+          "description": "Введите email для получения кода сброса",
+          "email": {
+            "label": "Email",
+            "placeholder": "your@email.com"
+          },
+          "submit": "Отправить код",
+          "submitting": "Отправка..."
+        },
+        "confirmStep": {
+          "title": "Введите код сброса",
+          "description": "Проверьте email и введите код ниже",
+          "resetCode": {
+            "label": "Код сброса",
+            "placeholder": "Введите 6-значный код"
+          },
+          "newPassword": {
+            "label": "Новый пароль",
+            "placeholder": "Введите новый пароль"
+          },
+          "submit": "Сбросить пароль",
+          "submitting": "Сброс...",
+          "codeExpires": "Код действителен 15 минут",
+          "resendCode": "Отправить код повторно"
+        },
+        "backToLogin": "Вернуться к входу"
       }
     },
     "footer": {

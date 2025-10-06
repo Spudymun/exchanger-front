@@ -8,6 +8,7 @@ import { RegisterForm } from './RegisterForm';
 interface AuthFormsProps {
   onAuthSuccess?: () => void;
   defaultMode?: 'login' | 'register';
+  onSwitchToForgotPassword?: () => void;
 }
 
 /**
@@ -20,7 +21,7 @@ interface AuthFormsProps {
  * - Все формы используют централизованные хуки и валидацию
  * - Оптимизирован с помощью React.memo для предотвращения лишних ре-рендеров
  */
-export const AuthForms = React.memo<AuthFormsProps>(({ onAuthSuccess, defaultMode = 'login' }) => {
+export const AuthForms = React.memo<AuthFormsProps>(({ onAuthSuccess, defaultMode = 'login', onSwitchToForgotPassword }) => {
   const [mode, setMode] = React.useState<'login' | 'register'>(defaultMode);
   const t = useTranslations('Layout.auth');
 
@@ -30,7 +31,7 @@ export const AuthForms = React.memo<AuthFormsProps>(({ onAuthSuccess, defaultMod
 
   return (
     <AuthFormLayout mode={mode} onModeChange={handleModeChange} t={t}>
-      <AuthFormsContent mode={mode} onAuthSuccess={onAuthSuccess} />
+      <AuthFormsContent mode={mode} onAuthSuccess={onAuthSuccess} onSwitchToForgotPassword={onSwitchToForgotPassword} />
     </AuthFormLayout>
   );
 });
@@ -42,11 +43,12 @@ AuthForms.displayName = 'AuthForms';
 interface AuthFormsContentProps {
   mode: 'login' | 'register';
   onAuthSuccess?: () => void;
+  onSwitchToForgotPassword?: () => void;
 }
 
-const AuthFormsContent: React.FC<AuthFormsContentProps> = React.memo(({ mode, onAuthSuccess }) => {
+const AuthFormsContent: React.FC<AuthFormsContentProps> = React.memo(({ mode, onAuthSuccess, onSwitchToForgotPassword }) => {
   if (mode === 'login') {
-    return <LoginForm onSuccess={onAuthSuccess} />;
+    return <LoginForm onSuccess={onAuthSuccess} onSwitchToForgotPassword={onSwitchToForgotPassword} />;
   }
 
   return <RegisterForm onSuccess={onAuthSuccess} />;

@@ -50,6 +50,18 @@
       "label": "Пароль",
       "placeholder": "Введите пароль"
     },
+    "newPassword": {
+      "label": "Новый пароль",
+      "placeholder": "Введите новый пароль"
+    },
+    "confirmNewPassword": {
+      "label": "Подтвердите новый пароль",
+      "placeholder": "Подтвердите новый пароль"
+    },
+    "resetCode": {
+      "label": "Код сброса",
+      "placeholder": "Введите 6-значный код"
+    },
     "confirmPassword": {
       "label": "Подтверждение пароля",
       "placeholder": "Подтвердите пароль"
@@ -77,7 +89,14 @@
       },
       "confirmPassword": {
         "noMatch": "Пароли не совпадают",
-        "required": "Подтверждение пароля обязательно"
+        "required": "Требуется подтверждение пароля"
+      },
+      "confirmNewPassword": {
+        "noMatch": "Пароли не совпадают",
+        "required": "Требуется подтверждение пароля"
+      },
+      "resetCode": {
+        "required": "Требуется код сброса"
       },
       "username": {
         "minLength": "Имя пользователя должно содержать не менее {min} символов",

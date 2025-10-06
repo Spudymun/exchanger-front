@@ -30,6 +30,9 @@ import {
   handleCardNumberValidation,
   handleNameValidation,
   handleTermsValidation,
+  handleResetCodeValidation,
+  handleNewPasswordValidation,
+  handleConfirmNewPasswordValidation,
   handleGeneralValidation,
 } from './handlers';
 
@@ -40,8 +43,16 @@ function handleValidationIssue(
   issue: z.ZodIssueOptionalMessage,
   t: NextIntlValidationConfig['t']
 ): { message: string } | null {
+  // eslint-disable-next-line no-console
+  console.warn('[DEBUG] handleValidationIssue:', { path: issue.path, message: issue.message, code: issue.code });
+  
   // Проверяем специальные случаи формы в порядке приоритета
-  return handleFormFieldValidation(issue, t) || handleGeneralValidation(issue, t);
+  const result = handleFormFieldValidation(issue, t) || handleGeneralValidation(issue, t);
+  
+  // eslint-disable-next-line no-console
+  console.warn('[DEBUG] handleValidationIssue RESULT:', result);
+  
+  return result;
 }
 
 /**
@@ -51,11 +62,17 @@ function handleFormFieldValidation(
   issue: z.ZodIssueOptionalMessage,
   t: NextIntlValidationConfig['t']
 ): { message: string } | null {
+  // eslint-disable-next-line no-console
+  console.warn('[DEBUG] handleFormFieldValidation START:', { path: issue.path, fieldName: issue.path?.[0] });
+  
   return (
     handleCaptchaValidation(issue, t) ||
     handleEmailValidation(issue, t) ||
     handlePasswordValidation(issue, t) ||
     handleConfirmPasswordValidation(issue, t) ||
+    handleNewPasswordValidation(issue, t) ||
+    handleConfirmNewPasswordValidation(issue, t) ||
+    handleResetCodeValidation(issue, t) ||
     handleAmountValidation(issue, t) ||
     handleCurrencyValidation(issue, t) ||
     handleCardNumberValidation(issue, t) ||
@@ -72,7 +89,15 @@ export function createNextIntlZodErrorMap(config: NextIntlValidationConfig): z.Z
   const { t } = config;
 
   return (issue, ctx) => {
-    return handleValidationIssue(issue, t) || { message: ctx.defaultError };
+    // eslint-disable-next-line no-console
+    console.warn('[DEBUG] errorMap CALLED:', { path: issue.path, message: issue.message, code: issue.code, defaultError: ctx.defaultError });
+    
+    const result = handleValidationIssue(issue, t) || { message: ctx.defaultError };
+    
+    // eslint-disable-next-line no-console
+    console.warn('[DEBUG] errorMap RETURNING:', result);
+    
+    return result;
   };
 }
 

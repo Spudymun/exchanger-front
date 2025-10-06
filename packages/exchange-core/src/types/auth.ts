@@ -60,6 +60,7 @@ export interface BaseAuthFormProps {
  */
 export interface LoginFormProps extends BaseAuthFormProps {
     onSwitchToRegister?: () => void;
+    onSwitchToForgotPassword?: () => void;
 }
 
 /**

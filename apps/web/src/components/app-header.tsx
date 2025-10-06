@@ -37,6 +37,7 @@ function useAuthDialogs() {
   const utils = trpc.useUtils();
   const [isLoginDialogOpen, setIsLoginDialogOpen] = React.useState(false);
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = React.useState(false);
+  const [isForgotPasswordDialogOpen, setIsForgotPasswordDialogOpen] = React.useState(false);
 
   // ✅ ФИКС: Добавляем logout мутацию
   const logout = trpc.auth.logout.useMutation({
@@ -49,20 +50,33 @@ function useAuthDialogs() {
   // ИСПРАВЛЕНИЕ: Мемоизируем все callback функции для предотвращения бесконечного цикла
   const handleOpenLogin = React.useCallback(() => {
     setIsRegisterDialogOpen(false);
+    setIsForgotPasswordDialogOpen(false);
     setIsLoginDialogOpen(true);
   }, []);
 
   const handleOpenRegister = React.useCallback(() => {
     setIsLoginDialogOpen(false);
+    setIsForgotPasswordDialogOpen(false);
     setIsRegisterDialogOpen(true);
+  }, []);
+
+  const handleOpenForgotPassword = React.useCallback(() => {
+    setIsLoginDialogOpen(false);
+    setIsRegisterDialogOpen(false);
+    setIsForgotPasswordDialogOpen(true);
   }, []);
 
   const handleCloseLogin = React.useCallback(() => setIsLoginDialogOpen(false), []);
   const handleCloseRegister = React.useCallback(() => setIsRegisterDialogOpen(false), []);
+  const handleCloseForgotPassword = React.useCallback(
+    () => setIsForgotPasswordDialogOpen(false),
+    []
+  );
 
   const handleAuthSuccess = React.useCallback(() => {
     setIsLoginDialogOpen(false);
     setIsRegisterDialogOpen(false);
+    setIsForgotPasswordDialogOpen(false);
   }, []);
 
   // ✅ ФИКС: Добавляем обработчик logout
@@ -74,10 +88,13 @@ function useAuthDialogs() {
     session,
     isLoginDialogOpen,
     isRegisterDialogOpen,
+    isForgotPasswordDialogOpen,
     handleOpenLogin,
     handleOpenRegister,
+    handleOpenForgotPassword,
     handleCloseLogin,
     handleCloseRegister,
+    handleCloseForgotPassword,
     handleAuthSuccess,
     handleSignOut, // ✅ ФИКС: возвращаем handleSignOut
   };
@@ -163,9 +180,12 @@ export function AppHeader({ className }: AppHeaderProps) {
     session,
     isLoginDialogOpen,
     isRegisterDialogOpen,
+    isForgotPasswordDialogOpen,
     handleOpenLogin,
+    handleOpenForgotPassword,
     handleCloseLogin,
     handleCloseRegister,
+    handleCloseForgotPassword,
     handleAuthSuccess,
     handleSignOut,
   } = useAuthDialogs();
@@ -195,9 +215,13 @@ export function AppHeader({ className }: AppHeaderProps) {
       <AuthDialogs
         isLoginOpen={isLoginDialogOpen}
         isRegisterOpen={isRegisterDialogOpen}
+        isForgotPasswordOpen={isForgotPasswordDialogOpen}
         onLoginClose={handleCloseLogin}
         onRegisterClose={handleCloseRegister}
+        onForgotPasswordClose={handleCloseForgotPassword}
         onAuthSuccess={handleAuthSuccess}
+        onOpenForgotPassword={handleOpenForgotPassword}
+        onOpenLogin={handleOpenLogin}
       />
     </Header>
   );
