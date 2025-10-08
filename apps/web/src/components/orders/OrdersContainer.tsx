@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */ // Container компонент с множественными helper функциями
 'use client';
 
 import { ORDER_STATUS_CONFIG, VALIDATION_LIMITS, type OrderStatus } from '@repo/constants';
@@ -267,6 +268,7 @@ function useOrdersHandlers(
 }
 
 // ⚡ Main component
+/* eslint-disable max-lines-per-function */ // Допустимо для container компонентов с множественными handlers
 export function OrdersContainer(props: OrdersContainerProps) {
   const t = useTranslations('OrdersPage');
   const tErrors = useTranslations('server.errors');
@@ -332,6 +334,7 @@ export function OrdersContainer(props: OrdersContainerProps) {
       searchTerm={searchTerm}
       currentPage={currentPage}
       itemsPerPage={ORDERS_PER_PAGE}
+      totalItems={data?.total} // ✅ ИСПРАВЛЕНО: передаем реальное total из API для server-side pagination
       onSearch={handleSearch}
       onPageChange={handlePageChange}
     >

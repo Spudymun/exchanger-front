@@ -6,6 +6,7 @@ import { createEnhancementFunction } from '../lib/form-enhancement';
 import { cn } from '../lib/utils';
 
 import { BaseErrorBoundary } from './error-boundaries';
+import { Button } from './ui/button'; // ✅ ДОБАВЛЕНО: импорт централизованного Button
 
 // ===== DATA TABLE COMPOUND COMPONENTS ARCHITECTURE v2.0 =====
 // Unified table composition system extending ExchangeForm pattern
@@ -18,6 +19,7 @@ export interface DataTableContextValue<T = Record<string, unknown>> {
   sortConfig?: { key: keyof T; direction: 'asc' | 'desc' } | null;
   currentPage?: number;
   itemsPerPage?: number;
+  totalItems?: number; // ✅ ДОБАВЛЕНО: поддержка external total для server-side pagination
   isLoading?: boolean;
   onSearch?: (term: string) => void;
   onSort?: (key: keyof T) => void;
@@ -42,6 +44,7 @@ export interface DataTableProps<T = Record<string, unknown>>
   sortConfig?: { key: keyof T; direction: 'asc' | 'desc' } | null;
   currentPage?: number;
   itemsPerPage?: number;
+  totalItems?: number; // ✅ ДОБАВЛЕНО: поддержка external total для server-side pagination
   onSearch?: (term: string) => void;
   onSort?: (key: keyof T) => void;
   onPageChange?: (page: number) => void;
@@ -59,6 +62,7 @@ const DataTable = React.forwardRef<HTMLDivElement, DataTableProps>(
       sortConfig,
       currentPage = 1,
       itemsPerPage = 10,
+      totalItems, // ✅ ДОБАВЛЕНО: получаем totalItems из пропсов
       onSearch,
       onSort,
       onPageChange,
@@ -73,6 +77,7 @@ const DataTable = React.forwardRef<HTMLDivElement, DataTableProps>(
         sortConfig,
         currentPage,
         itemsPerPage,
+        totalItems, // ✅ ДОБАВЛЕНО: передаем в контекст
         isLoading,
         onSearch,
         onSort,
@@ -84,6 +89,7 @@ const DataTable = React.forwardRef<HTMLDivElement, DataTableProps>(
         sortConfig,
         currentPage,
         itemsPerPage,
+        totalItems, // ✅ ДОБАВЛЕНО: в dependencies
         isLoading,
         onSearch,
         onSort,
@@ -252,7 +258,8 @@ export interface PaginationProps extends React.HTMLAttributes<HTMLDivElement> {
 
 // Helper function for pagination calculations
 const usePaginationData = (context: DataTableContextValue | undefined) => {
-  const totalItems = context?.data?.length ?? 0;
+  // ✅ ПРИОРИТЕТ: external totalItems (для server-side pagination), fallback на data.length (для client-side)
+  const totalItems = context?.totalItems ?? context?.data?.length ?? 0;
   const currentPage = context?.currentPage ?? 1;
   const itemsPerPage = context?.itemsPerPage ?? DEFAULT_ITEMS_PER_PAGE;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
@@ -285,25 +292,28 @@ const Pagination = React.forwardRef<HTMLDivElement, PaginationProps>(
         )}
 
         <div className="flex items-center space-x-2">
-          <button
+          {/* ✅ ИСПРАВЛЕНО: Использование централизованного Button компонента */}
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => context?.onPageChange?.(currentPage - 1)}
             disabled={currentPage <= 1}
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
           >
             ←
-          </button>
+          </Button>
 
           <div className="text-sm font-medium">
             Страница {currentPage} из {totalPages}
           </div>
 
-          <button
+          <Button
+            variant="outline"
+            size="icon"
             onClick={() => context?.onPageChange?.(currentPage + 1)}
             disabled={currentPage >= totalPages}
-            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-8 w-8"
           >
             →
-          </button>
+          </Button>
         </div>
       </div>
     );
