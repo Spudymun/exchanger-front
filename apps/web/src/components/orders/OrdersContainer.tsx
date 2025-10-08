@@ -1,9 +1,10 @@
 'use client';
 
-import { ORDER_STATUS_CONFIG, type OrderStatus } from '@repo/constants';
+import { ORDER_STATUS_CONFIG, VALIDATION_LIMITS, type OrderStatus } from '@repo/constants';
 import type { Order } from '@repo/exchange-core';
 import { useAuthModal } from '@repo/providers';
 import { DataTable, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui';
+import { getStatusColorClass } from '@repo/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -12,7 +13,7 @@ import * as React from 'react';
 import { trpc } from '../../../lib/trpc-provider';
 
 // Constants
-const ORDERS_PER_PAGE = 20;
+const ORDERS_PER_PAGE = VALIDATION_LIMITS.DEFAULT_PAGE_SIZE;
 const UNAUTHORIZED_ERROR_KEY = 'server.errors.auth.required';
 
 // Types for sort options
@@ -48,7 +49,7 @@ function useOrdersColumns(t: ReturnType<typeof useTranslations>) {
           const config = ORDER_STATUS_CONFIG[order.status];
           return (
             <span
-              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-${config.color}/10 text-${config.color}`}
+              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColorClass(order.status)}`}
             >
               {config.label}
             </span>
