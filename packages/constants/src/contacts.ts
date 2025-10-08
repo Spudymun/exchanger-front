@@ -24,7 +24,7 @@ export const CONTACT_INFO = {
   SUPPORT_EMAIL: 'onboarding@resend.dev', // Для локальной разработки
   SUPPORT_TELEGRAM: '@exchangego_support',
   WORKING_HOURS: '24/7',
-  RESPONSE_TIME: '5-15 минут',
+  RESPONSE_TIME: '1-3 часа',
 } as const;
 
 export const COMPANY_INFO = {

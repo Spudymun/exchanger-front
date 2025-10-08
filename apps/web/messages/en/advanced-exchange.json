@@ -9,7 +9,7 @@
     "benefits": {
       "fast": "Fast • Secure • No registration • Best rates • Instant transfers",
       "items": {
-        "exchange5min": "Exchange in 5 minutes",
+        "exchange5min": "Exchange in 1-3 hours",
         "noRegistration": "No registration",
         "bestRate": "Best rate"
       }
@@ -37,7 +37,7 @@
       "amount": "Amount",
       "min": "min",
       "reserve": "Reserve",
-      "processing": "Processing time: 15-30 minutes"
+      "processing": "Processing time: 1-3 hours"
     },
     "exchange": "Exchange",
     "submit": "Submit",
@@ -159,8 +159,8 @@
     "exchangeTerms": {
       "title": "Exchange Terms and Procedures",
       "processingTime": {
-        "title": "Operation Processing Time",
-        "description": "Operations are usually processed within 5-15 minutes. In rare cases, the time may be extended to 30 minutes during high network load."
+        "title": "Automatic Operation Mode",
+        "description": "This operation is carried out in automatic mode (24/7)."
       },
       "confirmations": {
         "title": "Number of Confirmations",
