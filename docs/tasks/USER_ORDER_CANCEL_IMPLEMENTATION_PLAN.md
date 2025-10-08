@@ -112,7 +112,7 @@ cancelOrder: protectedProcedure
 const login = trpc.auth.login.useMutation({
   onSuccess: () => {
     notifications.success(t('loginSuccess'), t('loginSuccessDescription'));
-    utils.auth.getSession.invalidate();
+    utils.auth.getSession.invalidate(); // ← БЕЗ await (в onSuccess)
   },
   onError: (error: unknown) => {
     notifications.handleApiError(error, t('loginError'));
@@ -138,7 +138,30 @@ const { data: orderData } = useOrderStatus(orderId, {
 });
 ```
 
-**ВЫВОД:** После мутации нужно **invalidate** кэш через `utils.exchange.getOrderStatus.invalidate({ orderId })`.
+**ВАЖНО - await vs no await:**
+
+1. **БЕЗ await** (95% случаев) - в `onSuccess` callback мутаций:
+
+```typescript
+const mutation = trpc.user.orders.cancelOrder.useMutation({
+  onSuccess: () => {
+    notifications.success(t('orderCancelled'));
+    utils.exchange.getOrderStatus.invalidate({ orderId }); // ← БЕЗ await
+  },
+});
+```
+
+2. **С await** (5% случаев) - когда ПОСЛЕ invalidate нужны синхронные действия:
+
+```typescript
+const handleAction = async () => {
+  await utils.exchange.getOrderStatus.invalidate({ orderId }); // ← С await
+  modal.close(); // Закрываем модалку ПОСЛЕ обновления
+  router.push('/orders'); // Редирект ПОСЛЕ обновления
+};
+```
+
+**ВЫВОД:** После мутации нужно **invalidate** кэш через `utils.exchange.getOrderStatus.invalidate({ orderId })`. Используй **БЕЗ await** в `onSuccess`, **С await** перед синхронными действиями.
 
 ---
 

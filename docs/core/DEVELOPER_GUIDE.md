@@ -772,10 +772,10 @@ export function UsersList() {
     search: 'john'
   })
 
-  // Mutation
+  // Mutation с invalidation
   const createUser = trpc.createUser.useMutation({
     onSuccess: () => {
-      // Обновить кеш
+      // ✅ БЕЗ await в onSuccess - фоновое обновление
       trpc.getUsers.invalidate()
     }
   })
@@ -802,6 +802,44 @@ export function UsersList() {
 }
 ```
 
+#### Cache Invalidation - await vs no await:
+
+**Правило**: `utils.invalidate()` возвращает Promise, который резолвится ПОСЛЕ завершения рефетча.
+
+**1. БЕЗ await (95% случаев)** - в `onSuccess` callback:
+
+```typescript
+const mutation = trpc.user.create.useMutation({
+  onSuccess: () => {
+    notifications.success('User created');
+    utils.user.getAll.invalidate(); // ← БЕЗ await
+  },
+});
+```
+
+**2. С await (5% случаев)** - перед синхронными действиями:
+
+```typescript
+const handleSubmit = async () => {
+  await mutation.mutateAsync(data);
+  // Ждем обновления данных ПЕРЕД закрытием модалки
+  await utils.user.getAll.invalidate();
+  modal.close(); // ← Закрываем ПОСЛЕ обновления
+  router.push('/users'); // ← Редирект ПОСЛЕ обновления
+};
+```
+
+**Ключевое отличие:**
+
+- **БЕЗ await**: UI обновится когда рефетч завершится (фон)
+- **С await**: Блокируем выполнение до завершения рефетча
+
+**См. также**: `docs/ПРОЕКТ_ШПАРГАЛКА_ДЛЯ_ИНЖЕНЕРА.md` → Паттерн 4.1
+)
+}
+
+````
+
 #### Как добавить новую процедуру:
 
 1. **Определить схему входных данных**:
@@ -812,7 +850,7 @@ const CreateProductInput = z.object({
   price: z.number().positive(),
   categoryId: z.string(),
 });
-```
+````
 
 2. **Добавить процедуру в роутер**:
 

@@ -6,6 +6,7 @@ import React from 'react';
 
 export { ThemeProvider, useTheme } from './theme-provider';
 export { ThemeScript } from './theme-script';
+export { AuthModalProvider, useAuthModal } from './auth-modal-provider';
 
 interface ProvidersProps {
   children: React.ReactNode;

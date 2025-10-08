@@ -1,0 +1,43 @@
+{
+  "OrdersPage": {
+    "metadata": {
+      "title": "My Orders | ExchangeGO",
+      "description": "View and manage your cryptocurrency exchange orders"
+    },
+    "title": "Orders",
+    "description": "View and manage your exchange orders",
+    "search": {
+      "placeholder": "Search by Order ID, Email, Amount..."
+    },
+    "columns": {
+      "orderId": "Order ID",
+      "status": "Status",
+      "cryptoAmount": "Crypto Amount",
+      "uahAmount": "UAH Amount",
+      "createdAt": "Created",
+      "actions": "Actions"
+    },
+    "filters": {
+      "status": "Filter by Status",
+      "sortBy": "Sort By",
+      "allStatuses": "All Statuses"
+    },
+    "sort": {
+      "newest": "Newest First",
+      "oldest": "Oldest First"
+    },
+    "actions": {
+      "viewDetails": "View Details"
+    },
+    "errors": {
+      "fetchFailed": "Failed to load orders. Please try again.",
+      "unauthorized": "You don't have access to view orders"
+    },
+    "empty": {
+      "title": "No Orders Found",
+      "description": "You haven't created any orders yet.",
+      "noResults": "No orders match your search"
+    },
+    "loading": "Loading orders..."
+  }
+}

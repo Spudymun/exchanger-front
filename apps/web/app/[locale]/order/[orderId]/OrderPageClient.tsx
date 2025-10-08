@@ -15,7 +15,7 @@ interface OrderPageClientProps {
 export function OrderPageClient({ orderId }: OrderPageClientProps) {
   const utils = trpc.useUtils();
   const notifications = useNotifications();
-  const t = useTranslations('OrderPage.OrderStatus');
+  const t = useTranslations('OrderStatus');
 
   // 🆕 Mutation для отмены заказа
   const cancelOrderMutation = trpc.user.orders.cancelOrder.useMutation({

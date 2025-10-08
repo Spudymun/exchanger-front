@@ -212,7 +212,7 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
     return await this.prisma.order.update({
       where: {
         id: orderId,
-        status: 'PENDING',
+        status: { in: ['PENDING', 'PAID'] },
         assignedOperatorId: null,
       },
       data: {
@@ -234,7 +234,7 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
       this.logger.warn('Concurrent assignment attempt detected', {
         orderId,
         operatorId,
-        reason: 'Order already assigned or not in PENDING status',
+        reason: 'Order already assigned or not in PENDING/PAID status',
       });
       return null;
     }

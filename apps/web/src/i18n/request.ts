@@ -63,6 +63,7 @@ const LAZY_MODULES = {
   COMMON_UI: 'common-ui',
   LAYOUT: 'layout',
   ORDER_PAGE: 'order-page',
+  ORDERS_PAGE: 'orders-page',
 } as const;
 
 const ROUTE_MODULE_MAP: Record<string, RouteModuleConfig> = {
@@ -99,6 +100,13 @@ const ROUTE_MODULE_MAP: Record<string, RouteModuleConfig> = {
     description: 'Order status pages',
   },
 
+  // Orders list page
+  '/orders': {
+    critical: [LAZY_MODULES.ORDERS_PAGE, LAZY_MODULES.LAYOUT, LAZY_MODULES.SERVER_ERRORS],
+    lazy: [LAZY_MODULES.NOTIFICATIONS, LAZY_MODULES.COMMON_UI],
+    description: 'Orders list page',
+  },
+
   // Admin routes - special handling
   '/admin': {
     critical: [LAZY_MODULES.LAYOUT, LAZY_MODULES.COMMON_UI],
@@ -120,6 +128,7 @@ const MODULE_NAMESPACE_MAP = {
   'common-ui': ['common', 'theme', 'NotFound', 'Error'],
   'dashboard-nav': ['dashboard', 'navigation'],
   'order-page': ['order-page', 'OrderStatus'],
+  'orders-page': ['OrdersPage'],
   operator: ['operator', 'OperatorDashboard'],
 } as const;
 

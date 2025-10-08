@@ -12,7 +12,7 @@ export type OrderSortOption = 'newest' | 'oldest' | 'amount-high' | 'amount-low'
  */
 export interface OrderFilterOptions {
   status?: OrderStatus;
-  userEmail?: string; // ✅ ВОССТАНОВЛЕНО: фильтрация по email пользователя (через User relation)
+  searchQuery?: string; // ✅ УНИВЕРСАЛЬНЫЙ ПОИСК: Order ID, суммы, email (через User relation)
   fromDate?: Date;
   toDate?: Date;
   minAmount?: number;
@@ -70,24 +70,69 @@ function filterByStatus(orders: Order[], status: OrderStatus): Order[] {
 }
 
 /**
- * Фильтрует заказы по email пользователя
- * ✅ ВОССТАНОВЛЕНО И АДАПТИРОВАНО: использует User relation через userId
- * ✅ СЛЕДУЕТ АРХИТЕКТУРНОМУ ПАТТЕРНУ: аналогично shared.ts router
+ * Проверяет, совпадает ли дата заказа с поисковым запросом
+ * ✅ ВЫНЕСЕНО ДЛЯ СОБЛЮДЕНИЯ ESLint max-statements и complexity
+ * Поддерживает форматы: ISO (2025-01-15), локализованные (15.01.2025, 1/15/2025)
+ */
+function matchesDateQuery(order: Order, searchTerm: string): boolean {
+  const createdAtStr = order.createdAt.toISOString(); // ISO: 2025-01-15T10:30:00.000Z
+  const createdAtLocal = order.createdAt.toLocaleDateString('ru-RU'); // 15.01.2025
+  const createdAtLocalEn = order.createdAt.toLocaleDateString('en-US'); // 1/15/2025
+  const createdAtFull = order.createdAt.toLocaleString('ru-RU'); // 15.01.2025, 10:30:00
+  
+  return (
+    createdAtStr.toLowerCase().includes(searchTerm) ||
+    createdAtLocal.includes(searchTerm) ||
+    createdAtLocalEn.includes(searchTerm) ||
+    createdAtFull.toLowerCase().includes(searchTerm)
+  );
+}
+
+/**
+ * Проверяет, совпадает ли заказ с поисковым запросом
+ * ✅ ВЫНЕСЕНО ДЛЯ СОБЛЮДЕНИЯ ESLint max-statements (10) и complexity (8)
+ */
+function matchesSearchQuery(order: Order, searchTerm: string, userEmailCache?: Map<string, string>): boolean {
+  // Поиск по Order ID
+  if (order.id.toLowerCase().includes(searchTerm)) return true;
+  
+  // Поиск по Crypto Amount
+  if (order.cryptoAmount.toString().includes(searchTerm)) return true;
+  
+  // Поиск по UAH Amount
+  if (order.uahAmount.toString().includes(searchTerm)) return true;
+  
+  // Поиск по дате (несколько форматов)
+  if (matchesDateQuery(order, searchTerm)) return true;
+  
+  // Поиск по Email (только если передан userEmailCache - для OPERATOR/SUPPORT)
+  if (userEmailCache) {
+    const orderUserEmail = userEmailCache.get(order.userId);
+    if (orderUserEmail?.toLowerCase().includes(searchTerm)) return true;
+  }
+  
+  return false;
+}
+
+/**
+ * Универсальный поиск по заказам: Order ID, Crypto Amount, UAH Amount, Email, Date
+ * ✅ СЕНЬЕРСКОЕ РЕШЕНИЕ: один метод для всех типов поиска
+ * ✅ ROLE-AGNOSTIC: работает для USER (без email) и OPERATOR/SUPPORT (с email)
  * 
  * @example
- * // Пример использования с userEmailCache (как в shared.ts router):
+ * // USER: поиск по своим заказам (Order ID, суммы, дата)
+ * const filtered = filterBySearchQuery(orders, '2025-01-15');
+ * 
+ * // OPERATOR/SUPPORT: поиск по всем полям включая email
  * const allUsers = await userManager.getAll();
  * const userEmailCache = new Map(allUsers.map(user => [user.id, user.email]));
- * const filteredOrders = filterOrders(orders, { userEmail: 'john@example.com' }, userEmailCache);
+ * const filtered = filterBySearchQuery(orders, 'john@example.com', userEmailCache);
  */
-function filterByUserEmail(orders: Order[], userEmail: string, userEmailCache: Map<string, string>): Order[] {
-  if (!userEmail.trim()) return orders;
+function filterBySearchQuery(orders: Order[], searchQuery: string, userEmailCache?: Map<string, string>): Order[] {
+  if (!searchQuery.trim()) return orders;
   
-  const searchTerm = userEmail.toLowerCase();
-  return orders.filter(order => {
-    const orderUserEmail = userEmailCache.get(order.userId);
-    return orderUserEmail?.toLowerCase().includes(searchTerm) || false;
-  });
+  const searchTerm = searchQuery.toLowerCase();
+  return orders.filter(order => matchesSearchQuery(order, searchTerm, userEmailCache));
 }
 
 /**
@@ -126,12 +171,12 @@ function filterByAmountRange(orders: Order[], minAmount?: number, maxAmount?: nu
 
 /**
  * Фильтрует заказы согласно заданным критериям
- * ✅ OVERLOAD 1: Без userEmailCache - обратная совместимость (userEmail фильтр игнорируется)
+ * ✅ OVERLOAD 1: Без userEmailCache - поиск по Order ID и суммам (для USER)
  */
 export function filterOrders(orders: Order[], filters?: OrderFilterOptions): Order[];
 /**
  * Фильтрует заказы согласно заданным критериям  
- * ✅ OVERLOAD 2: С userEmailCache - полная функциональность включая userEmail фильтр
+ * ✅ OVERLOAD 2: С userEmailCache - полный поиск включая email (для OPERATOR/SUPPORT)
  */
 export function filterOrders(orders: Order[], filters: OrderFilterOptions, userEmailCache: Map<string, string>): Order[];
 export function filterOrders(orders: Order[], filters: OrderFilterOptions = {}, userEmailCache?: Map<string, string>): Order[] {
@@ -141,9 +186,9 @@ export function filterOrders(orders: Order[], filters: OrderFilterOptions = {}, 
     filteredOrders = filterByStatus(filteredOrders, filters.status);
   }
 
-  // ✅ ВОССТАНОВЛЕНО: фильтрация по email пользователя (только если передан userEmailCache)
-  if (filters.userEmail && userEmailCache) {
-    filteredOrders = filterByUserEmail(filteredOrders, filters.userEmail, userEmailCache);
+  // ✅ УНИВЕРСАЛЬНЫЙ ПОИСК: Order ID, суммы, email (если есть userEmailCache)
+  if (filters.searchQuery) {
+    filteredOrders = filterBySearchQuery(filteredOrders, filters.searchQuery, userEmailCache);
   }
 
   filteredOrders = filterByDateRange(filteredOrders, filters.fromDate, filters.toDate);

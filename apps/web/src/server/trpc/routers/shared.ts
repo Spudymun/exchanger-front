@@ -4,10 +4,14 @@ import {
   AUTH_CONSTANTS,
   DATE_FORMAT_CONSTANTS,
   UI_NUMERIC_CONSTANTS,
+  ORDER_STATUS_VALUES,
+  USER_ROLES,
   type CryptoCurrency,
+  type OrderStatus,
 } from '@repo/constants';
 import { EmailMonitoringService } from '@repo/email-service';
 import {
+  getUserRoleForApp,
   orderManager,
   userManager,
   type Order,
@@ -20,12 +24,14 @@ import {
 } from '@repo/exchange-core/server';
 import { UserManagerFactory } from '@repo/session-management';
 import {
+  processOrders,
   paginateOrders,
   sortOrders,
   getOrdersStatistics,
   securityEnhancedQuickActionsSchema,
   createInternalServerError,
 } from '@repo/utils';
+import { z } from 'zod';
 
 // Security-enhanced schemas
 import {
@@ -35,7 +41,7 @@ import {
 } from '../../../../../../packages/utils/src/validation/security-enhanced-schemas';
 
 import { createTRPCRouter } from '../init';
-import { operatorAndSupport } from '../middleware/auth';
+import { operatorAndSupport, protectedProcedure } from '../middleware/auth';
 
 /**
  * Shared API роутер
@@ -231,7 +237,6 @@ export const sharedRouter = createTRPCRouter({
       throw createInternalServerError('Failed to check wallet alerts');
     }
   }),
-
   // Управление мониторингом кошельков (доступно operator и support)
   walletMonitoringControl: operatorAndSupport
     .input(securityEnhancedQuickActionsSchema.pick({ action: true }))
@@ -304,6 +309,45 @@ export const sharedRouter = createTRPCRouter({
       console.error('[checkEmailProvidersHealth] Error:', error);
       throw createInternalServerError('Failed to check email providers health');
     }
+  }),
+
+  // Get all orders with role-based access control
+  orders: createTRPCRouter({
+    getAll: protectedProcedure
+      .input(z.object({
+        filters: z.object({ 
+          status: z.enum(ORDER_STATUS_VALUES as [string, ...string[]]).optional(),
+          searchQuery: z.string().optional(), // ✅ УНИВЕРСАЛЬНЫЙ ПОИСК: Order ID, суммы, email
+        }).optional(),
+        sortBy: z.enum(['newest', 'oldest']).default('newest'),
+        pagination: z.object({
+          limit: z.number().min(1).max(100).default(VALIDATION_LIMITS.DEFAULT_PAGE_SIZE),
+          offset: z.number().min(0).default(0),
+        }),
+      }))
+      .query(async ({ input, ctx }) => {
+        const userRole = getUserRoleForApp(ctx.user, 'web');
+        const allOrders = userRole === USER_ROLES.USER
+          ? await orderManager.findByUserId(ctx.user.id)
+          : await orderManager.getAll();
+
+        // ✅ OPTIMIZATION: Build userEmailCache ТОЛЬКО для non-USER ролей и ТОЛЬКО если есть searchQuery (для поиска по email)
+        let userEmailCache: Map<string, string> | undefined;
+        if (userRole !== USER_ROLES.USER && input.filters?.searchQuery) {
+          const allUsers = await userManager.getAll();
+          userEmailCache = new Map(allUsers.map(user => [user.id, user.email]));
+        }
+
+        return processOrders(allOrders, {
+          filters: input.filters ? { 
+            status: input.filters.status as OrderStatus | undefined,
+            searchQuery: input.filters.searchQuery, // ✅ УНИВЕРСАЛЬНЫЙ ПОИСК: Order ID, суммы, email
+          } : undefined,
+          sortBy: input.sortBy,
+          pagination: input.pagination,
+          userEmailCache, // Передаем cache для поиска по email (OPERATOR/SUPPORT)
+        });
+      }),
   }),
 
   // Быстрые действия

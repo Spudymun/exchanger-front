@@ -1,6 +1,7 @@
 'use client';
 
 import { APP_ROUTES, UI_REFRESH_INTERVALS } from '@repo/constants';
+import { useAuthModal } from '@repo/providers';
 import { Header } from '@repo/ui';
 
 import { useTranslations, useLocale } from 'next-intl';
@@ -35,9 +36,9 @@ function useAuthDialogs() {
     refetchInterval: UI_REFRESH_INTERVALS.SESSION_STATUS_REFRESH,
   });
   const utils = trpc.useUtils();
-  const [isLoginDialogOpen, setIsLoginDialogOpen] = React.useState(false);
-  const [isRegisterDialogOpen, setIsRegisterDialogOpen] = React.useState(false);
-  const [isForgotPasswordDialogOpen, setIsForgotPasswordDialogOpen] = React.useState(false);
+  
+  // ✅ Используем глобальный контекст вместо локального state
+  const authModal = useAuthModal();
 
   // ✅ ФИКС: Добавляем logout мутацию
   const logout = trpc.auth.logout.useMutation({
@@ -47,56 +48,25 @@ function useAuthDialogs() {
     },
   });
 
-  // ИСПРАВЛЕНИЕ: Мемоизируем все callback функции для предотвращения бесконечного цикла
-  const handleOpenLogin = React.useCallback(() => {
-    setIsRegisterDialogOpen(false);
-    setIsForgotPasswordDialogOpen(false);
-    setIsLoginDialogOpen(true);
-  }, []);
-
-  const handleOpenRegister = React.useCallback(() => {
-    setIsLoginDialogOpen(false);
-    setIsForgotPasswordDialogOpen(false);
-    setIsRegisterDialogOpen(true);
-  }, []);
-
-  const handleOpenForgotPassword = React.useCallback(() => {
-    setIsLoginDialogOpen(false);
-    setIsRegisterDialogOpen(false);
-    setIsForgotPasswordDialogOpen(true);
-  }, []);
-
-  const handleCloseLogin = React.useCallback(() => setIsLoginDialogOpen(false), []);
-  const handleCloseRegister = React.useCallback(() => setIsRegisterDialogOpen(false), []);
-  const handleCloseForgotPassword = React.useCallback(
-    () => setIsForgotPasswordDialogOpen(false),
-    []
-  );
-
-  const handleAuthSuccess = React.useCallback(() => {
-    setIsLoginDialogOpen(false);
-    setIsRegisterDialogOpen(false);
-    setIsForgotPasswordDialogOpen(false);
-  }, []);
-
   // ✅ ФИКС: Добавляем обработчик logout
   const handleSignOut = React.useCallback(() => {
     logout.mutate();
   }, [logout]);
 
+  // ✅ ФИКС: При успешной аутентификации инвалидируем все queries для обновления данных
+  const handleAuthSuccess = React.useCallback(async () => {
+    // Сначала инвалидируем и ЖДЕМ пока данные обновятся
+    await utils.auth.getSession.invalidate();
+    await utils.invalidate();
+    // Только ПОСЛЕ обновления данных закрываем модалку
+    authModal.closeAll();
+  }, [authModal, utils]);
+
   return {
     session,
-    isLoginDialogOpen,
-    isRegisterDialogOpen,
-    isForgotPasswordDialogOpen,
-    handleOpenLogin,
-    handleOpenRegister,
-    handleOpenForgotPassword,
-    handleCloseLogin,
-    handleCloseRegister,
-    handleCloseForgotPassword,
+    ...authModal, // isLoginOpen, isRegisterOpen, isForgotPasswordOpen, openLogin, openRegister, openForgotPassword, closeAll
     handleAuthSuccess,
-    handleSignOut, // ✅ ФИКС: возвращаем handleSignOut
+    handleSignOut,
   };
 }
 
@@ -178,14 +148,12 @@ export function AppHeader({ className }: AppHeaderProps) {
 
   const {
     session,
-    isLoginDialogOpen,
-    isRegisterDialogOpen,
-    isForgotPasswordDialogOpen,
-    handleOpenLogin,
-    handleOpenForgotPassword,
-    handleCloseLogin,
-    handleCloseRegister,
-    handleCloseForgotPassword,
+    isLoginOpen,
+    isRegisterOpen,
+    isForgotPasswordOpen,
+    openLogin,
+    openForgotPassword,
+    closeAll,
     handleAuthSuccess,
     handleSignOut,
   } = useAuthDialogs();
@@ -199,7 +167,7 @@ export function AppHeader({ className }: AppHeaderProps) {
       <Header.Container>
         <AppHeaderMobile
           session={session}
-          handleOpenLogin={handleOpenLogin}
+          handleOpenLogin={openLogin}
           handleSignOut={handleSignOut}
           t={t}
         />
@@ -207,21 +175,21 @@ export function AppHeader({ className }: AppHeaderProps) {
           pathname={pathname}
           t={t}
           session={session}
-          handleOpenLogin={handleOpenLogin}
+          handleOpenLogin={openLogin}
           handleSignOut={handleSignOut}
         />
       </Header.Container>
 
       <AuthDialogs
-        isLoginOpen={isLoginDialogOpen}
-        isRegisterOpen={isRegisterDialogOpen}
-        isForgotPasswordOpen={isForgotPasswordDialogOpen}
-        onLoginClose={handleCloseLogin}
-        onRegisterClose={handleCloseRegister}
-        onForgotPasswordClose={handleCloseForgotPassword}
+        isLoginOpen={isLoginOpen}
+        isRegisterOpen={isRegisterOpen}
+        isForgotPasswordOpen={isForgotPasswordOpen}
+        onLoginClose={closeAll}
+        onRegisterClose={closeAll}
+        onForgotPasswordClose={closeAll}
         onAuthSuccess={handleAuthSuccess}
-        onOpenForgotPassword={handleOpenForgotPassword}
-        onOpenLogin={handleOpenLogin}
+        onOpenForgotPassword={openForgotPassword}
+        onOpenLogin={openLogin}
       />
     </Header>
   );
