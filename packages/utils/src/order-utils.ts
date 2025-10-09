@@ -75,17 +75,30 @@ function filterByStatus(orders: Order[], status: OrderStatus): Order[] {
  * Поддерживает форматы: ISO (2025-01-15), локализованные (15.01.2025, 1/15/2025)
  */
 function matchesDateQuery(order: Order, searchTerm: string): boolean {
-  const createdAtStr = order.createdAt.toISOString(); // ISO: 2025-01-15T10:30:00.000Z
-  const createdAtLocal = order.createdAt.toLocaleDateString('ru-RU'); // 15.01.2025
-  const createdAtLocalEn = order.createdAt.toLocaleDateString('en-US'); // 1/15/2025
-  const createdAtFull = order.createdAt.toLocaleString('ru-RU'); // 15.01.2025, 10:30:00
+  const date = order.createdAt;
   
-  return (
-    createdAtStr.toLowerCase().includes(searchTerm) ||
-    createdAtLocal.includes(searchTerm) ||
-    createdAtLocalEn.includes(searchTerm) ||
-    createdAtFull.toLowerCase().includes(searchTerm)
-  );
+  // Компоненты даты в локальном времени
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = String(date.getFullYear());
+  
+  // Полные форматы даты
+  const formats = [
+    date.toISOString(), // 2025-01-15T10:30:00.000Z (UTC)
+    `${year}-${month}-${day}`, // 2025-01-15 (ISO дата без времени в локальном времени)
+    date.toLocaleDateString('ru-RU'), // 15.01.2025
+    date.toLocaleDateString('en-US'), // 1/15/2025
+    date.toLocaleString('ru-RU'), // 15.01.2025, 10:30:00
+  ];
+  
+  if (formats.some(format => format.toLowerCase().includes(searchTerm))) {
+    return true;
+  }
+  
+  // Компоненты даты для точного поиска
+  const components = [day, month, year, `${day}.${month}`, `${month}.${year}`, `${day}.${month}.${year}`];
+  
+  return components.includes(searchTerm);
 }
 
 /**
@@ -93,8 +106,11 @@ function matchesDateQuery(order: Order, searchTerm: string): boolean {
  * ✅ ВЫНЕСЕНО ДЛЯ СОБЛЮДЕНИЯ ESLint max-statements (10) и complexity (8)
  */
 function matchesSearchQuery(order: Order, searchTerm: string, userEmailCache?: Map<string, string>): boolean {
-  // Поиск по Order ID
+  // Поиск по Order ID (UUID)
   if (order.id.toLowerCase().includes(searchTerm)) return true;
+  
+  // Поиск по Public ID
+  if (order.publicId?.toLowerCase().includes(searchTerm)) return true;
   
   // Поиск по Crypto Amount
   if (order.cryptoAmount.toString().includes(searchTerm)) return true;

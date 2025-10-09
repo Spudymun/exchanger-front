@@ -1,4 +1,4 @@
-import { VALIDATION_BOUNDS, ORDER_STATUSES } from '@repo/constants';
+import { VALIDATION_BOUNDS, ORDER_STATUSES, type OrderStatus } from '@repo/constants';
 
 import type { OrderRepositoryInterface } from '../repositories/order-repository-interface';
 import type { User, Order, CreateOrderRequest } from '../types';
@@ -196,6 +196,23 @@ export const orderManager = {
     const repo = await getOrderRepository();
     if (!repo) throw new Error(REPO_ERROR_MESSAGE);
     return await repo.findByOperator(operatorId);
+  },
+
+  // 🆕 SQL-level pagination with filtering and sorting
+  findWithPagination: async (options: {
+    limit: number;
+    offset: number;
+    status?: OrderStatus;
+    userId?: string;
+    searchQuery?: string;
+    sortBy?: 'newest' | 'oldest';
+  }): Promise<{
+    data: Order[];
+    total: number;
+  }> => {
+    const repo = await getOrderRepository();
+    if (!repo) throw new Error(REPO_ERROR_MESSAGE);
+    return await repo.findWithPagination(options);
   },
 
   getLatest: async (limit: number = DEFAULT_LIMIT): Promise<Order[]> => {

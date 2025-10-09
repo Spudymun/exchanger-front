@@ -327,32 +327,53 @@ export const sharedRouter = createTRPCRouter({
       }))
       .query(async ({ input, ctx }) => {
         const userRole = getUserRoleForApp(ctx.user, 'web');
-        const allOrders = userRole === USER_ROLES.USER
-          ? await orderManager.findByUserId(ctx.user.id)
-          : await orderManager.getAll();
+        
+        // 🎯 HYBRID APPROACH: SQL для простых запросов, память для сложных
+        // Если есть searchQuery (поиск по суммам/датам) → используем getAll() + processOrders()
+        // Если только фильтры (status/sortBy) → используем SQL findWithPagination()
+        
+        const hasComplexSearch = Boolean(input.filters?.searchQuery);
+        
+        if (hasComplexSearch || userRole === USER_ROLES.USER) {
+          // COMPLEX SEARCH или USER: загружаем все ордера и фильтруем в памяти
+          const allOrders = userRole === USER_ROLES.USER
+            ? await orderManager.findByUserId(ctx.user.id)
+            : await orderManager.getAll();
 
-        // ✅ FIX: Email уже загружен в orders через user relation в getAll()
-        // Больше не нужно загружать всех пользователей через userManager.getAll()
-        // userEmailCache строится из orders напрямую
-        let userEmailCache: Map<string, string> | undefined;
-        if (userRole !== USER_ROLES.USER && input.filters?.searchQuery) {
-          // Строим кэш из email которые уже есть в orders (загружены через user relation)
-          userEmailCache = new Map(
-            allOrders
-              .filter((order: Order) => 'email' in order && order.email) // Фильтруем orders с email
-              .map((order: Order) => [order.userId, (order as Order & { email: string }).email]) // userId -> email
-          );
+          // Email cache для поиска по email (только для OPERATOR/SUPPORT)
+          let userEmailCache: Map<string, string> | undefined;
+          if (userRole !== USER_ROLES.USER && input.filters?.searchQuery) {
+            userEmailCache = new Map(
+              allOrders
+                .filter((order: Order) => 'email' in order && order.email)
+                .map((order: Order) => [order.userId, (order as Order & { email: string }).email])
+            );
+          }
+
+          return processOrders(allOrders, {
+            filters: input.filters ? {
+              status: input.filters.status as OrderStatus | undefined,
+              searchQuery: input.filters.searchQuery, // Поиск: ID, publicId, суммы, даты, email
+            } : undefined,
+            sortBy: input.sortBy,
+            pagination: input.pagination,
+            userEmailCache,
+          });
         }
-
-        return processOrders(allOrders, {
-          filters: input.filters ? { 
-            status: input.filters.status as OrderStatus | undefined,
-            searchQuery: input.filters.searchQuery, // ✅ УНИВЕРСАЛЬНЫЙ ПОИСК: Order ID, суммы, email
-          } : undefined,
+        
+        // SIMPLE FILTERS: используем SQL пагинацию (быстрее и меньше памяти)
+        const result = await orderManager.findWithPagination({
+          limit: input.pagination.limit,
+          offset: input.pagination.offset,
+          status: input.filters?.status as OrderStatus | undefined,
           sortBy: input.sortBy,
-          pagination: input.pagination,
-          userEmailCache, // Передаем cache для поиска по email (OPERATOR/SUPPORT)
         });
+        
+        return {
+          items: result.data,
+          total: result.total,
+          hasMore: (input.pagination.offset + result.data.length) < result.total,
+        };
       }),
   }),
 

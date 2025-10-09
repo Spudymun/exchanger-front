@@ -33,16 +33,22 @@ export interface OrderRepositoryInterface {
   findByDepositAddress(address: string): Promise<Order | null>;
 
   // Пагинация (соответствует существующим utils)
+  // 🆕 ENHANCED: SQL-level filtering/sorting/pagination instead of in-memory
   findWithPagination(options: {
-    page: number;
+    // Pagination
     limit: number;
+    offset: number;
+    
+    // Filters
     status?: OrderStatus;
     userId?: string;
+    searchQuery?: string; // 🆕 Search by ID, email, amounts
+    
+    // Sorting
+    sortBy?: 'newest' | 'oldest'; // 🆕 Order by createdAt
   }): Promise<{
     data: Order[];
     total: number;
-    page: number;
-    limit: number;
   }>;
 
   // ✅ ДОБАВЛЕНО: Методы для совместимости с manager.ts

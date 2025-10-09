@@ -397,40 +397,127 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
     ]);
   }
 
-  async findWithPagination(options: {
-    page: number;
-    limit: number;
+  /**
+   * 🆕 Build WHERE clause for findWithPagination
+   */
+  private buildPaginationWhereClause(options: {
     status?: OrderStatus;
     userId?: string;
+    searchQuery?: string;
+  }): any {
+    const { status, userId, searchQuery } = options;
+    const where: any = {};
+    
+    if (status) {
+      where.status = mapToPrismaStatus(status);
+    }
+    
+    if (userId) {
+      where.userId = userId;
+    }
+    
+    // 🆕 Search query: ID, publicId, email, amounts
+    if (searchQuery && searchQuery.trim()) {
+      const search = searchQuery.trim().toLowerCase();
+      
+      where.OR = [
+        // Search by order ID (case-insensitive)
+        { id: { contains: search, mode: 'insensitive' } },
+        
+        // Search by public ID (case-insensitive)
+        { publicId: { contains: search, mode: 'insensitive' } },
+        
+        // Search by user email (via relation, case-insensitive)
+        { user: { email: { contains: search, mode: 'insensitive' } } },
+      ];
+    }
+    
+    return where;
+  }
+
+  /**
+   * 🆕 Execute paginated query with filters
+   */
+  private async executePaginatedQuery(
+    where: any,
+    orderBy: any,
+    skip: number,
+    take: number
+  ): Promise<[any[], number]> {
+    return await Promise.all([
+      this.prisma.order.findMany({
+        where,
+        orderBy,
+        skip,
+        take,
+        include: {
+          wallet: true,
+          bank: true,
+          user: { select: { id: true, email: true } }, // 🆕 Include email for search
+        },
+      }),
+      this.prisma.order.count({ where }),
+    ]);
+  }
+
+  /**
+   * 🆕 ENHANCED: SQL-level filtering, sorting, and pagination
+   * 
+   * Replaces in-memory filtering with database-level WHERE/ORDER BY/LIMIT/OFFSET
+   * 
+   * Performance: Loads only requested page instead of all orders
+   * Scalability: Supports millions of orders without memory issues
+   * 
+   * Search supports:
+   * - Order ID (UUID)
+   * - Public ID
+   * - User email (via JOIN)
+   */
+  async findWithPagination(options: {
+    limit: number;
+    offset: number;
+    status?: OrderStatus;
+    userId?: string;
+    searchQuery?: string;
+    sortBy?: 'newest' | 'oldest';
   }): Promise<{
     data: Order[];
     total: number;
-    page: number;
-    limit: number;
   }> {
     try {
-      const { page, limit, status, userId } = options;
-      const skip = (page - 1) * limit;
-      const whereClause = this.buildWhereClause(status, userId);
-      const [prismaOrders, total] = await this.fetchOrdersAndCount(whereClause, skip, limit);
-
+      const { limit, offset, sortBy = 'newest' } = options;
+      
+      const where = this.buildPaginationWhereClause({
+        status: options.status,
+        userId: options.userId,
+        searchQuery: options.searchQuery,
+      });
+      
+      const orderBy = { createdAt: sortBy === 'oldest' ? ('asc' as const) : ('desc' as const) };
+      
+      const [prismaOrders, total] = await this.executePaginatedQuery(where, orderBy, offset, limit);
+      
+      this.logger.debug('findWithPagination completed', {
+        total,
+        returned: prismaOrders.length,
+        limit,
+        offset,
+        hasSearchQuery: !!options.searchQuery,
+      });
+      
       return {
         data: prismaOrders.map(order => this.mapPrismaToOrder(order as any)),
         total,
-        page,
-        limit,
       };
     } catch (error) {
       this.logger.error('PostgresOrderAdapter.findWithPagination failed', {
         error: error instanceof Error ? error.message : String(error),
-        page: options.page,
         limit: options.limit,
+        offset: options.offset,
       });
       return {
         data: [],
         total: 0,
-        page: options.page,
-        limit: options.limit,
       };
     }
   }
