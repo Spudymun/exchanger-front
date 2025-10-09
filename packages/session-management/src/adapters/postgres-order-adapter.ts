@@ -40,6 +40,10 @@ interface PrismaOrder {
     name: string;
     externalId: string;
   } | null;
+  user?: {
+    id: string;
+    email: string;
+  } | null;
 }
 
 // Mapping between frontend status types and database enum values
@@ -152,8 +156,14 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
         where: { userId },
         include: { 
           wallet: true, 
-          bank: true 
-        }, // ✅ ИСПРАВЛЕНО: загружаем wallet и bank relations
+          bank: true,
+          user: {
+            select: {
+              id: true,
+              email: true,
+            },
+          },
+        }, // ✅ ИСПРАВЛЕНО: загружаем wallet, bank и user relations
         orderBy: { createdAt: 'desc' },
       });
 
@@ -457,6 +467,13 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
         orderBy: { createdAt: 'desc' },
         include: {
           wallet: true,
+          bank: true,
+          user: {
+            select: {
+              id: true,
+              email: true,
+            },
+          },
         },
       });
       return prismaOrders.map(order => this.mapPrismaToOrder(order as any));
@@ -517,7 +534,7 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
   }
 
   private mapPrismaToOrder(prismaOrder: PrismaOrder): Order {
-    return {
+    const order: Order = {
       id: prismaOrder.id,
       publicId: prismaOrder.publicId, // ✅ ДОБАВЛЕНО: внешний ID для URL и API
       userId: prismaOrder.userId, // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: используем userId
@@ -536,5 +553,13 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
       bankName: prismaOrder.bank?.name || undefined, // ✅ ДОБАВЛЕНО: название банка из relation
       fixedExchangeRate: prismaOrder.fixedExchangeRate ? prismaOrder.fixedExchangeRate.toNumber() : undefined, // ✅ ДОБАВЛЕНО: зафиксированный курс
     };
+    
+    // ✅ ДОБАВЛЕНО: email из user relation (если загружен)
+    // Используем type assertion чтобы добавить email без изменения Order интерфейса
+    if (prismaOrder.user?.email) {
+      (order as any).email = prismaOrder.user.email;
+    }
+    
+    return order;
   }
 }

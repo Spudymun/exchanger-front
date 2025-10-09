@@ -251,6 +251,56 @@ function handleClientHelp(): string {
   return TELEGRAM_CLIENT_MESSAGES.GREETINGS.HELP();
 }
 
+// ========================================
+// 🆕 CHANNEL SEPARATION: Telegram API helpers
+// ========================================
+
+/**
+ * Отправка сообщения в Telegram (chat или group)
+ * Универсальная функция для отправки в личные чаты операторов или группы
+ * 
+ * @param chatId - Telegram chat_id (число для личных чатов, отрицательное для групп)
+ * @param text - Текст сообщения
+ * @returns true если сообщение отправлено успешно
+ */
+async function sendTelegramMessage(chatId: string, text: string): Promise<boolean> {
+  try {
+    const telegramApiUrl = `${process.env.TELEGRAM_BOT_API_URL || 'https://api.telegram.org'}/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`;
+    
+    const response = await fetch(telegramApiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+      }),
+    });
+
+    if (response.ok) {
+      logger.debug('TELEGRAM_MESSAGE_SENT', {
+        chatId,
+        messageLength: text.length,
+      });
+      return true;
+    } else {
+      const errorBody = await response.text();
+      logger.warn('TELEGRAM_MESSAGE_FAILED', {
+        chatId,
+        status: response.status,
+        statusText: response.statusText,
+        error: errorBody,
+      });
+      return false;
+    }
+  } catch (error) {
+    logger.warn('TELEGRAM_MESSAGE_EXCEPTION', {
+      chatId,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+    return false;
+  }
+}
+
 /**
  * Обработчик текстовых сообщений от клиентов
  * Пересылает сообщение всем авторизованным операторам
@@ -290,57 +340,67 @@ async function handleClientMessage(update: TelegramUpdate): Promise<string> {
     `ℹ️ Ответьте клиенту в личных сообщениях Telegram`,
   ].join('\n');
 
-  // Отправка уведомлений всем операторам
-  const operatorIds = getAuthorizedOperators();
+  // 🆕 CHANNEL SEPARATION: Environment-based routing with graceful fallback
+  const supportChatId = process.env.TELEGRAM_SUPPORT_CHAT_ID;
   let notifiedCount = 0;
-
-  for (const operatorId of operatorIds) {
-    try {
-      const telegramApiUrl = `${process.env.TELEGRAM_BOT_API_URL || 'https://api.telegram.org'}/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`;
-      
-      const response = await fetch(telegramApiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: operatorId,
-          text: operatorMessage,
-          // БЕЗ parse_mode - отправляем plain text
-        }),
+  
+  if (supportChatId) {
+    // Route 1: Send to Support Group (если настроена группа)
+    logger.debug('TELEGRAM_SUPPORT_GROUP_ROUTE', { 
+      supportChatId, 
+      clientUserId: userId,
+      messageLength: operatorMessage.length,
+    });
+    
+    const success = await sendTelegramMessage(supportChatId, operatorMessage);
+    
+    if (success) {
+      notifiedCount = 1;
+      logger.info('Client message sent to support group', {
+        userId,
+        supportChatId,
+        messageLength: operatorMessage.length,
       });
-
-      if (response.ok) {
+    } else {
+      logger.warn('Failed to send to support group', {
+        userId,
+        supportChatId,
+        fallbackToBroadcast: true,
+      });
+    }
+    
+  } else {
+    // Route 2: Fallback to broadcast (backward compatibility)
+    logger.debug('TELEGRAM_SUPPORT_FALLBACK_BROADCAST', {
+      reason: 'TELEGRAM_SUPPORT_CHAT_ID not configured',
+      clientUserId: userId,
+    });
+    
+    const operatorIds = getAuthorizedOperators();
+    
+    for (const operatorId of operatorIds) {
+      const success = await sendTelegramMessage(operatorId, operatorMessage);
+      
+      if (success) {
         notifiedCount++;
         logger.debug('OPERATOR_NOTIFIED_CLIENT_MESSAGE', {
           operatorId,
           clientUserId: userId,
         });
-      } else {
-        const errorBody = await response.text();
-        logger.warn('OPERATOR_NOTIFY_FAILED', {
-          operatorId,
-          status: response.status,
-          statusText: response.statusText,
-          error: errorBody,
-        });
       }
-    } catch (error) {
-      logger.warn('OPERATOR_NOTIFY_EXCEPTION', {
-        operatorId,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
-    }
 
-    // Небольшая задержка между сообщениями операторам (Telegram rate limit: 1 msg/sec)
-    if (notifiedCount < operatorIds.length) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Небольшая задержка между сообщениями операторам (Telegram rate limit: 1 msg/sec)
+      if (notifiedCount < operatorIds.length) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
     }
+    
+    logger.info('CLIENT_MESSAGE_FORWARDED', {
+      userId,
+      operatorsNotified: notifiedCount,
+      totalOperators: operatorIds.length,
+    });
   }
-
-  logger.info('CLIENT_MESSAGE_FORWARDED', {
-    userId,
-    operatorsNotified: notifiedCount,
-    totalOperators: operatorIds.length,
-  });
 
   return TELEGRAM_CLIENT_MESSAGES.RESPONSES.MESSAGE_RECEIVED();
 }

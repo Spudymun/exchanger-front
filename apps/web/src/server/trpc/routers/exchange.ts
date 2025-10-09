@@ -163,6 +163,7 @@ async function sendTelegramNotification(
         },
         depositAddress,
         walletType: usedOldestOccupiedWallet ? 'reused' : 'fresh',
+        notificationType: 'new_order', // 🆕 Указываем тип для роутинга в правильную тему
       }),
     });
     

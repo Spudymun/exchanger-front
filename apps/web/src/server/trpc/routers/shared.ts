@@ -331,11 +331,17 @@ export const sharedRouter = createTRPCRouter({
           ? await orderManager.findByUserId(ctx.user.id)
           : await orderManager.getAll();
 
-        // ✅ OPTIMIZATION: Build userEmailCache ТОЛЬКО для non-USER ролей и ТОЛЬКО если есть searchQuery (для поиска по email)
+        // ✅ FIX: Email уже загружен в orders через user relation в getAll()
+        // Больше не нужно загружать всех пользователей через userManager.getAll()
+        // userEmailCache строится из orders напрямую
         let userEmailCache: Map<string, string> | undefined;
         if (userRole !== USER_ROLES.USER && input.filters?.searchQuery) {
-          const allUsers = await userManager.getAll();
-          userEmailCache = new Map(allUsers.map(user => [user.id, user.email]));
+          // Строим кэш из email которые уже есть в orders (загружены через user relation)
+          userEmailCache = new Map(
+            allOrders
+              .filter((order: Order) => 'email' in order && order.email) // Фильтруем orders с email
+              .map((order: Order) => [order.userId, (order as Order & { email: string }).email]) // userId -> email
+          );
         }
 
         return processOrders(allOrders, {

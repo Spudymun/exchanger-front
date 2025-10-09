@@ -172,28 +172,42 @@ async function notifyOperator(
   operatorId: string,
   message: string,
   keyboard: InlineKeyboard,
-  orderId: string
+  orderId: string,
+  topicId?: number
 ): Promise<boolean> {
   logger.debug('TELEGRAM_NOTIFY_SINGLE_OPERATOR', {
     operatorId: operatorId.trim(),
     orderId,
     messageLength: message.length,
     keyboardButtons: keyboard.inline_keyboard.length,
+    topicId: topicId || 'none',
   });
 
   try {
     const telegramApiUrl = `${TELEGRAM_API.BASE_URL}/bot${process.env.TELEGRAM_BOT_TOKEN}${TELEGRAM_API.SEND_MESSAGE}`;
     
-    const requestPayload = {
+    const requestPayload: {
+      chat_id: string;
+      text: string;
+      parse_mode: string;
+      reply_markup: InlineKeyboard;
+      message_thread_id?: number;
+    } = {
       chat_id: operatorId.trim(),
       text: message,
       parse_mode: TELEGRAM_API.PARAMS.PARSE_MODE,
       reply_markup: keyboard,
     };
+    
+    // 🆕 TELEGRAM TOPICS: Добавляем message_thread_id если указан
+    if (topicId) {
+      requestPayload.message_thread_id = topicId;
+    }
 
     logger.debug('TELEGRAM_API_REQUEST', {
       operatorId: operatorId.trim(),
       orderId,
+      topicId: topicId || 'General',
       url: telegramApiUrl.replace(process.env.TELEGRAM_BOT_TOKEN || '', '[TOKEN]'),
       payloadSize: JSON.stringify(requestPayload).length,
     });
@@ -207,6 +221,7 @@ async function notifyOperator(
     logger.debug('TELEGRAM_API_RESPONSE', {
       operatorId: operatorId.trim(),
       orderId,
+      topicId: topicId || 'General',
       status: response.status,
       statusText: response.statusText,
       ok: response.ok,
@@ -216,6 +231,7 @@ async function notifyOperator(
       logger.info('Operator notified successfully', {
         operatorId: operatorId.trim(),
         orderId,
+        topicId: topicId || 'General',
         responseStatus: response.status,
       });
       return true;
@@ -224,6 +240,7 @@ async function notifyOperator(
       logger.error('TELEGRAM_API_ERROR_RESPONSE', {
         operatorId: operatorId.trim(),
         orderId,
+        topicId: topicId || 'General',
         status: response.status,
         statusText: response.statusText,
         responseBody: responseText,
@@ -234,6 +251,7 @@ async function notifyOperator(
     logger.warn('Failed to notify operator', {
       operatorId: operatorId.trim(),
       orderId,
+      topicId: topicId || 'General',
       error: error instanceof Error ? error.message : 'Unknown error',
       errorName: error instanceof Error ? error.name : 'UnknownError',
     });
@@ -260,13 +278,99 @@ function getAuthorizedOperators(): string[] {
 }
 
 /**
+ * 🆕 TELEGRAM TOPICS: Получение Topic ID по типу уведомления
+ * 
+ * Возвращает message_thread_id для отправки сообщения в конкретную тему супергруппы.
+ * Если Topics не настроены - возвращает undefined (сообщение идёт в General topic).
+ * 
+ * @param notificationType - Тип уведомления
+ * @returns message_thread_id или undefined
+ */
+function getTopicIdForNotificationType(
+  notificationType?: 'new_order' | 'order_cancelled' | 'order_paid'
+): number | undefined {
+  if (!notificationType) {
+    return undefined;
+  }
+  
+  const topicIdStr = (() => {
+    switch (notificationType) {
+      case 'new_order':
+        return process.env.TELEGRAM_NEW_ORDERS_TOPIC_ID;
+      case 'order_cancelled':
+        return process.env.TELEGRAM_CANCELLED_ORDERS_TOPIC_ID;
+      case 'order_paid':
+        return process.env.TELEGRAM_PAID_ORDERS_TOPIC_ID;
+      default:
+        return undefined;
+    }
+  })();
+  
+  return topicIdStr ? parseInt(topicIdStr, 10) : undefined;
+}
+
+/**
  * Отправка уведомлений всем операторам
+ * 
+ * 🆕 TELEGRAM TOPICS: Поддержка тем (вкладок) внутри группы Orders
+ * - new_order → TELEGRAM_NEW_ORDERS_TOPIC_ID
+ * - order_cancelled → TELEGRAM_CANCELLED_ORDERS_TOPIC_ID
+ * - order_paid → TELEGRAM_PAID_ORDERS_TOPIC_ID
+ * - fallback → General topic (если Topics не настроены)
  */
 async function sendOperatorNotifications(
   message: string,
   keyboard: InlineKeyboard,
-  orderId: string
+  orderId: string,
+  notificationType?: 'new_order' | 'order_cancelled' | 'order_paid'
 ): Promise<{ notifiedCount: number; errorCount: number; totalOperators: number }> {
+  
+  // 🆕 TELEGRAM TOPICS: Получаем Topic ID для типа уведомления
+  const topicId = getTopicIdForNotificationType(notificationType);
+  
+  const ordersChatId = process.env.TELEGRAM_ORDERS_CHAT_ID;
+  
+  if (ordersChatId) {
+    // Route 1: Send to Orders channel (with topic if configured)
+    logger.info('TELEGRAM_NOTIFICATION_TO_ORDERS_CHANNEL', {
+      notificationType: notificationType || 'new_order',
+      chatId: ordersChatId,
+      topicId: topicId || 'General',
+      orderId,
+      messageLength: message.length,
+    });
+    
+    const success = await notifyOperator(ordersChatId, message, keyboard, orderId, topicId);
+    
+    if (success) {
+      logger.info('Notification sent to Orders channel', {
+        orderId,
+        notificationType: notificationType || 'new_order',
+        chatId: ordersChatId,
+        topicId: topicId || 'General',
+      });
+      
+      return {
+        notifiedCount: 1,
+        errorCount: 0,
+        totalOperators: 1,
+      };
+    } else {
+      logger.warn('Failed to send to Orders channel, falling back to broadcast', {
+        orderId,
+        chatId: ordersChatId,
+      });
+      // Fallback будет выполнен ниже
+    }
+  }
+  
+  // Route 2: Fallback to broadcast (backward compatibility или если канал не настроен)
+  logger.info('TELEGRAM_ORDERS_FALLBACK_BROADCAST', {
+    reason: ordersChatId ? 'Channel send failed' : 'Orders channel not configured',
+    notificationType: notificationType || 'new_order',
+    orderId,
+  });
+  
   const operatorIds = getAuthorizedOperators();
   
   logger.info('TELEGRAM_NOTIFY_ALL_OPERATORS_START', {
@@ -364,8 +468,13 @@ async function processNotifications(req: NextApiRequest, res: NextApiResponse): 
     return;
   }
 
-  // Отправка уведомлений
-  const result = await sendOperatorNotifications(message, keyboard, payload.order.id);
+  // 🆕 Отправка уведомлений с учетом типа
+  const result = await sendOperatorNotifications(
+    message,
+    keyboard,
+    payload.order.id,
+    payload.notificationType // Передаем тип для роутинга по каналам
+  );
 
   logger.info('Notification batch completed', {
     orderId: payload.order.id,
