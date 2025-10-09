@@ -1,0 +1,307 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Telegram Bot Test Scenarios",
+  "description": "Готовые тестовые сценарии для симуляции работы Telegram бота",
+  "version": "1.0.0",
+  "scenarios": [
+    {
+      "name": "client-basic-flow",
+      "description": "Базовый flow клиента: /start → message → rate limit",
+      "userType": "client",
+      "userId": 555555555,
+      "username": "test_client",
+      "steps": [
+        {
+          "action": "send_command",
+          "command": "/start",
+          "expectedResponse": "Добро пожаловать в службу поддержки ExchangeGO!",
+          "expectedStatus": 200
+        },
+        {
+          "action": "send_command",
+          "command": "/help",
+          "expectedResponse": "Как получить помощь",
+          "expectedStatus": 200
+        },
+        {
+          "action": "send_message",
+          "message": "Не пришла криптовалюта на кошелек",
+          "expectedResponse": "Ваше сообщение получено!",
+          "expectedStatus": 200,
+          "sideEffect": "Операторы должны получить уведомление"
+        },
+        {
+          "action": "send_message",
+          "message": "Сообщение 2",
+          "expectedStatus": 200
+        },
+        {
+          "action": "send_message",
+          "message": "Сообщение 3",
+          "expectedStatus": 200
+        },
+        {
+          "action": "send_message",
+          "message": "Сообщение 4",
+          "expectedStatus": 200
+        },
+        {
+          "action": "send_message",
+          "message": "Сообщение 5",
+          "expectedStatus": 200
+        },
+        {
+          "action": "send_message",
+          "message": "Сообщение 6 - должно быть отклонено rate limit",
+          "expectedResponse": "Слишком много сообщений",
+          "expectedStatus": 200,
+          "note": "Rate limit: 5 msg/min"
+        }
+      ]
+    },
+    {
+      "name": "operator-basic-flow",
+      "description": "Базовый flow оператора: /start → /login → /orders",
+      "userType": "operator",
+      "userId": 621882329,
+      "username": "test_operator",
+      "steps": [
+        {
+          "action": "send_command",
+          "command": "/start",
+          "expectedResponse": "Добро пожаловать в ExchangeGO Bot!",
+          "expectedStatus": 200
+        },
+        {
+          "action": "send_command",
+          "command": "/login",
+          "expectedResponse": "Вы вошли как оператор",
+          "expectedStatus": 200
+        },
+        {
+          "action": "send_command",
+          "command": "/orders",
+          "expectedResponse": "Активные заявки",
+          "expectedStatus": 200
+        }
+      ]
+    },
+    {
+      "name": "client-attempts-operator-commands",
+      "description": "Клиент пытается использовать операторские команды",
+      "userType": "client",
+      "userId": 666666666,
+      "username": "malicious_client",
+      "steps": [
+        {
+          "action": "send_command",
+          "command": "/login",
+          "expectedResponse": "Эта команда доступна только операторам",
+          "expectedStatus": 200,
+          "note": "Должен быть отклонен"
+        },
+        {
+          "action": "send_command",
+          "command": "/takeorder 123",
+          "expectedResponse": "Эта команда доступна только операторам",
+          "expectedStatus": 200,
+          "note": "Должен быть отклонен"
+        },
+        {
+          "action": "send_command",
+          "command": "/orders",
+          "expectedResponse": "Эта команда доступна только операторам",
+          "expectedStatus": 200,
+          "note": "Должен быть отклонен"
+        }
+      ]
+    },
+    {
+      "name": "support-message-variations",
+      "description": "Различные варианты обращений в поддержку",
+      "userType": "client",
+      "userId": 777777777,
+      "username": "various_client",
+      "steps": [
+        {
+          "action": "send_message",
+          "message": "Заявка ID 12345 - криптовалюта не поступила",
+          "expectedStatus": 200
+        },
+        {
+          "action": "wait",
+          "seconds": 15
+        },
+        {
+          "action": "send_message",
+          "message": "Прошло уже 2 часа, когда поступит?",
+          "expectedStatus": 200
+        },
+        {
+          "action": "wait",
+          "seconds": 15
+        },
+        {
+          "action": "send_message",
+          "message": "Адрес кошелька: TRX..., транзакция висит",
+          "expectedStatus": 200
+        }
+      ]
+    },
+    {
+      "name": "rate-limit-recovery",
+      "description": "Проверка восстановления после rate limit (1 минута)",
+      "userType": "client",
+      "userId": 888888888,
+      "username": "rate_test_client",
+      "steps": [
+        {
+          "action": "send_message",
+          "message": "Сообщение 1",
+          "expectedStatus": 200
+        },
+        {
+          "action": "send_message",
+          "message": "Сообщение 2",
+          "expectedStatus": 200
+        },
+        {
+          "action": "send_message",
+          "message": "Сообщение 3",
+          "expectedStatus": 200
+        },
+        {
+          "action": "send_message",
+          "message": "Сообщение 4",
+          "expectedStatus": 200
+        },
+        {
+          "action": "send_message",
+          "message": "Сообщение 5",
+          "expectedStatus": 200
+        },
+        {
+          "action": "send_message",
+          "message": "Сообщение 6 - rate limit",
+          "expectedResponse": "Слишком много сообщений",
+          "expectedStatus": 200
+        },
+        {
+          "action": "wait",
+          "seconds": 60,
+          "note": "Ожидание сброса rate limit"
+        },
+        {
+          "action": "send_message",
+          "message": "Сообщение после ожидания - должно пройти",
+          "expectedStatus": 200,
+          "note": "Rate limit должен сброситься"
+        }
+      ]
+    },
+    {
+      "name": "operator-takeorder-flow",
+      "description": "Оператор берет заявку в работу (требует реальную заявку)",
+      "userType": "operator",
+      "userId": 621882329,
+      "username": "active_operator",
+      "prerequisites": "Должна существовать заявка в статусе PENDING",
+      "steps": [
+        {
+          "action": "send_command",
+          "command": "/login",
+          "expectedStatus": 200
+        },
+        {
+          "action": "send_command",
+          "command": "/takeorder ORDER_ID_HERE",
+          "expectedResponse": "Заявка взята в работу",
+          "expectedStatus": 200,
+          "note": "Замените ORDER_ID_HERE на реальный ID заявки"
+        },
+        {
+          "action": "send_command",
+          "command": "/orders",
+          "expectedResponse": "в работе",
+          "expectedStatus": 200
+        }
+      ]
+    },
+    {
+      "name": "concurrent-clients",
+      "description": "Несколько клиентов пишут одновременно",
+      "type": "batch",
+      "clients": [
+        {
+          "userId": 111111111,
+          "username": "client_1",
+          "message": "Проблема с заявкой от клиента 1"
+        },
+        {
+          "userId": 222222222,
+          "username": "client_2",
+          "message": "Вопрос по обмену от клиента 2"
+        },
+        {
+          "userId": 333333333,
+          "username": "client_3",
+          "message": "Техническая проблема от клиента 3"
+        }
+      ],
+      "expectedBehavior": "Все операторы должны получить 3 уведомления",
+      "note": "Симуляция одновременных обращений"
+    }
+  ],
+  "testData": {
+    "sampleMessages": [
+      "Не пришла криптовалюта на кошелек",
+      "Заявка висит уже 2 часа, что делать?",
+      "Адрес TRX не работает",
+      "Как отменить заявку?",
+      "Проблема с картой, деньги не поступили",
+      "Exchange rate изменился, хочу отменить",
+      "Когда поступит перевод?",
+      "ID заявки не приходит на email",
+      "Не могу найти свою заявку",
+      "Техническая ошибка при создании заявки"
+    ],
+    "operatorCommands": [
+      "/start",
+      "/help",
+      "/login",
+      "/orders",
+      "/takeorder 12345"
+    ],
+    "clientCommands": [
+      "/start",
+      "/help"
+    ],
+    "authorizedOperators": [
+      621882329,
+      8068430102
+    ]
+  },
+  "expectedResponses": {
+    "client": {
+      "start": "👋 Добро пожаловать в службу поддержки ExchangeGO!",
+      "help": "📋 Как получить помощь:",
+      "message_received": "✅ Ваше сообщение получено!",
+      "rate_limit": "⚠️ Слишком много сообщений",
+      "operator_command_denied": "❌ Эта команда доступна только операторам"
+    },
+    "operator": {
+      "start": "Добро пожаловать в ExchangeGO Bot! 👋",
+      "login_success": "✅ Вы вошли как оператор!",
+      "login_denied": "❌ Доступ запрещен",
+      "order_taken": "✅ Заявка взята в работу!",
+      "order_not_found": "❌ Не удалось взять заявку"
+    }
+  },
+  "notes": [
+    "Для тестирования operator flow используйте ID из AUTHORIZED_TELEGRAM_OPERATORS",
+    "Rate limit сбрасывается через 60 секунд",
+    "Операторы получают уведомления в Telegram при обращении клиентов",
+    "Все webhook запросы должны возвращать 200 OK",
+    "Используйте test-telegram-bot.ps1 для автоматизации тестирования"
+  ]
+}

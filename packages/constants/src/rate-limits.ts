@@ -25,7 +25,7 @@ export const RATE_LIMITS = {
     blockDuration: 3600,
   },
   EMAIL_SEND: {
-    points: 5, // 5 emails per period
+    points: 500000, // 5 emails per period
     duration: 600, // 10 minutes
     blockDuration: 600,
   },

@@ -1,3 +1,4 @@
+import { TELEGRAM_CLIENT_MESSAGES } from '@repo/constants';
 import { createEnvironmentLogger, gracefulHandler } from '@repo/utils';
 
 import { api } from './trpc-client';
@@ -50,8 +51,91 @@ function getSession(userId: number): BotSession {
   return session;
 }
 
+// ========================================
+// 🆕 CLIENT SUPPORT: Utility functions
+// ========================================
+
 /**
- * Обработчик команды /start
+ * Извлечение userId из Telegram Update
+ * @param update - Telegram update объект
+ * @returns userId или null если не найден
+ */
+function extractUserId(update: TelegramUpdate): number | null {
+  return update.message?.from?.id ?? update.callback_query?.from?.id ?? null;
+}
+
+/**
+ * Извлечение username из Telegram Update
+ * @param update - Telegram update объект
+ * @returns username (с @) или null если не найден
+ */
+function extractUsername(update: TelegramUpdate): string | null {
+  const username = update.message?.from?.username ?? update.callback_query?.from?.username;
+  return username ? `@${username}` : null;
+}
+
+/**
+ * Получение списка авторизованных операторов
+ * @returns Массив userId авторизованных операторов
+ */
+function getAuthorizedOperators(): string[] {
+  return process.env.AUTHORIZED_TELEGRAM_OPERATORS?.split(',') || [];
+}
+
+/**
+ * Проверка является ли пользователь авторизованным оператором
+ * @param userId - Telegram user ID
+ * @returns true если пользователь авторизованный оператор
+ */
+function isAuthorizedOperator(userId: number): boolean {
+  const authorizedOperators = getAuthorizedOperators();
+  return authorizedOperators.includes(String(userId));
+}
+
+/**
+ * Определение типа пользователя (оператор или клиент)
+ * @param userId - Telegram user ID
+ * @returns 'operator' если авторизованный оператор, иначе 'client'
+ */
+function getUserType(userId: number): 'operator' | 'client' {
+  return isAuthorizedOperator(userId) ? 'operator' : 'client';
+}
+
+/**
+ * Проверка rate limit для клиентских сообщений
+ * @param session - Сессия пользователя
+ * @returns true если лимит НЕ превышен, false если превышен
+ */
+function checkClientRateLimit(session: BotSession): boolean {
+  const now = Date.now();
+  const WINDOW_MS = 60000; // 1 минута
+  const MAX_MESSAGES = 5; // 5 сообщений в минуту
+
+  // Если нет истории или окно истекло - сбрасываем счетчик
+  if (!session.lastMessageTime || now - session.lastMessageTime > WINDOW_MS) {
+    session.lastMessageTime = now;
+    session.messageCount = 1;
+    return true;
+  }
+
+  // Проверяем лимит
+  if (session.messageCount && session.messageCount >= MAX_MESSAGES) {
+    logger.warn('CLIENT_RATE_LIMIT_EXCEEDED', {
+      userId: session.userId,
+      messageCount: session.messageCount,
+      windowMs: WINDOW_MS,
+    });
+    return false;
+  }
+
+  // Увеличиваем счетчик
+  session.messageCount = (session.messageCount || 0) + 1;
+  return true;
+}
+
+/**
+ * Обработчик команды /start (router)
+ * Routes based on user type
  */
 function handleStartCommand(update: TelegramUpdate): string {
   logger.debug('TELEGRAM_START_COMMAND', {
@@ -60,44 +144,205 @@ function handleStartCommand(update: TelegramUpdate): string {
     hasUser: !!update.message?.from,
   });
 
-  if (!update.message?.from) {
+  const userId = extractUserId(update);
+  if (userId === null) {
     logger.warn('TELEGRAM_START_NO_USER', { update: JSON.stringify(update) });
     return ERROR_MESSAGES.USER_NOT_FOUND;
   }
 
-  const userId = update.message.from.id;
-  logger.debug('CREATING_TELEGRAM_SESSION', { userId });
-  getSession(userId);
+  const userType = getUserType(userId);
 
-  logger.info('User started bot', {
-    userId: update.message.from.id,
-    username: update.message.from.username,
-    firstName: update.message.from.first_name,
-  });
+  logger.debug('TELEGRAM_START_ROUTING', { userId, userType });
 
-  const welcomeMessage = (
-    `Добро пожаловать в ExchangeGO Bot! 👋\n\n` +
-    `Я помогаю операторам управлять заявками.\n\n` +
-    `Доступные команды:\n` +
-    BOT_COMMANDS.map(cmd => `/${cmd.command} - ${cmd.description}`).join('\n') +
-    `\n\nДля начала работы используйте /login`
-  );
+  // Route based on user type
+  if (userType === 'operator') {
+    // Operator flow - existing logic
+    logger.debug('CREATING_TELEGRAM_SESSION', { userId });
+    const session = getSession(userId);
+    session.userType = 'operator';
 
-  logger.debug('TELEGRAM_START_RESPONSE_PREPARED', { messageLength: welcomeMessage.length });
-  return welcomeMessage;
+    logger.info('Operator started bot', {
+      userId,
+      username: update.message?.from?.username,
+      firstName: update.message?.from?.first_name,
+    });
+
+    const welcomeMessage = (
+      `Добро пожаловать в ExchangeGO Bot! 👋\n\n` +
+      `Я помогаю операторам управлять заявками.\n\n` +
+      `Доступные команды:\n` +
+      BOT_COMMANDS.map(cmd => `/${cmd.command} - ${cmd.description}`).join('\n') +
+      `\n\nДля начала работы используйте /login`
+    );
+
+    logger.debug('TELEGRAM_START_RESPONSE_PREPARED', { messageLength: welcomeMessage.length });
+    return welcomeMessage;
+  } else {
+    // Client flow
+    return handleClientStart(update);
+  }
 }
 
 /**
- * Обработчик команды /help
+ * Обработчик команды /help (router)
+ * Routes based on user type
  */
-function handleHelpCommand(): string {
-  return (
-    `📋 Справка по командам:\n\n` +
-    BOT_COMMANDS.map(
-      cmd =>
-        `/${cmd.command} - ${cmd.description}${cmd.operatorOnly ? ' (только для операторов)' : ''}`
-    ).join('\n')
-  );
+function handleHelpCommand(update: TelegramUpdate): string {
+  const userId = extractUserId(update);
+  
+  // If can't determine userId, show operator help as fallback
+  if (userId === null) {
+    return (
+      `📋 Справка по командам:\n\n` +
+      BOT_COMMANDS.map(
+        cmd =>
+          `/${cmd.command} - ${cmd.description}${cmd.operatorOnly ? ' (только для операторов)' : ''}`
+      ).join('\n')
+    );
+  }
+
+  const userType = getUserType(userId);
+  
+  if (userType === 'operator') {
+    // Operator help
+    return (
+      `📋 Справка по командам:\n\n` +
+      BOT_COMMANDS.map(
+        cmd =>
+          `/${cmd.command} - ${cmd.description}${cmd.operatorOnly ? ' (только для операторов)' : ''}`
+      ).join('\n')
+    );
+  } else {
+    // Client help
+    return handleClientHelp();
+  }
+}
+
+// ========================================
+// 🆕 CLIENT SUPPORT: Handler functions
+// ========================================
+
+/**
+ * Обработчик /start для клиентов
+ */
+function handleClientStart(update: TelegramUpdate): string {
+  logger.debug('TELEGRAM_CLIENT_START', {
+    messageId: update.message?.message_id,
+  });
+
+  const userId = extractUserId(update);
+  if (userId === null) {
+    return ERROR_MESSAGES.USER_NOT_FOUND;
+  }
+
+  const session = getSession(userId);
+  session.userType = 'client';
+
+  logger.info('Client started bot', { userId });
+
+  return TELEGRAM_CLIENT_MESSAGES.GREETINGS.START();
+}
+
+/**
+ * Обработчик /help для клиентов
+ */
+function handleClientHelp(): string {
+  logger.debug('TELEGRAM_CLIENT_HELP');
+  return TELEGRAM_CLIENT_MESSAGES.GREETINGS.HELP();
+}
+
+/**
+ * Обработчик текстовых сообщений от клиентов
+ * Пересылает сообщение всем авторизованным операторам
+ */
+async function handleClientMessage(update: TelegramUpdate): Promise<string> {
+  const userId = extractUserId(update);
+  const username = extractUsername(update);
+  const messageText = update.message?.text;
+
+  if (userId === null || !messageText) {
+    return ERROR_MESSAGES.USER_NOT_FOUND;
+  }
+
+  const session = getSession(userId);
+
+  // Rate limiting check
+  if (!checkClientRateLimit(session)) {
+    return TELEGRAM_CLIENT_MESSAGES.RESPONSES.RATE_LIMIT_EXCEEDED();
+  }
+
+  logger.info('CLIENT_MESSAGE_RECEIVED', {
+    userId,
+    username,
+    messageLength: messageText.length,
+  });
+
+  // Формирование сообщения для операторов (БЕЗ Markdown для надёжности)
+  const operatorMessage = [
+    '💬 Новое обращение клиента в поддержку',
+    '',
+    `👤 Пользователь: ${username || `ID ${userId}`}`,
+    `📱 Telegram ID: ${userId}`,
+    '',
+    `💬 Сообщение:`,
+    messageText,
+    '',
+    `ℹ️ Ответьте клиенту в личных сообщениях Telegram`,
+  ].join('\n');
+
+  // Отправка уведомлений всем операторам
+  const operatorIds = getAuthorizedOperators();
+  let notifiedCount = 0;
+
+  for (const operatorId of operatorIds) {
+    try {
+      const telegramApiUrl = `${process.env.TELEGRAM_BOT_API_URL || 'https://api.telegram.org'}/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`;
+      
+      const response = await fetch(telegramApiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: operatorId,
+          text: operatorMessage,
+          // БЕЗ parse_mode - отправляем plain text
+        }),
+      });
+
+      if (response.ok) {
+        notifiedCount++;
+        logger.debug('OPERATOR_NOTIFIED_CLIENT_MESSAGE', {
+          operatorId,
+          clientUserId: userId,
+        });
+      } else {
+        const errorBody = await response.text();
+        logger.warn('OPERATOR_NOTIFY_FAILED', {
+          operatorId,
+          status: response.status,
+          statusText: response.statusText,
+          error: errorBody,
+        });
+      }
+    } catch (error) {
+      logger.warn('OPERATOR_NOTIFY_EXCEPTION', {
+        operatorId,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+
+    // Небольшая задержка между сообщениями операторам (Telegram rate limit: 1 msg/sec)
+    if (notifiedCount < operatorIds.length) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  }
+
+  logger.info('CLIENT_MESSAGE_FORWARDED', {
+    userId,
+    operatorsNotified: notifiedCount,
+    totalOperators: operatorIds.length,
+  });
+
+  return TELEGRAM_CLIENT_MESSAGES.RESPONSES.MESSAGE_RECEIVED();
 }
 
 /**
@@ -380,6 +625,7 @@ async function handleCallbackQuery(update: TelegramUpdate): Promise<string | nul
 
 /**
  * Основная функция обработки telegram update
+ * 🔧 REFACTORED: Added client support routing
  */
 export async function handleTelegramUpdate(update: TelegramUpdate): Promise<string | null> {
   return await gracefulHandler(
@@ -396,34 +642,74 @@ export async function handleTelegramUpdate(update: TelegramUpdate): Promise<stri
       }
 
       const text = message.text.trim();
+      const userId = extractUserId(update);
 
-      // Обработка команд
+      if (userId === null) {
+        return ERROR_MESSAGES.USER_NOT_FOUND;
+      }
+
+      const userType = getUserType(userId);
+
+      logger.debug('TELEGRAM_UPDATE_ROUTING', {
+        userId,
+        userType,
+        command: text.split(' ')[0],
+      });
+
+      // ========================================
+      // Universal commands (operator + client)
+      // ========================================
+
       if (text === '/start') {
         return handleStartCommand(update);
       }
 
       if (text === '/help') {
-        return handleHelpCommand();
+        return handleHelpCommand(update);
       }
 
-      if (text === '/login') {
-        return handleLoginCommand(update);
+      // ========================================
+      // Operator-only commands
+      // ========================================
+
+      if (userType === 'operator') {
+        if (text === '/login') {
+          return handleLoginCommand(update);
+        }
+
+        if (text.startsWith('/takeorder')) {
+          return await handleTakeOrderCommand(update);
+        }
+
+        if (text === '/orders') {
+          return handleOrdersCommand(update);
+        }
+
+        // Неизвестная команда для оператора
+        if (text.startsWith('/')) {
+          return '❓ Неизвестная команда. Используйте /help для просмотра доступных команд.';
+        }
+
+        // Обычное сообщение от оператора (игнорируем)
+        return '❓ Не понимаю это сообщение. Используйте /help для просмотра доступных команд.';
       }
 
-      if (text === '/takeorder') {
-        return await handleTakeOrderCommand(update);
+      // ========================================
+      // Client-only commands
+      // ========================================
+
+      // Client tries to use operator commands
+      if (text === '/login' || text.startsWith('/takeorder') || text === '/orders') {
+        return TELEGRAM_CLIENT_MESSAGES.RESPONSES.OPERATOR_COMMAND_DENIED();
       }
 
-      if (text === '/orders') {
-        return handleOrdersCommand(update);
-      }
-
-      // Неизвестная команда
+      // Неизвестная команда для клиента
       if (text.startsWith('/')) {
-        return '❓ Неизвестная команда. Используйте /help для просмотра доступных команд.';
+        return '❓ Неизвестная команда. Используйте /help для получения справки.';
       }
 
-      return '❓ Не понимаю это сообщение. Используйте /help для просмотра доступных команд.';
+      // Обычное текстовое сообщение от клиента → обработать как обращение в поддержку
+      return await handleClientMessage(update);
     },
     { fallback: 'Произошла ошибка при обработке сообщения' }
   );

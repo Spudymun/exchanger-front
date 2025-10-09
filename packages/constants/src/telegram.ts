@@ -163,6 +163,63 @@ export const TELEGRAM_OPERATOR_MESSAGES = {
   },
 } as const;
 
+// ========================================
+// 🆕 CLIENT SUPPORT: Сообщения для клиентов
+// ========================================
+
+export const TELEGRAM_CLIENT_MESSAGES = {
+  ICONS: {
+    SUPPORT: '💬',
+    SUCCESS: '✅',
+    ERROR: '❌',
+    WARNING: '⚠️',
+    INFO: 'ℹ️',
+  },
+  
+  GREETINGS: {
+    START: () => [
+      '👋 Добро пожаловать в службу поддержки ExchangeGO!',
+      '',
+      'Опишите вашу проблему или задайте вопрос.',
+      'Наши операторы ответят вам в ближайшее время.',
+      '',
+      '⏱ Среднее время ответа: 1-3 часа',
+      '⚡ Мы работаем 24/7',
+    ].join('\n'),
+    
+    HELP: () => [
+      '📋 Как получить помощь:',
+      '',
+      '1️⃣ Опишите вашу проблему в сообщении',
+      '2️⃣ Укажите номер заявки (если есть)',
+      '3️⃣ Дождитесь ответа оператора',
+      '',
+      '⏱ Мы отвечаем в течение 1-3 часов',
+      '💬 Оператор свяжется с вами в личных сообщениях',
+    ].join('\n'),
+  },
+  
+  RESPONSES: {
+    MESSAGE_RECEIVED: () => [
+      '✅ Ваше сообщение получено!',
+      '',
+      'Оператор свяжется с вами в ближайшее время.',
+      'Среднее время ответа: 1-3 часа',
+    ].join('\n'),
+    
+    RATE_LIMIT_EXCEEDED: () => [
+      '⚠️ Слишком много сообщений',
+      '',
+      'Пожалуйста, подождите минуту перед отправкой следующего сообщения.',
+      'Лимит: 5 сообщений в минуту',
+    ].join('\n'),
+    
+    OPERATOR_COMMAND_DENIED: () => [
+      '❌ Эта команда доступна только операторам',
+    ].join('\n'),
+  },
+} as const;
+
 // Типы для TypeScript
 export type TelegramApiEndpoint = keyof typeof TELEGRAM_API;
 export type TelegramIcon = keyof typeof TELEGRAM_OPERATOR_MESSAGES.ICONS;
@@ -170,3 +227,6 @@ export type TelegramHeader = keyof typeof TELEGRAM_OPERATOR_MESSAGES.HEADERS;
 export type TelegramStatus = keyof typeof TELEGRAM_OPERATOR_MESSAGES.STATUS_MESSAGES;
 export type TelegramAction = keyof typeof TELEGRAM_OPERATOR_MESSAGES.ACTIONS;
 export type TelegramTemplate = keyof typeof TELEGRAM_OPERATOR_MESSAGES.TEMPLATES;
+export type TelegramClientIcon = keyof typeof TELEGRAM_CLIENT_MESSAGES.ICONS;
+export type TelegramClientGreeting = keyof typeof TELEGRAM_CLIENT_MESSAGES.GREETINGS;
+export type TelegramClientResponse = keyof typeof TELEGRAM_CLIENT_MESSAGES.RESPONSES;

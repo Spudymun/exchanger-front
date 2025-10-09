@@ -8,6 +8,11 @@ export interface BotSession {
   operatorId?: string;
   isOperator: boolean;
   currentOrderId?: string;
+  // 🆕 CLIENT SUPPORT: User type for context isolation
+  userType?: 'operator' | 'client';
+  // 🆕 CLIENT SUPPORT: Rate limiting для клиентов
+  lastMessageTime?: number;
+  messageCount?: number;
 }
 
 export interface TelegramUpdate {

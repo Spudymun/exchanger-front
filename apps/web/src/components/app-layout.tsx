@@ -6,6 +6,7 @@ import { TRPCProvider } from '../../lib/trpc-provider';
 import { AppFooter } from './app-footer';
 import { AppHeader } from './app-header';
 import { GlobalLoadingOverlay } from './global-loading-overlay';
+import { GlobalFloatingButtons } from './GlobalFloatingButtons';
 import { NotificationDisplay } from './notification-display';
 
 interface AppLayoutProps {
@@ -26,6 +27,7 @@ export function AppLayout({ children, className }: AppLayoutProps) {
               </main>
               <AppFooter />
               <NotificationDisplay />
+              <GlobalFloatingButtons />
             </div>
             <GlobalLoadingOverlay />
           </AuthModalProvider>

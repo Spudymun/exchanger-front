@@ -15,14 +15,14 @@ export const SOCIAL_LINKS = {
   },
   SUPPORT_TELEGRAM: {
     name: 'Telegram Support',
-    href: 'https://t.me/exchangego_support',
+    href: 'https://t.me/exchangego_operators_bot', // 🆕 Updated to real bot
     icon: 'telegram',
   },
 } as const;
 
 export const CONTACT_INFO = {
   SUPPORT_EMAIL: 'onboarding@resend.dev', // Для локальной разработки
-  SUPPORT_TELEGRAM: '@exchangego_support',
+  SUPPORT_TELEGRAM: '@exchangego_operators_bot', // 🆕 Updated to real bot
   WORKING_HOURS: '24/7',
   RESPONSE_TIME: '1-3 часа',
 } as const;
