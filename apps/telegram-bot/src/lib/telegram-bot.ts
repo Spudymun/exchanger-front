@@ -1,6 +1,7 @@
 import { TELEGRAM_CLIENT_MESSAGES } from '@repo/constants';
 import { createEnvironmentLogger, gracefulHandler } from '@repo/utils';
 
+import { updateAllOrderMessages } from './telegram-message-tracker';
 import { api } from './trpc-client';
 
 import type { BotSession, TelegramUpdate } from './types';
@@ -29,6 +30,7 @@ const BOT_COMMANDS = [
   { command: 'help', description: 'Показать справку' },
   { command: 'login', description: 'Войти как оператор', operatorOnly: true },
   { command: 'takeorder', description: 'Взять заявку в работу', operatorOnly: true },
+  { command: 'complete', description: 'Завершить заявку', operatorOnly: true },
   { command: 'orders', description: 'Показать активные заявки', operatorOnly: true },
 ];
 
@@ -613,7 +615,174 @@ function handleOrdersCommand(update: TelegramUpdate): string {
         ? `• Заявка #${session.currentOrderId} (в работе)`
         : 'Нет заявок в работе'
     }\n\n` +
-    `Используйте /takeorder для взятия новой заявки.`
+    `Используйте /takeorder для взятия новой заявки.\n` +
+    `Используйте /complete ORDER_ID для завершения заявки.`
+  );
+}
+
+/**
+ * Обработчик команды /complete
+ * Завершает заявку и отмечает перевод как выполненный
+ */
+async function handleCompleteOrderCommand(update: TelegramUpdate): Promise<string> {
+  logger.debug('TELEGRAM_COMPLETE_ORDER_COMMAND', {
+    messageId: update.message?.message_id,
+    updateId: update.update_id,
+    hasUser: !!update.message?.from,
+  });
+
+  if (!update.message?.from) {
+    logger.warn('TELEGRAM_COMPLETE_ORDER_NO_USER', { update: JSON.stringify(update) });
+    return ERROR_MESSAGES.USER_NOT_FOUND;
+  }
+
+  const userId = update.message.from.id;
+  const session = getSession(userId);
+
+  logger.debug('TELEGRAM_COMPLETE_ORDER_SESSION_CHECK', {
+    userId,
+    isOperator: session.isOperator,
+    operatorId: session.operatorId,
+  });
+
+  if (!session.isOperator) {
+    logger.warn('TELEGRAM_COMPLETE_ORDER_NOT_OPERATOR', {
+      userId,
+      sessionOperator: session.isOperator,
+    });
+    return ERROR_MESSAGES.OPERATOR_ONLY;
+  }
+
+  // Извлечение orderId из команды /complete ORDER_ID
+  const messageText = update.message.text || '';
+  const orderIdMatch = messageText.match(/\/complete\s+([\w-]+)/);
+
+  logger.debug('TELEGRAM_COMPLETE_ORDER_PARSE_ID', {
+    messageText,
+    hasMatch: !!orderIdMatch?.[1],
+    extractedOrderId: orderIdMatch?.[1],
+  });
+
+  if (!orderIdMatch?.[1]) {
+    logger.warn('TELEGRAM_COMPLETE_ORDER_NO_ID', { messageText });
+    return '❌ Укажите ID заявки: /complete ORDER_ID';
+  }
+
+  const orderId = orderIdMatch[1];
+  const telegramOperatorId = userId.toString();
+
+  logger.info('TELEGRAM_COMPLETE_ORDER_ATTEMPT', {
+    orderId,
+    telegramOperatorId,
+    operatorId: session.operatorId,
+  });
+
+  const result = await gracefulHandler(
+    async () => {
+      logger.debug('CALLING_TELEGRAM_UPDATE_ORDER_STATUS_API', {
+        orderId,
+        telegramOperatorId,
+        newStatus: 'completed',
+      });
+
+      return await api.telegram.updateOrderStatus({
+        orderId,
+        telegramOperatorId,
+        status: 'completed',
+      });
+    },
+    { fallback: null }
+  );
+
+  logger.debug('TELEGRAM_COMPLETE_ORDER_API_RESULT', {
+    orderId,
+    success: !!result?.success,
+    hasOrder: !!result?.order,
+    hasError: !!result?.error,
+    errorCode: result?.error?.code,
+  });
+
+  if (result?.success && result.order) {
+    logger.info('Order completed by operator', {
+      operatorId: session.operatorId,
+      orderId: result.order.id,
+      telegramOperatorId,
+      orderStatus: result.order.status,
+      processedAt: result.order.processedAt?.toISOString(),
+    });
+
+    const successMessage = (
+      `✅ Заявка завершена!\n\n` +
+      `📋 Заявка #${result.order.id}\n` +
+      `💰 Сумма: ${result.order.cryptoAmount} ${result.order.currency}\n` +
+      `🔄 Статус: ${result.order.status}\n\n` +
+      `Заявка успешно завершена. Средства переведены клиенту.`
+    );
+
+    // Обновляем ВСЕ сообщения этой заявки для синхронизации
+    const updatedCount = await updateAllOrderMessages({
+      orderId,
+      newText: successMessage,
+      newKeyboard: { inline_keyboard: [] }, // Убираем кнопки после завершения
+    });
+
+    logger.info('All order messages updated after completion', {
+      orderId,
+      updatedCount,
+      operatorId: session.operatorId,
+    });
+
+    logger.debug('TELEGRAM_COMPLETE_ORDER_SUCCESS_RESPONSE', {
+      messageLength: successMessage.length,
+    });
+    return successMessage;
+  }
+
+  // Детальные сообщения об ошибках
+  if (result?.error) {
+    logger.warn('TELEGRAM_COMPLETE_ORDER_FAILED', {
+      orderId,
+      telegramOperatorId,
+      errorCode: result.error.code,
+      errorMessage: result.error.message,
+    });
+
+    switch (result.error.code) {
+      case 'ORDER_NOT_FOUND':
+        return (
+          `❌ Заявка не найдена\n\n` +
+          `Заявка #${orderId} не существует в системе.\n` +
+          `Проверьте правильность ID заявки.`
+        );
+
+      case 'INVALID_STATUS':
+        return (
+          `❌ Невозможно завершить заявку\n\n` +
+          `${result.error.message}\n` +
+          `Текущий статус: ${result.error.details?.currentStatus || 'неизвестен'}\n\n` +
+          `Заявка должна быть в статусе "PROCESSING" для завершения.`
+        );
+
+      case 'OPERATOR_NOT_FOUND':
+        return `❌ Ошибка авторизации\n\n${result.error.message}`;
+
+      case 'SYSTEM_ERROR':
+        return (
+          `❌ Системная ошибка\n\n` +
+          `${result.error.message}\n\n` +
+          `Обратитесь к администратору, если ошибка повторяется.`
+        );
+
+      default:
+        return `❌ Не удалось завершить заявку\n\n${result.error.message}`;
+    }
+  }
+
+  // Fallback error
+  return (
+    `❌ Не удалось завершить заявку\n\n` +
+    `Произошла неизвестная ошибка.\n` +
+    `Проверьте ID заявки и попробуйте снова.`
   );
 }
 
@@ -680,7 +849,82 @@ async function handleCallbackQuery(update: TelegramUpdate): Promise<string | nul
            `Для получения подробной информации используйте web интерфейс оператора.`;
   }
 
+  // Обработка callback_data для завершения заявки
+  // Эти действия обрабатываются в webhook.ts через handleCallbackQueryResponse
+  // Возвращаем null чтобы не отправлять дублирующее сообщение
+  if (
+    callbackQuery.data.startsWith('complete_order_') ||
+    callbackQuery.data.startsWith('confirm_complete_') ||
+    callbackQuery.data.startsWith('cancel_complete_')
+  ) {
+    return null;
+  }
+
   return '❓ Неизвестное действие';
+}
+
+/**
+ * Экспортируемая функция для завершения заказа через callback button
+ * Используется в webhook.ts для обработки confirm_complete_ callback
+ */
+export async function completeOrderViaCallback(
+  orderId: string,
+  telegramOperatorId: string
+): Promise<{ success: boolean; message: string; error?: { code: string; message: string } }> {
+  const result = await gracefulHandler(
+    async () => {
+      // Вызов tRPC API
+      return await api.telegram.updateOrderStatus({
+        orderId,
+        telegramOperatorId,
+        status: 'completed',
+      });
+    },
+    { fallback: null }
+  );
+
+  if (result?.success && result.order) {
+    const successMessage =
+      `✅ Заявка завершена!\n\n` +
+      `📋 Заявка #${result.order.id}\n` +
+      `💰 Сумма: ${result.order.cryptoAmount} ${result.order.currency}\n` +
+      `🔄 Статус: ${result.order.status}\n\n` +
+      `Заявка успешно завершена. Средства переведены клиенту.`;
+
+    // Обновляем ВСЕ сообщения
+    await updateAllOrderMessages({
+      orderId,
+      newText: successMessage,
+      newKeyboard: { inline_keyboard: [] },
+    });
+
+    logger.info('Order completed via callback button', { orderId, telegramOperatorId });
+
+    return {
+      success: true,
+      message: successMessage,
+    };
+  }
+
+  if (result?.error) {
+    return {
+      success: false,
+      message: result.error.message,
+      error: {
+        code: result.error.code,
+        message: result.error.message,
+      },
+    };
+  }
+
+  return {
+    success: false,
+    message: 'Неизвестная ошибка при завершении заявки',
+    error: {
+      code: 'UNKNOWN_ERROR',
+      message: 'Неизвестная ошибка',
+    },
+  };
 }
 
 /**

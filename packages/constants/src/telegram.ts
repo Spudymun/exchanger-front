@@ -87,9 +87,17 @@ export const TELEGRAM_OPERATOR_MESSAGES = {
     TAKE_ORDER: (orderId: string) => `Используйте /takeorder ${orderId} для принятия заявки`,
     BUTTON_TAKE: '✅ Взять в работу',
     BUTTON_DETAILS: '📋 Детали',
+    BUTTON_COMPLETE: '✅ Завершить заявку',
+    BUTTON_CONFIRM_YES: '✅ Да, завершить',
+    BUTTON_CANCEL: '❌ Отмена',
     CALLBACK_TAKE_ORDER: (orderId: string) => `take_order_${orderId}`,
     CALLBACK_ORDER_DETAILS: (orderId: string) => `order_details_${orderId}`,
+    CALLBACK_COMPLETE_ORDER: (orderId: string) => `complete_order_${orderId}`,
+    CALLBACK_CONFIRM_COMPLETE: (orderId: string) => `confirm_complete_${orderId}`,
+    CALLBACK_CANCEL_COMPLETE: (orderId: string) => `cancel_complete_${orderId}`,
     TAKEORDER_COMMAND: (orderId: string) => `/takeorder ${orderId}`,
+    COMPLETE_COMMAND: (orderId: string) => `/complete ${orderId}`,
+    COMPLETE_ORDER: (orderId: string) => `Используйте /complete ${orderId} для завершения заявки`,
   },
   
   // Шаблоны полных сообщений
@@ -230,3 +238,13 @@ export type TelegramTemplate = keyof typeof TELEGRAM_OPERATOR_MESSAGES.TEMPLATES
 export type TelegramClientIcon = keyof typeof TELEGRAM_CLIENT_MESSAGES.ICONS;
 export type TelegramClientGreeting = keyof typeof TELEGRAM_CLIENT_MESSAGES.GREETINGS;
 export type TelegramClientResponse = keyof typeof TELEGRAM_CLIENT_MESSAGES.RESPONSES;
+
+// Типы для Telegram Order Messages
+export type TelegramNotificationType = 'new_order' | 'order_paid' | 'order_cancelled';
+export interface TelegramOrderMessageInfo {
+  orderId: string;
+  chatId: string;
+  messageId: number;
+  topicId?: number;
+  notificationType: TelegramNotificationType;
+}

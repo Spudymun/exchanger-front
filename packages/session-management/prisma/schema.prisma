@@ -83,28 +83,29 @@ model UserAppRole {
 }
 
 model Order {
-  id                 String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  publicId           String          @unique @map("public_id") @db.VarChar(30)
-  userId             String          @map("user_id") @db.Uuid
-  cryptoAmount       Decimal         @map("crypto_amount") @db.Decimal(36, 18)
-  currency           String          @db.VarChar(10)
-  uahAmount          Decimal         @map("uah_amount") @db.Decimal(12, 2)
-  status             OrderStatus     @default(PENDING)
-  txHash             String?         @map("tx_hash") @db.VarChar(255)
-  recipientData      Json?           @map("recipient_data")
-  assignedOperatorId String?         @map("assigned_operator_id") @db.Uuid
-  assignedAt         DateTime?       @map("assigned_at") @db.Timestamptz(6)
-  createdAt          DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
-  processedAt        DateTime?       @map("processed_at") @db.Timestamptz(6)
-  walletId           String?         @map("wallet_id") @db.Uuid
-  bankId             String?         @map("bank_id") @db.Uuid
-  fixedExchangeRate  Decimal?        @map("fixed_exchange_rate") @db.Decimal(15, 8)
+  id                 String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  publicId           String                   @unique @map("public_id") @db.VarChar(30)
+  userId             String                   @map("user_id") @db.Uuid
+  cryptoAmount       Decimal                  @map("crypto_amount") @db.Decimal(36, 18)
+  currency           String                   @db.VarChar(10)
+  uahAmount          Decimal                  @map("uah_amount") @db.Decimal(12, 2)
+  status             OrderStatus              @default(PENDING)
+  txHash             String?                  @map("tx_hash") @db.VarChar(255)
+  recipientData      Json?                    @map("recipient_data")
+  assignedOperatorId String?                  @map("assigned_operator_id") @db.Uuid
+  assignedAt         DateTime?                @map("assigned_at") @db.Timestamptz(6)
+  createdAt          DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
+  processedAt        DateTime?                @map("processed_at") @db.Timestamptz(6)
+  walletId           String?                  @map("wallet_id") @db.Uuid
+  bankId             String?                  @map("bank_id") @db.Uuid
+  fixedExchangeRate  Decimal?                 @map("fixed_exchange_rate") @db.Decimal(15, 8)
   auditLogs          OrderAuditLog[]
-  assignedOperator   User?           @relation("OperatorAssignments", fields: [assignedOperatorId], references: [id])
-  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  wallet             Wallet?         @relation(fields: [walletId], references: [id])
-  bank               Bank?           @relation(fields: [bankId], references: [id], onDelete: SetNull)
+  telegramMessages   TelegramOrderMessage[]
+  assignedOperator   User?                    @relation("OperatorAssignments", fields: [assignedOperatorId], references: [id])
+  user               User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet             Wallet?                  @relation(fields: [walletId], references: [id])
+  bank               Bank?                    @relation(fields: [bankId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([status])
@@ -240,4 +241,22 @@ model BankReserve {
   @@unique([bankId, fiatCurrency])
   @@index([fiatCurrency, amount])
   @@map("bank_reserves")
+}
+
+model TelegramOrderMessage {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  orderId          String   @map("order_id") @db.Uuid
+  chatId           String   @map("chat_id") @db.Text
+  messageId        BigInt   @map("message_id")
+  topicId          Int?     @map("topic_id")
+  notificationType String   @map("notification_type") @db.Text
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, notificationType], name: "telegram_order_message_unique")
+  @@index([orderId])
+  @@index([chatId, messageId], name: "idx_telegram_chat_message")
+  @@map("telegram_order_messages")
 }

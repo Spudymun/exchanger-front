@@ -1,7 +1,10 @@
-import { HTTP_STATUS, TELEGRAM_OPERATOR_MESSAGES, TELEGRAM_API } from '@repo/constants';
-import { createEnvironmentLogger, gracefulHandler } from '@repo/utils';
 
+import { HTTP_STATUS, TELEGRAM_OPERATOR_MESSAGES, TELEGRAM_API } from '@repo/constants';
+import type { TelegramNotificationType } from '@repo/constants';
+import { createEnvironmentLogger, gracefulHandler } from '@repo/utils';
 import type { NextApiRequest, NextApiResponse } from 'next';
+
+import { saveTelegramMessageInfo } from '../../src/lib/telegram-message-tracker';
 
 const logger = createEnvironmentLogger('telegram-notify-operators');
 
@@ -146,9 +149,27 @@ function createOperatorMessage(payload: NotificationPayload): string {
 }
 
 /**
- * Создание inline клавиатуры
+ * Создание inline клавиатуры в зависимости от типа уведомления
  */
-function createInlineKeyboard(orderId: string): InlineKeyboard {
+function createInlineKeyboard(
+  orderId: string, 
+  notificationType?: 'new_order' | 'order_cancelled' | 'order_paid'
+): InlineKeyboard {
+  // Для отмененных заявок - только кнопка "Детали", без "Взять в работу"
+  if (notificationType === 'order_cancelled') {
+    return {
+      inline_keyboard: [
+        [
+          {
+            text: TELEGRAM_OPERATOR_MESSAGES.ACTIONS.BUTTON_DETAILS,
+            callback_data: TELEGRAM_OPERATOR_MESSAGES.ACTIONS.CALLBACK_ORDER_DETAILS(orderId),
+          },
+        ],
+      ],
+    };
+  }
+
+  // Для новых заявок и оплаченных - полная клавиатура
   return {
     inline_keyboard: [
       [
@@ -173,7 +194,8 @@ async function notifyOperator(
   message: string,
   keyboard: InlineKeyboard,
   orderId: string,
-  topicId?: number
+  topicId?: number,
+  notificationType?: TelegramNotificationType
 ): Promise<boolean> {
   logger.debug('TELEGRAM_NOTIFY_SINGLE_OPERATOR', {
     operatorId: operatorId.trim(),
@@ -228,10 +250,23 @@ async function notifyOperator(
     });
 
     if (response.ok) {
+      // ✅ Сохранить message_id в БД для возможности обновления
+      const responseData = await response.json();
+      if (responseData.result?.message_id && notificationType) {
+        await saveTelegramMessageInfo({
+          orderId,
+          chatId: operatorId.trim(),
+          messageId: responseData.result.message_id,
+          notificationType,
+          topicId,
+        });
+      }
+
       logger.info('Operator notified successfully', {
         operatorId: operatorId.trim(),
         orderId,
         topicId: topicId || 'General',
+        messageId: responseData.result?.message_id,
         responseStatus: response.status,
       });
       return true;
@@ -340,7 +375,14 @@ async function sendOperatorNotifications(
       messageLength: message.length,
     });
     
-    const success = await notifyOperator(ordersChatId, message, keyboard, orderId, topicId);
+    const success = await notifyOperator(
+      ordersChatId, 
+      message, 
+      keyboard, 
+      orderId, 
+      topicId,
+      notificationType || 'new_order'
+    );
     
     if (success) {
       logger.info('Notification sent to Orders channel', {
@@ -394,7 +436,14 @@ async function sendOperatorNotifications(
       totalOperators: operatorIds.length,
     });
 
-    const success = await notifyOperator(operatorId, message, keyboard, orderId);
+    const success = await notifyOperator(
+      operatorId, 
+      message, 
+      keyboard, 
+      orderId,
+      undefined,
+      notificationType || 'new_order'
+    );
     if (success) {
       notifiedCount++;
       logger.debug('TELEGRAM_NOTIFY_OPERATOR_SUCCESS', {
@@ -453,7 +502,7 @@ async function processNotifications(req: NextApiRequest, res: NextApiResponse): 
   
   // Создание сообщения и клавиатуры
   const message = createOperatorMessage(payload);
-  const keyboard = createInlineKeyboard(payload.order.id);
+  const keyboard = createInlineKeyboard(payload.order.id, payload.notificationType);
 
   // Получение и проверка операторов
   const operatorIds = getAuthorizedOperators();
