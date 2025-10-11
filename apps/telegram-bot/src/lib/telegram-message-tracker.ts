@@ -11,6 +11,8 @@ import { TELEGRAM_API } from '@repo/constants';
 import { getPrismaClient, type PrismaClientConfig } from '@repo/session-management';
 import { createEnvironmentLogger } from '@repo/utils';
 
+import type { InlineKeyboard } from './telegram-api-helpers';
+
 const logger = createEnvironmentLogger('telegram-message-tracker');
 
 /**
@@ -182,7 +184,7 @@ export async function deleteTelegramMessageInfo(
 interface UpdateAllOrderMessagesParams {
   orderId: string;
   newText?: string;
-  newKeyboard?: { inline_keyboard: Array<Array<{ text: string; callback_data: string }>> };
+  newKeyboard?: InlineKeyboard;
 }
 
 /**

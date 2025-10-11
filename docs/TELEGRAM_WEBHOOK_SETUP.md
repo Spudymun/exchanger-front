@@ -65,13 +65,13 @@ ngrok http 3003
 #### Вариант A: Через браузер
 
 ```
-https://api.telegram.org/bot8080670068:AAG94FIreDoNJ_xc4aLFkxg0yKdSc-aV0cE/setWebhook?url=https://ff39d32298a6.ngrok-free.app/api/webhook
+https://api.telegram.org/bot8080670068:AAG1LtOO0INbJFOXhj5--WHWRvImewP866E/setWebhook?url=https://ff39d32298a6.ngrok-free.app/api/webhook
 ```
 
 ### Пример:
 
 ```
-https://api.telegram.org/bot8080670068:AAG1LtOO0INbJFOXhj5--WHWRvImewP866E/setWebhook?url=https://f37e9652782d.ngrok-free.app/api/webhook
+https://api.telegram.org/bot8080670068:AAG1LtOO0INbJFOXhj5--WHWRvImewP866E/setWebhook?url=https://19db6dbb119e.ngrok-free.app/api/webhook
 ```
 
 #### Вариант B: Через PowerShell
