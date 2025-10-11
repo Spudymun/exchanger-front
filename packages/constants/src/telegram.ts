@@ -90,11 +90,18 @@ export const TELEGRAM_OPERATOR_MESSAGES = {
     BUTTON_COMPLETE: '✅ Завершить заявку',
     BUTTON_CONFIRM_YES: '✅ Да, завершить',
     BUTTON_CANCEL: '❌ Отмена',
+    BUTTON_CANCEL_ORDER: '❌ Отменить заявку',
+    BUTTON_CONFIRM_CANCEL_YES: '✅ Да, отменить',
+    BUTTON_BACK: '◀️ Назад',
     CALLBACK_TAKE_ORDER: (orderId: string) => `take_order_${orderId}`,
     CALLBACK_ORDER_DETAILS: (orderId: string) => `order_details_${orderId}`,
     CALLBACK_COMPLETE_ORDER: (orderId: string) => `complete_order_${orderId}`,
     CALLBACK_CONFIRM_COMPLETE: (orderId: string) => `confirm_complete_${orderId}`,
     CALLBACK_CANCEL_COMPLETE: (orderId: string) => `cancel_complete_${orderId}`,
+    CALLBACK_CANCEL_ORDER: (orderId: string) => `cancel_order_${orderId}`,
+    CALLBACK_SELECT_CANCEL_REASON: (orderId: string, reason: string) => `select_cancel_reason_${orderId}_${reason}`,
+    CALLBACK_CONFIRM_CANCEL: (orderId: string) => `confirm_cancel_${orderId}`,
+    CALLBACK_BACK_TO_ORDER: (orderId: string) => `back_to_order_${orderId}`,
     TAKEORDER_COMMAND: (orderId: string) => `/takeorder ${orderId}`,
     COMPLETE_COMMAND: (orderId: string) => `/complete ${orderId}`,
     COMPLETE_ORDER: (orderId: string) => `Используйте /complete ${orderId} для завершения заявки`,
@@ -228,6 +235,40 @@ export const TELEGRAM_CLIENT_MESSAGES = {
   },
 } as const;
 
+// Причины отмены заявки оператором
+export const OPERATOR_CANCEL_REASONS = {
+  CLIENT_NOT_RESPONDING: {
+    id: 'client_not_responding',
+    label: 'Клиент не выходит на связь',
+    description: 'Клиент не отвечает на сообщения или не предоставляет необходимую информацию',
+  },
+  INCORRECT_DATA: {
+    id: 'incorrect_data',
+    label: 'Некорректные данные клиента',
+    description: 'Предоставленные клиентом данные неверны или неполны',
+  },
+  PAYMENT_TIMEOUT: {
+    id: 'payment_timeout',
+    label: 'Истекло время оплаты',
+    description: 'Клиент не произвел оплату в установленные сроки',
+  },
+  TECHNICAL_ISSUE: {
+    id: 'technical_issue',
+    label: 'Технические проблемы',
+    description: 'Возникли технические проблемы при обработке заявки',
+  },
+  CLIENT_REQUEST: {
+    id: 'client_request',
+    label: 'По просьбе клиента',
+    description: 'Клиент попросил отменить заявку',
+  },
+  OTHER: {
+    id: 'other',
+    label: 'Другая причина',
+    description: 'Другая причина отмены заявки',
+  },
+} as const;
+
 // Типы для TypeScript
 export type TelegramApiEndpoint = keyof typeof TELEGRAM_API;
 export type TelegramIcon = keyof typeof TELEGRAM_OPERATOR_MESSAGES.ICONS;
@@ -238,6 +279,7 @@ export type TelegramTemplate = keyof typeof TELEGRAM_OPERATOR_MESSAGES.TEMPLATES
 export type TelegramClientIcon = keyof typeof TELEGRAM_CLIENT_MESSAGES.ICONS;
 export type TelegramClientGreeting = keyof typeof TELEGRAM_CLIENT_MESSAGES.GREETINGS;
 export type TelegramClientResponse = keyof typeof TELEGRAM_CLIENT_MESSAGES.RESPONSES;
+export type OperatorCancelReasonId = keyof typeof OPERATOR_CANCEL_REASONS;
 
 // Типы для Telegram Order Messages
 export type TelegramNotificationType = 'new_order' | 'order_paid' | 'order_cancelled';

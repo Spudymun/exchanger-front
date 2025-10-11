@@ -219,6 +219,7 @@ export const telegramBotRouter = createTRPCRouter({
         status: z.enum(['pending', 'processing', 'completed', 'cancelled']),
         telegramOperatorId: z.string(),
         operatorNote: z.string().optional(),
+        cancellationReason: z.string().optional(), // Причина отмены для cancelled статуса
       })
     )
     .mutation(async ({ input }): Promise<TakeOrderResult> => {
@@ -275,6 +276,32 @@ export const telegramBotRouter = createTRPCRouter({
               message: 'Не удалось обновить статус заявки',
             },
           };
+        }
+
+        // Создание audit log с причиной отмены (если статус = cancelled)
+        if (input.status === 'cancelled' && input.cancellationReason) {
+          const prisma = getConfiguredPrismaClient();
+          await prisma.orderAuditLog.create({
+            data: {
+              orderId: input.orderId,
+              action: 'operator_cancellation',
+              oldValue: order.status,
+              newValue: input.status,
+              performedBy: operator.id,
+              metadata: {
+                cancellationReason: input.cancellationReason,
+                operatorNote: input.operatorNote,
+                source: 'telegram_bot',
+                telegramOperatorId: input.telegramOperatorId,
+              },
+            },
+          });
+
+          logger.info('CANCELLATION_AUDIT_LOG_CREATED', {
+            orderId: input.orderId,
+            cancellationReason: input.cancellationReason,
+            operatorId: operator.id,
+          });
         }
 
         logger.info('ORDER_STATUS_UPDATED_VIA_TELEGRAM', {

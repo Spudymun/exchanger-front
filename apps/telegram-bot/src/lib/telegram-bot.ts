@@ -849,13 +849,17 @@ async function handleCallbackQuery(update: TelegramUpdate): Promise<string | nul
            `Для получения подробной информации используйте web интерфейс оператора.`;
   }
 
-  // Обработка callback_data для завершения заявки
+  // Обработка callback_data для завершения и отмены заявки
   // Эти действия обрабатываются в webhook.ts через handleCallbackQueryResponse
   // Возвращаем null чтобы не отправлять дублирующее сообщение
   if (
     callbackQuery.data.startsWith('complete_order_') ||
     callbackQuery.data.startsWith('confirm_complete_') ||
-    callbackQuery.data.startsWith('cancel_complete_')
+    callbackQuery.data.startsWith('cancel_complete_') ||
+    callbackQuery.data.startsWith('cancel_order_') ||
+    callbackQuery.data.startsWith('select_cancel_reason_') ||
+    callbackQuery.data.startsWith('back_to_order_') ||
+    callbackQuery.data.startsWith('confirm_cancel_')
   ) {
     return null;
   }
@@ -920,6 +924,73 @@ export async function completeOrderViaCallback(
   return {
     success: false,
     message: 'Неизвестная ошибка при завершении заявки',
+    error: {
+      code: 'UNKNOWN_ERROR',
+      message: 'Неизвестная ошибка',
+    },
+  };
+}
+
+/**
+ * Экспортируемая функция для отмены заказа через callback button
+ * Используется в webhook.ts для обработки confirm_cancel_ callback
+ */
+export async function cancelOrderViaCallback(
+  orderId: string,
+  telegramOperatorId: string,
+  cancellationReason: string
+): Promise<{ success: boolean; message: string; error?: { code: string; message: string } }> {
+  const result = await gracefulHandler(
+    async () => {
+      // Вызов tRPC API
+      return await api.telegram.updateOrderStatus({
+        orderId,
+        telegramOperatorId,
+        status: 'cancelled',
+        cancellationReason,
+      });
+    },
+    { fallback: null }
+  );
+
+  if (result?.success && result.order) {
+    const successMessage =
+      `❌ Заявка отменена\n\n` +
+      `📋 Заявка #${result.order.id}\n` +
+      `💰 Сумма: ${result.order.cryptoAmount} ${result.order.currency}\n` +
+      `🔄 Статус: ${result.order.status}\n` +
+      `📝 Причина отмены: ${cancellationReason}\n\n` +
+      `Заявка отменена оператором.`;
+
+    // Обновляем ВСЕ сообщения
+    await updateAllOrderMessages({
+      orderId,
+      newText: successMessage,
+      newKeyboard: { inline_keyboard: [] },
+    });
+
+    logger.info('Order cancelled via callback button', { orderId, telegramOperatorId, cancellationReason });
+
+    return {
+      success: true,
+      message: successMessage,
+    };
+  }
+
+  if (result?.error) {
+    return {
+      success: false,
+      message: result.error.message,
+      error: {
+        code: result.error.code,
+        message: result.error.message,
+      },
+    };
+  }
+
+  return {
+    success: false,
+    message: 'Неизвестная ошибка при отмене заявки',
     error: {
       code: 'UNKNOWN_ERROR',
       message: 'Неизвестная ошибка',
