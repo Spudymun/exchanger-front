@@ -33,6 +33,8 @@ import {
 import {
   AutoRegistrationService,
   SmartPricingService,
+  OrderExpirationService,
+  OrderCancellationHandler,
   type AutoRegistrationResult,
 } from '@repo/exchange-core/server';
 import { UserManagerFactory, type SessionMetadata } from '@repo/session-management';
@@ -281,6 +283,32 @@ async function sendCryptoAddressEmail(params: {
   }
 }
 
+// ✅ Singleton для OrderExpirationService
+let expirationService: OrderExpirationService | null = null;
+
+async function getExpirationService(): Promise<OrderExpirationService> {
+  if (!expirationService) {
+    const redisUrl = process.env.REDIS_URL;
+    if (!redisUrl) {
+      throw new Error('REDIS_URL environment variable is required');
+    }
+
+    expirationService = new OrderExpirationService(redisUrl);
+    await expirationService.initialize();
+
+    // Запустить listener один раз
+    const cancellationHandler = new OrderCancellationHandler();
+
+    await expirationService.startExpirationListener((orderId) =>
+      cancellationHandler.handleExpiredOrder(orderId)
+    );
+
+    logger.info('ORDER_EXPIRATION_SERVICE_INITIALIZED');
+  }
+
+  return expirationService;
+}
+
 /**
  * Обрабатывает успешную заявку с выделенным кошельком
  */
@@ -352,7 +380,36 @@ async function processSuccessfulOrder(params: {
     walletId: walletInfo.id,
     bankId: bankUuid,                    // ✅ ИСПОЛЬЗУЕМ UUID банка
     fixedExchangeRate,                   // ✅ ДОБАВИТЬ (из frontend)
+    expiresAt: new Date(Date.now() + ORDER_EXPIRATION_TIME_MS), // ✅ Автоматическая отмена через 90 мин
   });
+
+  // ✅ Запланировать автоматическую отмену заказа через Redis TTL
+  try {
+    logger.info('ATTEMPTING_TO_SCHEDULE_ORDER_EXPIRATION', {
+      orderId: order.id,
+      redisUrl: process.env.REDIS_URL ? 'set' : 'missing',
+    });
+    
+    const expService = await getExpirationService();
+    
+    logger.info('EXPIRATION_SERVICE_OBTAINED', {
+      orderId: order.id,
+      serviceInitialized: !!expService,
+    });
+    
+    await expService.scheduleOrderExpiration(order.id);
+    
+    logger.info('ORDER_EXPIRATION_SCHEDULED_SUCCESSFULLY', {
+      orderId: order.id,
+    });
+  } catch (error) {
+    logger.error('FAILED_TO_SCHEDULE_ORDER_EXPIRATION', {
+      orderId: order.id,
+      error: error instanceof Error ? error.message : UNKNOWN_ERROR_MESSAGE,
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    // Не бросаем ошибку - fallback cron подхватит через expiresAt
+  }
 
   // Отправка email с адресом
   await sendCryptoAddressEmail({ order, orderRequest, depositAddress, sessionMetadata, walletInfo });

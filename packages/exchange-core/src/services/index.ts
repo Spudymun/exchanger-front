@@ -16,5 +16,8 @@ export * from './auto-registration-service';
 // ✅ Smart Pricing Service для гибридной системы ценообразования
 export * from './smart-pricing-service';
 
+// ✅ Order Expiration Service для автоматической отмены заказов по таймауту
+export * from './order-expiration-service';
+
 // NOTE: wallet-alerts-service и wallet-monitoring-process перенесены в server.ts для предотвращения frontend bundle проблем
 // NOTE: queue-email-notifier НЕ экспортируется для предотвращения frontend bundle проблем

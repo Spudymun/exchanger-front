@@ -4,6 +4,7 @@ import { UserManagerFactory } from '@repo/session-management';
 import { type inferAsyncReturnType } from '@trpc/server';
 import { type CreateNextContextOptions } from '@trpc/server/adapters/next';
 
+import { getCleanupCron } from '../utils/cleanup-cron-singleton';
 import { createErrorMessageFunction } from '../utils/i18n-errors';
 
 /**
@@ -38,6 +39,12 @@ function getLocaleFromAcceptLanguage(acceptLanguage: string): SupportedLocale {
 
 export const createContext = async (opts: CreateNextContextOptions) => {
   const { req, res } = opts;
+
+  // ✅ Инициализация OrderCleanupCron при первом запросе
+  // Запускается асинхронно, не блокирует создание context
+  void getCleanupCron().catch((error) => {
+    console.error('Failed to initialize OrderCleanupCron:', error);
+  });
 
   // Get IP for rate limiting
   const forwarded = req.headers['x-forwarded-for'];

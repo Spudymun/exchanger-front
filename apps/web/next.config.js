@@ -37,6 +37,7 @@ const nextConfig = {
     '@repo/session-management',
     '@repo/email-service',
     'ioredis',
+    '@sendgrid/mail', // ✅ Исключаем из бандлинга (использует Node.js 'fs')
   ],
   env: {
     DATABASE_URL: process.env.DATABASE_URL, // eslint-disable-line no-undef
@@ -55,6 +56,8 @@ const nextConfig = {
         net: false,
         tls: false,
         fs: false,
+        stream: false,
+        path: false,
         ioredis: false,
       };
 
@@ -66,6 +69,7 @@ const nextConfig = {
         ioredis: false,
       };
     }
+
     return config;
   },
 };

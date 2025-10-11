@@ -100,6 +100,7 @@ model Order {
   walletId           String?                  @map("wallet_id") @db.Uuid
   bankId             String?                  @map("bank_id") @db.Uuid
   fixedExchangeRate  Decimal?                 @map("fixed_exchange_rate") @db.Decimal(15, 8)
+  expiresAt          DateTime?                @map("expires_at") @db.Timestamptz(6)
   auditLogs          OrderAuditLog[]
   telegramMessages   TelegramOrderMessage[]
   assignedOperator   User?                    @relation("OperatorAssignments", fields: [assignedOperatorId], references: [id])
@@ -117,6 +118,8 @@ model Order {
   @@index([txHash])
   @@index([publicId])
   @@index([bankId])
+  @@index([expiresAt])
+  @@index([status, expiresAt])
   @@index([userId, status], name: "idx_user_status_for_duplicate_check")
   @@map("orders")
 }

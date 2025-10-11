@@ -1,6 +1,6 @@
 import { ORDER_STATUS_CONFIG, VALIDATION_LIMITS, ORDER_STATUSES } from '@repo/constants';
 import { orderManager } from '@repo/exchange-core';
-import { WalletPoolManagerFactory } from '@repo/exchange-core/server';
+import { WalletPoolManagerFactory, OrderExpirationService } from '@repo/exchange-core/server';
 import {
   paginateOrders,
   filterOrders,
@@ -38,6 +38,21 @@ import { operatorOnly } from '../middleware/auth';
 
 // Create logger for operator operations
 const logger = createEnvironmentLogger('operator-router');
+
+// Singleton для OrderExpirationService (shared с exchange.ts)
+let expirationService: OrderExpirationService | null = null;
+
+async function getExpirationService(): Promise<OrderExpirationService> {
+  if (!expirationService) {
+    const redisUrl = process.env.REDIS_URL;
+    if (!redisUrl) {
+      throw new Error('REDIS_URL environment variable is required');
+    }
+    expirationService = new OrderExpirationService(redisUrl);
+    await expirationService.initialize();
+  }
+  return expirationService;
+}
 
 /**
  * Operator API роутер
@@ -230,6 +245,25 @@ export const operatorRouter = createTRPCRouter({
       if (!updatedOrder) {
         logger.error('ORDER_STATUS_UPDATE_FAILED', { orderId: input.orderId });
         throw createInternalServerError('Order update failed');
+      }
+
+      // ✅ Отменить запланированную отмену если статус изменился с PENDING
+      if (updatedOrder.status !== ORDER_STATUSES.PENDING) {
+        try {
+          const expService = await getExpirationService();
+          await expService.cancelOrderExpiration(updatedOrder.id);
+          logger.info('ORDER_EXPIRATION_TTL_CANCELLED_ON_STATUS_CHANGE', {
+            orderId: updatedOrder.id,
+            newStatus: updatedOrder.status,
+            reason: 'status_changed_from_pending_by_operator',
+          });
+        } catch (error) {
+          logger.warn('FAILED_TO_CANCEL_ORDER_EXPIRATION', {
+            orderId: updatedOrder.id,
+            error: error instanceof Error ? error.message : 'Unknown error',
+          });
+          // Не критично - Redis ключ истечет сам, handler проверит статус
+        }
       }
 
       logger.info('ORDER_STATUS_UPDATED_SUCCESSFULLY', {

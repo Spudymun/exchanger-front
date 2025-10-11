@@ -19,6 +19,7 @@
 - **[ARCHITECTURE.md](core/ARCHITECTURE.md)** - Детальное описание архитектуры монорепозитория, структуры пакетов, технологий и best practices
 - **[API_DOCS.md](core/API_DOCS.md)** - Документация API endpoints, tRPC процедур и интеграций
 - **[I18N_ARCHITECTURE_GUIDE.md](core/I18N_ARCHITECTURE_GUIDE.md)** - **🌍 НОВОЕ** Модульная система переводов с performance-first loading и решением race condition проблем
+- **[REDIS_CONNECTIONS_ARCHITECTURE.md](REDIS_CONNECTIONS_ARCHITECTURE.md)** - **🔴 НОВОЕ** Архитектура Redis соединений: 3 инстанса, singleton паттерны, Pub/Sub отдельное соединение
 
 ## ⚙️ Контроль качества
 

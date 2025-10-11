@@ -32,6 +32,10 @@ export * from './services/wallet-strategies/immediate-allocation-strategy';
 export * from './services/auto-registration-service';
 export * from './services/smart-pricing-service';
 
+// ✅ SERVER-ONLY: Order expiration service (Redis + background processes)
+export * from './services/order-expiration-service';
+export * from './services/order-cancellation-handler';
+
 // ✅ SERVER-ONLY: Monitoring and alerting services (server-only operations)
 export { WalletAlertsService } from './services/wallet-alerts-service';
 export { WalletMonitoringProcess } from './services/wallet-monitoring-process';

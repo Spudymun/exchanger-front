@@ -12,6 +12,7 @@ export interface CreateOrderRequest {
   walletId?: string; // ✅ ДОБАВЛЕНО: для привязки кошелька при создании
   bankId?: string; // ✅ ДОБАВЛЕНО: ID банка получателя
   fixedExchangeRate?: number; // ✅ ДОБАВЛЕНО: курс фиксации с frontend
+  expiresAt?: Date; // ✅ ДОБАВЛЕНО: время истечения заказа для автоматической отмены
 }
 
 export interface Order {
@@ -40,6 +41,10 @@ export interface Order {
   bankId?: string; // UUID банка получателя
   bankName?: string; // Название банка для UI (из relation)
   fixedExchangeRate?: number; // Курс на момент создания ордера
+  // ✅ WALLET FIELD: поле для привязки кошелька
+  walletId?: string; // UUID кошелька для заказа
+  // ✅ EXPIRATION FIELD: поле для автоматической отмены по таймауту
+  expiresAt?: Date; // Время истечения заказа (now + 90 мин)
   // ✅ УДАЛЕНО: email - теперь через userId -> User relation
   // ✅ УДАЛЕНО: tokenStandard - теперь через walletId -> Wallet relation
 }

@@ -3,6 +3,7 @@
 
 import { PrismaClient, OrderStatus as PrismaOrderStatus } from '@prisma/client';
 
+import { ORDER_EXPIRATION_TIME_MS } from '@repo/constants';
 import type { OrderStatus } from '@repo/constants';
 import type { OrderRepositoryInterface, Order, CreateOrderRequest } from '@repo/exchange-core';
 import { generatePublicOrderId } from '@repo/exchange-core';
@@ -32,6 +33,7 @@ interface PrismaOrder {
   processedAt: Date | null;
   bankId?: string | null; // ✅ UUID банка (не externalId)
   fixedExchangeRate?: { toNumber(): number } | null; // ✅ ДОБАВЛЕНО: зафиксированный курс
+  expiresAt?: Date | null; // ✅ ДОБАВЛЕНО: время истечения для cron job
   wallet?: {
     address: string;
   } | null;
@@ -72,6 +74,7 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
       });
 
       const publicId = generatePublicOrderId();
+      const expiresAt = new Date(Date.now() + ORDER_EXPIRATION_TIME_MS);
 
       const prismaOrder = await this.prisma.order.create({
         data: {
@@ -83,6 +86,7 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
           walletId: orderData.walletId || null, // ✅ ИСПРАВЛЕНО: поддержка привязки кошелька
           bankId: orderData.bankId || null,    // ✅ ДОБАВЛЕНО: поддержка банка
           fixedExchangeRate: orderData.fixedExchangeRate || null, // ✅ ДОБАВЛЕНО: фиксированный курс
+          expiresAt, // ✅ ДОБАВЛЕНО: время истечения заказа (90 минут)
           recipientData: orderData.recipientData
             ? JSON.parse(JSON.stringify(orderData.recipientData))
             : undefined,
@@ -620,6 +624,7 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
     }
   }
 
+  // eslint-disable-next-line complexity
   private mapPrismaToOrder(prismaOrder: PrismaOrder): Order {
     const order: Order = {
       id: prismaOrder.id,
@@ -639,6 +644,7 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
       bankId: prismaOrder.bankId || undefined, // ✅ UUID банка
       bankName: prismaOrder.bank?.name || undefined, // ✅ ДОБАВЛЕНО: название банка из relation
       fixedExchangeRate: prismaOrder.fixedExchangeRate ? prismaOrder.fixedExchangeRate.toNumber() : undefined, // ✅ ДОБАВЛЕНО: зафиксированный курс
+      expiresAt: prismaOrder.expiresAt || undefined, // ✅ ДОБАВЛЕНО: время истечения для cron job
     };
     
     // ✅ ДОБАВЛЕНО: email из user relation (если загружен)

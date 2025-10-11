@@ -1,5 +1,18 @@
 # Turbopack + ioredis: Server Dependencies Leaking into Client Bundle
 
+> ⚠️ **ВНИМАНИЕ: Документ НЕ актуален для текущей конфигурации проекта**
+>
+> В проекте **Turbopack отключен** - используется только стандартный Webpack bundler.
+>
+> Эта документация актуальна **только если вы планируете включить Turbopack** в режиме разработки (`npm run dev --turbopack`).
+>
+> **Текущее решение для client/server bundle separation** описано в:
+>
+> - `WEBPACK_EXTERNALS_MONOREPO_MODULE_RESOLUTION.md` - для monorepo пакетов
+> - `next.config.js` - использует `serverExternalPackages` + `webpack.resolve.alias = false`
+
+---
+
 ## Проблема
 
 При использовании **Next.js 15 с Turbopack** в режиме разработки (`npm run dev --turbopack`) возникает ошибка:
