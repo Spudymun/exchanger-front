@@ -13,6 +13,7 @@ import {
   createInternalServerError,
   securityEnhancedOrderStatusSchema,
   securityEnhancedUserOrdersPaginationSchema,
+  sendCancellationNotification,
   /*
   // ⚠️ LEGACY IMPORTS - ЗАКОММЕНТИРОВАНЫ ДЛЯ BACKWARD COMPATIBILITY
   // 
@@ -36,52 +37,8 @@ import { createTRPCRouter } from '../../init';
 import { protectedProcedure } from '../../middleware/auth';
 
 /**
- * 🆕 TASK: Отправка уведомления операторам об отмене заявки пользователем
- * Паттерн скопирован из apps/web/src/server/trpc/routers/exchange.ts:sendTelegramNotification
- */
-async function sendCancellationNotification(order: Order, userEmail: string) {
-  const telegramBotUrl = process.env.TELEGRAM_BOT_URL;
-  if (!telegramBotUrl) {
-    console.warn('TELEGRAM_BOT_URL not configured, skipping cancellation notification');
-    return;
-  }
-
-  try {
-    await fetch(`${telegramBotUrl}/api/notify-operators`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        order: {
-          id: order.id,
-          email: userEmail,
-          cryptoAmount: order.cryptoAmount,
-          currency: order.currency,
-          uahAmount: order.uahAmount,
-          status: 'cancelled',
-        },
-        // ⚠️ ВАЖНО: depositAddress ОБЯЗАТЕЛЕН в payload схеме
-        depositAddress: order.depositAddress || 'N/A',
-        walletType: 'fresh', // Неважно для отмены, но обязательно по схеме
-        // 🆕 НОВЫЙ флаг для определения типа уведомления
-        notificationType: 'order_cancelled',
-      }),
-    });
-
-    console.log(`✅ Telegram notification sent for cancelled order ${order.id}`);
-  } catch (error) {
-    console.error('Failed to send Telegram cancellation notification', {
-      orderId: order.id,
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-    // НЕ прерываем выполнение - отмена заявки успешна даже без уведомления
-  }
-}
-
-/**
  * 🆕 TASK: Отправка уведомления операторам об оплате заявки пользователем
- * Паттерн скопирован из sendCancellationNotification выше
+ * Паттерн скопирован из sendCancellationNotification (теперь в @repo/utils)
  */
 async function sendPaidNotification(order: Order, userEmail: string) {
   const telegramBotUrl = process.env.TELEGRAM_BOT_URL;
@@ -98,7 +55,8 @@ async function sendPaidNotification(order: Order, userEmail: string) {
       },
       body: JSON.stringify({
         order: {
-          id: order.id,
+          id: order.publicId, // ✅ publicId для отображения в Telegram
+          internalId: order.id, // ✅ UUID для связи с БД (обновление сообщений)
           email: userEmail,
           cryptoAmount: order.cryptoAmount,
           currency: order.currency,
@@ -207,7 +165,7 @@ export const ordersRouter = createTRPCRouter({
       console.log(`❌ Заявка ${order.id} отменена пользователем ${user.email}`);
 
       // 🆕 TASK: Отправка уведомления операторам об отмене
-      await sendCancellationNotification(updatedOrder, user.email);
+      await sendCancellationNotification(updatedOrder, user.email, 'user');
 
       return {
         id: updatedOrder.id,

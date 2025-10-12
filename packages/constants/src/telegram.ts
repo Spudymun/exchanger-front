@@ -138,23 +138,37 @@ export const TELEGRAM_OPERATOR_MESSAGES = {
     ].join('\n'),
 
     // 🆕 TASK: Шаблон для уведомления об отмене заявки
-    ORDER_CANCELLED_MESSAGE: (order: {
-      id: string;
-      email: string;
-      cryptoAmount: string;
-      currency: string;
-      uahAmount: string;
-    }) => [
-      `❌ **Заявка отменена пользователем**`,
-      ``,
-      `📋 Заявка: #${order.id}`,
-      `📧 Email: ${order.email}`,
-      `💎 Сумма: ${order.cryptoAmount} ${order.currency}`,
-      `💰 Эквивалент: ${order.uahAmount} UAH`,
-      `👤 Инициатор: Пользователь`,
-      ``,
-      `ℹ️ Заявка была отменена до завершения обработки`,
-    ].join('\n'),
+    ORDER_CANCELLED_MESSAGE: (
+      order: {
+        id: string;
+        email: string;
+        cryptoAmount: string;
+        currency: string;
+        uahAmount: string;
+      },
+      initiator?: 'user' | 'operator' | 'system'
+    ) => {
+      // Определяем заголовок и причину в зависимости от инициатора
+      const title = initiator === 'system' 
+        ? '⏱️ **Заявка отменена автоматически**'
+        : '❌ **Заявка отменена пользователем**';
+      
+      const reason = initiator === 'system'
+        ? '⏰ Причина: Истекло время оплаты'
+        : '👤 Инициатор: Пользователь';
+
+      return [
+        title,
+        ``,
+        `📋 Заявка: #${order.id}`,
+        `📧 Email: ${order.email}`,
+        `💎 Сумма: ${order.cryptoAmount} ${order.currency}`,
+        `💰 Эквивалент: ${order.uahAmount} UAH`,
+        reason,
+        ``,
+        `ℹ️ Заявка была отменена до завершения обработки`,
+      ].join('\n');
+    },
 
     // 🆕 TASK: Шаблон для уведомления об оплате заявки
     ORDER_PAID_MESSAGE: (order: {

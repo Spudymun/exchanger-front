@@ -1,5 +1,5 @@
 import type { Order } from '@repo/exchange-core';
-import { createEnvironmentLogger } from '@repo/utils';
+import { createEnvironmentLogger, isUUID } from '@repo/utils';
 import { z } from 'zod';
 
 import { getConfiguredPrismaClient } from '../../utils/get-prisma';
@@ -88,9 +88,11 @@ export const telegramBotRouter = createTRPCRouter({
         logger.debug('IMPORTING_ORDER_MANAGER', { source: '@repo/exchange-core' });
         const { orderManager } = await import('@repo/exchange-core');
 
-        // Найти заявку
+        // Найти заявку (поддержка UUID и publicId)
         logger.debug('LOOKING_UP_ORDER_FOR_TELEGRAM', { orderId: input.orderId });
-        const order = await orderManager.findById(input.orderId);
+        const order = isUUID(input.orderId)
+          ? await orderManager.findById(input.orderId)
+          : await orderManager.findByPublicId(input.orderId);
 
         if (!order) {
           logger.warn('ORDER_NOT_FOUND_FOR_TELEGRAM', { orderId: input.orderId });
@@ -146,19 +148,21 @@ export const telegramBotRouter = createTRPCRouter({
           };
         }
 
-        // Попытка назначения заявки
+        // Попытка назначения заявки (используем UUID из найденного order)
         logger.debug('ASSIGNING_ORDER_TO_TELEGRAM_OPERATOR', {
           orderId: input.orderId,
+          internalOrderId: order.id,
           operatorId: operator.id,
           telegramOperatorId: input.telegramOperatorId,
         });
 
-        const updatedOrder = await orderManager.assignToOperator(input.orderId, operator.id);
+        const updatedOrder = await orderManager.assignToOperator(order.id, operator.id);
 
         if (!updatedOrder) {
           // Concurrent conflict - другой оператор успел взять заявку
           logger.warn('CONCURRENT_ASSIGNMENT_CONFLICT', {
             orderId: input.orderId,
+            internalOrderId: order.id,
             telegramOperatorId: input.telegramOperatorId,
           });
 
@@ -234,9 +238,11 @@ export const telegramBotRouter = createTRPCRouter({
         // Валидация оператора
         const operator = await validateTelegramOperator(input.telegramOperatorId);
 
-        // Получение и проверка заявки
+        // Получение и проверка заявки (поддержка UUID и publicId)
         const { orderManager } = await import('@repo/exchange-core');
-        const order = await orderManager.findById(input.orderId);
+        const order = isUUID(input.orderId)
+          ? await orderManager.findById(input.orderId)
+          : await orderManager.findByPublicId(input.orderId);
 
         if (!order) {
           return {
@@ -265,8 +271,8 @@ export const telegramBotRouter = createTRPCRouter({
           };
         }
 
-        // Обновление статуса
-        const updatedOrder = await orderManager.updateStatus(input.orderId, input.status);
+        // Обновление статуса (используем UUID из найденного order)
+        const updatedOrder = await orderManager.updateStatus(order.id, input.status);
 
         if (!updatedOrder) {
           return {

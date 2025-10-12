@@ -10,7 +10,8 @@ const logger = createEnvironmentLogger('telegram-notify-operators');
 
 interface NotificationPayload {
   order: {
-    id: string;
+    id: string; // publicId для отображения
+    internalId?: string; // UUID для связи с БД (обновление сообщений)
     email: string;
     cryptoAmount: string;
     currency: string;
@@ -21,6 +22,10 @@ interface NotificationPayload {
   depositAddress: string;
   walletType: 'fresh' | 'reused';
   notificationType?: 'new_order' | 'order_cancelled' | 'order_paid'; // 🆕 ДОБАВИЛИ 'order_paid'
+  metadata?: {
+    initiator?: 'user' | 'operator' | 'system'; // 🆕 Инициатор отмены
+    cancelledAt?: string;
+  };
 }
 
 interface PayloadValidationResult {
@@ -111,11 +116,14 @@ function validatePayload(body: unknown): PayloadValidationResult {
  * Создание сообщения для операторов
  */
 function createOperatorMessage(payload: NotificationPayload): string {
-  const { order, depositAddress, walletType, notificationType } = payload;
+  const { order, depositAddress, walletType, notificationType, metadata } = payload;
 
   // 🆕 TASK: Обработка уведомления об отмене заявки
   if (notificationType === 'order_cancelled') {
-    return TELEGRAM_OPERATOR_MESSAGES.TEMPLATES.ORDER_CANCELLED_MESSAGE(order);
+    return TELEGRAM_OPERATOR_MESSAGES.TEMPLATES.ORDER_CANCELLED_MESSAGE(
+      order,
+      metadata?.initiator
+    );
   }
 
   // 🆕 TASK: Обработка уведомления об оплате заявки
@@ -193,13 +201,13 @@ async function notifyOperator(
   operatorId: string,
   message: string,
   keyboard: InlineKeyboard,
-  orderId: string,
+  internalOrderId: string, // UUID для сохранения в БД
   topicId?: number,
   notificationType?: TelegramNotificationType
 ): Promise<boolean> {
   logger.debug('TELEGRAM_NOTIFY_SINGLE_OPERATOR', {
     operatorId: operatorId.trim(),
-    orderId,
+    internalOrderId,
     messageLength: message.length,
     keyboardButtons: keyboard.inline_keyboard.length,
     topicId: topicId || 'none',
@@ -228,7 +236,7 @@ async function notifyOperator(
 
     logger.debug('TELEGRAM_API_REQUEST', {
       operatorId: operatorId.trim(),
-      orderId,
+      internalOrderId,
       topicId: topicId || 'General',
       url: telegramApiUrl.replace(process.env.TELEGRAM_BOT_TOKEN || '', '[TOKEN]'),
       payloadSize: JSON.stringify(requestPayload).length,
@@ -242,7 +250,7 @@ async function notifyOperator(
 
     logger.debug('TELEGRAM_API_RESPONSE', {
       operatorId: operatorId.trim(),
-      orderId,
+      internalOrderId,
       topicId: topicId || 'General',
       status: response.status,
       statusText: response.statusText,
@@ -254,7 +262,7 @@ async function notifyOperator(
       const responseData = await response.json();
       if (responseData.result?.message_id && notificationType) {
         await saveTelegramMessageInfo({
-          orderId,
+          orderId: internalOrderId, // ✅ UUID для связи с Order.id
           chatId: operatorId.trim(),
           messageId: responseData.result.message_id,
           notificationType,
@@ -264,7 +272,7 @@ async function notifyOperator(
 
       logger.info('Operator notified successfully', {
         operatorId: operatorId.trim(),
-        orderId,
+        internalOrderId,
         topicId: topicId || 'General',
         messageId: responseData.result?.message_id,
         responseStatus: response.status,
@@ -274,7 +282,7 @@ async function notifyOperator(
       const responseText = await response.text();
       logger.error('TELEGRAM_API_ERROR_RESPONSE', {
         operatorId: operatorId.trim(),
-        orderId,
+        internalOrderId,
         topicId: topicId || 'General',
         status: response.status,
         statusText: response.statusText,
@@ -285,7 +293,7 @@ async function notifyOperator(
   } catch (error) {
     logger.warn('Failed to notify operator', {
       operatorId: operatorId.trim(),
-      orderId,
+      internalOrderId,
       topicId: topicId || 'General',
       error: error instanceof Error ? error.message : 'Unknown error',
       errorName: error instanceof Error ? error.name : 'UnknownError',
@@ -356,7 +364,8 @@ function getTopicIdForNotificationType(
 async function sendOperatorNotifications(
   message: string,
   keyboard: InlineKeyboard,
-  orderId: string,
+  publicOrderId: string, // publicId для отображения
+  internalOrderId: string, // UUID для сохранения в БД
   notificationType?: 'new_order' | 'order_cancelled' | 'order_paid'
 ): Promise<{ notifiedCount: number; errorCount: number; totalOperators: number }> {
   
@@ -371,7 +380,8 @@ async function sendOperatorNotifications(
       notificationType: notificationType || 'new_order',
       chatId: ordersChatId,
       topicId: topicId || 'General',
-      orderId,
+      publicOrderId,
+      internalOrderId,
       messageLength: message.length,
     });
     
@@ -379,14 +389,15 @@ async function sendOperatorNotifications(
       ordersChatId, 
       message, 
       keyboard, 
-      orderId, 
+      internalOrderId, // ✅ UUID для сохранения в БД
       topicId,
       notificationType || 'new_order'
     );
     
     if (success) {
       logger.info('Notification sent to Orders channel', {
-        orderId,
+        publicOrderId,
+        internalOrderId,
         notificationType: notificationType || 'new_order',
         chatId: ordersChatId,
         topicId: topicId || 'General',
@@ -399,7 +410,8 @@ async function sendOperatorNotifications(
       };
     } else {
       logger.warn('Failed to send to Orders channel, falling back to broadcast', {
-        orderId,
+        publicOrderId,
+        internalOrderId,
         chatId: ordersChatId,
       });
       // Fallback будет выполнен ниже
@@ -410,19 +422,21 @@ async function sendOperatorNotifications(
   logger.info('TELEGRAM_ORDERS_FALLBACK_BROADCAST', {
     reason: ordersChatId ? 'Channel send failed' : 'Orders channel not configured',
     notificationType: notificationType || 'new_order',
-    orderId,
+    publicOrderId,
+    internalOrderId,
   });
   
   const operatorIds = getAuthorizedOperators();
   
   logger.info('TELEGRAM_NOTIFY_ALL_OPERATORS_START', {
-    orderId,
+    publicOrderId,
+    internalOrderId,
     totalOperators: operatorIds.length,
     operatorIds: operatorIds.join(','),
   });
   
   if (operatorIds.length === 0) {
-    logger.warn('TELEGRAM_NO_AUTHORIZED_OPERATORS', { orderId });
+    logger.warn('TELEGRAM_NO_AUTHORIZED_OPERATORS', { publicOrderId, internalOrderId });
     return { notifiedCount: 0, errorCount: 0, totalOperators: 0 };
   }
 
@@ -430,7 +444,8 @@ async function sendOperatorNotifications(
   
   for (const operatorId of operatorIds) {
     logger.debug('TELEGRAM_NOTIFY_OPERATOR_ATTEMPT', {
-      orderId,
+      publicOrderId,
+      internalOrderId,
       operatorId,
       attemptNumber: notifiedCount + 1,
       totalOperators: operatorIds.length,
@@ -440,20 +455,22 @@ async function sendOperatorNotifications(
       operatorId, 
       message, 
       keyboard, 
-      orderId,
+      internalOrderId, // ✅ UUID для сохранения в БД
       undefined,
       notificationType || 'new_order'
     );
     if (success) {
       notifiedCount++;
       logger.debug('TELEGRAM_NOTIFY_OPERATOR_SUCCESS', {
-        orderId,
+        publicOrderId,
+        internalOrderId,
         operatorId,
         successCount: notifiedCount,
       });
     } else {
       logger.warn('TELEGRAM_NOTIFY_OPERATOR_FAILED', {
-        orderId,
+        publicOrderId,
+        internalOrderId,
         operatorId,
         failedCount: (operatorIds.length - notifiedCount - 1),
       });
@@ -463,7 +480,8 @@ async function sendOperatorNotifications(
   const errorCount = operatorIds.length - notifiedCount;
   
   logger.info('TELEGRAM_NOTIFY_ALL_OPERATORS_COMPLETE', {
-    orderId,
+    publicOrderId,
+    internalOrderId,
     totalOperators: operatorIds.length,
     notifiedCount,
     errorCount,
@@ -499,10 +517,26 @@ async function processNotifications(req: NextApiRequest, res: NextApiResponse): 
   }
 
   const payload = req.body as NotificationPayload;
+
+  // ✅ ВАЖНО: internalId ОБЯЗАТЕЛЕН для корректной работы с БД
+  if (!payload.order.internalId) {
+    logger.error('MISSING_INTERNAL_ORDER_ID', {
+      publicId: payload.order.id,
+      notificationType: payload.notificationType,
+    });
+    res.status(HTTP_STATUS.BAD_REQUEST).json({ 
+      error: 'Missing required field: order.internalId' 
+    });
+    return;
+  }
   
   // Создание сообщения и клавиатуры
   const message = createOperatorMessage(payload);
-  const keyboard = createInlineKeyboard(payload.order.id, payload.notificationType);
+  // ✅ ВАЖНО: Используем internalId для callback_data (UUID для БД операций)
+  const keyboard = createInlineKeyboard(
+    payload.order.internalId, // UUID для callback
+    payload.notificationType
+  );
 
   // Получение и проверка операторов
   const operatorIds = getAuthorizedOperators();
@@ -521,9 +555,32 @@ async function processNotifications(req: NextApiRequest, res: NextApiResponse): 
   const result = await sendOperatorNotifications(
     message,
     keyboard,
-    payload.order.id,
+    payload.order.id, // publicId для отображения
+    payload.order.internalId, // UUID для БД
     payload.notificationType // Передаем тип для роутинга по каналам
   );
+
+  // 🆕 ВАЖНО: Для отмененных заявок обновляем ВСЕ существующие сообщения
+  if (payload.notificationType === 'order_cancelled' && payload.order.internalId) {
+    const { updateAllOrderMessages } = await import('../../src/lib/telegram-message-tracker');
+    
+    const cancelledMessage = message; // Используем то же сообщение что отправили
+    const cancelledKeyboard = { inline_keyboard: [[{
+      text: '📋 Детали',
+      callback_data: `details_${payload.order.internalId}`, // ✅ UUID для callback
+    }]] };
+
+    const updatedCount = await updateAllOrderMessages({
+      orderId: payload.order.internalId, // ✅ UUID для поиска в БД
+      newText: cancelledMessage,
+      newKeyboard: cancelledKeyboard,
+    });
+
+    logger.info('UPDATED_EXISTING_MESSAGES_FOR_CANCELLED_ORDER', {
+      orderId: payload.order.id,
+      updatedCount,
+    });
+  }
 
   logger.info('Notification batch completed', {
     orderId: payload.order.id,

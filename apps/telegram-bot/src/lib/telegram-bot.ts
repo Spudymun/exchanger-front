@@ -564,7 +564,7 @@ async function handleTakeOrderCommand(update: TelegramUpdate): Promise<string> {
 
     const successMessage = (
       `✅ Заявка взята в работу!\n\n` +
-      `📋 Заявка #${result.order.id}\n` +
+      `📋 Заявка #${result.order.publicId}\n` +
       `💰 Сумма: ${result.order.cryptoAmount} ${result.order.currency}\n` +
       `🔄 Статус: ${result.order.status}\n\n` +
       `Используйте /orders для просмотра деталей.`
@@ -713,7 +713,7 @@ async function handleCompleteOrderCommand(update: TelegramUpdate): Promise<strin
 
     const successMessage = (
       `✅ Заявка завершена!\n\n` +
-      `📋 Заявка #${result.order.id}\n` +
+      `📋 Заявка #${result.order.publicId}\n` +
       `💰 Сумма: ${result.order.cryptoAmount} ${result.order.currency}\n` +
       `🔄 Статус: ${result.order.status}\n\n` +
       `Заявка успешно завершена. Средства переведены клиенту.`
@@ -858,8 +858,11 @@ async function handleCallbackQuery(update: TelegramUpdate): Promise<string | nul
     callbackQuery.data.startsWith('cancel_complete_') ||
     callbackQuery.data.startsWith('cancel_order_') ||
     callbackQuery.data.startsWith('select_cancel_reason_') ||
+    callbackQuery.data.startsWith('scr_') || // ✅ Короткий формат для select cancel reason
     callbackQuery.data.startsWith('back_to_order_') ||
-    callbackQuery.data.startsWith('confirm_cancel_')
+    callbackQuery.data.startsWith('bto_') || // ✅ Короткий формат для back to order
+    callbackQuery.data.startsWith('confirm_cancel_') ||
+    callbackQuery.data.startsWith('ccl_') // ✅ Короткий формат для confirm cancel
   ) {
     return null;
   }
@@ -890,7 +893,7 @@ export async function completeOrderViaCallback(
   if (result?.success && result.order) {
     const successMessage =
       `✅ Заявка завершена!\n\n` +
-      `📋 Заявка #${result.order.id}\n` +
+      `📋 Заявка #${result.order.publicId}\n` +
       `💰 Сумма: ${result.order.cryptoAmount} ${result.order.currency}\n` +
       `🔄 Статус: ${result.order.status}\n\n` +
       `Заявка успешно завершена. Средства переведены клиенту.`;
@@ -956,7 +959,7 @@ export async function cancelOrderViaCallback(
   if (result?.success && result.order) {
     const successMessage =
       `❌ Заявка отменена\n\n` +
-      `📋 Заявка #${result.order.id}\n` +
+      `📋 Заявка #${result.order.publicId}\n` +
       `💰 Сумма: ${result.order.cryptoAmount} ${result.order.currency}\n` +
       `🔄 Статус: ${result.order.status}\n` +
       `📝 Причина отмены: ${cancellationReason}\n\n` +

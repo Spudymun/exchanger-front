@@ -155,7 +155,8 @@ async function sendTelegramNotification(
       },
       body: JSON.stringify({
         order: {
-          id: order.id,
+          id: order.publicId, // ✅ publicId для отображения в Telegram
+          internalId: order.id, // ✅ UUID для связи с БД (обновление сообщений)
           email: orderRequest.email,
           cryptoAmount: order.cryptoAmount,
           currency: order.currency,

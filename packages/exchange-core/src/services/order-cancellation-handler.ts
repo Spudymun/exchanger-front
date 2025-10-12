@@ -1,7 +1,7 @@
 import { ORDER_STATUSES } from '@repo/constants';
-import { createEnvironmentLogger } from '@repo/utils';
+import { createEnvironmentLogger, sendCancellationNotification } from '@repo/utils';
 
-import { orderManager } from '../data/manager';
+import { orderManager, userManager } from '../data/manager';
 import type { Order } from '../types/order';
 
 const logger = createEnvironmentLogger('OrderCancellationHandler');
@@ -56,14 +56,43 @@ export class OrderCancellationHandler {
       }
 
       // 4. Атомарно обновить статус заказа на cancelled
-      const updatedOrder = await orderManager.update(orderId, {
-        status: ORDER_STATUSES.CANCELLED,
-        processedAt: new Date(),
-        updatedAt: new Date(),
+      // ✅ ВАЖНО: Используем Prisma updateMany с WHERE для атомарности
+      const { getPrismaClient } = await import('@repo/session-management');
+      const databaseUrl = process.env.DATABASE_URL;
+      if (!databaseUrl) {
+        logger.error('DATABASE_URL_NOT_CONFIGURED', { orderId });
+        return;
+      }
+
+      const prisma = getPrismaClient({ url: databaseUrl });
+
+      const updateResult = await prisma.order.updateMany({
+        where: {
+          id: orderId,
+          status: 'PENDING', // ✅ Prisma UPPERCASE enum
+        },
+        data: {
+          status: 'CANCELLED', // ✅ Prisma UPPERCASE enum
+          processedAt: new Date(),
+          updatedAt: new Date(),
+        },
       });
 
+      // ✅ Проверка: если count=0, значит другой процесс уже обработал
+      const NO_ROWS_UPDATED = 0;
+      if (updateResult.count === NO_ROWS_UPDATED) {
+        logger.info('ORDER_ALREADY_PROCESSED_BY_ANOTHER_PROCESS', {
+          orderId,
+          reason: 'status_not_pending_during_update',
+        });
+        return; // ✅ НЕ ОТПРАВЛЯЕМ уведомление - дубликат отмены
+      }
+
+      // 5. Загружаем обновленный заказ для отправки уведомления
+      const updatedOrder = await orderManager.findById(orderId);
+
       if (!updatedOrder) {
-        logger.error('FAILED_TO_UPDATE_ORDER_STATUS', { orderId });
+        logger.error('UPDATED_ORDER_NOT_FOUND', { orderId });
         return;
       }
 
@@ -76,7 +105,10 @@ export class OrderCancellationHandler {
       // 5. Компенсационные действия: освободить кошелек
       await this.releaseOrderWallet(order);
 
-      // 6. Опционально: отправить уведомление пользователю
+      // 6. 🆕 Отправить уведомление операторам об автоматической отмене
+      await this.notifyOperatorsAboutCancellation(updatedOrder);
+
+      // 7. Опционально: отправить уведомление пользователю
       await this.notifyUserAboutExpiration(order);
     } catch (error) {
       logger.error('ERROR_HANDLING_EXPIRED_ORDER', {
@@ -116,6 +148,39 @@ export class OrderCancellationHandler {
         error: error instanceof Error ? error.message : String(error),
       });
       // Не бросаем ошибку - это не должно блокировать отмену заказа
+    }
+  }
+
+  /**
+   * Уведомить операторов об автоматической отмене заказа
+   *
+   * @architecture Использует централизованную функцию из @repo/utils
+   */
+  private async notifyOperatorsAboutCancellation(order: Order): Promise<void> {
+    try {
+      // Получить email пользователя из БД
+      const user = await userManager.findById(order.userId);
+      if (!user) {
+        logger.warn('USER_NOT_FOUND_FOR_NOTIFICATION', {
+          orderId: order.id,
+          userId: order.userId,
+        });
+        return;
+      }
+
+      // Отправить уведомление с инициатором 'system'
+      await sendCancellationNotification(order, user.email, 'system');
+
+      logger.info('OPERATOR_NOTIFICATION_SENT_FOR_AUTO_CANCELLATION', {
+        orderId: order.id,
+        userEmail: user.email,
+      });
+    } catch (error) {
+      logger.error('FAILED_TO_NOTIFY_OPERATORS_ABOUT_CANCELLATION', {
+        orderId: order.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      // Не бросаем ошибку - уведомление не должно блокировать отмену
     }
   }
 

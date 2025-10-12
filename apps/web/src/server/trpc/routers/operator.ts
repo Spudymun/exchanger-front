@@ -1,5 +1,5 @@
 import { ORDER_STATUS_CONFIG, VALIDATION_LIMITS, ORDER_STATUSES } from '@repo/constants';
-import { orderManager } from '@repo/exchange-core';
+import { orderManager, validateOrderAccess } from '@repo/exchange-core';
 import { WalletPoolManagerFactory, OrderExpirationService } from '@repo/exchange-core/server';
 import {
   paginateOrders,
@@ -206,6 +206,20 @@ export const operatorRouter = createTRPCRouter({
       if (!order) {
         logger.warn('ORDER_NOT_FOUND_FOR_STATUS_UPDATE', { orderId: input.orderId });
         throw createNotFoundError(`Order with ID "${input.orderId}" not found`);
+      }
+
+      // 🔒 SECURITY: Если оператор меняет статус на CANCELLED, проверить владение заказом
+      if (input.status === ORDER_STATUSES.CANCELLED) {
+        logger.debug('VALIDATING_ORDER_OWNERSHIP_FOR_CANCELLATION', {
+          orderId: input.orderId,
+          operatorEmail: ctx.user.email,
+        });
+
+        await validateOrderAccess(input.orderId, ctx.user.email);
+        logger.info('ORDER_OWNERSHIP_VALIDATED', {
+          orderId: input.orderId,
+          operatorEmail: ctx.user.email,
+        });
       }
 
       // Проверка валидных переходов статусов

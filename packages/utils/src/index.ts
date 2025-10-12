@@ -10,6 +10,7 @@ export * from './error-system/error-mapper';
 export * from './error-system/exchange-errors';
 
 export * from './order-status';
+export * from './order-notifications';
 export * from './card-utils';
 export * from './logger';
 export * from './context-mappers';
