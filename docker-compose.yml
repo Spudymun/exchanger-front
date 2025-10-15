@@ -50,6 +50,31 @@ services:
       timeout: 10s
       retries: 3
 
+  # Bull Board Dashboard (standalone мониторинг очередей)
+  bull-board-dashboard:
+    build:
+      context: .
+      dockerfile: ./apps/bull-board-dashboard/Dockerfile
+    container_name: exchanger-bull-board
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - REDIS_URL=redis://redis:6379
+      - REDIS_DB_QUEUE=1
+      - PORT=3010
+    ports:
+      - "3010:3010"
+    networks:
+      - exchanger-network
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3010/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine

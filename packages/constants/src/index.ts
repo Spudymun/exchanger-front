@@ -69,3 +69,6 @@ export * from './email-config';
 
 // Telegram Bot API and notification constants
 export * from './telegram';
+
+// Queue configuration
+export * from './queue-config';

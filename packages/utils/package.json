@@ -4,7 +4,9 @@
   "private": true,
   "exports": {
     ".": "./src/index.ts",
-    "./validation/security-enhanced-utils": "./src/validation/security-enhanced-utils.ts"
+    "./validation/security-enhanced-utils": "./src/validation/security-enhanced-utils.ts",
+    "./telegram-queue": "./src/telegram-queue/index.ts",
+    "./order-notifications": "./src/order-notifications.ts"
   },
   "scripts": {
     "lint": "eslint . --max-warnings 0",

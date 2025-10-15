@@ -5,7 +5,7 @@ const EMPTY_MODULE = './lib/empty.js';
 const nextConfig = {
     reactStrictMode: true,
     transpilePackages: ["@repo/ui", "@repo/exchange-core", "@repo/constants", "@repo/utils"],
-    serverExternalPackages: ['@trpc/server', '@repo/session-management', 'ioredis'],
+    serverExternalPackages: ['@trpc/server', '@repo/session-management', 'ioredis', 'bullmq'],
     
     // ✅ Turbopack config for dev mode
     turbopack: {

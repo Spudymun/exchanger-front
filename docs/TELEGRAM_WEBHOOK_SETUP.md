@@ -71,7 +71,7 @@ https://api.telegram.org/bot8080670068:AAG1LtOO0INbJFOXhj5--WHWRvImewP866E/setWe
 ### Пример:
 
 ```
-https://api.telegram.org/bot8080670068:AAG1LtOO0INbJFOXhj5--WHWRvImewP866E/setWebhook?url=https://19db6dbb119e.ngrok-free.app/api/webhook
+https://api.telegram.org/bot8080670068:AAG1LtOO0INbJFOXhj5--WHWRvImewP866E/setWebhook?url=https://6baabd8174d1.ngrok-free.app/api/webhook
 ```
 
 #### Вариант B: Через PowerShell

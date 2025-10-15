@@ -132,6 +132,11 @@ async function allocateWalletForOrder(currency: CryptoCurrency, tokenStandard?: 
 
 /**
  * 🆕 TASK 9.3: Send Telegram notification to operators
+ *
+ * @architecture
+ * - Использует BullMQ очередь для надежной доставки
+ * - Graceful degradation: fallback к прямой отправке при проблемах с Redis
+ * - НЕ блокирует создание заказа при сбоях уведомлений
  */
 async function sendTelegramNotification(
   order: Order,
@@ -139,43 +144,36 @@ async function sendTelegramNotification(
   depositAddress: string,
   usedOldestOccupiedWallet: boolean
 ) {
-  const telegramBotUrl = process.env.TELEGRAM_BOT_URL;
-  if (!telegramBotUrl) {
-    logger.warn('TELEGRAM_BOT_URL not configured, skipping Telegram notification', {
-      orderId: order.id,
-    });
-    return;
-  }
-
   try {
-    await fetch(`${telegramBotUrl}/api/notify-operators`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    const { getTelegramQueue } = await import('@repo/utils/telegram-queue');
+    const queue = await getTelegramQueue();
+
+    await queue.enqueue({
+      orderId: order.id,
+      notificationType: 'new_order',
+      payload: {
         order: {
           id: order.publicId, // ✅ publicId для отображения в Telegram
           internalId: order.id, // ✅ UUID для связи с БД (обновление сообщений)
           email: orderRequest.email,
-          cryptoAmount: order.cryptoAmount,
+          cryptoAmount: String(order.cryptoAmount),
           currency: order.currency,
-          uahAmount: order.uahAmount,
+          uahAmount: String(order.uahAmount),
           status: order.status,
-          createdAt: order.createdAt,
+          createdAt: order.createdAt.toISOString(),
         },
         depositAddress,
         walletType: usedOldestOccupiedWallet ? 'reused' : 'fresh',
-        notificationType: 'new_order', // 🆕 Указываем тип для роутинга в правильную тему
-      }),
+        notificationType: 'new_order',
+      },
     });
-    
-    logger.info('Telegram notification sent successfully', {
+
+    logger.info('Telegram notification enqueued successfully', {
       orderId: order.id,
       walletType: usedOldestOccupiedWallet ? 'reused' : 'fresh',
     });
   } catch (telegramError) {
-    logger.error('Failed to send Telegram notification', {
+    logger.error('Failed to enqueue Telegram notification', {
       orderId: order.id,
       error: telegramError instanceof Error ? telegramError.message : UNKNOWN_ERROR_MESSAGE,
     });

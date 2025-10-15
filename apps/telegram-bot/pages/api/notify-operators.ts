@@ -1,6 +1,6 @@
 
 import { HTTP_STATUS, TELEGRAM_OPERATOR_MESSAGES, TELEGRAM_API } from '@repo/constants';
-import type { TelegramNotificationType } from '@repo/constants';
+import type { TelegramNotificationType, TelegramNotificationPayload } from '@repo/constants';
 import { createEnvironmentLogger, gracefulHandler } from '@repo/utils';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -8,25 +8,8 @@ import { saveTelegramMessageInfo } from '../../src/lib/telegram-message-tracker'
 
 const logger = createEnvironmentLogger('telegram-notify-operators');
 
-interface NotificationPayload {
-  order: {
-    id: string; // publicId для отображения
-    internalId?: string; // UUID для связи с БД (обновление сообщений)
-    email: string;
-    cryptoAmount: string;
-    currency: string;
-    uahAmount: string;
-    status?: string; // 🆕 Опциональное поле для отмены
-    createdAt?: string;
-  };
-  depositAddress: string;
-  walletType: 'fresh' | 'reused';
-  notificationType?: 'new_order' | 'order_cancelled' | 'order_paid'; // 🆕 ДОБАВИЛИ 'order_paid'
-  metadata?: {
-    initiator?: 'user' | 'operator' | 'system'; // 🆕 Инициатор отмены
-    cancelledAt?: string;
-  };
-}
+// ✅ Используем централизованный тип из @repo/constants
+type NotificationPayload = TelegramNotificationPayload;
 
 interface PayloadValidationResult {
   isValid: boolean;

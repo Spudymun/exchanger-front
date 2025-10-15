@@ -186,6 +186,7 @@
         "NODE_ENV",
         "DATABASE_URL",
         "REDIS_URL",
+        "REDIS_DB_QUEUE",
         "FORCE_MOCK_MODE",
         "SESSION_ENVIRONMENT",
         "NEXTAUTH_URL",

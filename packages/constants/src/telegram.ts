@@ -304,3 +304,32 @@ export interface TelegramOrderMessageInfo {
   topicId?: number;
   notificationType: TelegramNotificationType;
 }
+// ========================================
+// 🆕 TELEGRAM NOTIFICATIONS: Типы для BullMQ очереди
+// ========================================
+
+/**
+ * Payload для Telegram уведомления через BullMQ
+ *
+ * @architecture Используется в web (Producer) и telegram-bot (Consumer)
+ * @note Синхронизирован с NotificationPayload из notify-operators.ts
+ */
+export interface TelegramNotificationPayload {
+  order: {
+    id: string; // publicId для отображения
+    internalId: string; // UUID для БД операций
+    email: string;
+    cryptoAmount: string;
+    currency: string;
+    uahAmount: string;
+    status?: string;
+    createdAt?: string;
+  };
+  depositAddress: string;
+  walletType: 'fresh' | 'reused';
+  notificationType: TelegramNotificationType;
+  metadata?: {
+    initiator?: 'user' | 'operator' | 'system';
+    cancelledAt?: string;
+  };
+}

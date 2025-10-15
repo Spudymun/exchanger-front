@@ -38,6 +38,7 @@ const nextConfig = {
     '@repo/email-service',
     'ioredis',
     '@sendgrid/mail', // ✅ Исключаем из бандлинга (использует Node.js 'fs')
+    'bullmq',
   ],
   env: {
     DATABASE_URL: process.env.DATABASE_URL, // eslint-disable-line no-undef

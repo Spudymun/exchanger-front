@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ['@repo/constants', '@repo/utils'],
-  serverExternalPackages: ['@trpc/server', 'telegraf'],
+  serverExternalPackages: ['@trpc/server', 'telegraf', 'bullmq'],
 
   // Оптимизация для backend-only usage
   poweredByHeader: false,

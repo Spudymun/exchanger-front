@@ -1,5 +1,6 @@
 import { ORDER_STATUSES } from '@repo/constants';
-import { createEnvironmentLogger, sendCancellationNotification } from '@repo/utils';
+import { createEnvironmentLogger } from '@repo/utils';
+import { sendCancellationNotification } from '@repo/utils/order-notifications';
 
 import { orderManager, userManager } from '../data/manager';
 import type { Order } from '../types/order';

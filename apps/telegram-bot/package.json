@@ -17,10 +17,12 @@
     "@tanstack/react-query": "^5.81.5",
     "@trpc/client": "^11.0.5",
     "@trpc/server": "^11.0.5",
+    "bullmq": "^5.34.2",
+    "ioredis": "^5.7.0",
     "next": "^15.3.0",
     "superjson": "^2.2.1",
-    "telegraf": "^4.16.4",
-    "zod": "^3.28.1"
+    "telegraf": "^4.16.3",
+    "zod": "^3.25.67"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",

@@ -13,7 +13,7 @@ import {
   createInternalServerError,
   securityEnhancedOrderStatusSchema,
   securityEnhancedUserOrdersPaginationSchema,
-  sendCancellationNotification,
+  createEnvironmentLogger,
   /*
   // ⚠️ LEGACY IMPORTS - ЗАКОММЕНТИРОВАНЫ ДЛЯ BACKWARD COMPATIBILITY
   // 
@@ -30,50 +30,50 @@ import {
   // createUserError,
   */
 } from '@repo/utils';
+import { sendCancellationNotification } from '@repo/utils/order-notifications';
 
 import { z } from 'zod';
 
 import { createTRPCRouter } from '../../init';
 import { protectedProcedure } from '../../middleware/auth';
 
+const logger = createEnvironmentLogger('orders-router');
+
 /**
  * 🆕 TASK: Отправка уведомления операторам об оплате заявки пользователем
- * Паттерн скопирован из sendCancellationNotification (теперь в @repo/utils)
+ *
+ * @architecture
+ * - Использует BullMQ очередь для надежной доставки
+ * - Graceful degradation: fallback к прямой отправке при проблемах с Redis
+ * - НЕ блокирует подтверждение оплаты при сбоях уведомлений
  */
 async function sendPaidNotification(order: Order, userEmail: string) {
-  const telegramBotUrl = process.env.TELEGRAM_BOT_URL;
-  if (!telegramBotUrl) {
-    console.warn('TELEGRAM_BOT_URL not configured, skipping paid notification');
-    return;
-  }
-
   try {
-    await fetch(`${telegramBotUrl}/api/notify-operators`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    const { getTelegramQueue } = await import('@repo/utils/telegram-queue');
+    const queue = await getTelegramQueue();
+
+    await queue.enqueue({
+      orderId: order.id,
+      notificationType: 'order_paid',
+      payload: {
         order: {
           id: order.publicId, // ✅ publicId для отображения в Telegram
           internalId: order.id, // ✅ UUID для связи с БД (обновление сообщений)
           email: userEmail,
-          cryptoAmount: order.cryptoAmount,
+          cryptoAmount: String(order.cryptoAmount),
           currency: order.currency,
-          uahAmount: order.uahAmount,
-          status: 'paid', // 🔄 ИЗМЕНЕНО: 'paid' вместо 'cancelled'
+          uahAmount: String(order.uahAmount),
+          status: 'paid',
         },
-        // ⚠️ ВАЖНО: depositAddress ОБЯЗАТЕЛЕН в payload схеме
         depositAddress: order.depositAddress || 'N/A',
-        walletType: 'fresh', // Неважно для оплаты, но обязательно по схеме
-        // 🆕 НОВЫЙ флаг для определения типа уведомления
-        notificationType: 'order_paid', // 🔄 ИЗМЕНЕНО: 'order_paid' вместо 'order_cancelled'
-      }),
+        walletType: 'fresh',
+        notificationType: 'order_paid',
+      },
     });
 
-    console.log(`✅ Telegram notification sent for paid order ${order.id}`);
+    logger.info('Telegram notification enqueued for paid order', { orderId: order.id });
   } catch (error) {
-    console.error('Failed to send Telegram paid notification', {
+    logger.error('Failed to enqueue Telegram paid notification', {
       orderId: order.id,
       error: error instanceof Error ? error.message : 'Unknown error',
     });
@@ -162,7 +162,7 @@ export const ordersRouter = createTRPCRouter({
         throw createInternalServerError('Order update failed');
       }
 
-      console.log(`❌ Заявка ${order.id} отменена пользователем ${user.email}`);
+      logger.info('Order cancelled by user', { orderId: order.id, userEmail: user.email });
 
       // 🆕 TASK: Отправка уведомления операторам об отмене
       await sendCancellationNotification(updatedOrder, user.email, 'user');
@@ -190,9 +190,7 @@ export const ordersRouter = createTRPCRouter({
 
       // 🆕 ИДЕМПОТЕНТНОСТЬ: Если заказ уже оплачен - возвращаем success без изменений
       if (order.status === ORDER_STATUSES.PAID) {
-        console.log(
-          `ℹ️ Заявка ${order.id} уже имеет статус PAID, возвращаем idempotent success`
-        );
+        logger.info('Order already has PAID status, returning idempotent success', { orderId: order.id });
         return {
           id: order.id,
           status: order.status,
@@ -220,9 +218,7 @@ export const ordersRouter = createTRPCRouter({
         throw createInternalServerError('Order update failed');
       }
 
-      console.log(
-        `💳 Заявка ${order.id} отмечена как оплаченная пользователем ${user.email}`
-      );
+      logger.info('Order marked as paid by user', { orderId: order.id, userEmail: user.email });
 
       // 🆕 TASK: Отправка уведомления операторам об оплате
       await sendPaidNotification(updatedOrder, user.email);

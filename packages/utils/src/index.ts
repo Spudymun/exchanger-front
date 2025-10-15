@@ -10,7 +10,7 @@ export * from './error-system/error-mapper';
 export * from './error-system/exchange-errors';
 
 export * from './order-status';
-export * from './order-notifications';
+// ❌ order-notifications removed from main export - use '@repo/utils/order-notifications' for server-side code
 export * from './card-utils';
 export * from './logger';
 export * from './context-mappers';
@@ -18,6 +18,10 @@ export * from './graceful-handler';
 
 // ✅ Link Parsing Utilities
 export * from './link-parsing';
+
+// ⚠️ Telegram Queue - SERVER ONLY
+// НЕ экспортируем здесь, чтобы избежать попадания в browser bundle
+// Импортируйте напрямую: import { getTelegramQueue } from '@repo/utils/telegram-queue'
 
 // Core validation functionality
 export * from './validation/core';

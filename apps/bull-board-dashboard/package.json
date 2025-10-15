@@ -1,0 +1,28 @@
+{
+  "name": "bull-board-dashboard",
+  "version": "1.0.0",
+  "description": "Standalone Bull Board Dashboard для мониторинга BullMQ очередей",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "node --watch --experimental-detect-module server.js",
+    "start": "node server.js",
+    "lint": "eslint server.js --max-warnings 0",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@bull-board/api": "^6.7.3",
+    "@bull-board/express": "^6.7.3",
+    "bullmq": "^5.34.2",
+    "express": "^5.0.0",
+    "ioredis": "^5.7.0"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.15.3",
+    "eslint": "^9.25.0",
+    "typescript": "^5.7.2"
+  }
+}

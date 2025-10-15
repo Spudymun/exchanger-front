@@ -1,6 +1,7 @@
 import type { Order } from '@repo/exchange-core';
 
 import { createEnvironmentLogger } from './logger';
+import { getTelegramQueue } from './telegram-queue';
 
 const logger = createEnvironmentLogger('order-notifications');
 
@@ -11,50 +12,46 @@ const logger = createEnvironmentLogger('order-notifications');
  * @param userEmail - Email пользователя, отменившего заказ
  * @param initiator - Инициатор отмены: 'user' | 'operator' | 'system'
  *
- * @architecture Централизованная функция для отправки уведомлений об отмене заказов
- * @see apps/telegram-bot/src/lib/webhook.ts - обработчик уведомлений
+ * @architecture
+ * - Использует BullMQ очередь для надежной доставки уведомлений
+ * - Graceful degradation: fallback к прямой отправке при проблемах с Redis
+ * - НЕ блокирует отмену заказа при сбоях уведомлений
+ *
+ * @see apps/telegram-bot/src/workers/telegram-notification-worker.ts - Worker обработчик
+ * @see packages/utils/src/telegram-queue/telegram-queue-producer.ts - Producer
  */
 export async function sendCancellationNotification(
   order: Order,
   userEmail: string,
   initiator: 'user' | 'operator' | 'system' = 'user'
 ): Promise<void> {
-  const telegramBotUrl = process.env.TELEGRAM_BOT_URL;
-  if (!telegramBotUrl) {
-    logger.warn('TELEGRAM_BOT_URL_NOT_CONFIGURED', { orderId: order.id });
-    return;
-  }
-
   try {
-    await fetch(`${telegramBotUrl}/api/notify-operators`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    const queue = await getTelegramQueue();
+
+    await queue.enqueue({
+      orderId: order.id,
+      notificationType: 'order_cancelled',
+      payload: {
         order: {
           id: order.publicId, // ✅ publicId для отображения в Telegram
           internalId: order.id, // ✅ UUID для связи с БД (updateAllOrderMessages)
           email: userEmail,
-          cryptoAmount: order.cryptoAmount,
+          cryptoAmount: String(order.cryptoAmount),
           currency: order.currency,
-          uahAmount: order.uahAmount,
+          uahAmount: String(order.uahAmount),
           status: 'cancelled',
         },
-        // ⚠️ ВАЖНО: depositAddress ОБЯЗАТЕЛЕН в payload схеме
         depositAddress: order.depositAddress || 'N/A',
-        walletType: 'fresh', // Неважно для отмены, но обязательно по схеме
-        // 🆕 Флаг для определения типа уведомления
+        walletType: 'fresh',
         notificationType: 'order_cancelled',
-        // Дополнительная информация об инициаторе отмене
         metadata: {
           initiator,
           cancelledAt: new Date().toISOString(),
         },
-      }),
+      },
     });
 
-    logger.info('CANCELLATION_NOTIFICATION_SENT', {
+    logger.info('CANCELLATION_NOTIFICATION_ENQUEUED', {
       orderId: order.id,
       initiator,
     });
