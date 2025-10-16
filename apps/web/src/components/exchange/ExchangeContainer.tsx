@@ -8,20 +8,21 @@ import {
   CRYPTOCURRENCIES,
   TOKEN_STANDARDS,
 } from '@repo/constants';
-import { calculateUahAmountAsync, getCurrencyLimits } from '@repo/exchange-core';
+import { getCurrencyLimits } from '@repo/exchange-core';
 import { useFormWithNextIntl } from '@repo/hooks';
 import { useAutoMinAmount, useNotifications } from '@repo/hooks/src/client-hooks';
 import { ExchangeForm, ExchangeErrorBoundary } from '@repo/ui';
 import {
   securityEnhancedFullExchangeFormSchema,
   type SecurityEnhancedFullExchangeForm,
+  calculateNetAmount,
 } from '@repo/utils';
 
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useDefaultBank } from '../../hooks/useDefaultBank';
-import { useExchangeMutation } from '../../hooks/useExchangeMutation';
+import { useExchangeMutation, useExchangeRates } from '../../hooks/useExchangeMutation';
 import { useRouter } from '../../i18n/navigation';
 
 import { ExchangeLayout } from './ExchangeLayout';
@@ -148,8 +149,10 @@ function useExchangeFormData(initialParams?: ExchangeContainerProps['initialPara
 }
 
 // 🚀 Smart Caching: Асинхронный хук для расчета обмена
+// ОБНОВЛЕНО: использует useExchangeRates вместо прямого вызова SmartPricingService
 function useExchangeCalculations(fromAmount: string, fromCurrency: string) {
   const [calculatedAmount, setCalculatedAmount] = useState(0);
+  const { data: ratesData } = useExchangeRates();
 
   useEffect(() => {
     const amount = Number(fromAmount);
@@ -158,27 +161,17 @@ function useExchangeCalculations(fromAmount: string, fromCurrency: string) {
       return;
     }
 
-    let isCancelled = false;
+    const currentRate = ratesData?.rates?.find((r: { currency: CryptoCurrency }) => r.currency === fromCurrency);
+    if (!currentRate) {
+      setCalculatedAmount(0);
+      return;
+    }
 
-    const calculateAmount = async () => {
-      try {
-        const result = await calculateUahAmountAsync(amount, fromCurrency as CryptoCurrency);
-        if (!isCancelled) {
-          setCalculatedAmount(result);
-        }
-      } catch {
-        if (!isCancelled) {
-          setCalculatedAmount(0);
-        }
-      }
-    };
-
-    void calculateAmount();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [fromAmount, fromCurrency]);
+    // Расчёт как в calculateUahAmountAsync но БЕЗ вызова SmartPricingService
+    const grossAmount = amount * currentRate.uahRate;
+    const netAmount = calculateNetAmount(grossAmount, currentRate.commission);
+    setCalculatedAmount(Number(netAmount.toFixed(2)));
+  }, [fromAmount, fromCurrency, ratesData]);
 
   return calculatedAmount;
 }
@@ -204,63 +197,6 @@ function useAutoFillLogic(
   }, [shouldAutoFill, getMinAmount, form.setValue]);
 }
 
-// Create order submission function
-function createOrderSubmission({
-  exchangeMutation,
-  router,
-  notifications,
-  serverErrorT,
-  notificationsT,
-}: {
-  exchangeMutation: ReturnType<typeof useExchangeMutation>;
-  router: ReturnType<typeof useRouter>;
-  notifications: ReturnType<typeof useNotifications>;
-  serverErrorT: ReturnType<typeof useTranslations>;
-  notificationsT: ReturnType<typeof useTranslations>;
-}) {
-  return async (values: SecurityEnhancedFullExchangeForm) => {
-    try {
-      // Calculate amount at submit time to get the most up-to-date value
-      const submitTimeAmount = await calculateUahAmountAsync(
-        Number(values.fromAmount),
-        values.fromCurrency as CryptoCurrency
-      );
-
-      const orderRequest = {
-        email: values.email,
-        cryptoAmount: Number(values.fromAmount),
-        currency: values.fromCurrency as CryptoCurrency,
-        uahAmount: submitTimeAmount,
-        tokenStandard: values.tokenStandard, // ✅ ИСПРАВЛЕНО: передача выбранной пользователем сети
-        recipientData: {
-          cardNumber: values.cardNumber,
-          bankId: values.selectedBankId || EXCHANGE_DEFAULTS.DEFAULT_BANK_ID, // ✅ MIGRATION: Централизованная константа
-        },
-      };
-
-      const orderData = await exchangeMutation.createOrder.mutateAsync(orderRequest);
-
-      // ✅ ФИКС: Навигация с задержкой для показа спиннера во время перехода
-      router.push(`/order/${orderData.orderId}`);
-
-      // Ждем завершения навигации (для первого перехода может быть 2-3 сек)
-      await new Promise(resolve => setTimeout(resolve, ORDER_NAVIGATION_DELAY_MS));
-    } catch (error) {
-      // Handle localized error messages
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-
-      // Check if error message is a localization key
-      if (errorMessage.startsWith('server.errors.')) {
-        const localizedMessage = serverErrorT(errorMessage.replace('server.errors.', ''));
-        const errorTitle = notificationsT('exchange.error');
-        notifications.error(errorTitle, localizedMessage);
-      } else {
-        notifications.handleApiError(error, notificationsT('exchange.error'));
-      }
-    }
-  };
-}
-
 // Hook для инициализации формы
 function useExchangeForm(initialParams?: ExchangeContainerProps['initialParams']) {
   const t = useTranslations('AdvancedExchangeForm');
@@ -269,6 +205,7 @@ function useExchangeForm(initialParams?: ExchangeContainerProps['initialParams']
   const router = useRouter();
   const exchangeMutation = useExchangeMutation();
   const notifications = useNotifications();
+  const { refetch: refetchRates } = useExchangeRates(); // ✅ Получаем refetch для актуального курса
 
   // ✅ ERROR BOUNDARY: Используем централизованный хук с обработкой ошибок
   const { defaultBank, fallbackBankId } = useDefaultBank();
@@ -279,13 +216,48 @@ function useExchangeForm(initialParams?: ExchangeContainerProps['initialParams']
     initialValues: initialFormData,
     validationSchema: securityEnhancedFullExchangeFormSchema,
     t,
-    onSubmit: createOrderSubmission({
-      exchangeMutation,
-      router,
-      notifications,
-      serverErrorT,
-      notificationsT,
-    }),
+    onSubmit: async (values: SecurityEnhancedFullExchangeForm) => {
+      try {
+        // ✅ ИСПРАВЛЕНО: Вычисляем uahAmount в момент submit (актуальный курс)
+        const { data: ratesData } = await refetchRates();
+        if (!ratesData) {
+          throw new Error('Не удалось получить курсы');
+        }
+        
+        const currentRate = ratesData.rates.find((r: { currency: string }) => r.currency === values.fromCurrency);
+        const uahAmount = currentRate ? Number(values.fromAmount) * currentRate.uahRate : 0;
+
+        if (uahAmount <= 0) {
+          throw new Error('Не удалось вычислить сумму в UAH');
+        }
+
+        const orderRequest = {
+          email: values.email,
+          cryptoAmount: Number(values.fromAmount),
+          currency: values.fromCurrency as CryptoCurrency,
+          uahAmount, // ✅ Реальное значение, вычисленное в момент submit
+          tokenStandard: values.tokenStandard,
+          recipientData: {
+            cardNumber: values.cardNumber,
+            bankId: values.selectedBankId || EXCHANGE_DEFAULTS.DEFAULT_BANK_ID,
+          },
+        };
+
+        const orderData = await exchangeMutation.createOrder.mutateAsync(orderRequest);
+
+        // ✅ ФИКС: Навигация с задержкой для показа спиннера
+        router.push(`/order/${orderData.orderId}`);
+        await new Promise(resolve => setTimeout(resolve, ORDER_NAVIGATION_DELAY_MS));
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        if (errorMessage.startsWith('server.errors.')) {
+          const localizedMessage = serverErrorT(errorMessage.replace('server.errors.', ''));
+          notifications.error(notificationsT('exchange.error'), localizedMessage);
+        } else {
+          notifications.handleApiError(error, notificationsT('exchange.error'));
+        }
+      }
+    },
   });
 
   // ✅ ERROR BOUNDARY: Устанавливаем дефолтный банк с fallback механизмом

@@ -5,6 +5,7 @@ import { type inferAsyncReturnType } from '@trpc/server';
 import { type CreateNextContextOptions } from '@trpc/server/adapters/next';
 
 import { getCleanupCron } from '../utils/cleanup-cron-singleton';
+import { getConfiguredPrismaClient } from '../utils/get-prisma';
 import { createErrorMessageFunction } from '../utils/i18n-errors';
 
 /**
@@ -74,6 +75,9 @@ export const createContext = async (opts: CreateNextContextOptions) => {
   // Create error message function bound to user's locale using next-intl
   const getErrorMessage = createErrorMessageFunction(locale);
 
+  // Get Prisma client for database access
+  const db = getConfiguredPrismaClient();
+
   return {
     req,
     res,
@@ -82,6 +86,7 @@ export const createContext = async (opts: CreateNextContextOptions) => {
     sessionId,
     locale,
     getErrorMessage,
+    db,
   };
 };
 

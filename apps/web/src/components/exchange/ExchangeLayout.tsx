@@ -25,7 +25,7 @@ import {
 import { type SecurityEnhancedFullExchangeForm } from '@repo/utils';
 import React from 'react';
 
-import { useSupportedCurrencies, useSupportedTokenStandards, useBanksForCurrency } from '../../hooks/useExchangeMutation';
+import { useSupportedCurrencies, useSupportedTokenStandards, useBanksForCurrency, useExchangeRates } from '../../hooks/useExchangeMutation';
 
 import { TermsAgreementText } from './TermsAgreementText';
 
@@ -50,6 +50,12 @@ function SendingSection({
   const { data: supportedCurrencies } = useSupportedCurrencies();
   // ✅ ИСПОЛЬЗУЕМ API для получения стандартов токенов
   const { data: supportedTokenStandards } = useSupportedTokenStandards();
+  // ✅ ИСПОЛЬЗУЕМ API для получения курсов
+  const { data: ratesData } = useExchangeRates();
+
+  const fromCurrency = form.values.fromCurrency as CryptoCurrency;
+  const currentRate = ratesData?.rates?.find((r: { currency: CryptoCurrency }) => r.currency === fromCurrency);
+  const exchangeRate = currentRate?.uahRate || 0;
 
   // Функция для автоматического обновления суммы при смене валюты
   const handleCurrencyChange = (newCurrency: string) => {
@@ -91,7 +97,11 @@ function SendingSection({
         />
 
         {/* Sending Info */}
-        <SendingInfo form={form as unknown as UseFormReturn<Record<string, unknown>>} t={t} />
+        <SendingInfo 
+          form={form as unknown as UseFormReturn<Record<string, unknown>>} 
+          t={t} 
+          exchangeRate={exchangeRate}
+        />
       </div>
     </ExchangeForm.ExchangeCard>
   );

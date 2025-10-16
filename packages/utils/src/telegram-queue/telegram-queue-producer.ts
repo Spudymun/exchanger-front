@@ -175,11 +175,11 @@ export class TelegramQueueProducer {
       });
 
       logger.info('DIRECT_SEND_SUCCESS', {
-        orderId: payload.order.internalId,
+        orderId: payload.order?.internalId ?? 'N/A',
       });
     } catch (error) {
       logger.error('DIRECT_SEND_FAILED', {
-        orderId: payload.order.internalId,
+        orderId: payload.order?.internalId ?? 'N/A',
         error: error instanceof Error ? error.message : 'Unknown error',
       });
       // НЕ throw - не прерываем создание заказа

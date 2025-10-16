@@ -295,8 +295,13 @@ export type TelegramClientGreeting = keyof typeof TELEGRAM_CLIENT_MESSAGES.GREET
 export type TelegramClientResponse = keyof typeof TELEGRAM_CLIENT_MESSAGES.RESPONSES;
 export type OperatorCancelReasonId = keyof typeof OPERATOR_CANCEL_REASONS;
 
-// Типы для Telegram Order Messages
-export type TelegramNotificationType = 'new_order' | 'order_paid' | 'order_cancelled';
+// Типы для Telegram Order Messages и уведомлений
+export type TelegramNotificationType = 
+  | 'new_order' 
+  | 'order_paid' 
+  | 'order_cancelled'
+  | 'manual_rate_outdated'; // Уведомление об устаревшем ручном курсе
+
 export interface TelegramOrderMessageInfo {
   orderId: string;
   chatId: string;
@@ -315,7 +320,7 @@ export interface TelegramOrderMessageInfo {
  * @note Синхронизирован с NotificationPayload из notify-operators.ts
  */
 export interface TelegramNotificationPayload {
-  order: {
+  order?: {
     id: string; // publicId для отображения
     internalId: string; // UUID для БД операций
     email: string;
@@ -325,11 +330,15 @@ export interface TelegramNotificationPayload {
     status?: string;
     createdAt?: string;
   };
-  depositAddress: string;
-  walletType: 'fresh' | 'reused';
+  depositAddress?: string;
+  walletType?: 'fresh' | 'reused';
   notificationType: TelegramNotificationType;
   metadata?: {
     initiator?: 'user' | 'operator' | 'system';
     cancelledAt?: string;
   };
+  // Для manual_rate_outdated уведомлений
+  currency?: string;
+  lastUpdateHours?: number;
+  currentRate?: string;
 }

@@ -8,21 +8,27 @@ import {
   EXCHANGE_DEFAULTS,
   FIAT_CURRENCIES,
 } from '@repo/constants';
-import { calculateUahAmountAsync, getCurrencyLimits } from '@repo/exchange-core';
+import { getCurrencyLimits } from '@repo/exchange-core';
 import { useFormWithNextIntl } from '@repo/hooks';
 import { useAutoMinAmount } from '@repo/hooks/src/client-hooks';
-import { securityEnhancedHeroExchangeFormSchema } from '@repo/utils';
+import { securityEnhancedHeroExchangeFormSchema, calculateNetAmount } from '@repo/utils';
 import { useMemo, useEffect, useState } from 'react';
 
 import { useDefaultBank } from '../../hooks/useDefaultBank';
+import { useExchangeRates } from '../../hooks/useExchangeMutation';
 
 import type { HeroExchangeFormData } from '../HeroExchangeForm';
 
 /**
- * 🚀 Hook для асинхронных расчетов с Smart Caching
+ * 🚀 Hook для расчетов суммы получения
+ * NOTE: useExchangeRates внутри - React Query кеширует и де-дублирует запросы автоматически
  */
-function useAsyncCalculatedAmount(fromAmount: string, fromCurrency: string) {
+function useAsyncCalculatedAmount(
+  fromAmount: string,
+  fromCurrency: string
+) {
   const [calculatedAmount, setCalculatedAmount] = useState(0);
+  const { data: ratesData } = useExchangeRates();
 
   useEffect(() => {
     const amount = Number(fromAmount);
@@ -31,27 +37,17 @@ function useAsyncCalculatedAmount(fromAmount: string, fromCurrency: string) {
       return;
     }
 
-    let isCancelled = false;
+    const currentRate = ratesData?.rates?.find((r: { currency: CryptoCurrency }) => r.currency === fromCurrency);
+    if (!currentRate) {
+      setCalculatedAmount(0);
+      return;
+    }
 
-    const calculateAmount = async () => {
-      try {
-        const result = await calculateUahAmountAsync(amount, fromCurrency as CryptoCurrency);
-        if (!isCancelled) {
-          setCalculatedAmount(result);
-        }
-      } catch {
-        if (!isCancelled) {
-          setCalculatedAmount(0);
-        }
-      }
-    };
-
-    void calculateAmount();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [fromAmount, fromCurrency]);
+    // Простая калькуляция: amount * rate * (1 - commission)
+    const grossAmount = amount * currentRate.uahRate;
+    const netAmount = calculateNetAmount(grossAmount, currentRate.commission);
+    setCalculatedAmount(Number(netAmount.toFixed(2)));
+  }, [fromAmount, fromCurrency, ratesData]);
 
   return calculatedAmount;
 }
@@ -101,7 +97,7 @@ export function useHeroExchangeForm(
   // Автозаполнение минимального количества
   useAutoFillLogic(form);
 
-  // 🚀 Smart Caching: Асинхронные расчеты с мгновенным откликом
+  // 🚀 Расчёт суммы получения (React Query де-дублирует useExchangeRates автоматически)
   const calculatedAmount = useAsyncCalculatedAmount(
     form.values.fromAmount as string,
     form.values.fromCurrency as string

@@ -9,6 +9,7 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     const { getTelegramWorker, shutdownTelegramWorker } = await import('./src/workers');
+    const { startManualRateChecker } = await import('./src/services/manual-rate-checker');
     
     // Запуск Worker сразу при старте сервера
     await getTelegramWorker().catch((error) => {
@@ -17,6 +18,10 @@ export async function register() {
     });
 
     console.log('[Instrumentation] BullMQ Worker initialized');
+
+    // Запуск Manual Rate Checker (проверка устаревших курсов)
+    startManualRateChecker();
+    console.log('[Instrumentation] Manual Rate Checker initialized');
 
     // ✅ Graceful shutdown handlers
     let shutdownInitiated = false;

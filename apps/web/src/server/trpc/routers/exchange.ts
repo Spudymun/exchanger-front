@@ -637,12 +637,13 @@ async function createOrderInSystem(
 
 export const exchangeRouter = createTRPCRouter({
   // Получить текущие курсы валют (ОБНОВЛЕНО: поддержка гибридной системы ценообразования)
-  getRates: publicProcedure.query(async () => {
+  getRates: publicProcedure.query(async ({ ctx }) => {
     // Имитация задержки API (сохраняем для UX)
     await new Promise(resolve => setTimeout(resolve, API_DELAY_MS));
 
     try {
-      const pricingService = new SmartPricingService();
+      // ✅ ИСПРАВЛЕНО: Передаем Prisma client для Manual DB fallback
+      const pricingService = new SmartPricingService(ctx.db);
 
       // Получаем курсы параллельно для производительности
       const ratePromises = CRYPTOCURRENCIES.map(currency =>

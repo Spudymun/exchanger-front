@@ -11,10 +11,17 @@ import { API_CURRENCY_SYMBOLS } from './pricing-config';
 // ==============================
 
 /**
+ * Константы API
+ */
+export const API_CONSTANTS = {
+  DEFAULT_TIMEOUT_MS: 5000, // 5 секунд для API запросов
+} as const;
+
+/**
  * Конфигурация API провайдера
  */
 export interface ApiProvider {
-  name: 'binance' | 'coingecko';
+  name: 'binance' | 'binance-p2p';
   priority: number;
   timeout: number;
   reliability: 'HIGH' | 'MEDIUM';
@@ -27,7 +34,7 @@ export interface ApiProvider {
 
 /**
  * Конфигурация API провайдеров в порядке приоритета
- * Иерархия: Binance → CoinGecko → Cache → Static Fallback
+ * Иерархия: Binance Spot (для BTC/ETH/LTC) → Binance P2P (для USDT) → Cache → Manual DB → Static Fallback
  */
 export const API_PROVIDERS: ApiProvider[] = [
   {
@@ -38,16 +45,6 @@ export const API_PROVIDERS: ApiProvider[] = [
     getUrl: (currency: CryptoCurrency) => {
       const symbol = API_CURRENCY_SYMBOLS.binance[currency as keyof typeof API_CURRENCY_SYMBOLS.binance];
       return `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`;
-    },
-  },
-  {
-    name: 'coingecko',
-    priority: 2,
-    timeout: 8000, // 8 секунд
-    reliability: 'HIGH',
-    getUrl: (currency: CryptoCurrency) => {
-      const coinId = API_CURRENCY_SYMBOLS.coingecko[currency as keyof typeof API_CURRENCY_SYMBOLS.coingecko];
-      return `https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd,uah`;
     },
   },
 ];
@@ -71,10 +68,6 @@ export const API_HEADERS = {
     'User-Agent': USER_AGENT,
   },
   BINANCE: {
-    Accept: ACCEPT_JSON,
-    'User-Agent': USER_AGENT,
-  },
-  COINGECKO: {
     Accept: ACCEPT_JSON,
     'User-Agent': USER_AGENT,
   },
@@ -130,7 +123,7 @@ export const RETRYABLE_HTTP_STATUSES = [
  */
 export const API_BASE_URLS = {
   BINANCE: 'https://api.binance.com/api/v3',
-  COINGECKO: 'https://api.coingecko.com/api/v3',
+  BINANCE_P2P: 'https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search',
 } as const;
 
 /**
@@ -139,8 +132,5 @@ export const API_BASE_URLS = {
 export const PRICING_API_ENDPOINTS = {
   BINANCE: {
     TICKER_PRICE: '/ticker/price',
-  },
-  COINGECKO: {
-    SIMPLE_PRICE: '/simple/price',
   },
 } as const;

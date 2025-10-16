@@ -36,6 +36,9 @@ function validateAuth(_req: NextApiRequest): boolean {
 
 /**
  * Валидация payload уведомления
+ * Два варианта валидации:
+ * 1. Для уведомлений с заказами (new_order, order_cancelled, order_paid) - требуются order, depositAddress, walletType
+ * 2. Для системных уведомлений (manual_rate_outdated) - требуются только специфичные поля
  */
 function validatePayload(body: unknown): PayloadValidationResult {
   logger.debug('TELEGRAM_NOTIFY_PAYLOAD_VALIDATION', {
@@ -49,24 +52,50 @@ function validatePayload(body: unknown): PayloadValidationResult {
   }
 
   const typedBody = body as Record<string, unknown>;
-  const { order, depositAddress, walletType } = typedBody;
+  const { notificationType, order, depositAddress, walletType, currency, currentRate, lastUpdateHours } = typedBody;
 
   logger.debug('TELEGRAM_NOTIFY_PAYLOAD_FIELDS', {
+    notificationType: String(notificationType),
     hasOrder: !!order,
     hasDepositAddress: !!depositAddress,
     hasWalletType: !!walletType,
-    walletTypeValue: String(walletType),
+    hasCurrency: !!currency,
+    hasCurrentRate: !!currentRate,
+    hasLastUpdateHours: typeof lastUpdateHours === 'number',
   });
 
+  // ✅ Вариант 1: Валидация для manual_rate_outdated
+  if (notificationType === 'manual_rate_outdated') {
+    if (!currency || !currentRate || typeof lastUpdateHours !== 'number') {
+      logger.warn('TELEGRAM_NOTIFY_MISSING_MANUAL_RATE_FIELDS', {
+        currency: !!currency,
+        currentRate: !!currentRate,
+        lastUpdateHours: typeof lastUpdateHours === 'number',
+      });
+      return {
+        isValid: false,
+        error: 'Missing required fields for manual_rate_outdated: currency, currentRate, lastUpdateHours'
+      };
+    }
+    logger.debug('TELEGRAM_NOTIFY_MANUAL_RATE_VALID', { 
+      currency: String(currency), 
+      currentRate: String(currentRate), 
+      lastUpdateHours: Number(lastUpdateHours) 
+    });
+    return { isValid: true };
+  }
+
+  // ✅ Вариант 2: Валидация для уведомлений с заказами (new_order, order_cancelled, order_paid)
+  // Эта проверка НЕ выполняется для manual_rate_outdated (уже вернули isValid:true выше)
   if (!order || !depositAddress || !walletType) {
-    logger.warn('TELEGRAM_NOTIFY_MISSING_FIELDS', {
+    logger.warn('TELEGRAM_NOTIFY_MISSING_ORDER_FIELDS', {
       order: !!order,
       depositAddress: !!depositAddress,
       walletType: !!walletType,
     });
     return { 
       isValid: false, 
-      error: 'Missing required fields: order, depositAddress, walletType' 
+      error: 'Missing required fields for order notification: order, depositAddress, walletType' 
     };
   }
 
@@ -91,7 +120,7 @@ function validatePayload(body: unknown): PayloadValidationResult {
   }
 
   const orderData = order as Record<string, unknown>;
-  logger.debug('TELEGRAM_NOTIFY_PAYLOAD_VALID', { orderId: String(orderData?.id) });
+  logger.debug('TELEGRAM_NOTIFY_ORDER_PAYLOAD_VALID', { orderId: String(orderData?.id) });
   return { isValid: true };
 }
 
@@ -101,8 +130,17 @@ function validatePayload(body: unknown): PayloadValidationResult {
 function createOperatorMessage(payload: NotificationPayload): string {
   const { order, depositAddress, walletType, notificationType, metadata } = payload;
 
+  // 🆕 Обработка уведомления об устаревшем manual rate
+  if (notificationType === 'manual_rate_outdated') {
+    return `⚠️ Manual Rate Outdated\n\n` +
+      `Currency: ${payload.currency}\n` +
+      `Current Rate: ${payload.currentRate} UAH\n` +
+      `Last Updated: ${payload.lastUpdateHours}h ago\n\n` +
+      `Please update the manual exchange rate.`;
+  }
+
   // 🆕 TASK: Обработка уведомления об отмене заявки
-  if (notificationType === 'order_cancelled') {
+  if (notificationType === 'order_cancelled' && order) {
     return TELEGRAM_OPERATOR_MESSAGES.TEMPLATES.ORDER_CANCELLED_MESSAGE(
       order,
       metadata?.initiator
@@ -110,11 +148,15 @@ function createOperatorMessage(payload: NotificationPayload): string {
   }
 
   // 🆕 TASK: Обработка уведомления об оплате заявки
-  if (notificationType === 'order_paid') {
+  if (notificationType === 'order_paid' && order) {
     return TELEGRAM_OPERATOR_MESSAGES.TEMPLATES.ORDER_PAID_MESSAGE(order);
   }
 
-  // Существующая логика для новых заявок
+  // Существующая логика для новых заявок (требует order)
+  if (!order || !depositAddress) {
+    return 'Invalid notification payload';
+  }
+
   const baseInfo = TELEGRAM_OPERATOR_MESSAGES.TEMPLATES.ORDER_INFO(
     {
       id: order.id,
@@ -183,7 +225,7 @@ function createInlineKeyboard(
 async function notifyOperator(
   operatorId: string,
   message: string,
-  keyboard: InlineKeyboard,
+  keyboard: InlineKeyboard | undefined,
   internalOrderId: string, // UUID для сохранения в БД
   topicId?: number,
   notificationType?: TelegramNotificationType
@@ -192,7 +234,7 @@ async function notifyOperator(
     operatorId: operatorId.trim(),
     internalOrderId,
     messageLength: message.length,
-    keyboardButtons: keyboard.inline_keyboard.length,
+    keyboardButtons: keyboard?.inline_keyboard.length ?? 0,
     topicId: topicId || 'none',
   });
 
@@ -203,14 +245,18 @@ async function notifyOperator(
       chat_id: string;
       text: string;
       parse_mode: string;
-      reply_markup: InlineKeyboard;
+      reply_markup?: InlineKeyboard;
       message_thread_id?: number;
     } = {
       chat_id: operatorId.trim(),
       text: message,
       parse_mode: TELEGRAM_API.PARAMS.PARSE_MODE,
-      reply_markup: keyboard,
     };
+    
+    // Добавляем клавиатуру только если она есть
+    if (keyboard) {
+      requestPayload.reply_markup = keyboard;
+    }
     
     // 🆕 TELEGRAM TOPICS: Добавляем message_thread_id если указан
     if (topicId) {
@@ -346,7 +392,7 @@ function getTopicIdForNotificationType(
  */
 async function sendOperatorNotifications(
   message: string,
-  keyboard: InlineKeyboard,
+  keyboard: InlineKeyboard | undefined,
   publicOrderId: string, // publicId для отображения
   internalOrderId: string, // UUID для сохранения в БД
   notificationType?: 'new_order' | 'order_cancelled' | 'order_paid'
@@ -501,10 +547,10 @@ async function processNotifications(req: NextApiRequest, res: NextApiResponse): 
 
   const payload = req.body as NotificationPayload;
 
-  // ✅ ВАЖНО: internalId ОБЯЗАТЕЛЕН для корректной работы с БД
-  if (!payload.order.internalId) {
+  // ✅ ВАЖНО: internalId ОБЯЗАТЕЛЕН для order-related уведомлений
+  if (payload.notificationType !== 'manual_rate_outdated' && !payload.order?.internalId) {
     logger.error('MISSING_INTERNAL_ORDER_ID', {
-      publicId: payload.order.id,
+      publicId: payload.order?.id,
       notificationType: payload.notificationType,
     });
     res.status(HTTP_STATUS.BAD_REQUEST).json({ 
@@ -513,13 +559,16 @@ async function processNotifications(req: NextApiRequest, res: NextApiResponse): 
     return;
   }
   
-  // Создание сообщения и клавиатуры
+  // Создание сообщения
   const message = createOperatorMessage(payload);
-  // ✅ ВАЖНО: Используем internalId для callback_data (UUID для БД операций)
-  const keyboard = createInlineKeyboard(
-    payload.order.internalId, // UUID для callback
-    payload.notificationType
-  );
+  
+  // Создание клавиатуры только для order-related уведомлений
+  const keyboard = payload.order?.internalId 
+    ? createInlineKeyboard(
+        payload.order.internalId, // UUID для callback
+        payload.notificationType as 'new_order' | 'order_paid' | 'order_cancelled'
+      )
+    : undefined;
 
   // Получение и проверка операторов
   const operatorIds = getAuthorizedOperators();
@@ -535,16 +584,20 @@ async function processNotifications(req: NextApiRequest, res: NextApiResponse): 
   }
 
   // 🆕 Отправка уведомлений с учетом типа
+  const orderRelatedType = payload.notificationType === 'manual_rate_outdated' 
+    ? undefined 
+    : payload.notificationType as 'new_order' | 'order_paid' | 'order_cancelled';
+    
   const result = await sendOperatorNotifications(
     message,
     keyboard,
-    payload.order.id, // publicId для отображения
-    payload.order.internalId, // UUID для БД
-    payload.notificationType // Передаем тип для роутинга по каналам
+    payload.order?.id ?? 'N/A', // publicId для отображения
+    payload.order?.internalId ?? 'manual-rate', // UUID для БД (для manual_rate используем placeholder)
+    orderRelatedType // Передаем тип для роутинга по каналам
   );
 
   // 🆕 ВАЖНО: Для отмененных заявок обновляем ВСЕ существующие сообщения
-  if (payload.notificationType === 'order_cancelled' && payload.order.internalId) {
+  if (payload.notificationType === 'order_cancelled' && payload.order?.internalId) {
     const { updateAllOrderMessages } = await import('../../src/lib/telegram-message-tracker');
     
     const cancelledMessage = message; // Используем то же сообщение что отправили
@@ -566,8 +619,9 @@ async function processNotifications(req: NextApiRequest, res: NextApiResponse): 
   }
 
   logger.info('Notification batch completed', {
-    orderId: payload.order.id,
+    orderId: payload.order?.id ?? payload.currency ?? 'N/A',
     walletType: payload.walletType,
+    notificationType: payload.notificationType,
     ...result,
   });
 

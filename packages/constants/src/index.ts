@@ -37,7 +37,6 @@ export type {
   CurrencyConfig,
   CachedRate,
   BinanceResponse,
-  CoinGeckoResponse,
 } from './pricing-config';
 export type { ApiProvider } from './api-endpoints';
 

@@ -4,19 +4,30 @@ import {
   // Pricing configuration constants
   LOG_JSON_INDENT,
   RATE_CONSTANTS,
-  API_CURRENCY_SYMBOLS,
   CURRENCY_PRICING_CONFIG,
   SMART_CACHE_CONFIG,
   type CurrencyConfig,
   type CachedRate,
   type BinanceResponse,
-  type CoinGeckoResponse,
   // API configuration
   API_PROVIDERS,
+  API_CONSTANTS,
   type ApiProvider,
 } from '@repo/constants';
 
 import type { HybridExchangeRate } from '../types/currency';
+
+import { BinanceP2PProvider } from './binance-p2p-provider';
+
+// Опциональный интерфейс для Prisma Client (для Manual DB fallback)
+interface PrismaClientLike {
+  manualExchangeRate: {
+    findFirst: (args: {
+      where: { currency: string; isActive: boolean };
+      orderBy: { createdAt: 'desc' };
+    }) => Promise<{ uahRate: { toNumber: () => number } } | null>;
+  };
+}
 
 const logger = {
   info: (message: string, data?: Record<string, unknown>) => {
@@ -35,6 +46,15 @@ const logger = {
     if (data) {
       // eslint-disable-next-line no-console
       console.warn(JSON.stringify(data, null, LOG_JSON_INDENT));
+    }
+  },
+  error: (message: string, data?: Record<string, unknown>) => {
+    const timestamp = new Date().toISOString();
+    // eslint-disable-next-line no-console
+    console.error(`${timestamp} ERROR[SmartPricingService] ${message}`);
+    if (data) {
+      // eslint-disable-next-line no-console
+      console.error(JSON.stringify(data, null, LOG_JSON_INDENT));
     }
   },
   verbose: (message: string, data?: Record<string, unknown>) => {
@@ -66,12 +86,27 @@ const logger = {
 export class SmartPricingService {
   private readonly config = CURRENCY_PRICING_CONFIG;
 
-  private rateCache = new Map<CryptoCurrency, CachedRate>();
+  // ✅ ИСПРАВЛЕНО: static кеш чтобы все instance использовали общий кеш
+  private static rateCache = new Map<CryptoCurrency, CachedRate>();
   
   // 🚀 SMART CACHING для быстрого переключения селекторов  
   private readonly CACHE_FRESH_MS = SMART_CACHE_CONFIG.FRESH_MS;
   private readonly CACHE_STALE_MS = SMART_CACHE_CONFIG.STALE_MS;
-  private backgroundUpdatePromises = new Map<CryptoCurrency, Promise<void>>();
+  // ✅ ИСПРАВЛЕНО: static backgroundUpdatePromises для всех instance
+  private static backgroundUpdatePromises = new Map<CryptoCurrency, Promise<void>>();
+
+  // P2P Provider для USDT
+  private readonly p2pProvider = new BinanceP2PProvider();
+
+  // Опциональный Prisma Client для Manual DB fallback
+  private readonly prisma?: PrismaClientLike;
+
+  // Константа для источника P2P
+  private readonly P2P_SOURCE = 'binance-p2p' as const;
+
+  constructor(prisma?: PrismaClientLike) {
+    this.prisma = prisma;
+  }
 
   /**
    * 🎯 SMART CACHING: Получить курс с мгновенным откликом
@@ -130,16 +165,16 @@ export class SmartPricingService {
    */
   private updateRateInBackground(currency: CryptoCurrency): void {
     // Предотвращаем множественные фоновые запросы для одной валюты
-    if (this.backgroundUpdatePromises.has(currency)) {
+    if (SmartPricingService.backgroundUpdatePromises.has(currency)) {
       return;
     }
 
     const updatePromise = this.performBackgroundUpdate(currency);
-    this.backgroundUpdatePromises.set(currency, updatePromise);
+    SmartPricingService.backgroundUpdatePromises.set(currency, updatePromise);
 
     // Очищаем promise после завершения
     void updatePromise.finally(() => {
-      this.backgroundUpdatePromises.delete(currency);
+      SmartPricingService.backgroundUpdatePromises.delete(currency);
     });
   }
 
@@ -176,8 +211,17 @@ export class SmartPricingService {
 
   /**
    * Попытка получить курс через API провайдеры
+   * 
+   * USDT: использует P2P API напрямую (украинский P2P рынок)
+   * BTC/ETH/LTC: использует Binance Spot через API_PROVIDERS
    */
   private async tryApiProviders(currency: CryptoCurrency): Promise<HybridExchangeRate | null> {
+    // USDT → Binance P2P (минуя API_PROVIDERS)
+    if (currency === 'USDT') {
+      return await this.tryP2PProvider(currency);
+    }
+
+    // BTC/ETH/LTC → Binance Spot через цикл провайдеров
     for (const provider of API_PROVIDERS) {
       const rate = await this.tryProviderSafely(provider, currency);
       if (rate) {
@@ -185,6 +229,23 @@ export class SmartPricingService {
       }
     }
     return null;
+  }
+
+  /**
+   * Получить USDT курс через P2P API
+   */
+  private async tryP2PProvider(currency: CryptoCurrency): Promise<HybridExchangeRate | null> {
+    try {
+      const rate = await this.p2pProvider.getP2PRate(currency, API_CONSTANTS.DEFAULT_TIMEOUT_MS);
+      if (rate && this.isValidRate(rate)) {
+        this.saveToCache(currency, rate, this.P2P_SOURCE);
+        return this.createSuccessfulRate(currency, rate, this.P2P_SOURCE);
+      }
+      return null;
+    } catch {
+      // Ошибка P2P - возвращаем null, fallback обработает
+      return null;
+    }
   }
 
   /**
@@ -207,8 +268,8 @@ export class SmartPricingService {
   /**
    * Сохранить курс в кеш
    */
-  private saveToCache(currency: CryptoCurrency, rate: number, source: 'binance' | 'coingecko'): void {
-    this.rateCache.set(currency, {
+  private saveToCache(currency: CryptoCurrency, rate: number, source: 'binance' | 'binance-p2p'): void {
+    SmartPricingService.rateCache.set(currency, {
       rate,
       timestamp: Date.now(),
       source,
@@ -256,14 +317,14 @@ export class SmartPricingService {
   /**
    * Парсинг ответа от различных провайдеров
    */
-  private parseProviderResponse(providerName: string, data: unknown, currency: CryptoCurrency): number | null {
+  private parseProviderResponse(providerName: string, data: unknown, _currency: CryptoCurrency): number | null {
     try {
       if (providerName === 'binance') {
         return this.parseBinanceResponse(data);
       }
 
-      if (providerName === 'coingecko') {
-        return this.parseCoinGeckoResponse(data, currency);
+      if (providerName === this.P2P_SOURCE) {
+        return this.parseBinanceP2PResponse(data);
       }
 
       return null;
@@ -282,21 +343,12 @@ export class SmartPricingService {
   }
 
   /**
-   * Парсинг ответа от CoinGecko API
+   * Парсинг ответа от Binance P2P API
+   * P2P провайдер возвращает готовый курс, просто валидируем
    */
-  private parseCoinGeckoResponse(data: unknown, currency: CryptoCurrency): number | null {
-    const coinGeckoData = data as CoinGeckoResponse;
-    const coinId = API_CURRENCY_SYMBOLS.coingecko[currency as keyof typeof API_CURRENCY_SYMBOLS.coingecko];
-    
-    // Безопасная проверка наличия ключа
-    if (!(coinId in coinGeckoData)) {
-      return null;
-    }
-    
-    const coinData = coinGeckoData[coinId as keyof CoinGeckoResponse];
-    const uahRate = coinData?.uah;
-    
-    return uahRate && !isNaN(uahRate) ? uahRate : null;
+  private parseBinanceP2PResponse(data: unknown): number | null {
+    const rate = data as number;
+    return isNaN(rate) ? null : rate;
   }
 
   /**
@@ -310,14 +362,14 @@ export class SmartPricingService {
    * Получить кешированный курс если он еще актуален
    */
   private getCachedRate(currency: CryptoCurrency): CachedRate | null {
-    const cached = this.rateCache.get(currency);
+    const cached = SmartPricingService.rateCache.get(currency);
     if (!cached) {
       return null;
     }
 
     const age = Date.now() - cached.timestamp;
     if (age > RATE_CONSTANTS.CACHE.MAX_AGE_MS) {
-      this.rateCache.delete(currency);
+      SmartPricingService.rateCache.delete(currency);
       return null;
     }
 
@@ -330,7 +382,7 @@ export class SmartPricingService {
   private createSuccessfulRate(
     currency: CryptoCurrency,
     marketRate: number,
-    source: 'binance' | 'coingecko' | 'cache'
+    source: 'binance' | 'binance-p2p' | 'cache'
   ): HybridExchangeRate {
     const config = this.config[currency as keyof typeof this.config];
     const clientRate = this.applyBusinessLogic(marketRate, config);
@@ -367,6 +419,65 @@ export class SmartPricingService {
   }
 
   /**
+   * Получить ручной курс из Manual DB
+   * Используется как fallback для USDT когда P2P API недоступен
+   */
+  private async getManualRate(currency: CryptoCurrency): Promise<number | null> {
+    if (!this.prisma) {
+      return null;
+    }
+
+    try {
+      return await this.fetchManualRateFromDb(currency);
+    } catch (error) {
+      return this.handleManualRateError(error, currency);
+    }
+  }
+
+  /**
+   * Получить активный ручной курс из БД
+   */
+  private async fetchManualRateFromDb(currency: CryptoCurrency): Promise<number | null> {
+    if (!this.prisma) {
+      return null;
+    }
+
+    const manualRate = await this.prisma.manualExchangeRate.findFirst({
+      where: {
+        currency,
+        isActive: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    if (!manualRate) {
+      return null;
+    }
+
+    const rate = manualRate.uahRate.toNumber();
+    
+    logger.info(`Manual rate found for ${currency}`, {
+      rate,
+      source: 'manual_db',
+    });
+
+    return rate;
+  }
+
+  /**
+   * Обработать ошибку получения ручного курса
+   */
+  private handleManualRateError(error: unknown, currency: CryptoCurrency): null {
+    logger.error('Failed to fetch manual rate from DB', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      currency,
+    });
+    return null;
+  }
+
+  /**
    * Применение бизнес-логики к рыночному курсу
    */
   private applyBusinessLogic(marketRate: number, config: CurrencyConfig): number {
@@ -381,8 +492,40 @@ export class SmartPricingService {
 
   /**
    * Статический fallback курс при полном отказе API
+   * 
+   * ВАЖНО: Для USDT иерархия: P2P → Cache → Manual DB → Error
+   * Для BTC/ETH/LTC используется статический курс с 5% надбавкой
    */
-  private getStaticFallbackRate(currency: CryptoCurrency): HybridExchangeRate {
+  private async getStaticFallbackRate(currency: CryptoCurrency): Promise<HybridExchangeRate> {
+    // USDT: Пытаемся Manual DB перед ошибкой
+    if (currency === 'USDT') {
+      return await this.handleUsdtFallback(currency);
+    }
+
+    // BTC/ETH/LTC: Используем статический fallback
+    return this.createStaticFallbackRate(currency);
+  }
+
+  /**
+   * Обработать fallback для USDT (Manual DB → Error)
+   */
+  private async handleUsdtFallback(currency: CryptoCurrency): Promise<HybridExchangeRate> {
+    const manualRate = await this.getManualRate(currency);
+    
+    if (manualRate) {
+      return this.createSuccessfulRate(currency, manualRate, this.P2P_SOURCE);
+    }
+
+    logger.error(`USDT rate unavailable - no P2P data and no manual rate`, {
+      currency,
+    });
+    throw new Error('USDT rate unavailable: P2P API failed and no manual fallback configured');
+  }
+
+  /**
+   * Создать статический fallback rate (BTC/ETH/LTC)
+   */
+  private createStaticFallbackRate(currency: CryptoCurrency): HybridExchangeRate {
     const config = this.config[currency as keyof typeof this.config];
     const safeRate = config.fallbackRate * RATE_CONSTANTS.FALLBACK.FALLBACK_MULTIPLIER;
     const finalRate = Math.round(safeRate * RATE_CONSTANTS.FORMATTING.KOPECK_MULTIPLIER) / RATE_CONSTANTS.FORMATTING.KOPECK_MULTIPLIER;

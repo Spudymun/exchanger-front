@@ -16,7 +16,7 @@ import {
 } from '@repo/ui';
 import React from 'react';
 
-import { useSupportedCurrencies, useSupportedTokenStandards } from '../../hooks/useExchangeMutation';
+import { useSupportedCurrencies, useSupportedTokenStandards, useExchangeRates } from '../../hooks/useExchangeMutation';
 
 import type { HeroExchangeFormData } from '../HeroExchangeForm';
 
@@ -31,6 +31,12 @@ export function SendingCard({ form, t, minAmount }: SendingCardProps) {
   const { data: supportedCurrencies } = useSupportedCurrencies();
   // ✅ ИСПОЛЬЗУЕМ API для получения стандартов токенов
   const { data: supportedTokenStandards } = useSupportedTokenStandards();
+  // ✅ ИСПОЛЬЗУЕМ API для получения курсов (вместо прямого вызова SmartPricingService)
+  const { data: ratesData } = useExchangeRates();
+
+  const fromCurrency = form.values.fromCurrency as CryptoCurrency;
+  const currentRate = ratesData?.rates?.find((r: { currency: CryptoCurrency }) => r.currency === fromCurrency);
+  const exchangeRate = currentRate?.uahRate || 0;
 
   // Функция для автоматического обновления суммы при смене валюты
   const handleCurrencyChange = (newCurrency: string) => {
@@ -70,6 +76,7 @@ export function SendingCard({ form, t, minAmount }: SendingCardProps) {
           form={form as unknown as UseFormReturn<Record<string, unknown>>}
           t={t}
           minAmount={minAmount}
+          exchangeRate={exchangeRate}
         />
       </CardContent>
     </Card>

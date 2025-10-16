@@ -5,12 +5,12 @@
 // Поддерживаемые криптовалюты
 export const CRYPTOCURRENCIES = ['BTC', 'ETH', 'USDT', 'LTC'] as const;
 
-// Комиссии (в процентах)
+// Комиссии (в процентах) - убраны, все заложено в staticMargin
 export const COMMISSION_RATES = {
-  BTC: 2.5,
-  ETH: 2.0,
-  USDT: 1.5,
-  LTC: 2.0,
+  BTC: 0,
+  ETH: 0,
+  USDT: 0,
+  LTC: 0,
 } as const;
 
 // Blockchain explorer URLs

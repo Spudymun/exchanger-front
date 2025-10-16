@@ -263,3 +263,24 @@ model TelegramOrderMessage {
   @@index([chatId, messageId], name: "idx_telegram_chat_message")
   @@map("telegram_order_messages")
 }
+
+/// Manual Exchange Rates
+/// Ручные курсы для fallback когда P2P API недоступен
+/// Используется как Manual Fallback в иерархии: P2P → Cache → Manual DB → Error
+model ManualExchangeRate {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  currency    String   @db.Text // 'USDT', 'BTC', 'ETH', 'LTC'
+  uahRate     Decimal  @map("uah_rate") @db.Decimal(18, 2) // Курс UAH за 1 единицу крипты
+  isActive    Boolean  @default(true) @map("is_active") // Активен ли курс
+  validUntil  DateTime @map("valid_until") @db.Timestamptz(6) // Действителен до (для проверки устаревания)
+  createdBy   String   @map("created_by") @db.Text // Email администратора
+  comment     String?  @db.Text // Комментарий причины установки курса
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([currency, isActive], name: "manual_rate_active_unique")
+  @@index([currency])
+  @@index([isActive])
+  @@index([validUntil])
+  @@map("manual_exchange_rates")
+}
