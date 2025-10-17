@@ -7,6 +7,13 @@ import React from 'react';
 export { ThemeProvider, useTheme } from './theme-provider';
 export { ThemeScript } from './theme-script';
 export { AuthModalProvider, useAuthModal } from './auth-modal-provider';
+export { 
+  useAuthProtectedPage, 
+  AuthErrorState,
+  type UseAuthProtectedPageParams, 
+  type UseAuthProtectedPageReturn,
+  type AuthErrorStateProps 
+} from './use-auth-protected-page';
 
 interface ProvidersProps {
   children: React.ReactNode;

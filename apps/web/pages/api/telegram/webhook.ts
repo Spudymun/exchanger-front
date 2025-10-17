@@ -22,7 +22,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const secretToken = req.headers['x-telegram-bot-api-secret-token'];
   
   // В development ngrok может терять headers через 307 redirect
-  if (process.env.NODE_ENV === 'production' && secretToken !== process.env.TELEGRAM_WEBHOOK_SECRET) {
+  // if (process.env.NODE_ENV === 'production' && secretToken !== process.env.TELEGRAM_WEBHOOK_SECRET) {
+  if (secretToken !== process.env.TELEGRAM_WEBHOOK_SECRET) {
     const forwardedFor = req.headers['x-forwarded-for'];
     const ip = Array.isArray(forwardedFor) ? forwardedFor[0] : forwardedFor || req.socket.remoteAddress;
     

@@ -157,8 +157,9 @@ async function main() {
     }
 
     // Генерируем новый secret token для dev
-    secretToken = generateSecretToken();
-    
+    // secretToken = generateSecretToken();
+    secretToken = process.env.TELEGRAM_WEBHOOK_SECRET || generateSecretToken();
+
     console.log('⚠️  Add this to your .env file:');
     console.log('');
     console.log(`TELEGRAM_WEBHOOK_SECRET=${secretToken}`);

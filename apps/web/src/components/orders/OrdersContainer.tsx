@@ -1,9 +1,9 @@
-/* eslint-disable max-lines */ // Container компонент с множественными helper функциями
+  // Container компонент с множественными helper функциями
 'use client';
 
 import { ORDER_STATUS_CONFIG, VALIDATION_LIMITS, type OrderStatus } from '@repo/constants';
 import type { Order } from '@repo/exchange-core';
-import { useAuthModal } from '@repo/providers';
+import { useAuthProtectedPage, AuthErrorState } from '@repo/providers';
 import { DataTable, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui';
 import { getStatusColorClass } from '@repo/utils';
 import Link from 'next/link';
@@ -105,43 +105,6 @@ function EmptyState({ searchTerm, t }: { searchTerm: string; t: ReturnType<typeo
       <p className="text-sm text-muted-foreground">
         {searchTerm ? t('empty.noResults') : t('empty.description')}
       </p>
-    </div>
-  );
-}
-
-// ⚡ Helper: Render error state
-function ErrorState({ 
-  error, 
-  t, 
-  tErrors,
-  onLoginRequired 
-}: { 
-  error: Error & { data?: { code?: string } }; 
-  t: ReturnType<typeof useTranslations>;
-  tErrors: ReturnType<typeof useTranslations>;
-  onLoginRequired: () => void;
-}) {
-  // ✅ Обработка UNAUTHORIZED: показываем перевод + открываем модалку логина
-  React.useEffect(() => {
-    const isUnauthorized = error.data?.code === 'UNAUTHORIZED' || 
-                          error.message.includes(UNAUTHORIZED_ERROR_KEY);
-    
-    if (isUnauthorized) {
-      onLoginRequired();
-    }
-  }, [error, onLoginRequired]);
-
-  const isUnauthorized = error.data?.code === 'UNAUTHORIZED' || 
-                         error.message.includes(UNAUTHORIZED_ERROR_KEY);
-  
-  const errorMessage = isUnauthorized 
-    ? tErrors(UNAUTHORIZED_ERROR_KEY)
-    : error.message;
-
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-      <p className="text-destructive text-lg">{t('errors.fetchFailed')}</p>
-      <p className="text-sm text-muted-foreground">{errorMessage}</p>
     </div>
   );
 }
@@ -272,8 +235,14 @@ function useOrdersHandlers(
 export function OrdersContainer(props: OrdersContainerProps) {
   const t = useTranslations('OrdersPage');
   const tErrors = useTranslations('server.errors');
-  const authModal = useAuthModal();
   const router = useRouter();
+
+  // ✅ Auth protection - проверяем сессию СНАЧАЛА
+  const { data: session } = trpc.auth.getSession.useQuery();
+  const { onAuthRequired } = useAuthProtectedPage({
+    onRedirect: () => router.push('/'),
+    session,
+  });
 
   // State management
   const { currentPage, setCurrentPage, searchTerm, setSearchTerm, statusFilter, setStatusFilter, sortBy, setSortBy } = useOrdersState(props);
@@ -281,33 +250,8 @@ export function OrdersContainer(props: OrdersContainerProps) {
   // Handlers
   const { handleSearch, handlePageChange } = useOrdersHandlers(setSearchTerm, setCurrentPage);
 
-  // ✅ Получаем сессию для проверки авторизации при закрытии модалки
-  const { data: session } = trpc.auth.getSession.useQuery();
-  const wasModalOpenRef = React.useRef(false);
-
-  // ✅ Отслеживаем открытие модалки
-  React.useEffect(() => {
-    if (authModal.isLoginOpen || authModal.isRegisterOpen || authModal.isForgotPasswordOpen) {
-      wasModalOpenRef.current = true;
-    }
-  }, [authModal.isLoginOpen, authModal.isRegisterOpen, authModal.isForgotPasswordOpen]);
-
-  // ✅ Редирект на главную если пользователь закрыл модалку крестиком (без успешного логина)
-  React.useEffect(() => {
-    const allModalsClosed = !authModal.isLoginOpen && !authModal.isRegisterOpen && !authModal.isForgotPasswordOpen;
-    
-    // Если модалка была открыта и теперь закрыта, но пользователь не авторизован → редирект
-    if (wasModalOpenRef.current && allModalsClosed && !session?.user) {
-      router.push('/');
-    }
-    
-    // Сбрасываем флаг при закрытии (в любом случае - успешный логин или крестик)
-    if (wasModalOpenRef.current && allModalsClosed) {
-      wasModalOpenRef.current = false;
-    }
-  }, [authModal.isLoginOpen, authModal.isRegisterOpen, authModal.isForgotPasswordOpen, session, router]);
-
-  // tRPC query
+  // tRPC query - ВСЕГДА вызываем хук (не условно!)
+  // enabled: !!session?.user - запрос идет ТОЛЬКО если есть сессия
   const { data, isLoading, error } = trpc.shared.orders.getAll.useQuery({
     filters: { 
       status: statusFilter,
@@ -315,14 +259,45 @@ export function OrdersContainer(props: OrdersContainerProps) {
     },
     sortBy,
     pagination: { limit: ORDERS_PER_PAGE, offset: (currentPage - 1) * ORDERS_PER_PAGE },
+  }, {
+    enabled: !!session?.user, // ← КЛЮЧЕВОЕ: запрос только если авторизован
   });
 
   // Column definitions
   const columns = useOrdersColumns(t);
 
-  // Render error state
+  // ✅ Если нет сессии - показываем AuthErrorState
+  // КРИТИЧЕСКИ ВАЖНО: проверяем session !== undefined чтобы отличить "загружается" от "не залогинен"
+  // session === undefined → ничего не рендерим (загрузка)
+  // session !== undefined && !session?.user → показываем AuthErrorState (не залогинен)
+  if (session !== undefined && !session?.user) {
+    return (
+      <AuthErrorState
+        error={{ 
+          message: tErrors(UNAUTHORIZED_ERROR_KEY),
+          data: { code: 'UNAUTHORIZED' }
+        } as Error & { data?: { code?: string } }}
+        translations={{
+          fetchFailed: t('errors.fetchFailed'),
+          unauthorizedMessage: tErrors(UNAUTHORIZED_ERROR_KEY),
+        }}
+        onLoginRequired={onAuthRequired}
+      />
+    );
+  }
+
+  // ✅ Render error state с auth protection
   if (error) {
-    return <ErrorState error={error} t={t} tErrors={tErrors} onLoginRequired={authModal.openLogin} />;
+    return (
+      <AuthErrorState
+        error={error as Error & { data?: { code?: string } }}
+        translations={{
+          fetchFailed: t('errors.fetchFailed'),
+          unauthorizedMessage: tErrors(UNAUTHORIZED_ERROR_KEY),
+        }}
+        onLoginRequired={onAuthRequired}
+      />
+    );
   }
 
   const orders = data?.items || [];

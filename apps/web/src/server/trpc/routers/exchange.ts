@@ -10,6 +10,7 @@ import {
   ORDER_STATUS_GROUPS,
   EMAIL_ENABLED_IN_DEVELOPMENT,
   EXCHANGE_DEFAULTS,
+  USER_ROLES,
 } from '@repo/constants';
 
 import { RateLimitedEmailService } from '@repo/email-service';
@@ -25,6 +26,7 @@ import {
   sanitizeEmail,
   orderManager,
   userManager,
+  getUserRoleForApp,
   isAmountWithinLimits,
   type CryptoCurrency,
   type Order,
@@ -69,7 +71,7 @@ import { z } from 'zod';
 
 import { type Context } from '../context';
 import { createTRPCRouter, publicProcedure } from '../init';
-
+import { protectedProcedure } from '../middleware/auth';
 import { rateLimitMiddleware } from '../middleware/rateLimit';
 
 // ✅ Logger для централизованного логирования
@@ -852,10 +854,10 @@ export const exchangeRouter = createTRPCRouter({
       };
     }),
 
-  // Получить статус заявки
-  getOrderStatus: publicProcedure
+  // Получить статус заявки (ЗАЩИЩЕНО: требует авторизацию)
+  getOrderStatus: protectedProcedure
     .input(securityEnhancedOrderByIdSchema)
-    .query(async ({ input }) => {
+    .query(async ({ input, ctx }) => {
       // Определяем тип ID и используем соответствующий метод поиска
       const order = isUUID(input.orderId)
         ? await orderManager.findById(input.orderId)
@@ -865,9 +867,19 @@ export const exchangeRouter = createTRPCRouter({
         throw createNotFoundError(`Order with ID "${input.orderId}" not found`);
       }
 
+      // ✅ ПРОВЕРКА ПРАВ ДОСТУПА на основе роли
+      const userRole = getUserRoleForApp(ctx.user, 'web');
+      
+      // USER может видеть только свои заказы
+      if (userRole === USER_ROLES.USER && order.userId !== ctx.user.id) {
+        throw createNotFoundError(`Order with ID "${input.orderId}" not found`);
+      }
+      
+      // OPERATOR, SUPPORT, ADMIN могут видеть все заказы (проверка пройдена)
+
       // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: получить email через userId → User
       const user = await userManager.findById(order.userId);
-      console.log('� DEBUG getOrderStatus:', { 
+      console.log('🔍 DEBUG getOrderStatus:', { 
         orderId: input.orderId,
         orderUserId: order.userId,
         userFound: user !== null && user !== undefined, 
