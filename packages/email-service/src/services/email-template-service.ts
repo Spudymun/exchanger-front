@@ -251,7 +251,7 @@ export class EmailTemplateService {
   static async generateAutoRegistrationPasswordEmail(
     data: import('../types/index').AutoRegistrationPasswordEmailData
   ): Promise<EmailMessage> {
-    const subject = `🎉 Ваш пароль для заявки №${data.orderId} - ${COMPANY_INFO.NAME}`;
+    const subject = `🎉 Ваш пароль для личного кабинета - ${COMPANY_INFO.NAME}`;
 
     const variables = {
       companyName: COMPANY_INFO.NAME,
