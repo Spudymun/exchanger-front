@@ -32,6 +32,8 @@ async function loadLocaleMessages(locale: string) {
     orderPageMessages,
     ordersPageMessages,
     contactsPageMessages,
+    rulesPageMessages,
+    amlPolicyPageMessages,
   ] = await Promise.all([
     import(`../../messages/${locale}/home-page.json`).then(m => m.default),
     import(`../../messages/${locale}/layout.json`).then(m => m.default),
@@ -44,6 +46,8 @@ async function loadLocaleMessages(locale: string) {
     import(`../../messages/${locale}/order-page.json`).then(m => m.default),
     import(`../../messages/${locale}/orders-page.json`).then(m => m.default),
     import(`../../messages/${locale}/contacts-page.json`).then(m => m.default),
+    import(`../../messages/${locale}/rules-page.json`).then(m => m.default),
+    import(`../../messages/${locale}/aml-policy-page.json`).then(m => m.default),
   ]);
 
   return {
@@ -59,6 +63,8 @@ async function loadLocaleMessages(locale: string) {
     ...orderPageMessages,
     ...ordersPageMessages,
     ...contactsPageMessages,
+    ...rulesPageMessages,
+    ...amlPolicyPageMessages,
   };
 }
 

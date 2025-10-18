@@ -1,0 +1,137 @@
+{
+  "RulesPage": {
+    "meta": {
+      "title": "Terms of Service - ExchangeGO",
+      "description": "Terms of service for ExchangeGO cryptocurrency exchange platform"
+    },
+    "hero": {
+      "title": "Terms of Service",
+      "subtitle": "Terms and conditions for using the ExchangeGO cryptocurrency exchange platform",
+      "lastUpdated": "Last updated"
+    },
+    "sections": {
+      "terms": {
+        "title": "1. Terms and Definitions",
+        "items": {
+          "service": {
+            "term": "ExchangeGO",
+            "definition": "An automated cryptocurrency exchange service located on the Internet at exchangego.com, offering its services through a specialized software interface for all Users."
+          },
+          "user": {
+            "term": "User",
+            "definition": "Any individual or legal entity that has agreed to all the terms offered by the Service and has joined this agreement."
+          },
+          "digitalUnits": {
+            "term": "Digital Units (Cryptocurrency)",
+            "definition": "Accounting units of corresponding electronic payment systems, indicating a specific volume of claims or other rights arising from agreements of electronic payment systems with their users."
+          },
+          "paymentSystem": {
+            "term": "Electronic Payment System (Payment System)",
+            "definition": "A software and hardware product developed by a third party, representing a system for accounting digital units and organizing settlements between users."
+          },
+          "payment": {
+            "term": "Payment",
+            "definition": "Transfer of digital units from payer to recipient."
+          },
+          "order": {
+            "term": "Operation (Order)",
+            "definition": "Information submitted by the User using the Service's tools in electronic form, indicating the intention to use the Service's services under the conditions offered by the Service and specified in the Order parameters."
+          }
+        }
+      },
+      "general": {
+        "title": "2. General Provisions",
+        "items": [
+          "This agreement governs the relationship between the User and the Service regarding the services provided by the Service and supersedes all previous agreements between them.",
+          "This agreement does not override the current legislation of the countries of registration and location of the Service and the User, as well as contractual relations between the User and electronic payment systems.",
+          "This agreement is considered accepted on the terms of a public offer, accepted by the User when submitting an Order, which is an integral part of this agreement.",
+          "A public offer is recognized as information displayed by the Service about the parameters and conditions of the Order.",
+          "Acceptance of the public offer is recognized as the User's completion of the Order formation, confirming their intention to enter into a transaction with the Service on the proposed terms.",
+          "The date and time of acceptance, as well as the Order terms, are automatically recorded by the Service at the moment of its completion.",
+          "The acceptance period for the User's proposal to make a transaction is 40 minutes from the moment of completing the Order formation.",
+          "This agreement comes into force from the moment the User completes the Order formation.",
+          "The agreement terminates from the moment digital units are received at the User's details in the amount specified in the Order, or from the moment the Order is canceled.",
+          "The parties recognize the electronic agreement as equivalent in legal force to a written agreement.",
+          "The Service has the right to make changes to the agreement unilaterally by publishing the current version on this page."
+        ]
+      },
+      "subject": {
+        "title": "3. Subject of the Agreement",
+        "items": [
+          "Using the technical means of the Service, the User instructs, and the Service performs actions on behalf of and at the expense of the User to receive and transfer the specified amount of digital units, as well as transfer the monetary equivalent to the User's details.",
+          "Any positive difference resulting from such actions goes to the Service as a commission."
+        ]
+      },
+      "services": {
+        "title": "4. Terms of Service Provision",
+        "items": [
+          "Order processing is carried out in accordance with the privacy policy and anti-money laundering policy.",
+          "Transaction management and information are provided only through the Service interface.",
+          "Operations are accounted for according to the rules of electronic payment systems.",
+          "A completed operation is irrevocable.",
+          "If funds are not received within 30 minutes, the Service has the right to cancel the transaction. Funds received later are returned to the sender within 24 hours, minus payment system fees.",
+          "If payment is manually confirmed without actual receipt of funds, the Service may block the client's details to prevent fraud.",
+          "If the received amount differs from the declared amount, the Service recalculates the Order based on the actually received amount.",
+          "If the amount differs by more than 10%, the Service may cancel the transaction and return the funds minus fees.",
+          "If funds are not sent to the User within 24 hours, the User has the right to demand a refund.",
+          "The Service has the right to involve third parties to fulfill obligations.",
+          "The Service has the right to cancel an operation without explanation in case of suspicious activity.",
+          "The Service may refuse service if these rules are violated."
+        ]
+      },
+      "privacy": {
+        "title": "5. Privacy Policy",
+        "items": [
+          "The Service accepts Users' personal data and stores it in encrypted form.",
+          "Data transmission between the User and the Service is carried out via secure SSL/TLS protocol.",
+          "The Service has the right to collect additional information about the User to improve service quality and ensure security.",
+          "Data may be transferred to law enforcement agencies upon official request.",
+          "Data may be transferred to payment system administrations to resolve disputes.",
+          "Personal data is stored for 5 years from the date of the last operation.",
+          "All required fields when creating an Order must contain accurate and current data."
+        ]
+      },
+      "aml": {
+        "title": "6. Anti-Money Laundering Policy (AML)",
+        "items": [
+          "The Service complies with international norms and standards for anti-money laundering (AML) and counter-terrorism financing.",
+          "Transfers to third parties, use of anonymous connections, and provision of false data are strictly prohibited.",
+          "Anti-fraud systems are applied, limits on operations are established, KYC (Know Your Customer) procedures are conducted, and transaction checks are performed.",
+          "The Service has the right to freeze an operation and request identity documents if suspicions arise or when processing large amounts.",
+          "Refusal to provide requested documents may result in denial of service and refund of funds minus fees.",
+          "The Service may transfer data to law enforcement agencies if illegal actions are detected.",
+          "The Service has the right to verify all provided data and request additional information."
+        ]
+      },
+      "liability": {
+        "title": "7. Limitation of Liability",
+        "items": [
+          "The Service operates around the clock, however, order processing time may vary depending on load.",
+          "Services are provided \"as is\" without any express or implied warranties.",
+          "The Service's liability is limited to the amount of the User's funds involved in a specific operation.",
+          "The Service does not guarantee uninterrupted platform availability and is not liable for technical failures.",
+          "The Service is not liable for payment delays caused by payment systems or banks.",
+          "The Service is not liable for losses related to the User's expectations regarding currency rate changes.",
+          "The Service is not liable for errors in details specified by the User.",
+          "The User is independently responsible for paying taxes related to exchange operations.",
+          "The User undertakes to compensate the Service's losses, except in cases where losses are caused by the Service's fault.",
+          "The User confirms the lawful origin of funds and the right to dispose of them.",
+          "It is prohibited to use the Service for fraud, money laundering, and other illegal actions.",
+          "Interference with the Service's operation, hacking attempts, DDoS attacks, and other unlawful actions are prohibited.",
+          "All website content, including design, texts, and code, is protected by copyright law.",
+          "Parties are released from liability in case of force majeure circumstances.",
+          "Payment systems are responsible for the security of user funds within their systems, the Service is only an intermediary."
+        ]
+      },
+      "disputes": {
+        "title": "8. Dispute Resolution",
+        "items": [
+          "All disputes and disagreements are resolved through negotiations between the User and the Service.",
+          "Claims are sent through the contacts specified on the website, with a detailed description of the problem.",
+          "If a dispute cannot be resolved through negotiations within 30 days, the legislation of the Service's country of registration applies.",
+          "The User agrees that using the Service means full acceptance of these rules."
+        ]
+      }
+    }
+  }
+}

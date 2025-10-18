@@ -1,0 +1,131 @@
+{
+  "AmlPolicyPage": {
+    "meta": {
+      "title": "AML/KYC Policy - ExchangeGO",
+      "description": "Anti-money laundering and KYC procedures on the ExchangeGO platform"
+    },
+    "hero": {
+      "title": "AML/KYC Policy",
+      "subtitle": "Anti-Money Laundering and Counter-Terrorism Financing Policy",
+      "lastUpdated": "Last updated"
+    },
+    "sections": {
+      "introduction": {
+        "title": "Introduction",
+        "content": [
+          "ExchangeGO adheres to strict practices and measures in the field of anti-money laundering (AML) and counter-terrorism financing.",
+          "The purpose of these measures is to demonstrate that ExchangeGO takes seriously any attempts to use its service for illegal purposes.",
+          "We warn users about the inadmissibility of using the service for money laundering, terrorism financing, fraud of any kind, as well as for purchasing prohibited goods and services."
+        ]
+      },
+      "requirements": {
+        "title": "Transaction Requirements",
+        "subtitle": "To prevent illegal transactions, the Service establishes the following requirements for all Orders:",
+        "items": [
+          {
+            "title": "Prohibition of Third-Party Transfers",
+            "description": "The sender and recipient of a payment within one Order must be the same person. Transfers to third parties using the Service are strictly prohibited."
+          },
+          {
+            "title": "Data Accuracy",
+            "description": "All contact information entered by the User in the Order, as well as other personal data transmitted by the User to the Service, must be current and completely accurate."
+          },
+          {
+            "title": "Prohibition of Anonymity",
+            "description": "It is strictly prohibited to create Orders by the User using anonymous proxy servers, VPN services, or any other anonymous Internet connections."
+          },
+          {
+            "title": "Legality of Funds",
+            "description": "The User confirms the lawful origin of all funds used and the right to dispose of them."
+          }
+        ]
+      },
+      "verification": {
+        "title": "Verification Procedures",
+        "subtitle": "Measures that the administration may take if suspicions arise:",
+        "items": [
+          {
+            "title": "Operation Suspension",
+            "description": "If the Service administration has reasonable suspicions that the User is attempting to use the Service for money laundering or any other illegal operations, the administration has the right to suspend the exchange operation during the investigation."
+          },
+          {
+            "title": "Document Request",
+            "description": "The administration may request identity documents from the User (passport, driver's license, national ID), as well as proof of address."
+          },
+          {
+            "title": "Additional Information",
+            "description": "Request for other information related to payments: source of funds, purpose of the operation, documents confirming the lawful origin of funds."
+          },
+          {
+            "title": "Consequences of Refusal",
+            "description": "Refusal to provide requested documents and information may result in denial of service and refund of funds minus all fees incurred."
+          }
+        ]
+      },
+      "kyc": {
+        "title": "KYC (Know Your Customer) Procedure",
+        "content": [
+          "ExchangeGO applies the Know Your Customer (KYC) procedure to ensure security and compliance with international standards.",
+          "The KYC procedure may be initiated automatically when certain transaction amount limits are reached or when suspicious activity is detected.",
+          "As part of the KYC procedure, the User is required to provide the requested documents within 72 hours of the request.",
+          "All provided documents are verified by the administration and may be transferred to specialized services for additional verification."
+        ]
+      },
+      "disclosure": {
+        "title": "Information Disclosure",
+        "subtitle": "All information provided by the client may be transferred to relevant authorities in the following cases:",
+        "items": [
+          {
+            "icon": "shield",
+            "title": "Upon Request from Law Enforcement",
+            "description": "Upon receipt of an official request from law enforcement agencies of any jurisdiction."
+          },
+          {
+            "icon": "gavel",
+            "title": "By Court Decision",
+            "description": "By decision of courts of various instances in the framework of legal proceedings."
+          },
+          {
+            "icon": "building",
+            "title": "Upon Request from Payment Systems",
+            "description": "Upon request from payment system administrations when investigating incidents and disputes."
+          },
+          {
+            "icon": "alert-triangle",
+            "title": "Upon Detection of Suspicious Activity",
+            "description": "When the administration independently identifies signs of illegal activity, information may be transferred proactively."
+          }
+        ]
+      },
+      "monitoring": {
+        "title": "Transaction Monitoring",
+        "content": [
+          "All transactions undergo automatic monitoring using specialized risk analysis systems.",
+          "Machine learning algorithms are applied to identify suspicious patterns and anomalous activity.",
+          "Individual and general transaction limits are established depending on the user's verification level.",
+          "Transactions with a high risk level are subject to additional manual verification by the security service."
+        ]
+      },
+      "consequences": {
+        "title": "Consequences of Violations",
+        "items": [
+          "Immediate account blocking and freezing of all operations",
+          "Refund of funds minus all fees incurred and verification costs",
+          "Blacklisting with prohibition on further use of the service",
+          "Transfer of information to law enforcement agencies upon detection of signs of criminal activity",
+          "Possible cooperation with law enforcement agencies within the framework of the investigation"
+        ]
+      },
+      "commitment": {
+        "title": "Our Commitments",
+        "content": [
+          "ExchangeGO undertakes to comply with all international standards and recommendations for anti-money laundering and counter-terrorism financing.",
+          "We constantly improve our monitoring and verification systems to ensure maximum platform security.",
+          "All user data is stored in encrypted form and protected by modern information security tools.",
+          "We cooperate with law enforcement agencies and regulators to maintain high compliance standards.",
+          "By using our service, you contribute to creating a safe and legal environment for cryptocurrency exchange."
+        ]
+      }
+    }
+  }
+}

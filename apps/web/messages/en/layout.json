@@ -3,7 +3,9 @@
     "navigation": {
       "exchange": "Exchange",
       "orders": "Orders",
-      "contact": "Contact"
+      "contact": "Contact",
+      "rules": "Rules",
+      "amlPolicy": "AML Policy"
     },
     "auth": {
       "signIn": "Sign In",

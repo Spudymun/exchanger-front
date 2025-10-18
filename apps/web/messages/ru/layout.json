@@ -3,7 +3,9 @@
     "navigation": {
       "exchange": "Обмен",
       "orders": "Заказы",
-      "contact": "Контакты"
+      "contact": "Контакты",
+      "rules": "Правила",
+      "amlPolicy": "AML Политика"
     },
     "auth": {
       "signIn": "Вход",

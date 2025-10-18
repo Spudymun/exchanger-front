@@ -1,6 +1,6 @@
 'use client';
 
-import { APP_ROUTES, UI_REFRESH_INTERVALS } from '@repo/constants';
+import { APP_ROUTES, LEGAL_ROUTES, UI_REFRESH_INTERVALS } from '@repo/constants';
 import { useAuthModal } from '@repo/providers';
 import { Header } from '@repo/ui';
 
@@ -36,7 +36,7 @@ function useAuthDialogs() {
     refetchInterval: UI_REFRESH_INTERVALS.SESSION_STATUS_REFRESH,
   });
   const utils = trpc.useUtils();
-  
+
   // ✅ Используем глобальный контекст вместо локального state
   const authModal = useAuthModal();
 
@@ -234,6 +234,15 @@ function AppHeaderNavigationLinks({
       </Link>
       <Link href={APP_ROUTES.ORDERS} className={getNavLinkClass(pathname, APP_ROUTES.ORDERS)}>
         {t('navigation.orders')}
+      </Link>
+      <Link href={LEGAL_ROUTES.RULES} className={getNavLinkClass(pathname, LEGAL_ROUTES.RULES)}>
+        {t('navigation.rules')}
+      </Link>
+      <Link
+        href={LEGAL_ROUTES.AML_POLICY}
+        className={getNavLinkClass(pathname, LEGAL_ROUTES.AML_POLICY)}
+      >
+        {t('navigation.amlPolicy')}
       </Link>
       <Link href={APP_ROUTES.CONTACTS} className={getNavLinkClass(pathname, APP_ROUTES.CONTACTS)}>
         {t('navigation.contact')}
