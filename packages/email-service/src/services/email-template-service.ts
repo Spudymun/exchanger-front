@@ -245,6 +245,42 @@ export class EmailTemplateService {
   }
 
   /**
+   * Generate auto-registration password email content
+   * For users who registered automatically during order creation
+   */
+  static async generateAutoRegistrationPasswordEmail(
+    data: import('../types/index').AutoRegistrationPasswordEmailData
+  ): Promise<EmailMessage> {
+    const subject = `🎉 Ваш пароль для заявки №${data.orderId} - ${COMPANY_INFO.NAME}`;
+
+    const variables = {
+      companyName: COMPANY_INFO.NAME,
+      userEmail: data.userEmail,
+      generatedPassword: data.generatedPassword,
+      orderId: data.orderId,
+    };
+
+    const logContext = {
+      orderId: data.orderId,
+      userEmail: data.userEmail,
+    };
+
+    const { html, text } = await this.generateUniversalTemplateEmail(
+      'auto-registration-password',
+      subject,
+      variables,
+      logContext
+    );
+
+    return {
+      to: data.userEmail,
+      subject,
+      html,
+      text,
+    };
+  }
+
+  /**
    * Clear template cache (useful for development)
    */
   static clearCache(): void {

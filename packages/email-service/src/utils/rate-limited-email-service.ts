@@ -102,4 +102,44 @@ export class RateLimitedEmailService {
       throw error;
     }
   }
+
+  /**
+   * Send auto-registration password email with rate limiting applied
+   * For users who registered automatically during order creation
+   * @param data Email data for sending auto-registration password
+   * @param clientIdentifier Unique identifier for rate limiting (IP address, user ID, etc.)
+   * @param config Email provider configuration
+   */
+  static async sendAutoRegistrationPassword(
+    data: import('../types/index').AutoRegistrationPasswordEmailData,
+    clientIdentifier: string,
+    config?: Partial<EmailProviderConfig>
+  ): Promise<EmailSendResult> {
+    try {
+      this.logger.info('Applying rate limit for auto-registration password email', {
+        orderId: data.orderId,
+        clientIdentifier,
+      });
+
+      // Apply rate limiting first
+      await applyEmailRateLimit(clientIdentifier);
+
+      this.logger.info('Rate limit passed, sending auto-registration password email', {
+        orderId: data.orderId,
+        clientIdentifier,
+      });
+
+      // If rate limit passes, call the actual email service
+      return await EmailService.sendAutoRegistrationPassword(data, config);
+    } catch (error) {
+      this.logger.error('Rate-limited auto-registration password email service error', {
+        orderId: data.orderId,
+        clientIdentifier,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+
+      // Re-throw the error
+      throw error;
+    }
+  }
 }

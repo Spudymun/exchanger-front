@@ -42,7 +42,10 @@ export { WalletMonitoringProcess } from './services/wallet-monitoring-process';
 
 // ✅ SERVER-ONLY: Экспорт типов для серверных сервисов
 export type { AlertCheckResult } from './services/wallet-alerts-service';
-export type { AutoRegistrationResult } from './services/auto-registration-service';
+export type {
+  AutoRegistrationResult,
+  AutoRegistrationResultWithPassword,
+} from './services/auto-registration-service';
 
 /**
  * Re-export client-safe types для серверного кода

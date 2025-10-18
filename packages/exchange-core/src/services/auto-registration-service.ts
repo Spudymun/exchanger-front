@@ -22,6 +22,14 @@ export interface AutoRegistrationResult {
   authenticationMethod: AuthenticationMethod;
 }
 
+/**
+ * Extended result with generated password for email sending
+ * Used only when generatePassword option is true
+ */
+export interface AutoRegistrationResultWithPassword extends AutoRegistrationResult {
+  generatedPassword?: string; // plaintext password - only for email sending
+}
+
 // Type alias for user authentication status - avoids inline type duplication
 type UserAuthenticationStatus = Pick<
   AutoRegistrationResult,
@@ -50,14 +58,18 @@ export class AutoRegistrationService {
     sessionMetadata: SessionMetadata,
     existingSessionId?: string,
     options: AutoRegistrationOptions = {}
-  ): Promise<AutoRegistrationResult> {
+  ): Promise<AutoRegistrationResultWithPassword> {
     try {
       this.logger.info('Ensuring user with session', {
         email,
         hasExistingSession: !!existingSessionId,
       });
 
-      const userStatus = await this.determineUserStatus(email, existingSessionId, options.generatePassword || false);
+      const userStatus = await this.determineUserStatus(
+        email,
+        existingSessionId,
+        options.generatePassword || false
+      );
       const finalSessionId = await this.resolveSessionId(userStatus, existingSessionId, sessionMetadata);
 
       this.logger.info('User session ensured successfully', {
@@ -72,6 +84,7 @@ export class AutoRegistrationService {
         sessionId: finalSessionId,
         isNewUser: userStatus.isNewUser,
         authenticationMethod: userStatus.authenticationMethod,
+        generatedPassword: userStatus.generatedPassword, // ✅ ПЕРЕДАЕМ НАВЕРХ
       };
     } catch (error) {
       this.logger.error('AutoRegistrationService.ensureUserWithSession failed', {
@@ -125,7 +138,7 @@ export class AutoRegistrationService {
     email: string,
     existingSessionId?: string,
     generatePassword: boolean = false
-  ): Promise<UserAuthenticationStatus> {
+  ): Promise<UserAuthenticationStatus & { generatedPassword?: string }> {
     // 1. Check if user is already logged in with valid session
     if (existingSessionId) {
       const sessionResult = await this.validateExistingSession(existingSessionId, email);
@@ -147,12 +160,13 @@ export class AutoRegistrationService {
     }
 
     // 3. Unregistered → auto-registration
-    const newUser = await this.createNewUserWithPassword(email, generatePassword);
+    const result = await this.createNewUserWithPassword(email, generatePassword);
 
     return {
-      user: newUser,
+      user: result.user,
       authenticationMethod: AUTHENTICATION_METHODS.AUTO_REGISTRATION,
       isNewUser: true,
+      generatedPassword: result.generatedPassword, // ✅ ПЕРЕДАЕМ ДАЛЬШЕ
     };
   }
 
@@ -228,7 +242,10 @@ export class AutoRegistrationService {
    * ✅ Create new user with optional password generation
    * Extracted from determineUserStatus to reduce complexity
    */
-  private async createNewUserWithPassword(email: string, generatePassword: boolean): Promise<User> {
+  private async createNewUserWithPassword(
+    email: string,
+    generatePassword: boolean
+  ): Promise<{ user: User; generatedPassword?: string }> {
     const userData: {
       email: string;
       hashedPassword: string | undefined;
@@ -239,18 +256,20 @@ export class AutoRegistrationService {
       isVerified: false,
     };
 
+    let plainPassword: string | undefined;
+
     // Генерируем пароль если нужно
     if (generatePassword) {
       // АРХИТЕКТУРНАЯ ГАРАНТИЯ: generatePasswordForAutoFlow() ВСЕГДА создает валидный пароль
       // Никаких дополнительных проверок не требуется - функция математически корректна
-      const plainPassword = generatePasswordForAutoFlow();
+      plainPassword = generatePasswordForAutoFlow();
 
       // 🚨 ТОЛЬКО ДЛЯ РАЗРАБОТКИ - логируем сгенерированный пароль
       if (process.env.NODE_ENV === 'development') {
-        this.logger.warn('DEV_ONLY_GENERATED_PASSWORD', { 
+        this.logger.warn('DEV_ONLY_GENERATED_PASSWORD', {
           email,
           plainPassword, // ⚠️ УДАЛИТЬ В ПРОДАКШЕНЕ!
-          note: 'This is development-only logging. Remove in production!'
+          note: 'This is development-only logging. Remove in production!',
         });
       }
 
@@ -261,6 +280,12 @@ export class AutoRegistrationService {
       this.logger.info('Generated secure password for auto-registered user', { email });
     }
 
-    return await this.userManager.create(userData);
+    const user = await this.userManager.create(userData);
+
+    // ✅ ВОЗВРАЩАЕМ plainPassword для отправки email (если был сгенерирован)
+    return {
+      user,
+      generatedPassword: plainPassword,
+    };
   }
 }

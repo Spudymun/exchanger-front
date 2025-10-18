@@ -34,6 +34,7 @@ export type {
   WalletReadyEmailData,
   SystemAlertEmailData,
   PasswordResetEmailData, // 🆕 НОВЫЙ тип для password reset
+  AutoRegistrationPasswordEmailData, // 🆕 НОВЫЙ тип для auto-registration password
   EmailEnvironment,
   EmailTemplateType,
 } from './types/index';

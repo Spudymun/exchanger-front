@@ -220,6 +220,67 @@ export class EmailService {
   }
 
   /**
+   * Send auto-registration password email to new user
+   * For users who registered automatically during order creation
+   */
+  static async sendAutoRegistrationPassword(
+    data: import('../types/index').AutoRegistrationPasswordEmailData,
+    config?: Partial<EmailProviderConfig>
+  ): Promise<EmailSendResult> {
+    try {
+      this.logger.info('Sending auto-registration password email', {
+        orderId: data.orderId,
+        to: data.userEmail,
+      });
+
+      // Generate email content from template
+      const emailMessage =
+        await EmailTemplateService.generateAutoRegistrationPasswordEmail(data);
+
+      // Get email provider and send
+      const provider = config
+        ? EmailServiceFactory.create(config)
+        : EmailServiceFactory.createFromEnvironment();
+      const result = await provider.send(emailMessage);
+
+      // Record result for monitoring
+      this.recordEmailResultForMonitoring(config, result, result.error);
+
+      if (result.success) {
+        this.logger.info('Auto-registration password email sent successfully', {
+          orderId: data.orderId,
+          to: data.userEmail,
+          messageId: result.messageId,
+        });
+      } else {
+        this.logger.error('Failed to send auto-registration password email', {
+          orderId: data.orderId,
+          to: data.userEmail,
+          error: result.error,
+        });
+      }
+
+      return result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : this.UNKNOWN_ERROR;
+
+      // Record error for monitoring
+      this.recordEmailErrorForMonitoring(config, errorMessage);
+
+      this.logger.error(this.EMAIL_SERVICE_ERROR, {
+        orderId: data.orderId,
+        to: data.userEmail,
+        error: errorMessage,
+      });
+
+      return {
+        success: false,
+        error: errorMessage,
+      };
+    }
+  }
+
+  /**
    * Send system alert emails to administrators
    */
   static async sendSystemAlert(

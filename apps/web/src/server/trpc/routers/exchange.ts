@@ -13,7 +13,9 @@ import {
   USER_ROLES,
 } from '@repo/constants';
 
-import { RateLimitedEmailService } from '@repo/email-service';
+import {
+  RateLimitedEmailService,
+} from '@repo/email-service';
 
 // Constants for error messages
 const UNKNOWN_ERROR_MESSAGE = 'Unknown error' as const;
@@ -284,6 +286,69 @@ async function sendCryptoAddressEmail(params: {
   }
 }
 
+/**
+ * Отправляет email с паролем для новых пользователей после авторегистрации
+ *
+ * @architecture
+ * - Вызывается ТОЛЬКО для новых пользователей (isNewUser === true)
+ * - Отправляется ТОЛЬКО если был сгенерирован пароль (generatedPassword существует)
+ * - Использует rate limiting через RateLimitedEmailService
+ * - НЕ блокирует создание заказа при ошибках отправки
+ */
+async function sendAutoRegistrationPasswordEmail(params: {
+  order: Order;
+  userEmail: string;
+  generatedPassword: string;
+  sessionMetadata: SessionMetadata;
+}) {
+  const { order, userEmail, generatedPassword, sessionMetadata } = params;
+
+  logger.info('Starting auto-registration password email sending', {
+    orderId: order.publicId,
+    email: userEmail,
+  });
+
+  // Проверяем конфигурацию отправки email
+  const environment = process.env.NODE_ENV === 'production' ? 'production' : 'development';
+  const isGlobalEnabled = environment === 'production' || EMAIL_ENABLED_IN_DEVELOPMENT.GLOBAL;
+
+  // TODO: Добавить специфичный флаг для auto-registration password в constants
+  // Пока используем GLOBAL флаг
+  if (!isGlobalEnabled) {
+    logger.info('Auto-registration password email disabled by configuration', {
+      orderId: order.publicId,
+      email: userEmail,
+      environment,
+      message: 'Email отправка отключена в конфигурации для разработки',
+    });
+    return;
+  }
+
+  try {
+    await RateLimitedEmailService.sendAutoRegistrationPassword(
+      {
+        userEmail,
+        generatedPassword,
+        orderId: order.publicId,
+      },
+      sessionMetadata.ip
+    );
+
+    logger.info('Auto-registration password email sent successfully', {
+      orderId: order.publicId,
+      email: userEmail,
+    });
+  } catch (emailError) {
+    logger.error('Failed to send auto-registration password email', {
+      orderId: order.publicId,
+      email: userEmail,
+      error: emailError instanceof Error ? emailError.message : UNKNOWN_ERROR_MESSAGE,
+    });
+    // Continue execution even if email sending fails
+    // User can always use password reset functionality
+  }
+}
+
 // ✅ Singleton для OrderExpirationService
 let expirationService: OrderExpirationService | null = null;
 
@@ -328,6 +393,7 @@ async function processSuccessfulOrder(params: {
     sessionId: string;
     isNewUser: boolean;
     authenticationMethod: string;
+    generatedPassword?: string; // 🆕 ДОБАВЛЕНО
   };
   sessionMetadata: SessionMetadata;
   usedOldestOccupiedWallet?: boolean;
@@ -414,6 +480,16 @@ async function processSuccessfulOrder(params: {
 
   // Отправка email с адресом
   await sendCryptoAddressEmail({ order, orderRequest, depositAddress, sessionMetadata, walletInfo });
+
+  // 🆕 Отправка email с паролем для новых пользователей
+  if (userSession.isNewUser && userSession.generatedPassword) {
+    await sendAutoRegistrationPasswordEmail({
+      order,
+      userEmail: orderRequest.email,
+      generatedPassword: userSession.generatedPassword,
+      sessionMetadata,
+    });
+  }
 
   // Отправка уведомления в Telegram
   await sendTelegramNotification(order, orderRequest, depositAddress, usedOldestOccupiedWallet);

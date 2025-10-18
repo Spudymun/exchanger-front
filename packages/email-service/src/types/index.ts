@@ -83,6 +83,16 @@ export interface PasswordResetEmailData {
 }
 
 /**
+ * Auto-registration password email template data
+ * For users who registered automatically during order creation
+ */
+export interface AutoRegistrationPasswordEmailData {
+  userEmail: string;
+  generatedPassword: string;
+  orderId: string;
+}
+
+/**
  * Environment types for email service
  */
 export type EmailEnvironment = 'development' | 'production' | 'test';

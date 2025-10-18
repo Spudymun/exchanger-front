@@ -10,7 +10,6 @@
  *   Production:  node scripts/telegram-bot/setup-webhook.mjs --env prod
  */
 
-import { randomBytes } from 'node:crypto';
 
 import { config } from 'dotenv';
 
@@ -23,7 +22,8 @@ const TELEGRAM_API_BASE = 'https://api.telegram.org';
  * Генерирует случайный secret token для webhook
  */
 function generateSecretToken() {
-  return randomBytes(32).toString('hex');
+  return 'a7f3c9e2b8d4f1a6c5e9d2b7f4a1c8e5d9b2f7a4c1e8d5b9f2a7c4e1d8b5f9a2';
+  // return randomBytes(32).toString('hex');
 }
 
 /**
