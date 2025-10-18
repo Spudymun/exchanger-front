@@ -18,6 +18,50 @@ interface LocaleLayoutProps {
   params: Promise<{ locale: string }>;
 }
 
+// Helper: Загрузка всех модулей локализации
+async function loadLocaleMessages(locale: string) {
+  const [
+    homePageMessages,
+    layoutMessages,
+    advancedExchangeMessages,
+    serverErrorsMessages,
+    notificationsMessages,
+    exchangeTradingMessages,
+    commonUiMessages,
+    dashboardNavMessages,
+    orderPageMessages,
+    ordersPageMessages,
+    contactsPageMessages,
+  ] = await Promise.all([
+    import(`../../messages/${locale}/home-page.json`).then(m => m.default),
+    import(`../../messages/${locale}/layout.json`).then(m => m.default),
+    import(`../../messages/${locale}/advanced-exchange.json`).then(m => m.default),
+    import(`../../messages/${locale}/server-errors.json`).then(m => m.default),
+    import(`../../messages/${locale}/notifications.json`).then(m => m.default),
+    import(`../../messages/${locale}/exchange-trading.json`).then(m => m.default),
+    import(`../../messages/${locale}/common-ui.json`).then(m => m.default),
+    import(`../../messages/${locale}/dashboard-nav.json`).then(m => m.default),
+    import(`../../messages/${locale}/order-page.json`).then(m => m.default),
+    import(`../../messages/${locale}/orders-page.json`).then(m => m.default),
+    import(`../../messages/${locale}/contacts-page.json`).then(m => m.default),
+  ]);
+
+  return {
+    ...homePageMessages,
+    ...layoutMessages,
+    ...advancedExchangeMessages,
+    ...serverErrorsMessages,
+    ...notificationsMessages,
+    ...exchangeTradingMessages,
+    ...commonUiMessages,
+    'common-ui': commonUiMessages,
+    ...dashboardNavMessages,
+    ...orderPageMessages,
+    ...ordersPageMessages,
+    ...contactsPageMessages,
+  };
+}
+
 export default async function LocaleLayout({ children, params }: LocaleLayoutProps) {
   const { locale } = await params;
 
@@ -30,45 +74,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   setRequestLocale(locale);
 
   // Load messages for client components
-  // Using modular translation files - load all required modules
-  const [
-    homePageMessages,
-    layoutMessages,
-    advancedExchangeMessages,
-    serverErrorsMessages,
-    notificationsMessages,
-    exchangeTradingMessages,
-    commonUiMessages,
-    dashboardNavMessages,
-    orderPageMessages,
-    ordersPageMessages,
-  ] = await Promise.all([
-    import(`../../messages/${locale}/home-page.json`).then(m => m.default),
-    import(`../../messages/${locale}/layout.json`).then(m => m.default),
-    import(`../../messages/${locale}/advanced-exchange.json`).then(m => m.default),
-    import(`../../messages/${locale}/server-errors.json`).then(m => m.default),
-    import(`../../messages/${locale}/notifications.json`).then(m => m.default),
-    import(`../../messages/${locale}/exchange-trading.json`).then(m => m.default),
-    import(`../../messages/${locale}/common-ui.json`).then(m => m.default),
-    import(`../../messages/${locale}/dashboard-nav.json`).then(m => m.default),
-    import(`../../messages/${locale}/order-page.json`).then(m => m.default),
-    import(`../../messages/${locale}/orders-page.json`).then(m => m.default),
-  ]);
-
-  // Merge all messages into single object
-  const messages = {
-    ...homePageMessages,
-    ...layoutMessages,
-    ...advancedExchangeMessages,
-    ...serverErrorsMessages,
-    ...notificationsMessages,
-    ...exchangeTradingMessages,
-    ...commonUiMessages,
-    'common-ui': commonUiMessages,
-    ...dashboardNavMessages,
-    ...orderPageMessages,
-    ...ordersPageMessages,
-  };
+  const messages = await loadLocaleMessages(locale);
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>

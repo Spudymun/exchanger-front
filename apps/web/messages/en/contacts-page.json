@@ -1,0 +1,50 @@
+{
+  "ContactsPage": {
+    "metadata": {
+      "title": "Contacts - ExchangeGO",
+      "description": "Get in touch with ExchangeGO support team. We're available 24/7 via Telegram and email."
+    },
+    "hero": {
+      "title": "Contact Us",
+      "subtitle": "We're here to help you 24/7. Choose your preferred way to get in touch."
+    },
+    "sections": {
+      "support": {
+        "title": "Support Channels",
+        "description": "Our team is always ready to assist you with any questions or issues."
+      },
+      "responseTime": {
+        "title": "Response Time",
+        "description": "We typically respond within 1-3 hours during peak times and even faster during off-peak hours."
+      }
+    },
+    "channels": {
+      "telegram": {
+        "title": "Telegram Support",
+        "description": "Get instant support through our Telegram bot. Available 24/7 with quick response times.",
+        "button": "Open Telegram",
+        "handle": "@exchangego_operators_bot"
+      },
+      "email": {
+        "title": "Email Support",
+        "description": "Send us a detailed message and we'll get back to you as soon as possible.",
+        "button": "Send Email",
+        "address": "support@exchangego.com"
+      }
+    },
+    "info": {
+      "availability": {
+        "title": "Availability",
+        "value": "24/7"
+      },
+      "responseTime": {
+        "title": "Average Response Time",
+        "value": "1-3 hours"
+      },
+      "languages": {
+        "title": "Languages",
+        "value": "English, Russian"
+      }
+    }
+  }
+}

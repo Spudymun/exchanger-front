@@ -1,0 +1,50 @@
+{
+  "ContactsPage": {
+    "metadata": {
+      "title": "Контакты - ExchangeGO",
+      "description": "Свяжитесь с командой поддержки ExchangeGO. Мы доступны 24/7 через Telegram и email."
+    },
+    "hero": {
+      "title": "Свяжитесь с нами",
+      "subtitle": "Мы всегда готовы помочь вам 24/7. Выберите удобный способ связи."
+    },
+    "sections": {
+      "support": {
+        "title": "Каналы поддержки",
+        "description": "Наша команда всегда готова помочь вам с любыми вопросами или проблемами."
+      },
+      "responseTime": {
+        "title": "Время ответа",
+        "description": "Обычно мы отвечаем в течение 1-3 часов в часы пик и ещё быстрее в остальное время."
+      }
+    },
+    "channels": {
+      "telegram": {
+        "title": "Поддержка в Telegram",
+        "description": "Получите мгновенную поддержку через наш Telegram бот. Доступно 24/7 с быстрым временем ответа.",
+        "button": "Открыть Telegram",
+        "handle": "@exchangego_operators_bot"
+      },
+      "email": {
+        "title": "Поддержка по Email",
+        "description": "Отправьте нам подробное сообщение и мы свяжемся с вами как можно скорее.",
+        "button": "Отправить Email",
+        "address": "support@exchangego.com"
+      }
+    },
+    "info": {
+      "availability": {
+        "title": "Доступность",
+        "value": "24/7"
+      },
+      "responseTime": {
+        "title": "Среднее время ответа",
+        "value": "1-3 часа"
+      },
+      "languages": {
+        "title": "Языки",
+        "value": "Английский, Русский"
+      }
+    }
+  }
+}
