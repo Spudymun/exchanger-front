@@ -21,6 +21,7 @@ import {
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 
+import { trpc } from '../../../lib/trpc-provider'; // ✅ Для invalidation session cache
 import { useDefaultBank } from '../../hooks/useDefaultBank';
 import { useExchangeMutation, useExchangeRates } from '../../hooks/useExchangeMutation';
 import { useRouter } from '../../i18n/navigation';
@@ -206,6 +207,7 @@ function useExchangeForm(initialParams?: ExchangeContainerProps['initialParams']
   const exchangeMutation = useExchangeMutation();
   const notifications = useNotifications();
   const { refetch: refetchRates } = useExchangeRates(); // ✅ Получаем refetch для актуального курса
+  const utils = trpc.useUtils(); // ✅ Для invalidation session cache
 
   // ✅ ERROR BOUNDARY: Используем централизованный хук с обработкой ошибок
   const { defaultBank, fallbackBankId } = useDefaultBank();
@@ -244,6 +246,10 @@ function useExchangeForm(initialParams?: ExchangeContainerProps['initialParams']
         };
 
         const orderData = await exchangeMutation.createOrder.mutateAsync(orderRequest);
+
+        // ✅ ФИКС: Invalidate session cache ПЕРЕД редиректом
+        // КРИТИЧНО для авторегистрации/автологина - предотвращает показ модалки логина
+        await utils.auth.getSession.invalidate();
 
         // ✅ ФИКС: Навигация с задержкой для показа спиннера
         router.push(`/order/${orderData.orderId}`);
