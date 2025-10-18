@@ -40,6 +40,35 @@ import { protectedProcedure } from '../../middleware/auth';
 const logger = createEnvironmentLogger('orders-router');
 
 /**
+ * Форматирует номер карты с пробелами каждые 4 цифры для удобного чтения и копирования
+ * 
+ * @param cardNumber - Номер карты (может содержать пробелы, дефисы и др.)
+ * @returns Отформатированный номер карты с пробелами каждые 4 цифры
+ * 
+ * @example
+ * formatCardNumber("1234567812345678") // "1234 5678 1234 5678"
+ * formatCardNumber("4270-1234-5678-9012") // "4270 1234 5678 9012"
+ */
+function formatCardNumber(cardNumber: string): string {
+  // Убираем все нецифровые символы
+  const digitsOnly = cardNumber.replace(/\D/g, '');
+  
+  // Форматируем с пробелами каждые 4 цифры
+  return digitsOnly.replace(/(\d{4})(?=\d)/g, '$1 ');
+}
+
+/**
+ * Оборачивает текст в inline code для Telegram Markdown
+ * Это делает текст кликабельным для копирования в Telegram
+ * 
+ * @param text - Текст для оборачивания
+ * @returns Текст обернутый в обратные кавычки
+ */
+function makeClickableCopy(text: string): string {
+  return `\`${text}\``;
+}
+
+/**
  * 🆕 TASK: Отправка уведомления операторам об оплате заявки пользователем
  *
  * @architecture
@@ -51,6 +80,11 @@ async function sendPaidNotification(order: Order, userEmail: string) {
   try {
     const { getTelegramQueue } = await import('@repo/utils/telegram-queue');
     const queue = await getTelegramQueue();
+
+    // ✅ НОВОЕ: Форматируем номер карты с пробелами и делаем кликабельным для копирования
+    const cardNumberFormatted = order.recipientData?.cardNumber 
+      ? makeClickableCopy(formatCardNumber(order.recipientData.cardNumber))
+      : undefined;
 
     await queue.enqueue({
       orderId: order.id,
@@ -64,6 +98,9 @@ async function sendPaidNotification(order: Order, userEmail: string) {
           currency: order.currency,
           uahAmount: String(order.uahAmount),
           status: 'paid',
+          bankName: order.bankName, // ✅ НОВОЕ
+          cardNumberMasked: cardNumberFormatted, // ✅ ОБНОВЛЕНО: полный номер с форматированием
+          fixedExchangeRate: order.fixedExchangeRate ? String(order.fixedExchangeRate) : undefined, // ✅ НОВОЕ
         },
         depositAddress: order.depositAddress || 'N/A',
         walletType: 'fresh',

@@ -109,12 +109,45 @@ export const TELEGRAM_OPERATOR_MESSAGES = {
   
   // Шаблоны полных сообщений
   TEMPLATES: {
-    ORDER_INFO: (order: { id: string; email: string; cryptoAmount: string; currency: string; uahAmount: string }, depositAddress: string) => [
-      `📧 Email: ${order.email}`,
-      `💎 Сумма: ${order.cryptoAmount} ${order.currency}`,
-      `💰 Эквивалент: ${order.uahAmount} UAH`,
-      `📍 Адрес: \`${depositAddress}\``,
-    ].join('\n'),
+    ORDER_INFO: (
+      order: { 
+        id: string; 
+        email: string; 
+        cryptoAmount: string; 
+        currency: string; 
+        uahAmount: string;
+        bankName?: string; // ✅ НОВОЕ
+        cardNumberMasked?: string; // ✅ НОВОЕ
+        fixedExchangeRate?: string; // ✅ НОВОЕ
+      }, 
+      depositAddress: string
+    ) => {
+      const baseInfo = [
+        `📧 Email: ${order.email}`,
+        `💎 Сумма: ${order.cryptoAmount} ${order.currency}`,
+        `💰 Эквивалент: ${order.uahAmount} UAH`,
+        `📍 Адрес: \`${depositAddress}\``,
+      ];
+
+      // ✅ НОВОЕ: Добавляем информацию о получателе фиата если есть
+      if (order.bankName || order.cardNumberMasked) {
+        baseInfo.push(''); // Пустая строка для отступа
+        baseInfo.push('💳 **Получатель фиата:**');
+        if (order.bankName) {
+          baseInfo.push(`   🏦 Банк: ${order.bankName}`);
+        }
+        if (order.cardNumberMasked) {
+          baseInfo.push(`   💳 Карта: ${order.cardNumberMasked}`);
+        }
+      }
+
+      // ✅ НОВОЕ: Добавляем зафиксированный курс если есть
+      if (order.fixedExchangeRate) {
+        baseInfo.push(`📊 Курс: ${order.fixedExchangeRate} UAH`);
+      }
+
+      return baseInfo.join('\n');
+    },
     
     FRESH_WALLET_MESSAGE: (baseInfo: string, orderId: string) => [
       `🆕 ${baseInfo}`,
@@ -145,6 +178,9 @@ export const TELEGRAM_OPERATOR_MESSAGES = {
         cryptoAmount: string;
         currency: string;
         uahAmount: string;
+        bankName?: string; // ✅ НОВОЕ
+        cardNumberMasked?: string; // ✅ НОВОЕ
+        fixedExchangeRate?: string; // ✅ НОВОЕ
       },
       initiator?: 'user' | 'operator' | 'system'
     ) => {
@@ -157,17 +193,37 @@ export const TELEGRAM_OPERATOR_MESSAGES = {
         ? '⏰ Причина: Истекло время оплаты'
         : '👤 Инициатор: Пользователь';
 
-      return [
+      const baseInfo = [
         title,
         ``,
         `📋 Заявка: #${order.id}`,
         `📧 Email: ${order.email}`,
         `💎 Сумма: ${order.cryptoAmount} ${order.currency}`,
         `💰 Эквивалент: ${order.uahAmount} UAH`,
-        reason,
-        ``,
-        `ℹ️ Заявка была отменена до завершения обработки`,
-      ].join('\n');
+      ];
+
+      // ✅ НОВОЕ: Добавляем информацию о получателе если есть
+      if (order.bankName || order.cardNumberMasked) {
+        baseInfo.push(``); // Пустая строка для разделения
+        baseInfo.push(`💳 **Получатель фиата:**`);
+        if (order.bankName) {
+          baseInfo.push(`🏦 Банк: ${order.bankName}`);
+        }
+        if (order.cardNumberMasked) {
+          baseInfo.push(`💳 Карта: ${order.cardNumberMasked}`);
+        }
+      }
+
+      // ✅ НОВОЕ: Добавляем курс если есть
+      if (order.fixedExchangeRate) {
+        baseInfo.push(`📊 Курс: ${order.fixedExchangeRate} UAH`);
+      }
+
+      baseInfo.push(reason);
+      baseInfo.push(``);
+      baseInfo.push(`ℹ️ Заявка была отменена до завершения обработки`);
+
+      return baseInfo.join('\n');
     },
 
     // 🆕 TASK: Шаблон для уведомления об оплате заявки
@@ -177,18 +233,43 @@ export const TELEGRAM_OPERATOR_MESSAGES = {
       cryptoAmount: string;
       currency: string;
       uahAmount: string;
-    }) => [
-      `💳 **Заявка оплачена пользователем**`,
-      ``,
-      `📋 Заявка: #${order.id}`,
-      `📧 Email: ${order.email}`,
-      `💎 Сумма: ${order.cryptoAmount} ${order.currency}`,
-      `💰 Эквивалент: ${order.uahAmount} UAH`,
-      `✅ Статус: PENDING → PAID`,
-      `👤 Инициатор: Пользователь`,
-      ``,
-      `⚡ Действие: Проверьте поступление средств и начните обработку`,
-    ].join('\n'),
+      bankName?: string; // ✅ НОВОЕ
+      cardNumberMasked?: string; // ✅ НОВОЕ
+      fixedExchangeRate?: string; // ✅ НОВОЕ
+    }) => {
+      const baseInfo = [
+        `💳 **Заявка оплачена пользователем**`,
+        ``,
+        `📋 Заявка: #${order.id}`,
+        `📧 Email: ${order.email}`,
+        `💎 Сумма: ${order.cryptoAmount} ${order.currency}`,
+        `💰 Эквивалент: ${order.uahAmount} UAH`,
+      ];
+
+      // ✅ НОВОЕ: Добавляем информацию о получателе если есть
+      if (order.bankName || order.cardNumberMasked) {
+        baseInfo.push(``); // Пустая строка для разделения
+        baseInfo.push(`💳 **Получатель фиата:**`);
+        if (order.bankName) {
+          baseInfo.push(`🏦 Банк: ${order.bankName}`);
+        }
+        if (order.cardNumberMasked) {
+          baseInfo.push(`💳 Карта: ${order.cardNumberMasked}`);
+        }
+      }
+
+      // ✅ НОВОЕ: Добавляем курс если есть
+      if (order.fixedExchangeRate) {
+        baseInfo.push(`📊 Курс: ${order.fixedExchangeRate} UAH`);
+      }
+
+      baseInfo.push(`✅ Статус: PENDING → PAID`);
+      baseInfo.push(`👤 Инициатор: Пользователь`);
+      baseInfo.push(``);
+      baseInfo.push(`⚡ Действие: Проверьте поступление средств и начните обработку`);
+
+      return baseInfo.join('\n');
+    },
   },
 } as const;
 
@@ -329,6 +410,9 @@ export interface TelegramNotificationPayload {
     uahAmount: string;
     status?: string;
     createdAt?: string;
+    bankName?: string; // ✅ НОВОЕ: название банка получателя фиата
+    cardNumberMasked?: string; // ✅ НОВОЕ: замаскированный номер карты (последние 4 цифры)
+    fixedExchangeRate?: string; // ✅ НОВОЕ: зафиксированный курс обмена
   };
   depositAddress?: string;
   walletType?: 'fresh' | 'reused';

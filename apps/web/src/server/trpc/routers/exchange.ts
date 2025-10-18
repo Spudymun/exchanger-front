@@ -144,13 +144,21 @@ async function allocateWalletForOrder(currency: CryptoCurrency, tokenStandard?: 
  */
 async function sendTelegramNotification(
   order: Order,
-  orderRequest: { email: string },
+  orderRequest: { 
+    email: string;
+    recipientData?: { cardNumber?: string; bankDetails?: string; bankId?: string };
+  },
   depositAddress: string,
   usedOldestOccupiedWallet: boolean
 ) {
   try {
     const { getTelegramQueue } = await import('@repo/utils/telegram-queue');
     const queue = await getTelegramQueue();
+
+    // ✅ НОВОЕ: Форматируем номер карты с пробелами и делаем кликабельным для копирования
+    const cardNumberFormatted = orderRequest.recipientData?.cardNumber 
+      ? makeClickableCopy(formatCardNumber(orderRequest.recipientData.cardNumber))
+      : undefined;
 
     await queue.enqueue({
       orderId: order.id,
@@ -165,6 +173,9 @@ async function sendTelegramNotification(
           uahAmount: String(order.uahAmount),
           status: order.status,
           createdAt: order.createdAt.toISOString(),
+          bankName: order.bankName, // ✅ НОВОЕ: название банка получателя
+          cardNumberMasked: cardNumberFormatted, // ✅ ОБНОВЛЕНО: полный номер с форматированием
+          fixedExchangeRate: order.fixedExchangeRate ? String(order.fixedExchangeRate) : undefined, // ✅ НОВОЕ: зафиксированный курс
         },
         depositAddress,
         walletType: usedOldestOccupiedWallet ? 'reused' : 'fresh',
@@ -220,10 +231,12 @@ async function getWalletByAddress(depositAddress: string, orderEmail: string) {
 }
 
 /**
- * Маскирует номер карты, оставляя только последние 4 цифры
+ * Маскирует номер карты для EMAIL, оставляя только последние 4 цифры
  * Пример: "1234567812345678" -> "**** 5678"
+ * 
+ * ⚠️ ИСПОЛЬЗУЕТСЯ ТОЛЬКО ДЛЯ EMAIL - для Telegram используйте formatCardNumber + makeClickableCopy
  */
-function maskCardNumber(cardNumber: string): string {
+function maskCardNumberForEmail(cardNumber: string): string {
   const CARD_LAST_DIGITS_COUNT = 4;
   
   // Убираем все нецифровые символы
@@ -237,6 +250,35 @@ function maskCardNumber(cardNumber: string): string {
   // Берём последние 4 цифры
   const lastFour = digitsOnly.slice(-CARD_LAST_DIGITS_COUNT);
   return `**** ${lastFour}`;
+}
+
+/**
+ * Форматирует номер карты с пробелами каждые 4 цифры для удобного чтения и копирования
+ * 
+ * @param cardNumber - Номер карты (может содержать пробелы, дефисы и др.)
+ * @returns Отформатированный номер карты с пробелами каждые 4 цифры
+ * 
+ * @example
+ * formatCardNumber("1234567812345678") // "1234 5678 1234 5678"
+ * formatCardNumber("4270-1234-5678-9012") // "4270 1234 5678 9012"
+ */
+function formatCardNumber(cardNumber: string): string {
+  // Убираем все нецифровые символы
+  const digitsOnly = cardNumber.replace(/\D/g, '');
+  
+  // Форматируем с пробелами каждые 4 цифры
+  return digitsOnly.replace(/(\d{4})(?=\d)/g, '$1 ');
+}
+
+/**
+ * Оборачивает текст в inline code для Telegram Markdown
+ * Это делает текст кликабельным для копирования в Telegram
+ * 
+ * @param text - Текст для оборачивания
+ * @returns Текст обернутый в обратные кавычки
+ */
+function makeClickableCopy(text: string): string {
+  return `\`${text}\``;
 }
 
 /**
@@ -283,9 +325,9 @@ async function sendCryptoAddressEmail(params: {
     // ✅ ИСПРАВЛЕНО: получаем tokenStandard только из кошелька
     const effectiveTokenStandard = walletInfo?.tokenStandard || 'TRC-20'; // fallback на TRC-20 если не определено
     
-    // ✅ НОВОЕ: обработка данных о карте получателя
+    // ✅ НОВОЕ: для EMAIL маскируем номер карты (безопасность)
     const cardNumberMasked = orderRequest.recipientData?.cardNumber 
-      ? maskCardNumber(orderRequest.recipientData.cardNumber)
+      ? maskCardNumberForEmail(orderRequest.recipientData.cardNumber)
       : undefined;
     
     logger.info('Token standard resolution for email', {
