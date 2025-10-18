@@ -249,11 +249,11 @@ export function AmountDisplayWithCopy({
     <div className="group">
       <p className={combineStyles(textStyles.heading.sm, 'mb-3')}>{t('amount')}</p>
       <div className="rounded-lg border-2 border-primary/30 bg-primary/10 p-4 group-hover:bg-primary/15 transition-colors shadow-sm">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
           <div className="flex items-center gap-2">
             <span
               className={combineStyles(
-                textStyles.heading.md,
+                'text-base sm:text-lg font-semibold text-foreground',
                 textStyles.utility.monoBreakAll,
                 'text-primary'
               )}
@@ -267,11 +267,11 @@ export function AmountDisplayWithCopy({
               size="sm"
             />
           </div>
-          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10">
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 self-start sm:self-center">
             <span className="text-primary font-bold">→</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className={combineStyles(textStyles.heading.md, 'text-success font-bold')}>
+            <span className={combineStyles('text-base sm:text-lg font-bold text-success')}>
               {orderData.uahAmount.toLocaleString(locale)} ₴
             </span>
             <CopyButton
