@@ -27,3 +27,20 @@ export function formatCryptoAmountForUI(amount: number, maxDecimals: number): st
 export function parseFormattedAmount(formattedAmount: string): number {
   return Number(formattedAmount);
 }
+
+/**
+ * Format card number with spaces after every 4 digits for display
+ * Removes all non-digit characters first, then adds spacing
+ * 
+ * @example
+ * formatCardNumberDisplay('4441114108442270') // '4441 1141 0844 2270'
+ * formatCardNumberDisplay('4441 1141 0844 2270') // '4441 1141 0844 2270'
+ * formatCardNumberDisplay('444111') // '4441 11'
+ */
+export function formatCardNumberDisplay(cardNumber: string): string {
+  // Remove all non-digit characters
+  const digitsOnly = cardNumber.replace(/\D/g, '');
+  
+  // Add space after every 4 digits
+  return digitsOnly.replace(/(\d{4})(?=\d)/g, '$1 ');
+}
