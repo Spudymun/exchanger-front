@@ -278,10 +278,22 @@ export class UserManagerFactory {
       return await this.create();
     }
 
-    // Создаем конфигурацию с указанным context
-    return await this.create({
+    // ✅ ИСПРАВЛЕНИЕ: Передаем DATABASE_URL и REDIS_URL из process.env
+    const config: ManagerConfiguration = {
       context,
-    });
+    };
+
+    // Добавляем database URL если есть
+    if (process.env.DATABASE_URL) {
+      config.database = { url: process.env.DATABASE_URL };
+    }
+
+    // Добавляем Redis URL если есть
+    if (process.env.REDIS_URL) {
+      config.redis = { url: process.env.REDIS_URL };
+    }
+
+    return await this.create(config);
   }
 
   // ✅ НОВЫЙ convenience метод для web приложения

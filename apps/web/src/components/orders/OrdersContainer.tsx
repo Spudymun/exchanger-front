@@ -1,4 +1,4 @@
-  // Container компонент с множественными helper функциями
+// Container компонент с множественными helper функциями
 'use client';
 
 import { ORDER_STATUS_CONFIG, VALIDATION_LIMITS, type OrderStatus } from '@repo/constants';
@@ -15,7 +15,7 @@ import { trpc } from '../../../lib/trpc-provider';
 
 // Constants
 const ORDERS_PER_PAGE = VALIDATION_LIMITS.DEFAULT_PAGE_SIZE;
-const UNAUTHORIZED_ERROR_KEY = 'server.errors.auth.required';
+const UNAUTHORIZED_ERROR_KEY = 'auth.required'; // Fixed: removed 'server.errors' prefix as it's already in useTranslations namespace
 
 // Types for sort options
 type OrderSortOption = 'newest' | 'oldest';
@@ -84,10 +84,7 @@ function useOrdersColumns(t: ReturnType<typeof useTranslations>) {
         key: 'actions',
         label: t('columns.actions'),
         render: (order: Order) => (
-          <Link
-            href={`/order/${order.publicId}`}
-            className="text-sm text-primary hover:underline"
-          >
+          <Link href={`/order/${order.publicId}`} className="text-sm text-primary hover:underline">
             {t('actions.viewDetails')}
           </Link>
         ),
@@ -98,7 +95,13 @@ function useOrdersColumns(t: ReturnType<typeof useTranslations>) {
 }
 
 // ⚡ Helper: Render empty state
-function EmptyState({ searchTerm, t }: { searchTerm: string; t: ReturnType<typeof useTranslations> }) {
+function EmptyState({
+  searchTerm,
+  t,
+}: {
+  searchTerm: string;
+  t: ReturnType<typeof useTranslations>;
+}) {
   return (
     <div className="flex flex-col items-center justify-center min-h-[300px] gap-2">
       <p className="text-lg font-semibold">{t('empty.title')}</p>
@@ -160,9 +163,7 @@ function OrdersFilters({
   return (
     <DataTable.Filters searchPlaceholder={t('search.placeholder')}>
       <div className="flex gap-2 items-center">
-        <label className="text-sm font-medium">
-          {t('filters.status')}
-        </label>
+        <label className="text-sm font-medium">{t('filters.status')}</label>
         <Select
           value={statusFilter || 'all'}
           onValueChange={value =>
@@ -184,9 +185,7 @@ function OrdersFilters({
       </div>
 
       <div className="flex gap-2 items-center">
-        <label className="text-sm font-medium">
-          {t('filters.sortBy')}
-        </label>
+        <label className="text-sm font-medium">{t('filters.sortBy')}</label>
         <Select value={sortBy} onValueChange={value => onSortChange(value as OrderSortOption)}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder={t('sort.newest')} />
@@ -208,9 +207,20 @@ function useOrdersState(props: OrdersContainerProps) {
   const [statusFilter, setStatusFilter] = React.useState<OrderStatus | undefined>(
     props.initialStatus as OrderStatus | undefined
   );
-  const [sortBy, setSortBy] = React.useState<OrderSortOption>((props.initialSortBy as OrderSortOption) ?? 'newest');
+  const [sortBy, setSortBy] = React.useState<OrderSortOption>(
+    (props.initialSortBy as OrderSortOption) ?? 'newest'
+  );
 
-  return { currentPage, setCurrentPage, searchTerm, setSearchTerm, statusFilter, setStatusFilter, sortBy, setSortBy };
+  return {
+    currentPage,
+    setCurrentPage,
+    searchTerm,
+    setSearchTerm,
+    statusFilter,
+    setStatusFilter,
+    sortBy,
+    setSortBy,
+  };
 }
 
 // ⚡ Helper: Create handlers (extracted to reduce complexity)
@@ -218,20 +228,27 @@ function useOrdersHandlers(
   setSearchTerm: (term: string) => void,
   setCurrentPage: (page: number) => void
 ) {
-  const handleSearch = React.useCallback((term: string) => {
-    setSearchTerm(term);
-    setCurrentPage(1);
-  }, [setSearchTerm, setCurrentPage]);
+  const handleSearch = React.useCallback(
+    (term: string) => {
+      setSearchTerm(term);
+      setCurrentPage(1);
+    },
+    [setSearchTerm, setCurrentPage]
+  );
 
-  const handlePageChange = React.useCallback((page: number) => {
-    setCurrentPage(page);
-  }, [setCurrentPage]);
+  const handlePageChange = React.useCallback(
+    (page: number) => {
+      setCurrentPage(page);
+    },
+    [setCurrentPage]
+  );
 
   return { handleSearch, handlePageChange };
 }
 
 // ⚡ Main component
 /* eslint-disable max-lines-per-function */ // Допустимо для container компонентов с множественными handlers
+/* eslint-disable complexity */ // Container компонент с auth protection и множественными условиями
 export function OrdersContainer(props: OrdersContainerProps) {
   const t = useTranslations('OrdersPage');
   const tErrors = useTranslations('server.errors');
@@ -245,23 +262,35 @@ export function OrdersContainer(props: OrdersContainerProps) {
   });
 
   // State management
-  const { currentPage, setCurrentPage, searchTerm, setSearchTerm, statusFilter, setStatusFilter, sortBy, setSortBy } = useOrdersState(props);
-  
+  const {
+    currentPage,
+    setCurrentPage,
+    searchTerm,
+    setSearchTerm,
+    statusFilter,
+    setStatusFilter,
+    sortBy,
+    setSortBy,
+  } = useOrdersState(props);
+
   // Handlers
   const { handleSearch, handlePageChange } = useOrdersHandlers(setSearchTerm, setCurrentPage);
 
   // tRPC query - ВСЕГДА вызываем хук (не условно!)
   // enabled: !!session?.user - запрос идет ТОЛЬКО если есть сессия
-  const { data, isLoading, error } = trpc.shared.orders.getAll.useQuery({
-    filters: { 
-      status: statusFilter,
-      searchQuery: searchTerm || undefined,
+  const { data, isLoading, error } = trpc.shared.orders.getAll.useQuery(
+    {
+      filters: {
+        status: statusFilter,
+        searchQuery: searchTerm || undefined,
+      },
+      sortBy,
+      pagination: { limit: ORDERS_PER_PAGE, offset: (currentPage - 1) * ORDERS_PER_PAGE },
     },
-    sortBy,
-    pagination: { limit: ORDERS_PER_PAGE, offset: (currentPage - 1) * ORDERS_PER_PAGE },
-  }, {
-    enabled: !!session?.user, // ← КЛЮЧЕВОЕ: запрос только если авторизован
-  });
+    {
+      enabled: !!session?.user, // ← КЛЮЧЕВОЕ: запрос только если авторизован
+    }
+  );
 
   // Column definitions
   const columns = useOrdersColumns(t);
@@ -273,10 +302,12 @@ export function OrdersContainer(props: OrdersContainerProps) {
   if (session !== undefined && !session?.user) {
     return (
       <AuthErrorState
-        error={{ 
-          message: tErrors(UNAUTHORIZED_ERROR_KEY),
-          data: { code: 'UNAUTHORIZED' }
-        } as Error & { data?: { code?: string } }}
+        error={
+          {
+            message: tErrors(UNAUTHORIZED_ERROR_KEY),
+            data: { code: 'UNAUTHORIZED' },
+          } as Error & { data?: { code?: string } }
+        }
         translations={{
           fetchFailed: t('errors.fetchFailed'),
           unauthorizedMessage: tErrors(UNAUTHORIZED_ERROR_KEY),
