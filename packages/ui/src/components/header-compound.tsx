@@ -81,7 +81,7 @@ const Header = React.forwardRef<HTMLElement, HeaderProps>(
             role="banner"
           >
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="py-1 sm:py-2 md:py-2">{children}</div>
+              <div className="py-1 sm:py-2 lg:py-2">{children}</div>
             </div>
           </header>
         </HeaderContext.Provider>
@@ -114,7 +114,7 @@ const Container = React.forwardRef<HTMLDivElement, ContainerProps>(
 
     return (
       <div ref={ref} className={cn(getVariantClass(variant), className)} {...props}>
-        <div className="flex flex-col space-y-0 min-h-[2.5rem] sm:min-h-[3rem] md:min-h-[3rem]">
+        <div className="flex flex-col space-y-0 min-h-[2.5rem] sm:min-h-[3rem] lg:min-h-[3rem]">
           {children}
         </div>
       </div>
@@ -146,7 +146,7 @@ const Navigation = React.forwardRef<HTMLElement, NavigationProps>(
   ({ className, children, ...props }, ref) => (
     <nav
       ref={ref}
-      className={cn('hidden md:flex items-center space-x-6', className)}
+      className={cn('hidden lg:flex items-center space-x-6', className)}
       role="navigation"
       aria-label="Main navigation"
       {...props}
@@ -194,7 +194,7 @@ const MobileMenu = React.forwardRef<HTMLButtonElement, MobileMenuProps>(
         ref={ref}
         variant="ghost"
         size="icon"
-        className={cn('md:hidden', className)}
+        className={cn('lg:hidden', className)}
         onClick={context?.onToggleMenu}
         aria-expanded={isOpen}
         aria-label="Toggle mobile menu"

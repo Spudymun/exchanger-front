@@ -1,6 +1,7 @@
 {
   "Layout": {
     "navigation": {
+      "menu": "Меню",
       "exchange": "Обмен",
       "orders": "Заказы",
       "contact": "Контакты",

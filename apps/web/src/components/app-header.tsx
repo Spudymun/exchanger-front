@@ -2,7 +2,7 @@
 
 import { APP_ROUTES, LEGAL_ROUTES, UI_REFRESH_INTERVALS } from '@repo/constants';
 import { useAuthModal } from '@repo/providers';
-import { Header } from '@repo/ui';
+import { Header, Sheet, SheetContent, SheetHeader, SheetTitle } from '@repo/ui';
 
 import { useTranslations, useLocale } from 'next-intl';
 import * as React from 'react';
@@ -83,7 +83,7 @@ function AppHeaderMobile({
   t: (key: string) => string;
 }) {
   return (
-    <div className="block sm:hidden">
+    <div className="block lg:hidden">
       <div className="flex justify-between items-center h-10">
         <AppHeaderLogoMobile />
         <div className="flex items-center space-x-2">
@@ -118,7 +118,7 @@ function AppHeaderDesktop({
   handleSignOut: () => void;
 }) {
   return (
-    <div className="hidden sm:block">
+    <div className="hidden lg:block">
       <div className="flex justify-between items-center h-10">
         <AppHeaderLogoDesktop />
         <Header.Navigation>
@@ -140,11 +140,97 @@ function AppHeaderDesktop({
   );
 }
 
+// Mobile Navigation Links для переиспользования
+function MobileNavigationLinks({
+  pathname,
+  t,
+  onLinkClick,
+}: {
+  pathname: string | null;
+  t: (key: string) => string;
+  onLinkClick: () => void;
+}) {
+  return (
+    <>
+      <Link
+        href={APP_ROUTES.EXCHANGE}
+        className={getNavLinkClass(pathname, APP_ROUTES.EXCHANGE)}
+        onClick={onLinkClick}
+      >
+        {t('navigation.exchange')}
+      </Link>
+      <Link
+        href={APP_ROUTES.ORDERS}
+        className={getNavLinkClass(pathname, APP_ROUTES.ORDERS)}
+        onClick={onLinkClick}
+      >
+        {t('navigation.orders')}
+      </Link>
+      <Link
+        href={LEGAL_ROUTES.RULES}
+        className={getNavLinkClass(pathname, LEGAL_ROUTES.RULES)}
+        onClick={onLinkClick}
+      >
+        {t('navigation.rules')}
+      </Link>
+      <Link
+        href={LEGAL_ROUTES.AML_POLICY}
+        className={getNavLinkClass(pathname, LEGAL_ROUTES.AML_POLICY)}
+        onClick={onLinkClick}
+      >
+        {t('navigation.amlPolicy')}
+      </Link>
+      <Link
+        href={APP_ROUTES.CONTACTS}
+        className={getNavLinkClass(pathname, APP_ROUTES.CONTACTS)}
+        onClick={onLinkClick}
+      >
+        {t('navigation.contact')}
+      </Link>
+    </>
+  );
+}
+
+// Компонент мобильного navigation drawer
+function MobileNavigationDrawer({
+  isOpen,
+  onClose,
+  pathname,
+  t,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  pathname: string | null;
+  t: (key: string) => string;
+}) {
+  return (
+    <Sheet open={isOpen} onOpenChange={onClose}>
+      <SheetContent side="left" className="w-[300px] sm:w-[350px]">
+        <SheetHeader>
+          <SheetTitle>{t('navigation.menu')}</SheetTitle>
+        </SheetHeader>
+        <nav className="flex flex-col space-y-4 mt-6">
+          <MobileNavigationLinks pathname={pathname} t={t} onLinkClick={onClose} />
+        </nav>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
 export function AppHeader({ className }: AppHeaderProps) {
   const t = useTranslations('Layout');
   const pathname = usePathname();
   const locale = useLocale();
   const router = useRouter();
+
+  // ✅ Mobile menu state
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const toggleMobileMenu = React.useCallback(() => {
+    setIsMobileMenuOpen(prev => !prev);
+  }, []);
+  const closeMobileMenu = React.useCallback(() => {
+    setIsMobileMenuOpen(false);
+  }, []);
 
   const {
     session,
@@ -163,22 +249,37 @@ export function AppHeader({ className }: AppHeaderProps) {
   };
 
   return (
-    <Header currentLocale={locale} onLocaleChange={handleLocaleChange} className={className}>
-      <Header.Container>
-        <AppHeaderMobile
-          session={session}
-          handleOpenLogin={openLogin}
-          handleSignOut={handleSignOut}
-          t={t}
-        />
-        <AppHeaderDesktop
-          pathname={pathname}
-          t={t}
-          session={session}
-          handleOpenLogin={openLogin}
-          handleSignOut={handleSignOut}
-        />
-      </Header.Container>
+    <>
+      <Header
+        currentLocale={locale}
+        onLocaleChange={handleLocaleChange}
+        className={className}
+        isMenuOpen={isMobileMenuOpen}
+        onToggleMenu={toggleMobileMenu}
+      >
+        <Header.Container>
+          <AppHeaderMobile
+            session={session}
+            handleOpenLogin={openLogin}
+            handleSignOut={handleSignOut}
+            t={t}
+          />
+          <AppHeaderDesktop
+            pathname={pathname}
+            t={t}
+            session={session}
+            handleOpenLogin={openLogin}
+            handleSignOut={handleSignOut}
+          />
+        </Header.Container>
+      </Header>
+
+      <MobileNavigationDrawer
+        isOpen={isMobileMenuOpen}
+        onClose={closeMobileMenu}
+        pathname={pathname}
+        t={t}
+      />
 
       <AuthDialogs
         isLoginOpen={isLoginOpen}
@@ -191,7 +292,7 @@ export function AppHeader({ className }: AppHeaderProps) {
         onOpenForgotPassword={openForgotPassword}
         onOpenLogin={openLogin}
       />
-    </Header>
+    </>
   );
 }
 
@@ -228,7 +329,7 @@ function AppHeaderNavigationLinks({
   t: (key: string) => string;
 }) {
   return (
-    <nav className="hidden md:flex space-x-6">
+    <nav className="hidden lg:flex space-x-6">
       <Link href={APP_ROUTES.EXCHANGE} className={getNavLinkClass(pathname, APP_ROUTES.EXCHANGE)}>
         {t('navigation.exchange')}
       </Link>
