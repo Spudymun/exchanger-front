@@ -47,6 +47,8 @@ export interface BaseCryptoEmailData {
   expiresAt: Date;
   userEmail: string;
   tokenStandard?: string; // ✅ ДОБАВЛЕНО: поддержка multi-network токенов для правильного отображения сети
+  bankName?: string; // ✅ ДОБАВЛЕНО: название банка получателя фиата
+  cardNumberMasked?: string; // ✅ ДОБАВЛЕНО: замаскированный номер карты (последние 4 цифры)
 }
 
 /**

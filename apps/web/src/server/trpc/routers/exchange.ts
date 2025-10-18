@@ -220,11 +220,36 @@ async function getWalletByAddress(depositAddress: string, orderEmail: string) {
 }
 
 /**
+ * Маскирует номер карты, оставляя только последние 4 цифры
+ * Пример: "1234567812345678" -> "**** 5678"
+ */
+function maskCardNumber(cardNumber: string): string {
+  const CARD_LAST_DIGITS_COUNT = 4;
+  
+  // Убираем все нецифровые символы
+  const digitsOnly = cardNumber.replace(/\D/g, '');
+  
+  // Если меньше 4 цифр, возвращаем как есть с маской
+  if (digitsOnly.length < CARD_LAST_DIGITS_COUNT) {
+    return `**** ${digitsOnly}`;
+  }
+  
+  // Берём последние 4 цифры
+  const lastFour = digitsOnly.slice(-CARD_LAST_DIGITS_COUNT);
+  return `**** ${lastFour}`;
+}
+
+/**
  * Отправляет email с адресом криптовалюты
  */
 async function sendCryptoAddressEmail(params: {
   order: Order;
-  orderRequest: { email: string; currency: CryptoCurrency; cryptoAmount: number };
+  orderRequest: { 
+    email: string; 
+    currency: CryptoCurrency; 
+    cryptoAmount: number;
+    recipientData?: { cardNumber?: string; bankDetails?: string; bankId?: string };
+  };
   depositAddress: string;
   sessionMetadata: SessionMetadata;
   walletInfo?: WalletInfo;
@@ -258,10 +283,17 @@ async function sendCryptoAddressEmail(params: {
     // ✅ ИСПРАВЛЕНО: получаем tokenStandard только из кошелька
     const effectiveTokenStandard = walletInfo?.tokenStandard || 'TRC-20'; // fallback на TRC-20 если не определено
     
+    // ✅ НОВОЕ: обработка данных о карте получателя
+    const cardNumberMasked = orderRequest.recipientData?.cardNumber 
+      ? maskCardNumber(orderRequest.recipientData.cardNumber)
+      : undefined;
+    
     logger.info('Token standard resolution for email', {
       orderId: order.publicId,
       walletTokenStandard: walletInfo?.tokenStandard,
       effectiveTokenStandard,
+      bankName: order.bankName,
+      hasCardNumber: !!cardNumberMasked,
     });
 
     await RateLimitedEmailService.sendCryptoAddress(
@@ -273,6 +305,8 @@ async function sendCryptoAddressEmail(params: {
         expiresAt: new Date(Date.now() + ORDER_EXPIRATION_TIME_MS),
         userEmail: orderRequest.email,
         tokenStandard: effectiveTokenStandard, // ✅ ИСПРАВЛЕНО: только из кошелька
+        bankName: order.bankName, // ✅ НОВОЕ: название банка получателя фиата
+        cardNumberMasked, // ✅ НОВОЕ: замаскированный номер карты
       },
       sessionMetadata.ip
     );

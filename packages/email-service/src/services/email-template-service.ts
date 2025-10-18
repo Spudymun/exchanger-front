@@ -91,6 +91,46 @@ export class EmailTemplateService {
   }
 
   /**
+   * Generate recipient info block for email template
+   * Returns object with HTML and text versions
+   */
+  private static generateRecipientInfoBlock(data: BaseCryptoEmailData): { html: string; text: string } {
+    if (!data.bankName && !data.cardNumberMasked) {
+      return { html: '', text: '' };
+    }
+
+    // HTML version
+    const bankRowHtml = data.bankName ? `
+            <div class="amount-info">
+                <span class="text-bold">Банк:</span>
+                <span>${data.bankName}</span>
+            </div>` : '';
+
+    const cardRowHtml = data.cardNumberMasked ? `
+            <div class="amount-info">
+                <span class="text-bold">Карта:</span>
+                <span>${data.cardNumberMasked}</span>
+            </div>` : '';
+
+    const html = `
+        <!-- Recipient Information -->
+        <div class="info-block info-block-secondary">
+            <h3>💳 Получатель фиата</h3>${bankRowHtml}${cardRowHtml}
+        </div>`;
+
+    // Text version
+    const bankRowText = data.bankName ? `\nБанк: ${data.bankName}` : '';
+    const cardRowText = data.cardNumberMasked ? `\nКарта: ${data.cardNumberMasked}` : '';
+
+    const text = `
+--------------------------------------------------
+
+💳 ПОЛУЧАТЕЛЬ ФИАТА${bankRowText}${cardRowText}`;
+
+    return { html, text };
+  }
+
+  /**
    * Generic template email generator to eliminate code duplication
    * Centralizes the common logic used by crypto-related email templates
    */
@@ -99,6 +139,8 @@ export class EmailTemplateService {
     subject: string,
     data: BaseCryptoEmailData
   ): Promise<EmailMessage> {
+    const recipientInfo = this.generateRecipientInfoBlock(data);
+
     const variables = {
       orderId: data.orderId,
       cryptoAddress: data.cryptoAddress,
@@ -111,6 +153,8 @@ export class EmailTemplateService {
       expiresAt: this.formatDate(data.expiresAt),
       userEmail: data.userEmail,
       companyName: COMPANY_INFO.NAME,
+      recipientInfoBlock: recipientInfo.html, // ✅ НОВОЕ: блок с информацией о получателе (HTML)
+      recipientInfoText: recipientInfo.text, // ✅ НОВОЕ: блок с информацией о получателе (TEXT)
     };
 
     const logContext = {
