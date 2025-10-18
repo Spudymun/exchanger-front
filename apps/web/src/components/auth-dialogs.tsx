@@ -19,6 +19,117 @@ interface AuthDialogsProps {
   onOpenLogin: () => void;
 }
 
+/**
+ * Hook для управления режимом auth модалки
+ */
+function useAuthDialogMode(isOpen: boolean, initialMode: 'login' | 'register') {
+  const [mode, setMode] = React.useState<'login' | 'register'>(initialMode);
+
+  // Сброс режима при закрытии модалки
+  React.useEffect(() => {
+    if (!isOpen) {
+      setMode(initialMode);
+    }
+  }, [isOpen, initialMode]);
+
+  return [mode, setMode] as const;
+}
+
+/**
+ * Компонент модалки входа/регистрации
+ */
+interface AuthDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  mode: 'login' | 'register';
+  onModeChange: (mode: 'login' | 'register') => void;
+  onAuthSuccess?: () => void;
+  onSwitchToForgotPassword?: () => void;
+  t: (key: string) => string;
+}
+
+function AuthDialog({
+  isOpen,
+  onClose,
+  mode,
+  onModeChange,
+  onAuthSuccess,
+  onSwitchToForgotPassword,
+  t,
+}: AuthDialogProps) {
+  const dialogTitle = mode === 'login' ? t('signIn') : t('signUp');
+
+  return (
+    <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
+      <DialogContent className="sm:max-w-md" closeButtonAriaLabel={t('close')}>
+        <DialogHeader>
+          <DialogTitle>{dialogTitle}</DialogTitle>
+        </DialogHeader>
+        <AuthForms
+          defaultMode={mode}
+          onAuthSuccess={onAuthSuccess}
+          onSwitchToForgotPassword={onSwitchToForgotPassword}
+          onModeChange={onModeChange}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/**
+ * Компонент модалки восстановления пароля
+ */
+interface ForgotPasswordDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onAuthSuccess?: () => void;
+  onBackToLogin: () => void;
+  t: (key: string) => string;
+}
+
+function ForgotPasswordDialog({
+  isOpen,
+  onClose,
+  onAuthSuccess,
+  onBackToLogin,
+  t,
+}: ForgotPasswordDialogProps) {
+  return (
+    <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
+      <DialogContent className="sm:max-w-md" closeButtonAriaLabel={t('close')}>
+        <DialogHeader>
+          <DialogTitle>{t('resetPassword')}</DialogTitle>
+        </DialogHeader>
+        <ForgotPasswordForms onSuccess={onAuthSuccess} onBackToLogin={onBackToLogin} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/**
+ * Hook для создания handlers переключения между модалками
+ */
+function useAuthDialogHandlers(
+  onLoginClose: () => void,
+  onOpenForgotPassword: () => void,
+  onForgotPasswordClose: () => void,
+  onOpenLogin: () => void
+) {
+  return React.useMemo(
+    () => ({
+      switchToForgotPassword: () => {
+        onLoginClose();
+        onOpenForgotPassword();
+      },
+      backToLogin: () => {
+        onForgotPasswordClose();
+        onOpenLogin();
+      },
+    }),
+    [onLoginClose, onOpenForgotPassword, onForgotPasswordClose, onOpenLogin]
+  );
+}
+
 export function AuthDialogs({
   isLoginOpen,
   isRegisterOpen,
@@ -31,54 +142,41 @@ export function AuthDialogs({
   onOpenLogin,
 }: AuthDialogsProps) {
   const t = useTranslations('Layout.auth');
-
-  // Handler для переключения с login на forgot password
-  const handleSwitchToForgotPassword = React.useCallback(() => {
-    onLoginClose();
-    onOpenForgotPassword();
-  }, [onLoginClose, onOpenForgotPassword]);
-
-  // Handler для возврата с forgot password на login
-  const handleBackToLogin = React.useCallback(() => {
-    onForgotPasswordClose();
-    onOpenLogin();
-  }, [onForgotPasswordClose, onOpenLogin]);
+  const [loginDialogMode, setLoginDialogMode] = useAuthDialogMode(isLoginOpen, 'login');
+  const [registerDialogMode, setRegisterDialogMode] = useAuthDialogMode(isRegisterOpen, 'register');
+  const handlers = useAuthDialogHandlers(
+    onLoginClose,
+    onOpenForgotPassword,
+    onForgotPasswordClose,
+    onOpenLogin
+  );
 
   return (
     <>
-      {/* Модальное окно входа */}
-      <Dialog open={isLoginOpen} onOpenChange={open => !open && onLoginClose()}>
-        <DialogContent className="sm:max-w-md" closeButtonAriaLabel={t('close')}>
-          <DialogHeader>
-            <DialogTitle>{t('signIn')}</DialogTitle>
-          </DialogHeader>
-          <AuthForms 
-            defaultMode="login" 
-            onAuthSuccess={onAuthSuccess}
-            onSwitchToForgotPassword={handleSwitchToForgotPassword}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Модальное окно регистрации */}
-      <Dialog open={isRegisterOpen} onOpenChange={open => !open && onRegisterClose()}>
-        <DialogContent className="sm:max-w-md" closeButtonAriaLabel={t('close')}>
-          <DialogHeader>
-            <DialogTitle>{t('signUp')}</DialogTitle>
-          </DialogHeader>
-          <AuthForms defaultMode="register" onAuthSuccess={onAuthSuccess} />
-        </DialogContent>
-      </Dialog>
-
-      {/* Модальное окно восстановления пароля */}
-      <Dialog open={isForgotPasswordOpen} onOpenChange={open => !open && onForgotPasswordClose()}>
-        <DialogContent className="sm:max-w-md" closeButtonAriaLabel={t('close')}>
-          <DialogHeader>
-            <DialogTitle>{t('resetPassword')}</DialogTitle>
-          </DialogHeader>
-          <ForgotPasswordForms onSuccess={onAuthSuccess} onBackToLogin={handleBackToLogin} />
-        </DialogContent>
-      </Dialog>
+      <AuthDialog
+        isOpen={isLoginOpen}
+        onClose={onLoginClose}
+        mode={loginDialogMode}
+        onModeChange={setLoginDialogMode}
+        onAuthSuccess={onAuthSuccess}
+        onSwitchToForgotPassword={handlers.switchToForgotPassword}
+        t={t}
+      />
+      <AuthDialog
+        isOpen={isRegisterOpen}
+        onClose={onRegisterClose}
+        mode={registerDialogMode}
+        onModeChange={setRegisterDialogMode}
+        onAuthSuccess={onAuthSuccess}
+        t={t}
+      />
+      <ForgotPasswordDialog
+        isOpen={isForgotPasswordOpen}
+        onClose={onForgotPasswordClose}
+        onAuthSuccess={onAuthSuccess}
+        onBackToLogin={handlers.backToLogin}
+        t={t}
+      />
     </>
   );
 }
