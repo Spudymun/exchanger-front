@@ -43,16 +43,14 @@ export const LEGAL_ROUTES = {
   RULES: '/rules' as const,
   /** AML политика */
   AML_POLICY: '/aml-policy' as const,
-  /** Возвраты */
-  RETURNS: '/returns' as const,
-  /** Политика конфиденциальности */
-  PRIVACY: '/privacy' as const,
 } as const;
 
 // === ЯКОРНЫЕ ССЫЛКИ ===
 export const ANCHOR_ROUTES = {
   /** Секция обменника на главной */
   EXCHANGE_SECTION: '#exchange-section' as const,
+  /** Секция "Как это работает" на главной */
+  HOW_IT_WORKS_SECTION: '#how-it-works' as const,
 } as const;
 
 // === ТИПЫ ===

@@ -1,6 +1,13 @@
 'use client';
 
-import { SOCIAL_LINKS, COMPANY_INFO, APP_ROUTES, INFO_ROUTES, LEGAL_ROUTES } from '@repo/constants';
+import {
+  SOCIAL_LINKS,
+  COMPANY_INFO,
+  APP_ROUTES,
+  LEGAL_ROUTES,
+  INFO_ROUTES,
+  ANCHOR_ROUTES,
+} from '@repo/constants';
 import { Footer } from '@repo/ui';
 import { useTranslations } from 'next-intl';
 
@@ -38,14 +45,6 @@ const getLegalLinks = (t: ReturnType<typeof useTranslations>) => [
     name: t('footer.legal.aml'),
     href: LEGAL_ROUTES.AML_POLICY,
   },
-  {
-    name: t('footer.legal.returns'),
-    href: LEGAL_ROUTES.RETURNS,
-  },
-  {
-    name: t('footer.legal.privacy'),
-    href: LEGAL_ROUTES.PRIVACY,
-  },
 ];
 
 export function AppFooter({ className }: AppFooterProps) {
@@ -55,7 +54,7 @@ export function AppFooter({ className }: AppFooterProps) {
 
   return (
     <Footer className={className} companyName={COMPANY_INFO.NAME} theme="dark">
-      <Footer.Container variant="grid" columns="four">
+      <Footer.Container variant="grid" columns="three">
         <Footer.Section title={t('footer.company.title')}>
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">{t('footer.company.description')}</p>
@@ -67,19 +66,12 @@ export function AppFooter({ className }: AppFooterProps) {
           </div>
         </Footer.Section>
 
-        <Footer.Section title={t('footer.exchange.title')}>
-          <Footer.Link href={APP_ROUTES.HOME}>{t('footer.exchange.calculator')}</Footer.Link>
-          <Footer.Link href={INFO_ROUTES.RATES}>{t('footer.exchange.rates')}</Footer.Link>
-          <Footer.Link href={INFO_ROUTES.RESERVES}>{t('footer.exchange.reserves')}</Footer.Link>
-          <Footer.Link href={INFO_ROUTES.LIMITS}>{t('footer.exchange.limits')}</Footer.Link>
-        </Footer.Section>
-
         <Footer.Section title={t('footer.support.title')}>
           <Footer.Link href={SOCIAL_LINKS.SUPPORT_TELEGRAM.href} external>
             {t('footer.support.telegram')}
           </Footer.Link>
           <Footer.Link href={INFO_ROUTES.FAQ}>{t('footer.support.faq')}</Footer.Link>
-          <Footer.Link href={INFO_ROUTES.HOW_IT_WORKS}>
+          <Footer.Link href={`${APP_ROUTES.HOME}${ANCHOR_ROUTES.HOW_IT_WORKS_SECTION}`}>
             {t('footer.support.howItWorks')}
           </Footer.Link>
           <Footer.Link href={APP_ROUTES.CONTACTS}>{t('footer.support.contacts')}</Footer.Link>
@@ -91,9 +83,6 @@ export function AppFooter({ className }: AppFooterProps) {
             <p className="text-sm text-muted-foreground">{t('footer.contacts.email')}</p>
             <p className="text-sm text-muted-foreground font-medium">
               {t('footer.contacts.workingHours')}
-            </p>
-            <p className="text-sm text-muted-foreground mb-4">
-              {t('footer.contacts.socialDescription')}
             </p>
             <Footer.Social links={socialLinks} />
           </div>

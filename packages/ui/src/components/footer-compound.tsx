@@ -237,32 +237,23 @@ export interface LegalProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const Legal = React.forwardRef<HTMLDivElement, LegalProps>(
   ({ className, links = [], children, ...props }, ref) => {
-    const context = useFooterContext();
-    const currentYear = context?.currentYear;
-    const companyName = context?.companyName;
-
     return (
       <div
         ref={ref}
         className={cn(
-          'border-t border-border pt-4 mt-8 flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0',
+          'border-t border-border pt-4 mt-8 flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0',
           className
         )}
         {...props}
       >
         {children || (
-          <>
-            <p className="text-sm text-muted-foreground">
-              © {currentYear} {companyName}. All rights reserved.
-            </p>
-            <div className="flex space-x-6">
-              {links.map((link, index) => (
-                <Link key={index} href={link.href}>
-                  {link.name}
-                </Link>
-              ))}
-            </div>
-          </>
+          <div className="flex space-x-6">
+            {links.map((link, index) => (
+              <Link key={index} href={link.href}>
+                {link.name}
+              </Link>
+            ))}
+          </div>
         )}
       </div>
     );

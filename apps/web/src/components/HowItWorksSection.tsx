@@ -55,7 +55,7 @@ export function HowItWorksSection() {
   ];
 
   return (
-    <div className="mb-16">
+    <div id="how-it-works" className="mb-16">
       <div className="text-center mb-12">
         <h2 className="text-3xl font-bold text-foreground mb-4">{t('title')}</h2>
       </div>

@@ -110,13 +110,6 @@
         "serviceType": "Автоматический обменник",
         "responseTime": "Время обработки: 1-3 часа"
       },
-      "exchange": {
-        "title": "Обмен валют",
-        "calculator": "Калькулятор обмена",
-        "rates": "Курсы валют",
-        "reserves": "Резервы",
-        "limits": "Лимиты обмена"
-      },
       "support": {
         "title": "Поддержка и помощь",
         "telegram": "Telegram поддержка",
@@ -125,18 +118,14 @@
         "contacts": "Контакты"
       },
       "legal": {
-        "title": "Правовая информация",
         "rules": "Правила сайта",
-        "aml": "Политика AML",
-        "returns": "Политика возвратов",
-        "privacy": "Политика конфиденциальности"
+        "aml": "Политика AML"
       },
       "contacts": {
         "title": "Связаться с нами",
         "telegram": "Telegram: @exchangego_operators_bot",
         "email": "Email: support@exchangego.com",
-        "workingHours": "Работаем 24/7",
-        "socialDescription": "Следите за новостями и курсами"
+        "workingHours": "Работаем 24/7"
       }
     }
   }

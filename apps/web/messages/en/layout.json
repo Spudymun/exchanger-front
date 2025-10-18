@@ -110,13 +110,6 @@
         "serviceType": "Automatic exchanger",
         "responseTime": "Processing time: 1-3 hours"
       },
-      "exchange": {
-        "title": "Currency Exchange",
-        "calculator": "Exchange Calculator",
-        "rates": "Exchange Rates",
-        "reserves": "Reserves",
-        "limits": "Exchange Limits"
-      },
       "support": {
         "title": "Support & Help",
         "telegram": "Telegram Support",
@@ -125,18 +118,14 @@
         "contacts": "Contacts"
       },
       "legal": {
-        "title": "Legal Information",
         "rules": "Site Rules",
-        "aml": "AML Policy",
-        "returns": "Return Policy",
-        "privacy": "Privacy Policy"
+        "aml": "AML Policy"
       },
       "contacts": {
         "title": "Contact Us",
         "telegram": "Telegram: @exchangego_support",
         "email": "Email: support@exchangego.com",
-        "workingHours": "Working 24/7",
-        "socialDescription": "Follow for news and rates"
+        "workingHours": "Working 24/7"
       }
     }
   }
