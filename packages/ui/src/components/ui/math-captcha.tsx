@@ -103,7 +103,8 @@ const CaptchaInput: React.FC<{
 }) => (
     <FormControl>
       <Input
-        type="number"
+        type="text"
+        inputMode="numeric"
         value={userAnswer}
         onChange={onChange}
         onBlur={onBlur}
