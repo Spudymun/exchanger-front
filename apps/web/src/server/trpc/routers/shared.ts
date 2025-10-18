@@ -12,10 +12,10 @@ import {
 import { EmailMonitoringService } from '@repo/email-service';
 import {
   getUserRoleForApp,
-  orderManager,
-  userManager,
   type Order,
 } from '@repo/exchange-core';
+
+// ✅ PRODUCTION-READY: Import manager factories instead of mocks
 import {
   WalletPoolManagerFactory,
   WalletAlertsService,
@@ -42,6 +42,7 @@ import {
 
 import { createTRPCRouter } from '../init';
 import { operatorAndSupport, protectedProcedure } from '../middleware/auth';
+import { getOrderManager, getUserManager } from '../utils/manager-factories';
 
 /**
  * Shared API роутер
@@ -89,6 +90,10 @@ export const sharedRouter = createTRPCRouter({
       };
 
       const matchesStatus = (order: Order) => !status || order.status === status;
+
+      // ✅ Получаем production managers
+      const orderManager = await getOrderManager();
+      const userManager = await getUserManager();
 
       const allOrders = await orderManager.getAll();
 
@@ -148,6 +153,7 @@ export const sharedRouter = createTRPCRouter({
       users = users.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, limit);
 
       // Возвращаем безопасную информацию о пользователях с подсчетом заказов
+      const orderManager = await getOrderManager(); // ✅ Получаем production OrderManager
       return await Promise.all(
         users.map(async user => {
           const userOrders = await orderManager.findByUserId(user.id);
@@ -165,6 +171,7 @@ export const sharedRouter = createTRPCRouter({
 
   // Общая статистика (доступна operator и support)
   getGeneralStats: operatorAndSupport.query(async () => {
+    const orderManager = await getOrderManager(); // ✅ Получаем production OrderManager
     const orders = await orderManager.getAll();
     // ✅ Use async UserManagerFactory pattern with web context
     const userManager = await UserManagerFactory.createForWeb();
@@ -336,6 +343,7 @@ export const sharedRouter = createTRPCRouter({
         
         if (hasComplexSearch || userRole === USER_ROLES.USER) {
           // COMPLEX SEARCH или USER: загружаем все ордера и фильтруем в памяти
+          const orderManager = await getOrderManager(); // ✅ Получаем production OrderManager
           const allOrders = userRole === USER_ROLES.USER
             ? await orderManager.findByUserId(ctx.user.id)
             : await orderManager.getAll();
@@ -362,6 +370,7 @@ export const sharedRouter = createTRPCRouter({
         }
         
         // SIMPLE FILTERS: используем SQL пагинацию (быстрее и меньше памяти)
+        const orderManager = await getOrderManager(); // ✅ Получаем production OrderManager
         const result = await orderManager.findWithPagination({
           limit: input.pagination.limit,
           offset: input.pagination.offset,

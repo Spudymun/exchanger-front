@@ -4,7 +4,9 @@ import {
   MARKABLE_AS_PAID_STATUSES, // 🆕 TASK: Константа для валидации статусов при отметке как оплаченого
   ORDER_STATUSES,
 } from '@repo/constants';
-import { orderManager, validateUserAccess, validateOrderAccess, type Order } from '@repo/exchange-core';
+import { validateUserAccess, validateOrderAccess, type Order } from '@repo/exchange-core';
+
+// ✅ PRODUCTION-READY: Import manager factories instead of mocks
 import {
   sortOrders,
   filterOrders,
@@ -36,6 +38,7 @@ import { z } from 'zod';
 
 import { createTRPCRouter } from '../../init';
 import { protectedProcedure } from '../../middleware/auth';
+import { getOrderManager } from '../../utils/manager-factories';
 
 const logger = createEnvironmentLogger('orders-router');
 
@@ -129,6 +132,8 @@ export const ordersRouter = createTRPCRouter({
     )
     .query(async ({ input, ctx }) => {
       const user = await validateUserAccess(ctx.user.id);
+      // ✅ Получаем production OrderManager
+      const orderManager = await getOrderManager();
       // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: email → user → orders by userId
       const allOrders = await orderManager.findByUserId(user.id);
 
@@ -191,6 +196,7 @@ export const ordersRouter = createTRPCRouter({
       }
 
       // Отменяем заявку
+      const orderManager = await getOrderManager(); // ✅ Получаем production OrderManager
       const updatedOrder = await orderManager.update(order.id, {
         status: ORDER_STATUSES.CANCELLED,
       });
@@ -247,6 +253,7 @@ export const ordersRouter = createTRPCRouter({
       }
 
       // Изменяем статус на PAID
+      const orderManager = await getOrderManager(); // ✅ Получаем production OrderManager
       const updatedOrder = await orderManager.update(order.id, {
         status: ORDER_STATUSES.PAID,
       });

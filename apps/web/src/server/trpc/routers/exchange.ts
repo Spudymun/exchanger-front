@@ -26,8 +26,7 @@ import {
   getExchangeRateAsync,
   getCurrencyLimits,
   sanitizeEmail,
-  orderManager,
-  userManager,
+  // ❌ REMOVED: orderManager, userManager - these are mocks, use factories instead
   getUserRoleForApp,
   isAmountWithinLimits,
   type CryptoCurrency,
@@ -78,6 +77,10 @@ import { rateLimitMiddleware } from '../middleware/rateLimit';
 
 // ✅ Logger для централизованного логирования
 const logger = createEnvironmentLogger('ExchangeRouter');
+
+// === MANAGER FACTORIES ===
+// ✅ ВАЖНО: Используем централизованные фабрики из utils/manager-factories
+import { getOrderManager, getUserManager } from '../utils/manager-factories';
 
 // === TYPE GUARDS ===
 
@@ -513,6 +516,7 @@ async function processSuccessfulOrder(params: {
   }
 
   // Создание заказа
+  const orderManager = await getOrderManager(); // ✅ Получаем production OrderManager
   const order = await orderManager.create({
     userId: userSession.user.id,
     email: orderRequest.email,
@@ -932,6 +936,8 @@ export const exchangeRouter = createTRPCRouter({
 
       // Проверка на дублирование активных заказов (Level 3 Protection)
       const sanitizedEmail = sanitizeEmail(input.email);
+      const userManager = await getUserManager(); // ✅ Получаем production UserManager
+      const orderManager = await getOrderManager(); // ✅ Получаем production OrderManager
       const existingUser = await userManager.findByEmail(sanitizedEmail);
       if (existingUser) {
         const userOrders = await orderManager.findByUserId(existingUser.id);
@@ -1010,6 +1016,10 @@ export const exchangeRouter = createTRPCRouter({
   getOrderStatus: protectedProcedure
     .input(securityEnhancedOrderByIdSchema)
     .query(async ({ input, ctx }) => {
+      // ✅ Получаем production managers
+      const orderManager = await getOrderManager();
+      const userManager = await getUserManager();
+      
       // Определяем тип ID и используем соответствующий метод поиска
       const order = isUUID(input.orderId)
         ? await orderManager.findById(input.orderId)
@@ -1080,6 +1090,10 @@ export const exchangeRouter = createTRPCRouter({
     .input(securityEnhancedGetOrderHistoryByEmailSchema)
     .query(async ({ input }) => {
       const sanitizedEmail = sanitizeEmail(input.email);
+
+      // ✅ Получаем production managers
+      const userManager = await getUserManager();
+      const orderManager = await getOrderManager();
 
       // ✅ ПРАВИЛЬНАЯ АРХИТЕКТУРА: email → user → orders by userId
       const user = await userManager.findByEmail(sanitizedEmail);

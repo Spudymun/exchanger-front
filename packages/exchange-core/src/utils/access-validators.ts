@@ -1,6 +1,6 @@
+import { UserManagerFactory } from '@repo/session-management';
 import { createNotFoundError, createForbiddenError, createEnvironmentLogger } from '@repo/utils';
 
-import { userManager, orderManager } from '../data';
 import type { User, Order } from '../types';
 
 const logger = createEnvironmentLogger('AccessValidators');
@@ -17,6 +17,7 @@ const logger = createEnvironmentLogger('AccessValidators');
  * @throws TRPCError if user not found
  */
 export async function validateUserAccess(userId: string): Promise<User> {
+  const userManager = await UserManagerFactory.createForWeb();
   const user = await userManager.findById(userId);
   if (!user) {
     throw createNotFoundError(`User with ID "${userId}" not found`);
@@ -33,6 +34,9 @@ export async function validateUserAccess(userId: string): Promise<User> {
  */
 export async function validateOrderAccess(orderId: string, userEmail: string): Promise<Order> {
   logger.info('🔍 DEBUG validateOrderAccess called', { orderId, userEmail });
+
+  const orderManager = await UserManagerFactory.createOrderManager();
+  const userManager = await UserManagerFactory.createForWeb();
 
   // ✅ ИСПРАВЛЕНО: Поддержка как publicId, так и внутреннего id
   const order = await orderManager.findByPublicId(orderId) || await orderManager.findById(orderId);
