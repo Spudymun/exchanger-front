@@ -8,7 +8,7 @@
     "style-scanner": "./bin/style-scanner.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --build",
     "build:clean": "tsc --build --clean",
     "build:force": "tsc --build --force",
     "dev": "tsc --watch",
@@ -21,6 +21,7 @@
     "scan-styles": "npm run build && cd ../../ && node packages/style-scanner/bin/style-scanner.js scan --out style-docs --verbose"
   },
   "dependencies": {
+    "@repo/constants": "*",
     "typescript": "^5.0.0",
     "react-docgen-typescript": "^2.2.2",
     "fast-glob": "^3.3.2",

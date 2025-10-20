@@ -76,21 +76,29 @@ export class EmailServiceFactory {
 
   /**
    * Create email provider automatically based on environment variables
-   * Tries providers in order: SendGrid → Resend → Gmail SMTP → Mock
+   * Tries providers in order: Resend → SendGrid → Gmail SMTP → Mock
    */
   static createFromEnvironment(): EmailProviderInterface {
     const logger = createEnvironmentLogger('EmailServiceFactory.createFromEnvironment');
 
-    // Try SendGrid first (premium service)
-    if (process.env.SENDGRID_API_KEY) {
-      logger.debug('Creating SendGrid provider from environment');
-      return this.create({ provider: 'sendgrid', apiKey: process.env.SENDGRID_API_KEY });
+    // ✅ НОВОЕ: Принудительный Mock режим для тестирования в production
+    if (process.env.FORCE_MOCK_EMAIL === 'true') {
+      logger.info('🧪 FORCE_MOCK_EMAIL enabled - using Mock provider in production', {
+        note: 'Emails will be logged but not sent. Requires verified domain for real sending.',
+      });
+      return this.createMock();
     }
 
-    // Try Resend (modern service)
+    // Try Resend first (modern service, configured for this project)
     if (process.env.RESEND_API_KEY) {
       logger.debug('Creating Resend provider from environment');
       return this.create({ provider: 'resend', apiKey: process.env.RESEND_API_KEY });
+    }
+
+    // Try SendGrid (premium service)
+    if (process.env.SENDGRID_API_KEY) {
+      logger.debug('Creating SendGrid provider from environment');
+      return this.create({ provider: 'sendgrid', apiKey: process.env.SENDGRID_API_KEY });
     }
 
     // Try Gmail SMTP (free service)
@@ -106,8 +114,8 @@ export class EmailServiceFactory {
 
     // Fallback to mock provider
     logger.debug('No email providers configured, using mock provider', {
-      sendgridConfigured: Boolean(process.env.SENDGRID_API_KEY),
       resendConfigured: Boolean(process.env.RESEND_API_KEY),
+      sendgridConfigured: Boolean(process.env.SENDGRID_API_KEY),
       gmailConfigured: Boolean(process.env.GMAIL_SMTP_USER && process.env.GMAIL_SMTP_PASS),
     });
 

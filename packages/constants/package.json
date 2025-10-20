@@ -9,7 +9,7 @@
     "dist/**"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --build",
     "build:clean": "tsc --build --clean",
     "build:force": "tsc --build --force",
     "build:rebuild": "npm run build:clean && npm run build:force",
@@ -27,9 +27,8 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     }
   }
 }

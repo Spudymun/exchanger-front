@@ -9,8 +9,20 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@repo/constants": ["../../packages/constants/dist"],
-      "@repo/constants/*": ["../../packages/constants/dist/*"]
+      "@repo/constants": ["../../packages/constants/src"],
+      "@repo/constants/*": ["../../packages/constants/src/*"],
+      "@repo/utils": ["../../packages/utils/src"],
+      "@repo/utils/*": ["../../packages/utils/src/*"],
+      "@repo/session-management": ["../../packages/session-management/src"],
+      "@repo/session-management/*": ["../../packages/session-management/src/*"],
+      "@repo/exchange-core": ["../../packages/exchange-core/src"],
+      "@repo/exchange-core/*": ["../../packages/exchange-core/src/*"],
+      "@repo/hooks": ["../../packages/hooks/src"],
+      "@repo/hooks/*": ["../../packages/hooks/src/*"],
+      "@repo/ui": ["../../packages/ui/src"],
+      "@repo/ui/*": ["../../packages/ui/src/*"],
+      "@repo/providers": ["../../packages/providers/src"],
+      "@repo/providers/*": ["../../packages/providers/src/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", "next-env.d.ts", "next.config.js", ".next/types/**/*.ts"],

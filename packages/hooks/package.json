@@ -17,7 +17,7 @@
     "./src/business/useOrderTracking": "./src/business/useOrderTracking.ts"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --build",
     "build:clean": "tsc --build --clean",
     "build:force": "tsc --build --force",
     "lint": "eslint . --max-warnings 0",

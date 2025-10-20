@@ -126,7 +126,7 @@ export class EmailService {
       const emailMessage = await EmailTemplateService.generateWalletReadyEmail(data);
 
       // Get email provider and send
-      const provider = EmailServiceFactory.create(config);
+      const provider = config ? EmailServiceFactory.create(config) : EmailServiceFactory.createFromEnvironment();
       const result = await provider.send(emailMessage);
 
       // ✅ НОВОЕ: Записать результат для мониторинга
@@ -298,7 +298,7 @@ export class EmailService {
       const emailMessages = await EmailTemplateService.generateSystemAlertEmail(data);
 
       // Get email provider and send to all recipients
-      const provider = EmailServiceFactory.create(config);
+      const provider = config ? EmailServiceFactory.create(config) : EmailServiceFactory.createFromEnvironment();
       return await this.sendToAllRecipients(emailMessages, provider, data, config);
     } catch (error) {
       this.logger.error('System alert service error', {

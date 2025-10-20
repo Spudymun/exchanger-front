@@ -22,6 +22,7 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 import { ExpressAdapter } from '@bull-board/express';
 import { Queue } from 'bullmq';
 import express from 'express';
+import basicAuth from 'express-basic-auth';
 
 // ========================================
 // CONFIGURATION
@@ -35,6 +36,9 @@ const CONFIG = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   HEALTH_CHECK_PATH: '/health',
   DASHBOARD_PATH: '/',
+  // Basic Auth credentials
+  AUTH_USER: process.env.BULL_BOARD_USER || 'admin',
+  AUTH_PASSWORD: process.env.BULL_BOARD_PASSWORD || 'admin123',
 };
 
 // ========================================
@@ -200,6 +204,38 @@ function createApp(serverAdapter) {
       uptime: process.uptime(),
     });
   });
+
+  // Basic Auth для Bull Board UI (production обязательно, dev опционально)
+  if (CONFIG.NODE_ENV === 'production' || CONFIG.AUTH_PASSWORD !== 'admin123') {
+    logger.info('BASIC_AUTH_ENABLED', {
+      user: CONFIG.AUTH_USER,
+      env: CONFIG.NODE_ENV,
+    });
+
+    app.use(
+      CONFIG.DASHBOARD_PATH,
+      basicAuth({
+        users: { [CONFIG.AUTH_USER]: CONFIG.AUTH_PASSWORD },
+        challenge: true,
+        realm: 'Bull Board Dashboard - Authentication Required',
+        unauthorizedResponse: (req) => {
+          logger.warn('UNAUTHORIZED_ACCESS_ATTEMPT', {
+            ip: req.ip,
+            path: req.path,
+          });
+          return {
+            error: 'Unauthorized',
+            message: 'Access denied. Valid credentials required.',
+          };
+        },
+      })
+    );
+  } else {
+    logger.warn('BASIC_AUTH_DISABLED', {
+      reason: 'Development mode with default password',
+      recommendation: 'Set BULL_BOARD_PASSWORD for production',
+    });
+  }
 
   // Bull Board UI
   app.use(CONFIG.DASHBOARD_PATH, serverAdapter.getRouter());

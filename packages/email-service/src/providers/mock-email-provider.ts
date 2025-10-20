@@ -20,31 +20,14 @@ export class MockEmailProvider implements EmailProviderInterface {
   }
 
   async send(message: EmailMessage): Promise<EmailSendResult> {
-    this.logger.info('📧 Mock Email Sent', {
+    // Компактное логирование параметров письма
+    this.logger.info('📧 Email сформирован (Mock Mode)', {
+      from: `${this.fromName} <${this.fromEmail}>`,
       to: message.to,
       subject: message.subject,
-      from: `${this.fromName} <${this.fromEmail}>`,
-      htmlLength: message.html.length,
-      textLength: message.text?.length || 0,
+      contentSize: `${message.html.length} chars`,
+      note: '⚠️ Отправка возможна только с верифицированным доменом',
     });
-
-    // Log email content in development (console allowed for mock provider)
-    // eslint-disable-next-line no-console
-    console.log(`
-===============================================
-📧 MOCK EMAIL SENT
-===============================================
-To: ${message.to}
-From: ${this.fromName} <${this.fromEmail}>
-Subject: ${message.subject}
-
-HTML Content:
-${message.html}
-
-Text Content:
-${message.text || 'No text content'}
-===============================================
-    `);
 
     // Simulate async operation
     await new Promise(resolve => setTimeout(resolve, 100));

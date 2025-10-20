@@ -21,7 +21,7 @@ export const SOCIAL_LINKS = {
 } as const;
 
 export const CONTACT_INFO = {
-  SUPPORT_EMAIL: 'onboarding@resend.dev', // Для локальной разработки
+  SUPPORT_EMAIL: 'spudymun@gmail.com', // 🆕 Production email для алертов
   SUPPORT_TELEGRAM: '@exchangego_operators_bot', // 🆕 Updated to real bot
   WORKING_HOURS: '24/7',
   RESPONSE_TIME: '1-3 часа',

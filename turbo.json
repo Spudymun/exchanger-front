@@ -15,6 +15,7 @@
         "DATABASE_URL",
         "REDIS_URL",
         "FORCE_MOCK_MODE",
+        "FORCE_MOCK_EMAIL",
         "SESSION_ENVIRONMENT",
         "NEXTAUTH_URL",
         "NEXTAUTH_SECRET",
@@ -50,6 +51,7 @@
         "DATABASE_URL",
         "REDIS_URL",
         "FORCE_MOCK_MODE",
+        "FORCE_MOCK_EMAIL",
         "SESSION_ENVIRONMENT",
         "NEXTAUTH_URL",
         "NEXTAUTH_SECRET",
@@ -85,6 +87,7 @@
         "DATABASE_URL",
         "REDIS_URL",
         "FORCE_MOCK_MODE",
+        "FORCE_MOCK_EMAIL",
         "SESSION_ENVIRONMENT",
         "NEXTAUTH_URL",
         "NEXTAUTH_SECRET",
@@ -122,6 +125,7 @@
         "DATABASE_URL",
         "REDIS_URL",
         "FORCE_MOCK_MODE",
+        "FORCE_MOCK_EMAIL",
         "SESSION_ENVIRONMENT",
         "NEXTAUTH_URL",
         "NEXTAUTH_SECRET",
@@ -149,14 +153,6 @@
     },
     "build:clean": {
       "cache": false
-    },
-    "build:force": {
-      "dependsOn": ["^build:force"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
-    },
-    "build:rebuild": {
-      "dependsOn": ["^build:rebuild"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
     "build:analyze": {
       "dependsOn": ["^build"],
@@ -192,6 +188,7 @@
         "REDIS_URL",
         "REDIS_DB_QUEUE",
         "FORCE_MOCK_MODE",
+        "FORCE_MOCK_EMAIL",
         "SESSION_ENVIRONMENT",
         "NEXTAUTH_URL",
         "NEXTAUTH_SECRET",

@@ -317,17 +317,19 @@ async function notifyOperator(
         statusText: response.statusText,
         responseBody: responseText,
       });
-      throw new Error(`Telegram API error: ${response.status} ${response.statusText}`);
+      // ✅ Пробрасываем ошибку дальше для retry в BullMQ
+      throw new Error(`Telegram API error: ${response.status} ${response.statusText} - ${responseText}`);
     }
   } catch (error) {
-    logger.warn('Failed to notify operator', {
+    logger.error('TELEGRAM_NOTIFY_OPERATOR_EXCEPTION', {
       operatorId: operatorId.trim(),
       internalOrderId,
       topicId: topicId || 'General',
       error: error instanceof Error ? error.message : 'Unknown error',
       errorName: error instanceof Error ? error.name : 'UnknownError',
     });
-    return false;
+    // ✅ Пробрасываем ошибку дальше - не глушим её!
+    throw error;
   }
 }
 
@@ -414,6 +416,7 @@ async function sendOperatorNotifications(
       messageLength: message.length,
     });
     
+    // ✅ notifyOperator теперь бросает исключение при ошибке - пробрасываем дальше
     const success = await notifyOperator(
       ordersChatId, 
       message, 
@@ -423,28 +426,19 @@ async function sendOperatorNotifications(
       notificationType || 'new_order'
     );
     
-    if (success) {
-      logger.info('Notification sent to Orders channel', {
-        publicOrderId,
-        internalOrderId,
-        notificationType: notificationType || 'new_order',
-        chatId: ordersChatId,
-        topicId: topicId || 'General',
-      });
-      
-      return {
-        notifiedCount: 1,
-        errorCount: 0,
-        totalOperators: 1,
-      };
-    } else {
-      logger.warn('Failed to send to Orders channel, falling back to broadcast', {
-        publicOrderId,
-        internalOrderId,
-        chatId: ordersChatId,
-      });
-      // Fallback будет выполнен ниже
-    }
+    logger.info('Notification sent to Orders channel', {
+      publicOrderId,
+      internalOrderId,
+      notificationType: notificationType || 'new_order',
+      chatId: ordersChatId,
+      topicId: topicId || 'General',
+    });
+    
+    return {
+      notifiedCount: success ? 1 : 0,
+      errorCount: 0,
+      totalOperators: 1,
+    };
   }
   
   // Route 2: Fallback to broadcast (backward compatibility или если канал не настроен)
@@ -469,45 +463,29 @@ async function sendOperatorNotifications(
     return { notifiedCount: 0, errorCount: 0, totalOperators: 0 };
   }
 
-  let notifiedCount = 0;
-  
-  for (const operatorId of operatorIds) {
-    logger.debug('TELEGRAM_NOTIFY_OPERATOR_ATTEMPT', {
-      publicOrderId,
-      internalOrderId,
-      operatorId,
-      attemptNumber: notifiedCount + 1,
-      totalOperators: operatorIds.length,
-    });
-
-    const success = await notifyOperator(
-      operatorId, 
-      message, 
-      keyboard, 
-      internalOrderId, // ✅ UUID для сохранения в БД
-      undefined,
-      notificationType || 'new_order'
-    );
-    if (success) {
-      notifiedCount++;
-      logger.debug('TELEGRAM_NOTIFY_OPERATOR_SUCCESS', {
+  // ✅ Отправляем всем операторам - если хотя бы один fail → бросаем ошибку для retry
+  const results = await Promise.allSettled(
+    operatorIds.map((operatorId) => {
+      logger.debug('TELEGRAM_NOTIFY_OPERATOR_ATTEMPT', {
         publicOrderId,
         internalOrderId,
         operatorId,
-        successCount: notifiedCount,
       });
-    } else {
-      logger.warn('TELEGRAM_NOTIFY_OPERATOR_FAILED', {
-        publicOrderId,
-        internalOrderId,
+      
+      return notifyOperator(
         operatorId,
-        failedCount: (operatorIds.length - notifiedCount - 1),
-      });
-    }
-  }
+        message,
+        keyboard,
+        internalOrderId,
+        undefined,
+        notificationType || 'new_order'
+      );
+    })
+  );
 
-  const errorCount = operatorIds.length - notifiedCount;
-  
+  const notifiedCount = results.filter((r) => r.status === 'fulfilled').length;
+  const errorCount = results.filter((r) => r.status === 'rejected').length;
+
   logger.info('TELEGRAM_NOTIFY_ALL_OPERATORS_COMPLETE', {
     publicOrderId,
     internalOrderId,
@@ -516,6 +494,14 @@ async function sendOperatorNotifications(
     errorCount,
     successRate: `${((notifiedCount / operatorIds.length) * 100).toFixed(1)}%`,
   });
+
+  // ✅ Если есть ошибки - бросаем исключение для retry в BullMQ
+  if (errorCount > 0) {
+    const firstError = results.find((r) => r.status === 'rejected') as PromiseRejectedResult;
+    throw new Error(
+      `Failed to notify ${errorCount} of ${operatorIds.length} operators: ${firstError.reason}`
+    );
+  }
 
   return { notifiedCount, errorCount, totalOperators: operatorIds.length };
 }

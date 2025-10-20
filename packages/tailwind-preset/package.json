@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "Centralized Tailwind CSS preset for ExchangeGO monorepo",
   "main": "preset.js",
+  "exports": {
+    ".": "./preset.js",
+    "./preset": "./preset.js",
+    "./globals.css": "./globals.css"
+  },
   "files": [
     "preset.js",
     "globals.css"

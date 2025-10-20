@@ -10,15 +10,19 @@
     "./server": "./src/server.ts"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --build",
     "check-types": "tsc --noEmit",
     "test": "jest --passWithNoTests"
   },
   "dependencies": {
     "@repo/constants": "*",
-    "@repo/utils": "*"
+    "@repo/email-service": "*",
+    "@repo/hooks": "*",
+    "@repo/utils": "*",
+    "bcryptjs": "^2.4.3"
   },
   "devDependencies": {
-    "@repo/typescript-config": "*"
+    "@repo/typescript-config": "*",
+    "@types/bcryptjs": "^2.4.6"
   }
 }

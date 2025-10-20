@@ -1,17 +1,25 @@
-version: '3.8'
-
 services:
   # Main Web Application (Production)
   web:
     build:
       context: .
-      dockerfile: ./apps/web/Dockerfile.prod
+      dockerfile: ./apps/web/Dockerfile
+      args:
+        - NODE_ENV=production
+        - DATABASE_URL=${DATABASE_URL}
+        - REDIS_URL=${REDIS_URL}
+        - NEXTAUTH_URL=${NEXTAUTH_URL}
+        - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+        - WEB_APP_URL=${WEB_APP_URL}
     container_name: exchanger-web-prod
     restart: always
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
-      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - WEB_APP_URL=${WEB_APP_URL}
       - TELEGRAM_BOT_URL=http://telegram-bot:3003
     ports:
       - "3000:3000"
@@ -27,6 +35,15 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 90s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
     logging:
       driver: "json-file"
       options:
@@ -37,16 +54,40 @@ services:
   telegram-bot:
     build:
       context: .
-      dockerfile: ./apps/telegram-bot/Dockerfile.prod
+      dockerfile: ./apps/telegram-bot/Dockerfile
+      args:
+        - NODE_ENV=production
+        - DATABASE_URL=${DATABASE_URL}
+        - REDIS_URL=${REDIS_URL}
+        - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+        - WEB_APP_URL=${WEB_APP_URL}
     container_name: exchanger-telegram-bot-prod
     restart: always
     environment:
       - NODE_ENV=production
-      - WEB_APP_URL=http://web:3000
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - REDIS_DB_QUEUE=1
+      - WEB_APP_URL=${WEB_APP_URL}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_WEBHOOK_URL=${TELEGRAM_WEBHOOK_URL}
+      - TELEGRAM_WEBHOOK_SECRET=${TELEGRAM_WEBHOOK_SECRET}
+      - API_SECRET_KEY=${API_SECRET_KEY}
+      - AUTHORIZED_TELEGRAM_OPERATORS=${AUTHORIZED_TELEGRAM_OPERATORS}
+      - OPERATOR_TELEGRAM_CHAT_IDS=${OPERATOR_TELEGRAM_CHAT_IDS}
+      - TELEGRAM_ORDERS_CHAT_ID=${TELEGRAM_ORDERS_CHAT_ID}
+      - TELEGRAM_SUPPORT_CHAT_ID=${TELEGRAM_SUPPORT_CHAT_ID}
+      - TELEGRAM_NEW_ORDERS_TOPIC_ID=${TELEGRAM_NEW_ORDERS_TOPIC_ID}
+      - TELEGRAM_CANCELLED_ORDERS_TOPIC_ID=${TELEGRAM_CANCELLED_ORDERS_TOPIC_ID}
+      - TELEGRAM_PAID_ORDERS_TOPIC_ID=${TELEGRAM_PAID_ORDERS_TOPIC_ID}
     # БЕЗ портов - полная изоляция в production
     networks:
       - exchanger-network
     depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
       web:
         condition: service_healthy
     healthcheck:
@@ -54,6 +95,56 @@ services:
       interval: 60s
       timeout: 15s
       retries: 3
+      start_period: 90s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Bull Board Dashboard (Production)
+  bull-board-dashboard:
+    build:
+      context: .
+      dockerfile: ./apps/bull-board-dashboard/Dockerfile
+    container_name: exchanger-bull-board-prod
+    restart: always
+    environment:
+      - NODE_ENV=production
+      - REDIS_URL=${REDIS_URL}
+      - REDIS_DB_QUEUE=1
+      - PORT=3010
+      - BULL_BOARD_USER=${BULL_BOARD_USER:-admin}
+      - BULL_BOARD_PASSWORD=${BULL_BOARD_PASSWORD}
+    ports:
+      - "3010:3010"
+    networks:
+      - exchanger-network
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3010/health"]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
     logging:
       driver: "json-file"
       options:

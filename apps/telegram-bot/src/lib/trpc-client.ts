@@ -1,12 +1,13 @@
 /**
- * tRPC клиент для интеграции с основным API (apps/web)
- * Серверная реализация для использования в Telegram Bot
+ * tRPC клиент для telegram-bot
+ * Используется для взаимодействия с API основного приложения через tRPC
+ * Поддерживает superjson для передачи Date объектов
  */
 
+import type { AppRouter } from '@repo/api-contract';
 import { createTRPCProxyClient, httpBatchLink } from '@trpc/client';
 import superjson from 'superjson';
 
-import type { AppRouter } from '../../../web/src/server/trpc/routers';
 
 /**
  * Получение базового URL для подключения к основному API
@@ -19,11 +20,6 @@ function getWebApiUrl(): string {
 
   throw new Error('WEB_APP_URL environment variable is required for telegram-bot');
 }
-
-/**
- * tRPC клиент для взаимодействия с основным API
- * Используется для выполнения operator.takeOrder и других процедур
- */
 export const trpcClient = createTRPCProxyClient<AppRouter>({
   links: [
     httpBatchLink({

@@ -11,7 +11,7 @@
     "./factories/*": "./src/factories/*"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --build",
     "check-types": "tsc --noEmit",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint src/**/*.ts --fix",
