@@ -108,9 +108,23 @@ async function handleCallbackQueryResponse(
       }
     );
 
-    // Если это взятие заявки в работу - обновить ВСЕ сообщения для этой заявки
+    // Если это взятие заявки в работу - обновить ВСЕ сообщения ТОЛЬКО при успехе
     if (callbackQuery.data?.startsWith('take_order_') && callbackQuery.message) {
       const orderId = callbackQuery.data.replace('take_order_', '');
+      
+      // ✅ CRITICAL FIX: Проверяем успешность операции перед обновлением UI
+      // Обновляем сообщения только если операция завершилась успешно (без ошибки)
+      const isOperationSuccessful = responseMessage && !isError;
+      
+      if (!isOperationSuccessful) {
+        logger.debug('Skipping message update - take order operation failed', {
+          orderId,
+          operatorId: callbackQuery.from.id,
+          errorMessage: responseMessage,
+        });
+        return; // Early return - не обновляем UI при ошибке
+      }
+
       const originalText = callbackQuery.message.text || '';
       const operatorName = callbackQuery.from.first_name || callbackQuery.from.id;
 
