@@ -243,8 +243,8 @@ WORKER: {
 1. Создать скрипт для массового добавления задач:
 
    ```bash
-   # Из корня проекта
-   node scripts/load-test-orders.mjs
+   # Из корня проекта - используем load testing скрипт
+   node scripts/load-test-concurrent.mjs
    ```
 
 2. Открыть Bull Board (http://localhost:3010)

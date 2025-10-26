@@ -75,25 +75,20 @@ npm run db:studio
 
 ### 4. Load Testing
 
-```powershell
-# Базовый тест (10 заявок)
-.\scripts\load-test-orders.ps1
-
-# Расширенные параметры
-.\scripts\load-test-orders.ps1 -ConcurrentOrders 20 -TimeoutSeconds 60 -DetailedLogging
-
-# Тест на production
-.\scripts\load-test-orders.ps1 -ApiBaseUrl "https://your-domain.com" -ConcurrentOrders 5
+```bash
+# Основной инструмент (рекомендуется)
+node scripts/load-test-concurrent.mjs
 ```
+
+**Что тестируется:**
+
+- 10 concurrent заявок (USDT-TRC20)
+- Автоматическая подготовка БД
+- Валидные карты украинских банков
+- Wallet allocation и distribution
+- Database performance
 
 ## 🔍 Альтернативные способы
-
-### Node.js версия
-
-```bash
-# Если нужна кроссплатформенная версия
-node scripts/load-test-orders.mjs
-```
 
 ### Ручное тестирование
 

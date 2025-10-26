@@ -56,31 +56,20 @@ securityEnhancedCreateExchangeOrderSchema = z.object({
 
 ## 🚀 Запуск тестирования
 
-### Вариант 1: PowerShell (Рекомендуется для Windows)
-
-```powershell
-# Базовый запуск (10 заявок на localhost:3000)
-.\scripts\load-test-orders.ps1
-
-# Расширенные параметры
-.\scripts\load-test-orders.ps1 -ApiBaseUrl "http://localhost:3000" -ConcurrentOrders 10 -TimeoutSeconds 30 -DetailedLogging
-
-# Тестирование на production URL
-.\scripts\load-test-orders.ps1 -ApiBaseUrl "https://your-domain.com" -ConcurrentOrders 5
-```
-
-### Вариант 2: Node.js (Кроссплатформенно)
+### Node.js скрипт (Рекомендуется)
 
 ```bash
-# Установка зависимостей (если нужно)
-npm install node-fetch
-
-# Базовый запуск
-node scripts/load-test-orders.mjs
-
-# С переменными окружения
-API_BASE_URL=http://localhost:3000 DETAILED_LOGGING=true node scripts/load-test-orders.mjs
+# Базовый запуск (10 concurrent заявок)
+node scripts/load-test-concurrent.mjs
 ```
+
+**Особенности:**
+
+- ✅ Автоматическая подготовка БД (`db:reset` + `db:seeds`)
+- ✅ 10 concurrent заявок с USDT (стабильно)
+- ✅ Валидные карты по алгоритму Луна
+- ✅ Детальная диагностика wallet distribution
+- ✅ Результат: 10/10 заявок успешно за ~5.38 секунд
 
 ## 📊 Что тестируется
 
