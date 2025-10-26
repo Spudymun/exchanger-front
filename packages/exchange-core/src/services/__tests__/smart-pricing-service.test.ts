@@ -1,11 +1,13 @@
 /**
  * Unit тесты для SmartPricingService
- * 
+ *
  * Покрывает:
  * - Иерархию Binance → CoinGecko → Cache → Fallback для ВСЕХ валют
  * - API интеграцию и fallback механизмы
  * - Бизнес-логику и округление курсов
  */
+
+/* eslint-disable max-lines-per-function */
 
 import type { CryptoCurrency } from '@repo/constants';
 
@@ -15,18 +17,18 @@ import { SmartPricingService } from '../smart-pricing-service';
 const TEST_VALUES = {
   MARKET_RATE: 41.32,
   // После применения маржи: 41.32 * (1 - 0.025 + 0.003) = 40.41
-  EXPECTED_CLIENT_RATE_MIN: 40,    // Минимальный ожидаемый курс для клиента
-  EXPECTED_CLIENT_RATE_MAX: 41,    // Максимальный ожидаемый курс для клиента
+  EXPECTED_CLIENT_RATE_MIN: 40, // Минимальный ожидаемый курс для клиента
+  EXPECTED_CLIENT_RATE_MAX: 41, // Максимальный ожидаемый курс для клиента
   KOPECK_MULTIPLIER: 100,
   USD_RATE: 1,
   API_CALLS_COUNT: 2, // Количество вызовов API (Binance + CoinGecko)
 };
 
-// Mock для изоляции от внешних зависимостей  
+// Mock для изоляции от внешних зависимостей
 jest.mock('@repo/constants', () => ({
   // Основные константы
   COMMISSION_RATES: { USDT: 1.5, BTC: 2.5, ETH: 2.0, LTC: 2.0 },
-  
+
   // Pricing configuration constants
   LOG_JSON_INDENT: 2,
   RATE_CONSTANTS: {
@@ -52,22 +54,24 @@ jest.mock('@repo/constants', () => ({
     FRESH_MS: 30000, // 30 секунд - свежий кеш
     STALE_MS: 300000, // 5 минут - устаревший но валидный
   },
-  
-  // API configuration constants  
+
+  // API configuration constants
   API_PROVIDERS: [
     {
       name: 'binance',
       priority: 1,
       timeout: 5000,
       reliability: 'HIGH',
-      getUrl: (currency: string) => `https://api.binance.com/api/v3/ticker/price?symbol=${currency}UAH`,
+      getUrl: (currency: string) =>
+        `https://api.binance.com/api/v3/ticker/price?symbol=${currency}UAH`,
     },
     {
-      name: 'coingecko', 
+      name: 'coingecko',
       priority: 2,
       timeout: 8000,
       reliability: 'HIGH',
-      getUrl: (currency: string) => `https://api.coingecko.com/api/v3/simple/price?ids=${currency}&vs_currencies=usd,uah`,
+      getUrl: (currency: string) =>
+        `https://api.coingecko.com/api/v3/simple/price?ids=${currency}&vs_currencies=usd,uah`,
     },
   ],
   API_HEADERS: {
@@ -78,21 +82,41 @@ jest.mock('@repo/constants', () => ({
 const mockFetch = jest.fn();
 global.fetch = mockFetch;
 
+// Mock Prisma для USDT fallback тестов
+const mockPrisma = {
+  manualExchangeRate: {
+    findFirst: jest.fn(),
+  },
+};
+
+// Тип для мока Prisma
+type MockPrismaClient = typeof mockPrisma;
+
 describe('SmartPricingService', () => {
   let service: SmartPricingService;
 
-  beforeEach(() => {
-    service = new SmartPricingService();
+  const setupService = () => {
+    // Создаем сервис с мокнутым Prisma для поддержки USDT fallback
+    service = new SmartPricingService(mockPrisma as unknown as MockPrismaClient);
     jest.clearAllMocks();
-  });
+
+    // По умолчанию Prisma возвращает manual rate для USDT fallback
+    mockPrisma.manualExchangeRate.findFirst.mockResolvedValue({
+      uahRate: {
+        toNumber: () => TEST_VALUES.MARKET_RATE,
+      },
+    });
+  };
+
+  beforeEach(setupService);
 
   describe('Binance API (приоритет 1)', () => {
     const testBinanceUSDT = async () => {
       const mockResponse = {
         ok: true,
-        json: jest.fn().mockResolvedValue({ 
+        json: jest.fn().mockResolvedValue({
           symbol: 'USDTUAH',
-          price: TEST_VALUES.MARKET_RATE.toString()
+          price: TEST_VALUES.MARKET_RATE.toString(),
         }),
       };
       mockFetch.mockResolvedValue(mockResponse);
@@ -110,9 +134,9 @@ describe('SmartPricingService', () => {
     const testBinanceBTC = async () => {
       const mockResponse = {
         ok: true,
-        json: jest.fn().mockResolvedValue({ 
+        json: jest.fn().mockResolvedValue({
           symbol: 'BTCUAH',
-          price: '1800000'
+          price: '1800000',
         }),
       };
       mockFetch.mockResolvedValue(mockResponse);
@@ -128,47 +152,52 @@ describe('SmartPricingService', () => {
 
   describe('CoinGecko fallback (приоритет 2)', () => {
     const testCoinGeckoFallback = async () => {
-      // Binance недоступен
-      mockFetch.mockRejectedValueOnce(new Error('Binance API error'));
+      // Для USDT нет CoinGecko fallback в новой логике (только P2P → Manual DB)
+      // Тестируем Manual DB fallback вместо CoinGecko
 
-      // CoinGecko успешен
-      const mockCoinGeckoResponse = {
-        ok: true,
-        json: jest.fn().mockResolvedValue({ 
-          tether: { usd: TEST_VALUES.USD_RATE, uah: TEST_VALUES.MARKET_RATE } 
-        }),
-      };
-      mockFetch.mockResolvedValueOnce(mockCoinGeckoResponse);
+      // Manual DB возвращает курс
+      mockPrisma.manualExchangeRate.findFirst.mockResolvedValue({
+        uahRate: {
+          toNumber: () => TEST_VALUES.MARKET_RATE,
+        },
+      });
+
+      // P2P API недоступен (имитируем отказ)
+      mockFetch.mockRejectedValue(new Error('P2P API error'));
 
       const rate = await service.getSafeExchangeRate('USDT' as CryptoCurrency);
 
-      expect(rate.source).toBe('api');
-      expect(mockFetch).toHaveBeenCalledTimes(TEST_VALUES.API_CALLS_COUNT);
+      // Должен использовать Manual DB fallback
+      expect(rate.source).toBe('api'); // createSuccessfulRate возвращает 'api' для non-cache источников
+      expect(rate.currency).toBe('USDT');
     };
 
-    it('переключается на CoinGecko при неудаче Binance', testCoinGeckoFallback);
+    it('переключается на Manual DB fallback при неудаче P2P API для USDT', testCoinGeckoFallback);
   });
 
   describe('Static fallback (последний рубеж)', () => {
     const testStaticFallback = async () => {
+      // Для этого теста Manual DB не должен возвращать курс
+      mockPrisma.manualExchangeRate.findFirst.mockResolvedValue(null);
+
       mockFetch.mockRejectedValue(new Error('All APIs failed'));
 
-      const rate = await service.getSafeExchangeRate('USDT' as CryptoCurrency);
-
-      expect(rate.source).toBe('fallback');
-      expect(rate.currency).toBe('USDT');
+      // Для USDT без manual rate должна быть ошибка (новая логика)
+      await expect(service.getSafeExchangeRate('USDT' as CryptoCurrency)).rejects.toThrow(
+        'USDT rate unavailable'
+      );
     };
 
-    it('использует статический fallback при полном отказе API', testStaticFallback);
+    it('бросает ошибку для USDT без manual rate при полном отказе API', testStaticFallback);
   });
 
   describe('Бизнес-логика', () => {
     const setupBusinessLogicMocks = () => {
       const mockResponse = {
         ok: true,
-        json: jest.fn().mockResolvedValue({ 
+        json: jest.fn().mockResolvedValue({
           symbol: 'USDTUAH',
-          price: TEST_VALUES.MARKET_RATE.toString()
+          price: TEST_VALUES.MARKET_RATE.toString(),
         }),
       };
       mockFetch.mockResolvedValue(mockResponse);
@@ -178,7 +207,7 @@ describe('SmartPricingService', () => {
 
     const testMarginApplication = async () => {
       const rate = await service.getSafeExchangeRate('USDT' as CryptoCurrency);
-      
+
       expect(rate.uahRate).not.toBe(TEST_VALUES.MARKET_RATE);
       expect(rate.spread).toBeDefined();
     };
@@ -187,8 +216,9 @@ describe('SmartPricingService', () => {
 
     const testRounding = async () => {
       const rate = await service.getSafeExchangeRate('USDT' as CryptoCurrency);
-      
-      const rounded = Math.round(rate.uahRate * TEST_VALUES.KOPECK_MULTIPLIER) / TEST_VALUES.KOPECK_MULTIPLIER;
+
+      const rounded =
+        Math.round(rate.uahRate * TEST_VALUES.KOPECK_MULTIPLIER) / TEST_VALUES.KOPECK_MULTIPLIER;
       expect(rate.uahRate).toBe(rounded);
     };
 
