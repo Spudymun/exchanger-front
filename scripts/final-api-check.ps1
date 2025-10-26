@@ -5,7 +5,7 @@ param([switch]$Detailed = $false)
 
 Write-Host "🔍 МАКСИМАЛЬНО ТОЧНАЯ ПРОВЕРКА API" -ForegroundColor Cyan -BackgroundColor Black
 
-$docsPath = "docs\API_DOCS.md"
+$docsPath = "docs\core\API_DOCS.md"
 $routersPath = "apps\web\src\server\trpc\routers"
 
 # Получаем endpoints из документации
@@ -15,7 +15,7 @@ $documentedEndpoints = @()
 $headerMatches = [regex]::Matches($docsContent, '###\s+`([^`]+)`')
 foreach ($regexMatch in $headerMatches) {
     $endpoint = $regexMatch.Groups[1].Value
-    if ($endpoint -match '^[\w\.]+$' -and $endpoint.Contains('.')) {
+    if ($endpoint -match '^[\w\.\-]+$' -and $endpoint.Contains('.')) {
         $documentedEndpoints += $endpoint
     }
 }
@@ -35,7 +35,7 @@ foreach ($router in $rootRouters) {
     
     # Ищем ВСЕ возможные паттерны endpoints
     $patterns = @(
-        '(\w+):\s+(publicProcedure|protectedProcedure|operatorOnly|supportOnly|operatorAndSupport)',  # прямые процедуры
+        '(\w+):\s+(publicProcedure|protectedProcedure|operatorOnly|supportOnly|operatorAndSupport|systemApiMiddleware)',  # прямые процедуры
         '(\w+):\s+rateLimitMiddleware\.(\w+)',  # через rate limit middleware
         '(\w+):\s+(\w+Procedure)\.',  # другие процедуры
         '(\w+):\s+createTRPCRouter\('  # вложенные роутеры

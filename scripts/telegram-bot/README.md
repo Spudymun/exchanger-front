@@ -266,7 +266,7 @@ CLIENT_MESSAGE_FORWARDED { userId: 555555555, operatorsNotified: 2, totalOperato
 
 ### 2. Telegram операторов
 
-Откройте Telegram с аккаунтами операторов (ID: 621882329, 8068430102) и проверьте уведомления.
+Откройте Telegram с аккаунтами операторов (ID: 621882329) и проверьте уведомления.
 
 ### 3. HTTP ответы
 
@@ -308,7 +308,7 @@ netstat -ano | findstr :3003
 1. Убедитесь что operator ID в `.env`:
 
    ```
-   AUTHORIZED_TELEGRAM_OPERATORS=621882329,8068430102
+   AUTHORIZED_TELEGRAM_OPERATORS=621882329
    ```
 
 2. Проверьте логи:

@@ -5,7 +5,6 @@ import {
   ORDER_EXPIRATION_TIME_MS,
   CURRENCY_NAMES,
   UI_NUMERIC_CONSTANTS,
-  PERCENTAGE_CALCULATIONS,
   AUTH_CONSTANTS,
   ORDER_STATUS_GROUPS,
   EMAIL_ENABLED_IN_DEVELOPMENT,
@@ -22,7 +21,6 @@ const UNKNOWN_ERROR_MESSAGE = 'Unknown error' as const;
 const DATABASE_URL_REQUIRED_ERROR = 'DATABASE_URL environment variable is required' as const;
 import {
   calculateUahAmountAsync,
-  calculateCryptoAmountAsync,
   getExchangeRateAsync,
   getCurrencyLimits,
   sanitizeEmail,
@@ -49,7 +47,6 @@ import {
   ExchangeErrors,
   createEnvironmentLogger,
   securityEnhancedGetCurrencyRateSchema,
-  securityEnhancedCalculateAmountSchema,
   securityEnhancedCreateExchangeOrderSchema,
   securityEnhancedOrderByIdSchema,
   securityEnhancedGetOrderHistoryByEmailSchema,
@@ -866,48 +863,6 @@ export const exchangeRouter = createTRPCRouter({
           commission: rate.commission,
         },
       };
-    }),
-
-  // Рассчитать сумму обмена
-  calculateExchange: publicProcedure
-    .input(securityEnhancedCalculateAmountSchema)
-    .query(async ({ input, ctx }) => {
-      const { amount, currency, direction } = input;
-      await assertValidCurrency(currency, ctx);
-      const validCurrency = currency as CryptoCurrency;
-
-      try {
-        if (direction === 'crypto-to-uah') {
-          const uahAmount = await calculateUahAmountAsync(amount, validCurrency);
-          // rate.uahRate = чистый курс БЕЗ маржи компании (только курс от SmartPricingService)
-          const rate = await getExchangeRateAsync(validCurrency);
-
-          return {
-            cryptoAmount: amount,
-            uahAmount,
-            rate: rate.uahRate,
-            commission: rate.commission,
-            commissionAmount:
-              amount * rate.uahRate * (rate.commission / PERCENTAGE_CALCULATIONS.PERCENT_BASE),
-          };
-        } else {
-          const cryptoAmount = await calculateCryptoAmountAsync(amount, validCurrency);
-          // rate.uahRate = чистый курс БЕЗ маржи компании (только курс от SmartPricingService)
-          const rate = await getExchangeRateAsync(validCurrency);
-
-          return {
-            cryptoAmount,
-            uahAmount: amount,
-            rate: rate.uahRate,
-            commission: rate.commission,
-            commissionAmount: amount * (rate.commission / PERCENTAGE_CALCULATIONS.PERCENT_BASE),
-          };
-        }
-      } catch {
-        throw createBadRequestError(
-          await ctx.getErrorMessage('server.errors.business.exchangeCalculationError')
-        );
-      }
     }),
 
   // Создать заявку на обмен

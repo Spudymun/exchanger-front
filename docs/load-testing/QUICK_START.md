@@ -6,11 +6,12 @@
 # 1. Проверка готовности системы
 .\scripts\health-check.ps1
 
-# 2. Запуск мониторинга (в отдельном терминале)
-.\scripts\monitor-system-load.ps1 -Continuous
+# 2. (Опционально) Запуск Bull Board Dashboard для мониторинга
+npm run dev:bull-board
+# Открыть: http://localhost:3010
 
 # 3. Запуск нагрузочного теста
-.\scripts\load-test-orders.ps1 -DetailedLogging
+node scripts/load-test-concurrent.mjs
 ```
 
 ## 📋 Полная последовательность
@@ -42,12 +43,34 @@ npm run dev
 
 ### 3. Мониторинг (опционально)
 
-```powershell
-# В отдельном PowerShell окне:
-.\scripts\monitor-system-load.ps1 -Continuous
+#### Bull Board Dashboard (рекомендуется)
 
-# Или с ограничением по времени:
-.\scripts\monitor-system-load.ps1 -DurationMinutes 10 -IntervalSeconds 1
+```bash
+# Запустить Bull Board Dashboard для мониторинга очередей и Redis
+npm run dev:bull-board
+# Открыть: http://localhost:3010
+```
+
+**Метрики доступные в Bull Board:**
+
+- 📊 Redis connections и memory usage
+- 📋 BullMQ jobs (waiting, active, completed, failed)
+- 🔄 Retry information и backoff delays
+- 💾 Queue operations в real-time
+
+#### Docker Stats (для контейнеров)
+
+```bash
+# Мониторинг использования ресурсов
+docker stats exchanger-postgres exchanger-redis
+```
+
+#### Prisma Studio (для БД)
+
+```bash
+# Просмотр данных БД в реальном времени
+npm run db:studio
+# Открыть: http://localhost:5555
 ```
 
 ### 4. Load Testing

@@ -528,7 +528,7 @@ function determineNotificationPriority(type: NotificationType, data: Notificatio
 ```env
 # Существующие переменные (не трогать)
 TELEGRAM_BOT_TOKEN=8080670068:AAG1LtOO0INbJFOXhj5--WHWRvImewP866E
-AUTHORIZED_TELEGRAM_OPERATORS=621882329,8068430102
+AUTHORIZED_TELEGRAM_OPERATORS=621882329,303594593
 
 # ✅ ДОБАВИТЬ новые:
 TELEGRAM_ORDERS_CHAT_ID=-1001234567890

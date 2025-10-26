@@ -65,7 +65,7 @@ open http://localhost:3010/queue/telegram-notifications
 AUTHORIZED_TELEGRAM_OPERATORS=123456789,987654321
 
 # 2. Правильные ID → должны быть COMPLETED
-AUTHORIZED_TELEGRAM_OPERATORS=621882329,8068430102
+AUTHORIZED_TELEGRAM_OPERATORS=621882329,303594593
 ```
 
 ## 📁 Файлы

@@ -188,7 +188,7 @@ docker-compose up -d --force-recreate telegram-bot
 
 ```bash
 # В .env установить реальные ID
-AUTHORIZED_TELEGRAM_OPERATORS=621882329,8068430102
+AUTHORIZED_TELEGRAM_OPERATORS=621882329,303594593
 TELEGRAM_ORDERS_CHAT_ID=-1003037178274
 
 docker-compose up -d --force-recreate telegram-bot
