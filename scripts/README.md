@@ -21,35 +21,23 @@ node scripts/load-test-concurrent.mjs
 
 ## 🔧 Утилиты
 
-### `health-check.ps1`
+### Проверка готовности системы
 
-```powershell
-.\scripts\health-check.ps1
+```bash
+# API Health Check
+curl http://localhost:3000/api/health | jq
+
+# Bull Board Dashboard (визуальный мониторинг)
+npm run dev:bull-board
+# Открыть: http://localhost:3010
+
+# Docker контейнеры
+docker stats exchanger-postgres exchanger-redis
+
+# Database GUI
+npm run db:studio
+# Открыть: http://localhost:5555
 ```
-
-Проверка готовности системы к тестированию:
-
-- API доступность
-- База данных подключение
-- Наличие кошельков
-- Redis состояние
-
-### `monitor-system-load.ps1`
-
-```powershell
-# Мониторинг в реальном времени
-.\scripts\monitor-system-load.ps1 -Continuous
-
-# Мониторинг 10 минут с интервалом 1 сек
-.\scripts\monitor-system-load.ps1 -DurationMinutes 10 -IntervalSeconds 1
-```
-
-Отслеживание во время тестирования:
-
-- Database connections & locks
-- Redis metrics
-- Wallet distribution
-- Order creation rate
 
 ### `validate-cards.mjs`
 
@@ -74,7 +62,8 @@ node scripts/validate-cards.mjs
 
 ```bash
 # 1. Проверка системы
-.\scripts\health-check.ps1
+curl http://localhost:3000/api/health | jq
+npm run dev:bull-board  # Визуальный мониторинг (опционально)
 
 # 2. Запуск тестирования
 node scripts/load-test-concurrent.mjs

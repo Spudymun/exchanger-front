@@ -274,11 +274,12 @@ redis.on('close', () => {
 
 **Health Check**: Проверять доступность Redis.
 
-```typescript
-// scripts/health-check.ps1 - УЖЕ ЕСТЬ
-Test-Component -Name "Redis Connection" -Points 1 -TestScript {
-    docker exec exchanger-redis redis-cli PING
-}
+```bash
+# Health Check через API endpoint
+curl http://localhost:3000/api/health | jq
+
+# Или через Docker напрямую
+docker exec exchanger-redis redis-cli PING
 ```
 
 ---

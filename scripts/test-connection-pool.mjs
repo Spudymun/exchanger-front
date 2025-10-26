@@ -38,23 +38,38 @@ prisma.$on('query', (e) => {
 });
 
 /**
- * Выполняет простой запрос к БД
+ * Выполняет простой запрос к БД и показывает детали соединений
  */
 async function executeQuery(iteration) {
   const startTime = Date.now();
   
   try {
-    // Простой запрос для проверки соединения
-    const result = await prisma.$queryRaw`SELECT COUNT(*) as count FROM pg_stat_activity WHERE datname = 'exchanger_db'`;
+    // Получаем детальную информацию о соединениях
+    const result = await prisma.$queryRaw`
+      SELECT 
+        count(*) as total_connections,
+        count(*) FILTER (WHERE state = 'active') as active_connections,
+        count(*) FILTER (WHERE state = 'idle') as idle_connections
+      FROM pg_stat_activity 
+      WHERE datname = 'exchanger_db'
+    `;
     
     const duration = Date.now() - startTime;
-    const connectionCount = result[0]?.count || 0;
+    const stats = result[0];
     
     console.log(`✅ Итерация #${iteration}:`);
     console.log(`   ├─ Время выполнения: ${duration}ms`);
-    console.log(`   └─ Активных соединений в БД: ${connectionCount}`);
+    console.log(`   ├─ Всего соединений: ${stats.total_connections}`);
+    console.log(`   ├─ Активных (active): ${stats.active_connections}`);
+    console.log(`   └─ Ожидающих (idle): ${stats.idle_connections}`);
     
-    return { success: true, duration, connectionCount };
+    return { 
+      success: true, 
+      duration, 
+      connectionCount: Number(stats.total_connections),
+      activeConnections: Number(stats.active_connections),
+      idleConnections: Number(stats.idle_connections)
+    };
   } catch (error) {
     const duration = Date.now() - startTime;
     console.error(`❌ Итерация #${iteration} - Ошибка:`);
@@ -112,7 +127,14 @@ async function runTest() {
     .reduce((sum, r) => sum + r.duration, 0) / successCount;
   const minDuration = Math.min(...results.filter(r => r.success).map(r => r.duration));
   const maxDuration = Math.max(...results.filter(r => r.success).map(r => r.duration));
+  
+  // Статистика по соединениям
+  const successResults = results.filter(r => r.success);
+  const avgConnections = successResults.reduce((sum, r) => sum + r.connectionCount, 0) / successResults.length;
+  const maxConnections = Math.max(...successResults.map(r => r.connectionCount));
+  const minConnections = Math.min(...successResults.map(r => r.connectionCount));
 
+  console.log(`   📈 Производительность:`);
   console.log(`   ├─ Всего итераций: ${totalIterations}`);
   console.log(`   ├─ Успешных запросов: ${successCount} (${(successCount/totalIterations*100).toFixed(1)}%)`);
   console.log(`   ├─ Ошибок: ${failCount}`);
@@ -120,17 +142,34 @@ async function runTest() {
   console.log(`   ├─ Минимальное время: ${minDuration}ms`);
   console.log(`   ├─ Максимальное время: ${maxDuration}ms`);
   console.log(`   └─ Всего запросов к БД: ${queryCount}`);
+  
+  console.log(`\n   🔌 Соединения PostgreSQL:`);
+  console.log(`   ├─ Среднее количество: ${avgConnections.toFixed(1)}`);
+  console.log(`   ├─ Минимум: ${minConnections}`);
+  console.log(`   ├─ Максимум: ${maxConnections}`);
+  console.log(`   └─ Лимит pool: 5`);
 
-  // Закрываем соединение
-  console.log(`\n🔌 Закрываю соединение с БД...`);
+  // Показываем текущие соединения перед выходом
+  console.log(`\n🔌 Завершение теста...`);
+  
+  try {
+    const connections = await prisma.$queryRaw`
+      SELECT count(*) as count 
+      FROM pg_stat_activity 
+      WHERE datname = 'exchanger_db'
+    `;
+    console.log(`   └─ Активных соединений в конце: ${connections[0]?.count || 0}`);
+  } catch (error) {
+    console.log(`   └─ Не удалось проверить соединения: ${error.message}`);
+  }
+
   // await prisma.$disconnect();
-  console.log(`✅ Соединение закрыто`);
 }
 
 // Обработка ошибок и graceful shutdown
 process.on('SIGINT', async () => {
   console.log(`\n\n⚠️ Получен сигнал SIGINT - останавливаю тест...`);
-  //await prisma.$disconnect();
+  // await prisma.$disconnect();
   process.exit(0);
 });
 

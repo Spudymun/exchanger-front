@@ -4,7 +4,7 @@
 
 ```powershell
 # 1. Проверка готовности системы
-.\scripts\health-check.ps1
+curl http://localhost:3000/api/health | jq
 
 # 2. (Опционально) Запуск Bull Board Dashboard для мониторинга
 npm run dev:bull-board
@@ -34,11 +34,13 @@ npm run dev
 
 ### 2. Health Check
 
-```powershell
-# Базовая проверка
-.\scripts\health-check.ps1
+```bash
+# Базовая проверка через API endpoint
+curl http://localhost:3000/api/health | jq
 
-# Если есть проблемы - смотри рекомендации в выводе
+# Или визуальный мониторинг через Bull Board Dashboard
+npm run dev:bull-board
+# Открыть: http://localhost:3010
 ```
 
 ### 3. Мониторинг (опционально)

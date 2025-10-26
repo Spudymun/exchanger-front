@@ -12,13 +12,13 @@
 
 | Категория                  | Количество                 | Статус              |
 | -------------------------- | -------------------------- | ------------------- |
-| **PowerShell (.ps1)**      | 10                         | ✅ Активные         |
+| **PowerShell (.ps1)**      | 9                          | ✅ Активные         |
 | **JavaScript/Node (.mjs)** | 7                          | ✅ Активные         |
 | **JavaScript (.js)**       | 2                          | ⚠️ Смешанный        |
 | **Shell (.sh)**            | 4                          | ✅ Активные (Linux) |
-| **SQL (.sql)**             | 3 корневых + 22 в packages | ✅ Активные         |
+| **SQL (.sql)**             | 0 корневых + 21 в packages | ✅ Активные         |
 | **NPM Scripts**            | 55+                        | ✅ Активные         |
-| **ИТОГО**                  | **103+** скриптов          | Проверены все       |
+| **ИТОГО**                  | **101+** скриптов          | Проверены все       |
 
 ### Ключевые находки
 
@@ -57,18 +57,16 @@
   - Total: 800 KB
 - **Выход:** `bundle-stats.json`
 
-#### ✅ `health-check.ps1`
+#### ❌ `health-check.ps1` (УДАЛЕН)
 
 - **Назначение:** Проверка готовности системы к нагрузочному тестированию
-- **Технологии:** PowerShell + psql + redis-cli
-- **Зависимости:**
-  - PostgreSQL (psql client)
-  - Redis (redis-cli)
-  - API доступность (localhost:3000)
-- **Использование:** `.\scripts\health-check.ps1`
-- **Статус:** ✅ **АКТИВНЫЙ** - используется перед load testing
-- **Проверки:** 8 компонентов (API, tRPC, DB, Tables, Wallets, Redis, Env, Resources)
-- **Документация:** `docs/load-testing/QUICK_START.md`
+- **Статус:** ❌ **УДАЛЕН** - 26 октября 2025
+- **Причина:** Заменен на `/api/health` endpoint и Bull Board Dashboard
+- **Альтернативы:**
+  - `curl http://localhost:3000/api/health | jq` - API endpoint
+  - `npm run dev:bull-board` - визуальный мониторинг
+  - `docker stats` - мониторинг контейнеров
+  - `npm run db:studio` - GUI для БД
 
 #### ✅ `scripts/final-api-check.ps1`
 
@@ -201,40 +199,62 @@
 
 ### 3. 🗄️ БАЗА ДАННЫХ (30+ SQL скриптов)
 
-#### Корневые SQL скрипты (3)
+#### Корневые SQL скрипты (0)
 
-##### ✅ `insert-usdt-manual-rate.sql`
+Все корневые SQL скрипты были удалены и заменены на лучшие альтернативы:
 
-- **Назначение:** Вставка/обновление fallback курса USDT
-- **Технологии:** PostgreSQL
-- **Использование:** `psql -f insert-usdt-manual-rate.sql`
-- **Статус:** ✅ **АКТИВНЫЙ** - для manual_exchange_rates
-- **Курс:** 42.22 UAH (Binance P2P рынок)
-- **Срок:** 30 дней
-- **Альтернатива:** `scripts/insert-manual-usdt-rate.mjs` (Node.js)
+##### ❌ `insert-usdt-manual-rate.sql` - УДАЛЁН (26 Oct 2025)
 
-##### ✅ `check-db-state.sql`
+- **Назначение:** SQL скрипт для вставки fallback курса USDT
+- **Причина удаления:**
+  - ❌ Устаревший курс (42.22 UAH вместо правильного 44.07 UAH)
+  - ❌ Неправильная логика: хранил курс С маржой, SmartPricingService применял маржу повторно
+  - ✅ Заменён на `scripts/insert-manual-usdt-rate.mjs` (правильный курс + автозагрузка .env)
+- **Альтернатива:** `node scripts/insert-manual-usdt-rate.mjs`
+
+##### ❌ `check-db-state.sql` - УДАЛЁН (26 Oct 2025)
 
 - **Назначение:** Проверка состояния базы данных
-- **Технологии:** PostgreSQL
-- **Статус:** ✅ **АКТИВНЫЙ** - для диагностики
-- **Проверки:**
-  - Список всех таблиц
-  - Структура таблицы users
-  - Все пользователи
-  - Конкретный telegramId (621882329)
+- **Причина удаления:**
+  - ❌ Дублирует `packages/session-management/scripts/check-default-operator.sql` (проверка оператора 621882329)
+  - ❌ Hardcoded личный ID (621882329)
+  - ❌ Нет интеграции с npm scripts
+  - ✅ Лучшие альтернативы: `npm run db:studio` (Prisma Studio GUI)
+- **Альтернативы:**
+  - `npm run db:studio` - Prisma Studio (визуальный интерфейс)
+  - `packages/session-management/scripts/check-default-operator.sql` - проверка оператора
+  - `packages/session-management/scripts/check-existing-operators.sql` - все операторы
 
-##### ✅ `check-manual-rates.sql`
+##### ❌ `check-manual-rates.sql` - УДАЛЁН (26 Oct 2025)
 
-- **Назначение:** Проверка активных курсов обмена
-- **Технологии:** PostgreSQL
-- **Статус:** ✅ **АКТИВНЫЙ** - мониторинг manual_exchange_rates
-- **Данные:**
-  - Активные курсы
-  - Срок действия (is_expired)
-  - Часы после истечения
+- **Назначение:** Проверка активных курсов обмена (manual_exchange_rates)
+- **Причина удаления:**
+  - ❌ Дублирует автоматический мониторинг `apps/telegram-bot/src/services/manual-rate-checker.ts`
+  - ❌ Автоматическая проверка запускается каждый день в 9:00 с Telegram уведомлениями
+  - ❌ Нет интеграции с npm scripts
+  - ✅ Лучшие альтернативы: Prisma Studio GUI, автоматический мониторинг
+- **Альтернативы:**
+  - `npm run db:studio` - Prisma Studio (визуальный интерфейс, таблица ManualExchangeRate)
+  - `apps/telegram-bot/src/services/manual-rate-checker.ts` - автоматическая проверка (9:00 daily + Telegram alerts)
+  - `node scripts/insert-manual-usdt-rate.mjs` - показывает current active rate после вставки
 
-#### SQL скрипты в packages/session-management/scripts (22)
+##### ❌ `create-telegram-operator.sql` - УДАЛЁН (26 Oct 2025)
+
+- **Назначение:** Создание Telegram оператора (старая версия)
+- **Причина удаления:**
+  - ❌ **КРИТИЧЕСКИЙ БАグ**: НЕ создает поле `telegram_id` (нарушает schema.prisma)
+  - ❌ Telegram Bot НЕ МОЖЕТ идентифицировать оператора без telegram_id
+  - ❌ Неправильный email: `telegram-test-operator@system.local` (не используется)
+  - ❌ Не идемпотентный (ON CONFLICT DO NOTHING)
+  - ✅ Заменён на `seed-default-operator.sql` (используется в `npm run db:seed:operator`)
+- **Альтернативы:**
+  - `packages/session-management/scripts/seed-default-operator.sql` - production версия (идемпотентная, с telegram_id='621882329')
+  - `packages/session-management/scripts/create-telegram-operator-proper.sql` - улучшенная версия (с telegram_id)
+  - `npm run db:seed:operator` - команда для создания оператора
+- **Связанные изменения:**
+  - Обновлен `get-telegram-operator-uuid.sql` - теперь ищет по `telegram_id` вместо старого email
+
+#### SQL скрипты в packages/session-management/scripts (21)
 
 ##### 🔄 RESET скрипты (в reset/)
 
@@ -273,9 +293,9 @@
 - **wallet-stats.sql** - Статистика по кошелькам
 - **Статус:** ✅ **АКТИВНЫЕ** - для диагностики и мониторинга
 
-##### 🛠️ UTILITY скрипты (5)
+##### 🛠️ UTILITY скрипты (4)
 
-- **create-telegram-operator.sql** - Создание Telegram оператора (старая версия)
+- ❌ **create-telegram-operator.sql** - УДАЛЁН (26 Oct 2025) - старая версия БЕЗ telegram_id поля
 - **create-telegram-operator-proper.sql** - Создание Telegram оператора (правильная версия)
 - **describe-wallets-table.sql** - Описание структуры wallets
 - **get-telegram-operator-uuid.sql** - Получение UUID оператора
@@ -623,7 +643,7 @@
 ### Скрипты, упоминаемые в документации
 
 ✅ **load-test-concurrent.mjs** - `docs/load-testing/ORDER_SYSTEM_LOAD_TESTING_GUIDE.md`  
-✅ **health-check.ps1** - `docs/load-testing/QUICK_START.md`  
+❌ **health-check.ps1** - УДАЛЕН (заменен на `/api/health` endpoint)  
 ✅ **test-telegram-bot.ps1** - `scripts/telegram-bot/README.md`  
 ✅ **docker-dev-start.ps1** - упоминается в DOCKER_COMPOSE_VERIFICATION_REPORT.md
 
@@ -636,8 +656,9 @@
 ### Скрипты без прямых вызовов (но АКТИВНЫЕ)
 
 ✅ **analyze-project-structure.ps1** - ручной запуск для обновления документации  
-✅ **validate-cleanup.js** - ⚠️ ВРЕМЕННЫЙ, использовался при аудите  
-✅ **checklist-reminder.mjs** - ⚠️ ВРЕМЕННЫЙ, husky hook
+❌ **health-check.ps1** - УДАЛЕН (использовать `/api/health` или Bull Board)
+⚠️ **validate-cleanup.js** - ⚠️ ВРЕМЕННЫЙ, использовался при аудите  
+⚠️ **checklist-reminder.mjs** - ⚠️ ВРЕМЕННЫЙ, husky hook
 
 ---
 
@@ -745,27 +766,25 @@ Full list: [scripts/USAGE_GUIDE.md](scripts/USAGE_GUIDE.md)
 - ✅ SQL: `kebab-case.sql`
 - ✅ Shell: `kebab-case.sh`
 
-### 6. ✅ Добавить error handling
+### 6. ✂️ Удалить устаревшие скрипты
 
-Некоторые скрипты могут улучшить error handling:
+**Рекомендация:** Удалены следующие скрипты:
 
-- `load-test-concurrent.mjs` - добавить retry logic
-- `health-check.ps1` - добавить alert notifications
-- `monitor-system-load.ps1` - добавить crash recovery
+- ❌ `health-check.ps1` - заменен на `/api/health` endpoint и Bull Board Dashboard
 
 ---
 
 ## 📊 СТАТИСТИКА ПО ТЕХНОЛОГИЯМ
 
-| Технология              | Количество | Примеры                                                       |
-| ----------------------- | ---------- | ------------------------------------------------------------- |
-| **PowerShell**          | 10         | test-telegram-bot.ps1, docker-dev-start.ps1, health-check.ps1 |
-| **Node.js ESM**         | 7          | load-test-concurrent.mjs, insert-manual-usdt-rate.mjs         |
-| **SQL**                 | 25+        | insert-usdt-manual-rate.sql, seed-\*.sql                      |
-| **Shell (Bash)**        | 4          | dev-up.sh, dev-down.sh                                        |
-| **JavaScript (legacy)** | 2          | validate-cleanup.js, bundle-analyzer.js                       |
-| **JSON**                | 1          | test-scenarios.json                                           |
-| **PowerShell Module**   | 1          | TelegramBotTester.psm1                                        |
+| Технология              | Количество | Примеры                                                          |
+| ----------------------- | ---------- | ---------------------------------------------------------------- |
+| **PowerShell**          | 9          | test-telegram-bot.ps1, docker-dev-start.ps1, final-api-check.ps1 |
+| **Node.js ESM**         | 7          | load-test-concurrent.mjs, insert-manual-usdt-rate.mjs            |
+| **SQL**                 | 22+        | seed-\*.sql (packages/session-management/scripts/)               |
+| **Shell (Bash)**        | 4          | dev-up.sh, dev-down.sh                                           |
+| **JavaScript (legacy)** | 2          | validate-cleanup.js, bundle-analyzer.js                          |
+| **JSON**                | 1          | test-scenarios.json                                              |
+| **PowerShell Module**   | 1          | TelegramBotTester.psm1                                           |
 
 ---
 
@@ -831,7 +850,6 @@ scripts/
 ├── checklist-reminder.mjs            ⚠️ ВРЕМЕННЫЙ
 ├── docker-dev-start.ps1              ✅ АКТИВНЫЙ
 ├── final-api-check.ps1               ✅ АКТИВНЫЙ
-├── health-check.ps1                  ✅ АКТИВНЫЙ
 ├── insert-manual-usdt-rate.mjs       ✅ АКТИВНЫЙ
 ├── load-test-concurrent.mjs          ✅ АКТИВНЫЙ (РЕКОМЕНДУЕМЫЙ)
 ├── README.md                         ✅ ДОКУМЕНТАЦИЯ
@@ -858,9 +876,10 @@ scripts/
     └── test-scenarios.json           ✅ АКТИВНЫЙ (данные)
 
 Корневые SQL:
-├── insert-usdt-manual-rate.sql       ✅ АКТИВНЫЙ
-├── check-db-state.sql                ✅ АКТИВНЫЙ
-└── check-manual-rates.sql            ✅ АКТИВНЫЙ
+├── insert-usdt-manual-rate.sql       ❌ УДАЛЁН (26 Oct 2025) - заменён на .mjs
+├── check-db-state.sql                ❌ УДАЛЁН (26 Oct 2025) - заменён на Prisma Studio + check-default-operator.sql
+├── check-manual-rates.sql            ❌ УДАЛЁН (26 Oct 2025) - заменён на manual-rate-checker.ts + Prisma Studio
+└── (ВСЕ удалены, нет корневых SQL скриптов)
 
 packages/session-management/scripts/:
 ├── reset/
@@ -873,7 +892,10 @@ packages/session-management/scripts/:
 ├── seed-test-orders-spudymun.sql     ✅ АКТИВНЫЙ
 ├── clean-reseed-usdt.sql             ✅ АКТИВНЫЙ
 ├── reset-usdt-to-available.sql       ✅ АКТИВНЫЙ
-└── (22 SQL файла всего)              ✅ ВСЕ АКТИВНЫЕ
+├── create-telegram-operator.sql      ❌ УДАЛЁН (26 Oct 2025) - без telegram_id поля
+├── create-telegram-operator-proper.sql ✅ АКТИВНЫЙ
+├── get-telegram-operator-uuid.sql    ✅ АКТИВНЫЙ (обновлен: ищет по telegram_id)
+└── (21 SQL файл всего)               ✅ АКТИВНЫЕ
 ```
 
 ### Приложение B: Граф зависимостей
