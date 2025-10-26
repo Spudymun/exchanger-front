@@ -28,7 +28,10 @@ interface OrdersContainerProps {
 }
 
 // ⚡ Helper: Create column definitions (extracted to reduce complexity)
-function useOrdersColumns(t: ReturnType<typeof useTranslations>) {
+function useOrdersColumns(
+  t: ReturnType<typeof useTranslations>,
+  tOrderStatus: ReturnType<typeof useTranslations>
+) {
   return React.useMemo(
     () => [
       {
@@ -47,12 +50,12 @@ function useOrdersColumns(t: ReturnType<typeof useTranslations>) {
         key: 'status',
         label: t('columns.status'),
         render: (order: Order) => {
-          const config = ORDER_STATUS_CONFIG[order.status];
+          const statusLabel = tOrderStatus(`statuses.${order.status}` as const);
           return (
             <span
               className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColorClass(order.status)}`}
             >
-              {config.label}
+              {statusLabel}
             </span>
           );
         },
@@ -90,7 +93,7 @@ function useOrdersColumns(t: ReturnType<typeof useTranslations>) {
         ),
       },
     ],
-    [t]
+    [t, tOrderStatus]
   );
 }
 
@@ -153,12 +156,14 @@ function OrdersFilters({
   onStatusChange,
   onSortChange,
   t,
+  tOrderStatus,
 }: {
   statusFilter: OrderStatus | undefined;
   sortBy: OrderSortOption;
   onStatusChange: (status: OrderStatus | undefined) => void;
   onSortChange: (sort: OrderSortOption) => void;
   t: ReturnType<typeof useTranslations>;
+  tOrderStatus: ReturnType<typeof useTranslations>;
 }) {
   return (
     <DataTable.Filters searchPlaceholder={t('search.placeholder')}>
@@ -175,9 +180,9 @@ function OrdersFilters({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t('filters.allStatuses')}</SelectItem>
-            {Object.entries(ORDER_STATUS_CONFIG).map(([status, config]) => (
+            {Object.keys(ORDER_STATUS_CONFIG).map(status => (
               <SelectItem key={status} value={status}>
-                {config.label}
+                {tOrderStatus(`statuses.${status}` as const)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -249,8 +254,10 @@ function useOrdersHandlers(
 // ⚡ Main component
 /* eslint-disable max-lines-per-function */ // Допустимо для container компонентов с множественными handlers
 /* eslint-disable complexity */ // Container компонент с auth protection и множественными условиями
+/* eslint-disable max-lines */ // Container компонент с локализацией статусов требует дополнительной логики
 export function OrdersContainer(props: OrdersContainerProps) {
   const t = useTranslations('OrdersPage');
+  const tOrderStatus = useTranslations('OrderStatus');
   const tErrors = useTranslations('server.errors');
   const router = useRouter();
 
@@ -293,7 +300,7 @@ export function OrdersContainer(props: OrdersContainerProps) {
   );
 
   // Column definitions
-  const columns = useOrdersColumns(t);
+  const columns = useOrdersColumns(t, tOrderStatus);
 
   // ✅ Если нет сессии - показываем AuthErrorState
   // КРИТИЧЕСКИ ВАЖНО: проверяем session !== undefined чтобы отличить "загружается" от "не залогинен"
@@ -353,6 +360,7 @@ export function OrdersContainer(props: OrdersContainerProps) {
           onStatusChange={setStatusFilter}
           onSortChange={setSortBy}
           t={t}
+          tOrderStatus={tOrderStatus}
         />
 
         <DataTable.Content>
