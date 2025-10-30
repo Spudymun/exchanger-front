@@ -10,7 +10,7 @@ export const TELEGRAM_API = {
   DELETE_MESSAGE: '/deleteMessage',
   SEND_PHOTO: '/sendPhoto',
   ANSWER_CALLBACK_QUERY: '/answerCallbackQuery',
-  
+
   // HTTP параметры
   PARAMS: {
     PARSE_MODE: 'Markdown' as const,
@@ -24,7 +24,7 @@ export const TELEGRAM_OPERATOR_MESSAGES = {
   // Базовые элементы сообщений
   ICONS: {
     NEW_ORDER: '🆕',
-    REUSED_WALLET: '🔄', 
+    REUSED_WALLET: '🔄',
     FRESH_WALLET: '✅',
     WARNING: '⚠️',
     MONEY: '💰',
@@ -51,18 +51,18 @@ export const TELEGRAM_OPERATOR_MESSAGES = {
     PAID: '💳',
     PAYMENT_CONFIRMED: '✅',
   },
-  
+
   // Заголовки сообщений
   HEADERS: {
-    NEW_ORDER: (orderId: string) => `💰 Новая заявка #${orderId}`,
+    NEW_ORDER: (orderId: string) => `💰 Новая заявка #${orderId.replace(/_/g, '\\_')}`,
     FRESH_WALLET_ASSIGNED: '✅ **Выделен свободный кошелек**',
     REUSED_WALLET_ASSIGNED: '⚠️ **Переиспользован занятый кошелек**',
     // 🆕 TASK: Заголовок для отмены заявки
-    ORDER_CANCELLED: (orderId: string) => `❌ Заявка #${orderId} отменена пользователем`,
+    ORDER_CANCELLED: (orderId: string) => `❌ Заявка #${orderId.replace(/_/g, '\\_')} отменена пользователем`,
     // 🆕 TASK: Заголовок для оплаты заявки
-    ORDER_PAID: (orderId: string) => `💳 Заявка #${orderId} оплачена пользователем`,
+    ORDER_PAID: (orderId: string) => `💳 Заявка #${orderId.replace(/_/g, '\\_')} оплачена пользователем`,
   },
-  
+
   // Статусы и состояния
   STATUS_MESSAGES: {
     PENDING_PAYMENT: '🔄 Статус: PENDING → Ожидание перевода от клиента',
@@ -81,7 +81,7 @@ export const TELEGRAM_OPERATOR_MESSAGES = {
     API_DEGRADED: (currency: string, reason: string) =>
       `⚠️ Проблема с API курсов ${currency}: ${reason}`,
   },
-  
+
   // Действия и кнопки
   ACTIONS: {
     TAKE_ORDER: (orderId: string) => `Используйте /takeorder ${orderId} для принятия заявки`,
@@ -106,20 +106,20 @@ export const TELEGRAM_OPERATOR_MESSAGES = {
     COMPLETE_COMMAND: (orderId: string) => `/complete ${orderId}`,
     COMPLETE_ORDER: (orderId: string) => `Используйте /complete ${orderId} для завершения заявки`,
   },
-  
+
   // Шаблоны полных сообщений
   TEMPLATES: {
     ORDER_INFO: (
-      order: { 
-        id: string; 
-        email: string; 
-        cryptoAmount: string; 
-        currency: string; 
+      order: {
+        id: string;
+        email: string;
+        cryptoAmount: string;
+        currency: string;
         uahAmount: string;
         bankName?: string; // ✅ НОВОЕ
         cardNumberMasked?: string; // ✅ НОВОЕ
         fixedExchangeRate?: string; // ✅ НОВОЕ
-      }, 
+      },
       depositAddress: string
     ) => {
       const baseInfo = [
@@ -148,7 +148,7 @@ export const TELEGRAM_OPERATOR_MESSAGES = {
 
       return baseInfo.join('\n');
     },
-    
+
     FRESH_WALLET_MESSAGE: (baseInfo: string, orderId: string) => [
       `🆕 ${baseInfo}`,
       ``,
@@ -158,7 +158,7 @@ export const TELEGRAM_OPERATOR_MESSAGES = {
       ``,
       `Используйте /takeorder ${orderId} для принятия заявки`,
     ].join('\n'),
-    
+
     REUSED_WALLET_MESSAGE: (baseInfo: string, orderId: string) => [
       `🔄 ${baseInfo}`,
       ``,
@@ -185,10 +185,10 @@ export const TELEGRAM_OPERATOR_MESSAGES = {
       initiator?: 'user' | 'operator' | 'system'
     ) => {
       // Определяем заголовок и причину в зависимости от инициатора
-      const title = initiator === 'system' 
+      const title = initiator === 'system'
         ? '⏱️ **Заявка отменена автоматически**'
         : '❌ **Заявка отменена пользователем**';
-      
+
       const reason = initiator === 'system'
         ? '⏰ Причина: Истекло время оплаты'
         : '👤 Инициатор: Пользователь';
@@ -196,7 +196,7 @@ export const TELEGRAM_OPERATOR_MESSAGES = {
       const baseInfo = [
         title,
         ``,
-        `📋 Заявка: #${order.id}`,
+        `📋 Заявка: #${order.id.replace(/_/g, '\\_')}`,
         `📧 Email: ${order.email}`,
         `💎 Сумма: ${order.cryptoAmount} ${order.currency}`,
         `💰 Эквивалент: ${order.uahAmount} UAH`,
@@ -240,7 +240,7 @@ export const TELEGRAM_OPERATOR_MESSAGES = {
       const baseInfo = [
         `💳 **Заявка оплачена пользователем**`,
         ``,
-        `📋 Заявка: #${order.id}`,
+        `📋 Заявка: #${order.id.replace(/_/g, '\\_')}`,
         `📧 Email: ${order.email}`,
         `💎 Сумма: ${order.cryptoAmount} ${order.currency}`,
         `💰 Эквивалент: ${order.uahAmount} UAH`,
@@ -285,7 +285,7 @@ export const TELEGRAM_CLIENT_MESSAGES = {
     WARNING: '⚠️',
     INFO: 'ℹ️',
   },
-  
+
   GREETINGS: {
     START: () => [
       '👋 Добро пожаловать в службу поддержки ExchangeGO!',
@@ -296,7 +296,7 @@ export const TELEGRAM_CLIENT_MESSAGES = {
       '⏱ Среднее время ответа: 1-3 часа',
       '⚡ Мы работаем 24/7',
     ].join('\n'),
-    
+
     HELP: () => [
       '📋 Как получить помощь:',
       '',
@@ -308,7 +308,7 @@ export const TELEGRAM_CLIENT_MESSAGES = {
       '💬 Оператор свяжется с вами в личных сообщениях',
     ].join('\n'),
   },
-  
+
   RESPONSES: {
     MESSAGE_RECEIVED: () => [
       '✅ Ваше сообщение получено!',
@@ -316,14 +316,14 @@ export const TELEGRAM_CLIENT_MESSAGES = {
       'Оператор свяжется с вами в ближайшее время.',
       'Среднее время ответа: 1-3 часа',
     ].join('\n'),
-    
+
     RATE_LIMIT_EXCEEDED: () => [
       '⚠️ Слишком много сообщений',
       '',
       'Пожалуйста, подождите минуту перед отправкой следующего сообщения.',
       'Лимит: 5 сообщений в минуту',
     ].join('\n'),
-    
+
     OPERATOR_COMMAND_DENIED: () => [
       '❌ Эта команда доступна только операторам',
     ].join('\n'),
@@ -377,9 +377,9 @@ export type TelegramClientResponse = keyof typeof TELEGRAM_CLIENT_MESSAGES.RESPO
 export type OperatorCancelReasonId = keyof typeof OPERATOR_CANCEL_REASONS;
 
 // Типы для Telegram Order Messages и уведомлений
-export type TelegramNotificationType = 
-  | 'new_order' 
-  | 'order_paid' 
+export type TelegramNotificationType =
+  | 'new_order'
+  | 'order_paid'
   | 'order_cancelled'
   | 'manual_rate_outdated'; // Уведомление об устаревшем ручном курсе
 

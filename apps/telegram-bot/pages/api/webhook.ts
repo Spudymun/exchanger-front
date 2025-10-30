@@ -91,7 +91,7 @@ async function handleCallbackQueryResponse(
   try {
     // Определяем тип сообщения: ошибка начинается с ❌
     const isError = responseMessage?.startsWith('❌') || responseMessage?.includes('Ошибка');
-    
+
     // Ответить на callback query
     await fetch(
       `${TELEGRAM_API.BASE_URL}/bot${process.env.TELEGRAM_BOT_TOKEN}${TELEGRAM_API.ANSWER_CALLBACK_QUERY}`,
@@ -111,11 +111,11 @@ async function handleCallbackQueryResponse(
     // Если это взятие заявки в работу - обновить ВСЕ сообщения ТОЛЬКО при успехе
     if (callbackQuery.data?.startsWith('take_order_') && callbackQuery.message) {
       const orderId = callbackQuery.data.replace('take_order_', '');
-      
+
       // ✅ CRITICAL FIX: Проверяем успешность операции перед обновлением UI
       // Обновляем сообщения только если операция завершилась успешно (без ошибки)
       const isOperationSuccessful = responseMessage && !isError;
-      
+
       if (!isOperationSuccessful) {
         logger.debug('Skipping message update - take order operation failed', {
           orderId,
@@ -276,7 +276,7 @@ async function handleCallbackQueryResponse(
     // Если это нажатие "Отменить заявку" - показываем причины отмены
     if (callbackQuery.data?.startsWith('cancel_order_') && callbackQuery.message) {
       const orderId = callbackQuery.data.replace('cancel_order_', '');
-      
+
       // Используем индексы (0-5) вместо строк для экономии байтов в callback_data
       const reasonButtons = Object.values(OPERATOR_CANCEL_REASONS).map((reason, index) => [{
         text: reason.label,
@@ -347,7 +347,7 @@ async function handleCallbackQueryResponse(
       // Получаем reason по индексу
       const reasons = Object.values(OPERATOR_CANCEL_REASONS);
       const reason = reasons[reasonIndex];
-      
+
       if (!reason) {
         logger.error('Invalid reason index', { reasonIndex, orderId });
         return;
@@ -465,7 +465,7 @@ async function handleCallbackQueryResponse(
       // Получаем reason по индексу
       const reasons = Object.values(OPERATOR_CANCEL_REASONS);
       const reason = reasons[reasonIndex];
-      
+
       if (!reason) {
         logger.error('Invalid reason index in confirmation', { reasonIndex, orderId });
         return;
@@ -507,7 +507,7 @@ async function handleCallbackQueryResponse(
         if (result.error) {
           switch (result.error.code) {
             case 'ORDER_NOT_FOUND':
-              errorMessage += `Заявка #${orderId} не найдена в системе.`;
+              errorMessage += `Заявка #${orderId.replace(/_/g, '\\_')} не найдена в системе.`;
               break;
             case 'INVALID_STATUS':
               errorMessage += result.error.message;
@@ -538,8 +538,8 @@ async function handleCallbackQueryResponse(
           }
         );
 
-        logger.error('Order cancellation failed', { 
-          orderId, 
+        logger.error('Order cancellation failed', {
+          orderId,
           errorCode: result.error?.code,
           errorMessage: result.error?.message
         });
@@ -584,7 +584,7 @@ async function handleCallbackQueryResponse(
         if (result.error) {
           switch (result.error.code) {
             case 'ORDER_NOT_FOUND':
-              errorMessage += `Заявка #${orderId} не найдена в системе.`;
+              errorMessage += `Заявка #${orderId.replace(/_/g, '\\_')} не найдена в системе.`;
               break;
             case 'INVALID_STATUS':
               errorMessage += result.error.message;

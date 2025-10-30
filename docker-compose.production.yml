@@ -6,36 +6,41 @@ services:
       dockerfile: ./apps/web/Dockerfile
       args:
         - NODE_ENV=production
-        - DATABASE_URL=${DATABASE_URL}
-        - REDIS_URL=${REDIS_URL}
-        - NEXTAUTH_URL=${NEXTAUTH_URL}
-        - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-        - WEB_APP_URL=${WEB_APP_URL}
+        - NODE_OPTIONS=--max-old-space-size=4096
+      shm_size: '2gb'
     container_name: exchanger-web-prod
     restart: always
+    volumes:
+      - ./scripts/docker/entrypoint-web-prod.sh:/app/docker-entrypoint.sh:ro
+      - ./packages/session-management/scripts:/app/seeds:ro
+    entrypoint: [ "/bin/sh", "/app/docker-entrypoint.sh" ]
+    command: [ "../../node_modules/.bin/next", "start" ]
     environment:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=${REDIS_URL}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
       - NEXTAUTH_URL=${NEXTAUTH_URL}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
       - WEB_APP_URL=${WEB_APP_URL}
       - TELEGRAM_BOT_URL=http://telegram-bot:3003
+      - TELEGRAM_WEBHOOK_SECRET=${TELEGRAM_WEBHOOK_SECRET}
+      - API_SECRET_KEY=${API_SECRET_KEY}
+      - AUTHORIZED_TELEGRAM_OPERATORS=${AUTHORIZED_TELEGRAM_OPERATORS}
     ports:
       - "3000:3000"
     networks:
-      - exchanger-network
+      - exchanger-prod-network
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
-      interval: 60s
-      timeout: 15s
-      retries: 3
-      start_period: 90s
+      test: [ "CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
     deploy:
       resources:
         limits:
@@ -57,19 +62,19 @@ services:
       dockerfile: ./apps/telegram-bot/Dockerfile
       args:
         - NODE_ENV=production
-        - DATABASE_URL=${DATABASE_URL}
-        - REDIS_URL=${REDIS_URL}
-        - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-        - WEB_APP_URL=${WEB_APP_URL}
+        - NODE_OPTIONS=--max-old-space-size=4096
+      shm_size: '2gb'
     container_name: exchanger-telegram-bot-prod
     restart: always
     environment:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=${REDIS_URL}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
       - REDIS_DB_QUEUE=1
       - WEB_APP_URL=${WEB_APP_URL}
+      - TELEGRAM_BOT_URL=http://telegram-bot:3003
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_BOT_USERNAME=${TELEGRAM_BOT_USERNAME}
       - TELEGRAM_WEBHOOK_URL=${TELEGRAM_WEBHOOK_URL}
       - TELEGRAM_WEBHOOK_SECRET=${TELEGRAM_WEBHOOK_SECRET}
       - API_SECRET_KEY=${API_SECRET_KEY}
@@ -82,7 +87,7 @@ services:
       - TELEGRAM_PAID_ORDERS_TOPIC_ID=${TELEGRAM_PAID_ORDERS_TOPIC_ID}
     # БЕЗ портов - полная изоляция в production
     networks:
-      - exchanger-network
+      - exchanger-prod-network
     depends_on:
       postgres:
         condition: service_healthy
@@ -91,11 +96,11 @@ services:
       web:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3003/api/health"]
-      interval: 60s
-      timeout: 15s
-      retries: 3
-      start_period: 90s
+      test: [ "CMD", "node", "-e", "require('http').get('http://localhost:3003/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
     deploy:
       resources:
         limits:
@@ -119,24 +124,19 @@ services:
     restart: always
     environment:
       - NODE_ENV=production
-      - REDIS_URL=${REDIS_URL}
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
       - REDIS_DB_QUEUE=1
       - PORT=3010
-      - BULL_BOARD_USER=${BULL_BOARD_USER:-admin}
+      - BULL_BOARD_USER=${BULL_BOARD_USER}
       - BULL_BOARD_PASSWORD=${BULL_BOARD_PASSWORD}
     ports:
       - "3010:3010"
     networks:
-      - exchanger-network
+      - exchanger-prod-network
     depends_on:
       redis:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3010/health"]
-      interval: 60s
-      timeout: 15s
-      retries: 3
-      start_period: 40s
+    # healthcheck наследуется из Dockerfile (использует node вместо curl)
     deploy:
       resources:
         limits:
@@ -160,13 +160,13 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    # NO exposed ports - internal Docker network only
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./docker/postgres/init-prod.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - postgres_data_prod:/var/lib/postgresql/data
     networks:
-      - exchanger-network
+      - exchanger-prod-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -181,14 +181,22 @@ services:
     image: redis:7-alpine
     container_name: exchanger-redis-prod
     restart: always
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     volumes:
-      - redis_data:/data
-      - ./docker/redis/redis-prod.conf:/usr/local/etc/redis/redis.conf:ro
-    command: redis-server /usr/local/etc/redis/redis.conf
+      - redis_data_prod:/data
+      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: >
+      redis-server /usr/local/etc/redis/redis.conf 
+      --maxmemory 2gb 
+      --maxclients 65000 
+      --bind 0.0.0.0 
+      --protected-mode yes 
+      --requirepass "${REDIS_PASSWORD}"
     networks:
-      - exchanger-network
+      - exchanger-prod-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -199,11 +207,11 @@ services:
         max-file: "3"
 
 volumes:
-  postgres_data:
+  postgres_data_prod:
     driver: local
-  redis_data:
+  redis_data_prod:
     driver: local
 
 networks:
-  exchanger-network:
+  exchanger-prod-network:
     driver: bridge

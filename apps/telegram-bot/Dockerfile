@@ -51,18 +51,11 @@ RUN npx prisma generate --schema=./packages/session-management/prisma/schema.pri
 # Clean TypeScript incremental cache (tsbuildinfo) to force fresh build
 RUN find packages -name "*.tsbuildinfo" -delete || true
 
-# Build arguments for environment variables
+# Build arguments (only non-sensitive values)
 ARG NODE_ENV=production
-ARG DATABASE_URL
-ARG REDIS_URL
-ARG TELEGRAM_BOT_TOKEN
-ARG WEB_APP_URL
+ARG NODE_OPTIONS=--max-old-space-size=4096
 
 ENV NODE_ENV=${NODE_ENV}
-ENV DATABASE_URL=${DATABASE_URL}
-ENV REDIS_URL=${REDIS_URL}
-ENV TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-ENV WEB_APP_URL=${WEB_APP_URL}
 
 # Build using Turborepo
 RUN npx turbo run build --filter=telegram-bot...

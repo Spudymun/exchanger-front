@@ -40,11 +40,10 @@ const nextConfig = {
     '@sendgrid/mail', // ✅ Исключаем из бандлинга (использует Node.js 'fs')
     'bullmq',
   ],
-  env: {
-    DATABASE_URL: process.env.DATABASE_URL, // eslint-disable-line no-undef
-    REDIS_URL: process.env.REDIS_URL, // eslint-disable-line no-undef
-    FORCE_MOCK_MODE: process.env.FORCE_MOCK_MODE, // eslint-disable-line no-undef
-  },
+  // ✅ REMOVED: env config (deprecated approach, use runtime environment variables)
+  // Next.js automatically uses process.env.* at runtime for server-side code
+  // This allows single Docker image for multiple environments
+  // See: https://nextjs.org/docs/app/guides/environment-variables#runtime-environment-variables
 
   // 🔐 Security Headers - OWASP recommendations
   async headers() {

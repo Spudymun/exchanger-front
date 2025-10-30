@@ -48,7 +48,10 @@ async function validateTelegramOperator(telegramOperatorId: string) {
     where: { userId: operator.id },
   });
 
-  const hasOperatorRole = appRoles.some(userRole => userRole.role === 'OPERATOR');
+  // Разрешить брать заявки как операторам, так и админам
+  const hasOperatorRole = appRoles.some(
+    userRole => userRole.role === 'OPERATOR' || userRole.role === 'ADMIN'
+  );
   if (!hasOperatorRole) {
     logger.warn('TELEGRAM_USER_NOT_OPERATOR', {
       telegramOperatorId,
