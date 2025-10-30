@@ -74,7 +74,7 @@ export interface CurrencyConfig {
  */
 export const CURRENCY_PRICING_CONFIG: Record<CryptoCurrency, CurrencyConfig> = {
   USDT: {
-    staticMargin: 0.045, // 4.5% базовая маржа
+    staticMargin: 0.07, // 4.5% базовая маржа
     competitiveBuffer: 0.003, // 0.3% буфер для конкурентности
     fallbackRate: 41.32, // Резервный курс USDT/UAH
   },
