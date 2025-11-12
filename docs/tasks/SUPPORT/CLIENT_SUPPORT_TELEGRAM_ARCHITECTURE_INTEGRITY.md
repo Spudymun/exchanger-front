@@ -236,7 +236,7 @@ async function handleClientMessage(update: TelegramUpdate): Promise<string> {
 ```env
 # ✅ СУЩЕСТВУЮЩИЕ (не трогать)
 TELEGRAM_BOT_TOKEN=YOUR_BOT_TOKEN_HERE
-AUTHORIZED_TELEGRAM_OPERATORS=621882329,303594593
+AUTHORIZED_TELEGRAM_OPERATORS=YOUR_OPERATOR_ID_1,YOUR_OPERATOR_ID_2
 
 # 🆕 ДОБАВИТЬ (optional - fallback на broadcast)
 # Telegram Group для order notifications (new_order, order_cancelled, order_paid)

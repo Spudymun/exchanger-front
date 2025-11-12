@@ -9,15 +9,19 @@
 ## 📋 EXECUTIVE SUMMARY
 
 ### Проблема
+
 Оператор видит в Telegram **успешное сообщение** о взятии заявки в работу, хотя в реальности заявка **НЕ была взята** из-за ошибки в базе данных.
 
 ### Критичность
+
 🔴 **КРИТИЧЕСКАЯ** - Оператор получает ложную информацию о статусе операции, что приводит к:
+
 - Потере времени оператора
 - Неверному представлению о состоянии заявок
 - Потенциальным конфликтам при назначении заявок
 
 ### Корневая причина
+
 Отсутствие проверки результата операции на уровне tRPC роутера, который **всегда возвращает `success: true`** независимо от реального результата операции в базе данных.
 
 ---
@@ -27,6 +31,7 @@
 ### 1. ХРОНОЛОГИЯ СОБЫТИЙ (из логов)
 
 #### Web Application (apps/web) - БД уровень:
+
 ```
 2025-10-08T15:18:26.231Z DEBUG ORDER_FOUND_FOR_TELEGRAM
 {
@@ -50,12 +55,13 @@ An operation failed because it depends on one or more records that were required
 2025-10-08T15:18:26.249Z INFO ORDER_ASSIGNED_VIA_TELEGRAM  // ❌ ЛОЖНОЕ сообщение!
 {
   "orderId": "fe1d2eb5-b80b-426d-9435-4b6695106e59",
-  "telegramOperatorId": "621882329",
+  "telegramOperatorId": "YOUR_OPERATOR_ID_HERE",
   "success": true  // ❌ ЛОЖНЫЙ success
 }
 ```
 
 #### Telegram Bot (apps/telegram-bot):
+
 ```
 2025-10-08T15:18:26.255Z DEBUG TELEGRAM_TAKE_ORDER_API_RESULT
 {
@@ -77,7 +83,7 @@ An operation failed because it depends on one or more records that were required
 2025-10-08T15:18:26.570Z INFO Order message updated  // ❌ НО кнопка удалена!
 {
   "orderId": "fe1d2eb5-b80b-426d-9435-4b6695106e59",
-  "chatId": 621882329
+  "chatId": YOUR_OPERATOR_ID_HERE
 }
 ```
 
@@ -96,19 +102,21 @@ logger.info('ORDER_ASSIGNED_VIA_TELEGRAM', {
   orderId: input.orderId,
   telegramOperatorId: input.telegramOperatorId,
   operatorId: operator.id,
-  newStatus: updatedOrder?.status,  // может быть undefined!
+  newStatus: updatedOrder?.status, // может быть undefined!
   assignedAt: updatedOrder?.assignedAt?.toISOString(),
 });
 
-return { success: true, order: updatedOrder };  // ❌ ВСЕГДА success: true
+return { success: true, order: updatedOrder }; // ❌ ВСЕГДА success: true
 ```
 
-**Проблема**: 
+**Проблема**:
+
 - `orderManager.assignToOperator` возвращает `Order | undefined`
 - При ошибке возвращается `undefined`
 - НО роутер **ВСЕГДА** возвращает `success: true`, даже когда `updatedOrder === undefined`
 
 **Доказательство из кода**:
+
 ```typescript
 // packages/exchange-core/src/data/manager.ts, строка 191
 assignToOperator: async (orderId: string, operatorId: string): Promise<Order | undefined> => {
@@ -172,6 +180,7 @@ async function handleCallbackQueryResponse(
 ```
 
 **Проблема**:
+
 - Обновление сообщения и удаление кнопок происходит **НЕЗАВИСИМО** от результата операции
 - Нет проверки `responseMessage` на наличие ошибки
 - Создаётся иллюзия успеха для оператора
@@ -185,26 +194,28 @@ async function handleCallbackQueryResponse(
 // ✅ ПРАВИЛЬНО: Проверка result?.order
 logger.debug('TELEGRAM_TAKE_ORDER_API_RESULT', {
   orderId,
-  success: !!result?.order,  // ✅ Правильная проверка
+  success: !!result?.order, // ✅ Правильная проверка
   hasOrder: !!result?.order,
 });
 
-if (result?.order) {  // ✅ Условие основано на наличии order
+if (result?.order) {
+  // ✅ Условие основано на наличии order
   // ... Сообщение об успехе
   return successMessage;
 } else {
-  logger.warn('TELEGRAM_TAKE_ORDER_FAILED', { /* ... */ });
-  
+  logger.warn('TELEGRAM_TAKE_ORDER_FAILED', {
+    /* ... */
+  });
+
   // ✅ ПРАВИЛЬНО: Сообщение об ошибке
-  const errorMessage = (
+  const errorMessage =
     `❌ Не удалось взять заявку\n\n` +
     `Возможные причины:\n` +
     `• Заявка не найдена\n` +
     `• Заявка уже взята другим оператором\n` +
-    `• Системная ошибка`
-  );
-  
-  return errorMessage;  // ✅ Возвращается сообщение об ошибке
+    `• Системная ошибка`;
+
+  return errorMessage; // ✅ Возвращается сообщение об ошибке
 }
 ```
 
@@ -215,6 +226,7 @@ if (result?.order) {  // ✅ Условие основано на наличии
 ## 🎯 КОРНЕВЫЕ ПРИЧИНЫ
 
 ### 1. Отсутствие проверки результата в tRPC роутере
+
 **Файл**: `apps/web/src/server/trpc/routers/telegram-bot.ts`
 
 ```typescript
@@ -222,13 +234,14 @@ if (result?.order) {  // ✅ Условие основано на наличии
 return { success: true, order: updatedOrder };
 
 // ✅ ДОЛЖНО БЫТЬ:
-return { 
-  success: !!updatedOrder, 
-  order: updatedOrder 
+return {
+  success: !!updatedOrder,
+  order: updatedOrder,
 };
 ```
 
 ### 2. Безусловное обновление UI в webhook handler
+
 **Файл**: `apps/telegram-bot/pages/api/webhook.ts`
 
 ```typescript
@@ -244,6 +257,7 @@ if (callbackQuery.data?.startsWith('take_order_') && wasSuccessful) {
 ```
 
 ### 3. Недостаточное логирование результата операции
+
 Логи показывают `ORDER_ASSIGNED_VIA_TELEGRAM` даже когда операция не удалась.
 
 ---
@@ -251,12 +265,14 @@ if (callbackQuery.data?.startsWith('take_order_') && wasSuccessful) {
 ## 📊 ВЛИЯНИЕ НА СИСТЕМУ
 
 ### Затронутые компоненты:
+
 1. ✅ `apps/web/src/server/trpc/routers/telegram-bot.ts` - tRPC роутер
 2. ✅ `apps/telegram-bot/pages/api/webhook.ts` - Webhook handler
 3. ✅ `apps/telegram-bot/src/lib/telegram-bot.ts` - Bot logic (частично правильно)
 4. ✅ `packages/session-management/src/adapters/postgres-order-adapter.ts` - БД адаптер (работает правильно)
 
 ### Типы ошибок, которые скрываются:
+
 - ✅ Заявка в неправильном статусе (не PENDING/PAID)
 - ✅ Заявка уже назначена другому оператору
 - ✅ Заявка не найдена
@@ -270,6 +286,7 @@ if (callbackQuery.data?.startsWith('take_order_') && wasSuccessful) {
 ### АРХИТЕКТУРНЫЕ ПРИНЦИПЫ
 
 #### 1. **Explicit Error Handling Pattern**
+
 Использовать паттерн явной обработки ошибок на каждом уровне:
 
 ```typescript
@@ -279,8 +296,8 @@ async assignToOperator(orderId: string, operatorId: string): Promise<Result<Orde
     const order = await this.prisma.order.update(/* ... */);
     return { success: true, data: order };
   } catch (error) {
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: {
         code: 'ASSIGNMENT_FAILED',
         reason: this.parseErrorReason(error),
@@ -293,18 +310,18 @@ async assignToOperator(orderId: string, operatorId: string): Promise<Result<Orde
 // Уровень бизнес-логики
 async assignToOperator(orderId: string, operatorId: string): Promise<Result<Order, AssignmentError>> {
   const result = await repo.assignToOperator(orderId, operatorId);
-  
+
   if (!result.success) {
     logger.warn('Assignment failed', result.error);
   }
-  
+
   return result;
 }
 
 // Уровень API
 .mutation(async ({ input }) => {
   const result = await orderManager.assignToOperator(input.orderId, operator.id);
-  
+
   return {
     success: result.success,
     order: result.success ? result.data : null,
@@ -314,6 +331,7 @@ async assignToOperator(orderId: string, operatorId: string): Promise<Result<Orde
 ```
 
 #### 2. **Type-Safe Error Codes**
+
 Использовать типизированные коды ошибок:
 
 ```typescript
@@ -338,6 +356,7 @@ export const ORDER_ASSIGNMENT_ERROR_MESSAGES: Record<OrderAssignmentError, strin
 ```
 
 #### 3. **Conditional UI Updates**
+
 Обновлять UI только при реальном успехе:
 
 ```typescript
@@ -345,7 +364,7 @@ export const ORDER_ASSIGNMENT_ERROR_MESSAGES: Record<OrderAssignmentError, strin
 async function handleCallbackQueryResponse(
   callbackQuery: NonNullable<TelegramUpdate['callback_query']>,
   responseMessage: string | null,
-  operationSuccess: boolean  // ✅ Новый параметр
+  operationSuccess: boolean // ✅ Новый параметр
 ): Promise<void> {
   await answerCallbackQuery(/* ... */);
 
@@ -356,13 +375,14 @@ async function handleCallbackQueryResponse(
     // Кнопки остаются, оператор может попробовать снова
     await answerCallbackQuery({
       text: responseMessage || 'Операция не выполнена',
-      show_alert: true  // ✅ Показать alert вместо toast
+      show_alert: true, // ✅ Показать alert вместо toast
     });
   }
 }
 ```
 
 #### 4. **Structured Logging**
+
 Использовать структурированное логирование с четкими уровнями:
 
 ```typescript
@@ -391,6 +411,7 @@ if (result.success) {
 #### 5. **Operator Notification Strategy**
 
 ##### Принципы уведомлений:
+
 1. **Немедленная обратная связь** - оператор должен знать результат СРАЗУ
 2. **Ясность статуса** - четкое различие между success/error/warning
 3. **Actionable информация** - что делать дальше
@@ -473,13 +494,13 @@ export const telegramBotRouter = createTRPCRouter({
 
         if (!order) {
           logger.warn('ORDER_NOT_FOUND_FOR_TELEGRAM', { orderId: input.orderId });
-          return { 
-            success: false, 
+          return {
+            success: false,
             order: null,
             error: {
               code: 'ORDER_NOT_FOUND',
-              message: 'Заявка не найдена'
-            }
+              message: 'Заявка не найдена',
+            },
           };
         }
 
@@ -513,13 +534,13 @@ export const telegramBotRouter = createTRPCRouter({
             errorMessage = `Заявка в статусе "${order.status}" не может быть взята в работу`;
           }
 
-          return { 
-            success: false, 
+          return {
+            success: false,
             order: null,
             error: {
               code: errorCode,
-              message: errorMessage
-            }
+              message: errorMessage,
+            },
           };
         }
 
@@ -531,10 +552,10 @@ export const telegramBotRouter = createTRPCRouter({
           assignedAt: updatedOrder.assignedAt?.toISOString(),
         });
 
-        return { 
-          success: true, 
+        return {
+          success: true,
           order: updatedOrder,
-          error: null
+          error: null,
         };
       } catch (error) {
         logger.error('TELEGRAM_TAKE_ORDER_EXCEPTION', {
@@ -548,8 +569,8 @@ export const telegramBotRouter = createTRPCRouter({
           order: null,
           error: {
             code: 'SYSTEM_ERROR',
-            message: 'Системная ошибка при обработке запроса'
-          }
+            message: 'Системная ошибка при обработке запроса',
+          },
         };
       }
     }),
@@ -569,12 +590,12 @@ export const telegramBotRouter = createTRPCRouter({
 async function handleCallbackQueryResponse(
   callbackQuery: NonNullable<TelegramUpdate['callback_query']>,
   responseMessage: string | null,
-  operationSuccess: boolean  // ✅ Новый параметр
+  operationSuccess: boolean // ✅ Новый параметр
 ): Promise<void> {
   try {
     // Определить тип уведомления
     const shouldShowAlert = !operationSuccess;
-    
+
     // Ответить на callback query
     await fetch(
       `${TELEGRAM_API.BASE_URL}/bot${process.env.TELEGRAM_BOT_TOKEN}${TELEGRAM_API.ANSWER_CALLBACK_QUERY}`,
@@ -586,13 +607,17 @@ async function handleCallbackQueryResponse(
         body: JSON.stringify({
           callback_query_id: callbackQuery.id,
           text: responseMessage || (operationSuccess ? 'Готово!' : 'Операция не выполнена'),
-          show_alert: shouldShowAlert,  // ✅ Alert при ошибке
+          show_alert: shouldShowAlert, // ✅ Alert при ошибке
         }),
       }
     );
 
     // ✅ Обновлять сообщение ТОЛЬКО при успехе
-    if (callbackQuery.data?.startsWith('take_order_') && callbackQuery.message && operationSuccess) {
+    if (
+      callbackQuery.data?.startsWith('take_order_') &&
+      callbackQuery.message &&
+      operationSuccess
+    ) {
       const orderId = callbackQuery.data.replace('take_order_', '');
       const originalText = callbackQuery.message.text || '';
       const updatedText = `${originalText}\n\n✅ **Заявка взята в работу оператором ${callbackQuery.from.first_name || callbackQuery.from.id}**`;
@@ -614,9 +639,9 @@ async function handleCallbackQueryResponse(
         }
       );
 
-      logger.info('Order message updated after successful assignment', { 
-        orderId, 
-        chatId: callbackQuery.message.chat.id 
+      logger.info('Order message updated after successful assignment', {
+        orderId,
+        chatId: callbackQuery.message.chat.id,
       });
     } else if (callbackQuery.data?.startsWith('take_order_') && !operationSuccess) {
       // ✅ При ошибке - НЕ обновляем сообщение, кнопки остаются
@@ -669,11 +694,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (update.callback_query) {
         // Определить success из responseMessage (содержит ли "✅")
         const operationSuccess = responseMessage?.includes('✅') ?? false;
-        
+
         await handleCallbackQueryResponse(
-          update.callback_query, 
+          update.callback_query,
           responseMessage,
-          operationSuccess  // ✅ Передаем флаг успеха
+          operationSuccess // ✅ Передаем флаг успеха
         );
       }
 
@@ -719,13 +744,14 @@ async function handleTakeOrderCommand(update: TelegramUpdate): Promise<string> {
   // ✅ УЛУЧШЕНИЕ: Использовать result.success вместо !!result?.order
   logger.debug('TELEGRAM_TAKE_ORDER_API_RESULT', {
     orderId,
-    success: result?.success ?? false,  // ✅ Используем явный флаг
+    success: result?.success ?? false, // ✅ Используем явный флаг
     hasOrder: !!result?.order,
     errorCode: result?.error?.code,
     errorMessage: result?.error?.message,
   });
 
-  if (result?.success && result?.order) {  // ✅ Проверка обоих условий
+  if (result?.success && result?.order) {
+    // ✅ Проверка обоих условий
     session.currentOrderId = result.order.id;
 
     logger.info('Order taken by operator', {
@@ -735,14 +761,13 @@ async function handleTakeOrderCommand(update: TelegramUpdate): Promise<string> {
       orderStatus: result.order.status,
     });
 
-    const successMessage = (
+    const successMessage =
       `✅ Заявка взята в работу!\n\n` +
       `📋 Заявка #${result.order.publicId}\n` +
       `💰 Сумма: ${result.order.cryptoAmount} ${result.order.currency}\n` +
       `🔄 Статус: ${result.order.status}\n\n` +
-      `Используйте /orders для просмотра деталей.`
-    );
-    
+      `Используйте /orders для просмотра деталей.`;
+
     return successMessage;
   } else {
     logger.warn('TELEGRAM_TAKE_ORDER_FAILED', {
@@ -754,18 +779,16 @@ async function handleTakeOrderCommand(update: TelegramUpdate): Promise<string> {
     });
 
     // ✅ УЛУЧШЕНИЕ: Использовать errorMessage из API
-    const errorMessage = result?.error?.message 
+    const errorMessage = result?.error?.message
       ? `❌ ${result.error.message}`
-      : (
-        `❌ Не удалось взять заявку\n\n` +
+      : `❌ Не удалось взять заявку\n\n` +
         `Возможные причины:\n` +
         `• Заявка не найдена\n` +
         `• Заявка уже взята другим оператором\n` +
         `• Заявка в неподходящем статусе\n` +
         `• Системная ошибка\n\n` +
-        `Попробуйте обновить список заявок.`
-      );
-    
+        `Попробуйте обновить список заявок.`;
+
     return errorMessage;
   }
 }
@@ -778,6 +801,7 @@ async function handleTakeOrderCommand(update: TelegramUpdate): Promise<string> {
 После внедрения исправлений, отслеживать:
 
 ### 1. Операционные метрики:
+
 ```typescript
 // Добавить в логирование
 {
@@ -791,12 +815,14 @@ async function handleTakeOrderCommand(update: TelegramUpdate): Promise<string> {
 ```
 
 ### 2. Бизнес метрики:
+
 - Процент успешных назначений через Telegram
 - Среднее время реакции оператора
 - Количество повторных попыток взятия заявки
 - Распределение ошибок по кодам
 
 ### 3. UX метрики:
+
 - Время от нажатия кнопки до получения ответа
 - Количество alert уведомлений vs toast
 - Процент операторов, использующих кнопки vs команды
@@ -806,18 +832,21 @@ async function handleTakeOrderCommand(update: TelegramUpdate): Promise<string> {
 ## ✅ ЧЕКЛИСТ ВНЕДРЕНИЯ
 
 ### Фаза 1: Критические исправления
+
 - [ ] Исправить telegram-bot-router.ts (success проверка)
 - [ ] Исправить webhook.ts (условное обновление UI)
 - [ ] Добавить типы ошибок в constants
 - [ ] Протестировать на dev окружении
 
 ### Фаза 2: Улучшения
+
 - [ ] Улучшить telegram-bot.ts (использование error codes)
 - [ ] Добавить структурированное логирование
 - [ ] Внедрить метрики
 - [ ] Документировать новые типы ошибок
 
 ### Фаза 3: Мониторинг
+
 - [ ] Настроить алерты на ошибки назначения
 - [ ] Создать dashboard метрик
 - [ ] Провести нагрузочное тестирование
@@ -828,16 +857,20 @@ async function handleTakeOrderCommand(update: TelegramUpdate): Promise<string> {
 ## 🔐 SECURITY CONSIDERATIONS
 
 ### 1. Валидация операторов
+
 Текущая реализация правильная - проверка через `AUTHORIZED_TELEGRAM_OPERATORS` и БД.
 
 ### 2. Rate Limiting
+
 Добавить ограничение на количество попыток взятия заявки:
+
 ```typescript
 const MAX_TAKE_ORDER_ATTEMPTS = 5;
 const RATE_LIMIT_WINDOW = 60000; // 1 минута
 ```
 
 ### 3. Аудит логи
+
 Все действия операторов логируются - это правильно. Продолжать.
 
 ---
@@ -845,11 +878,13 @@ const RATE_LIMIT_WINDOW = 60000; // 1 минута
 ## 📚 ДОПОЛНИТЕЛЬНЫЕ МАТЕРИАЛЫ
 
 ### Связанные документы:
+
 - `docs/TELEGRAM_WEBHOOK_SETUP.md` - текущая документация
 - `docs/troubleshooting/` - раздел для troubleshooting
 - `packages/constants/src/errors.ts` - типы ошибок (создать)
 
 ### Паттерны для изучения:
+
 - Result type pattern (Rust-style)
 - Railway-oriented programming
 - Error boundaries в React/Next.js
@@ -859,21 +894,24 @@ const RATE_LIMIT_WINDOW = 60000; // 1 минута
 ## 🎯 ЗАКЛЮЧЕНИЕ
 
 ### Проблема понятна на 100%
+
 ✅ Корневая причина: отсутствие проверки `result.success` в tRPC роутере  
 ✅ Усугубление: безусловное обновление UI в webhook handler  
-✅ Последствие: оператор видит success при реальной ошибке  
+✅ Последствие: оператор видит success при реальной ошибке
 
 ### Решение чёткое
+
 ✅ 3 файла требуют изменений  
 ✅ Приоритет: КРИТИЧЕСКИЙ  
 ✅ Время на исправление: ~2-4 часа  
-✅ Риск регрессий: НИЗКИЙ (добавление проверок)  
+✅ Риск регрессий: НИЗКИЙ (добавление проверок)
 
 ### Архитектура улучшится
+
 ✅ Явная обработка ошибок на всех уровнях  
 ✅ Типизированные коды ошибок  
 ✅ Понятные сообщения операторам  
-✅ Сохранение кнопок при ошибке для retry  
+✅ Сохранение кнопок при ошибке для retry
 
 ---
 
