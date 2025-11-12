@@ -31,12 +31,6 @@ export default [
     ignores: allIgnores,
   },
 
-  // === STYLE-SCANNER ИСКЛЮЧЕНИЯ ===
-  {
-    name: 'style-scanner-ignores',
-    ignores: ['packages/style-scanner/**/*'],
-  },
-
   // === БАЗОВАЯ КОНФИГУРАЦИЯ ДЛЯ ВСЕХ ФАЙЛОВ ===
   ...baseConfig,
   
@@ -209,23 +203,6 @@ export default [
       'no-console': 'off', // Разрешено для performance мониторинга
       'promise/catch-or-return': 'off', // Разрешено в benchmark утилитах
       'promise/always-return': 'off', // Разрешено в benchmark утилитах
-    })),
-  },
-
-  // === STYLE-SCANNER TOOL OVERRIDES ===
-  {
-    name: 'style-scanner-overrides',
-    files: ['packages/style-scanner/**/*.{js,ts}'],
-    rules: lazyLoadConfig('style-scanner-rules', () => ({
-      // Разрешаем больше сложности для анализа компонентов
-      'complexity': ['error', 20], // Увеличено с базового значения
-      'max-lines-per-function': ['error', { max: 100 }], // Увеличено для парсинга
-      'max-depth': ['error', 6], // Увеличено для обхода дерева
-      'sonarjs/cognitive-complexity': ['error', 25], // Увеличено для анализа
-      'sonarjs/no-duplicate-string': 'off', // Разрешено дублирование в константах
-      'no-console': 'off', // Разрешено для CLI вывода
-      'no-magic-numbers': 'off', // Разрешено для настроек парсера
-      '@typescript-eslint/no-explicit-any': 'warn', // Смягчено для парсинга
     })),
   },
 

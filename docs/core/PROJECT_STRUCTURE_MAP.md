@@ -78,20 +78,6 @@ Root path: `e:\project\kiro\exchanger-front`
 │   ├── 📁 providers/ - React провайдеры | Context providers | Контекстные провайдеры для всего приложения
 │   │   ├── 📁 .turbo/ 🚫 (auto-hidden) - Кэш Turborepo | Оптимизация сборки | Ускорение повторных сборок пакета
 │   │   ├── 📁 src/ - Исходный код провайдеров | Provider source | Все провайдеры приложения
-│   ├── 📁 style-scanner/ - Сканер стилей и компонентов | Analysis tool | Инструмент анализа структуры стилей проекта
-│   │   ├── 📁 .turbo/ 🚫 (auto-hidden) - Кэш Turborepo | Оптимизация сборки | Ускорение повторных сборок пакета
-│   │   ├── 📁 bin/ 🚫 (auto-hidden) - Исполняемые файлы | CLI binaries | Скомпилированные CLI команды
-│   │   ├── 📁 dist/ 🚫 (auto-hidden) - Скомпилированные файлы | Build output | Результат сборки сканера
-│   │   ├── 📁 node_modules/ 🚫 (auto-hidden) - Локальные зависимости | NPM packages | Зависимости сканера стилей
-│   │   ├── 📁 src/ - Исходный код сканера | Scanner source | Логика анализа стилей и компонентов
-│   │   │   ├── 📁 config/ - Конфигурация сканера | Scanner settings | Настройки и паттерны для анализа
-│   │   │   ├── 📁 constants/ - Константы сканера | Scanner constants | Константы для работы анализатора
-│   │   │   ├── 📁 core/ - Ядро сканера | Core logic | Основная логика анализа
-│   │   │   ├── 📁 scanners/ - Специализированные сканеры | Specific scanners | Сканеры для разных типов файлов
-│   │   │   ├── 📁 services/ - Сервисы сканера | Scanner services | Вспомогательные сервисы для анализа
-│   │   │   ├── 📁 types/ - Типы сканера | Scanner types | TypeScript типы для сканера
-│   │   │   ├── 📁 utils/ - Утилиты сканера | Scanner utilities | Вспомогательные функции для анализа
-│   │   ├── 📁 style-docs/ 🚫 (auto-hidden) - Документация стилей | Generated docs | Автогенерируемая документация стилей
 │   ├── 📁 tailwind-preset/ - Предустановки Tailwind CSS | CSS preset | Централизованные CSS переменные и конфигурация
 │   ├── 📁 typescript-config/ - Конфигурации TypeScript | TS configurations | Переиспользуемые конфигурации компиляции TypeScript
 │   ├── 📁 ui/ - UI компоненты и библиотека | shadcn/ui components | Центральная библиотека пользовательских интерфейсов
