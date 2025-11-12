@@ -54,5 +54,5 @@ project-structure.txt
 style-docs
 
 # AI agent working directory (should not be committed)
-.kiropackages/style-scanner/
+packages/style-scanner/
 .kiro/
