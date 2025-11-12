@@ -527,7 +527,7 @@ function determineNotificationPriority(type: NotificationType, data: Notificatio
 
 ```env
 # Существующие переменные (не трогать)
-TELEGRAM_BOT_TOKEN=8080670068:AAG1LtOO0INbJFOXhj5--WHWRvImewP866E
+TELEGRAM_BOT_TOKEN=YOUR_BOT_TOKEN_HERE
 AUTHORIZED_TELEGRAM_OPERATORS=621882329,303594593
 
 # ✅ ДОБАВИТЬ новые:

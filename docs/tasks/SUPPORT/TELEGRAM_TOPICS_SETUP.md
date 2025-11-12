@@ -38,7 +38,7 @@
 1. Откройте Web Telegram (web.telegram.org)
 2. Откройте группу Orders
 3. Кликните на тему
-4. В URL будет: `.../#-1003037178274/2`
+4. В URL будет: `.../#YOUR_CHAT_ID_HERE/2`
 5. Последняя цифра после `/` - это `message_thread_id` (в примере: `2`)
 
 #### Способ 2: Через логи бота
@@ -89,7 +89,7 @@ npm run dev
 
 ```bash
 # Группа Orders
-TELEGRAM_ORDERS_CHAT_ID=-1003037178274
+TELEGRAM_ORDERS_CHAT_ID=YOUR_ORDERS_CHAT_ID_HERE
 
 # Topics внутри группы Orders
 TELEGRAM_NEW_ORDERS_TOPIC_ID=2        # Тема "🆕 Новые заказы"
@@ -126,7 +126,7 @@ TELEGRAM_PAID_ORDERS_TOPIC_ID=4       # Тема "✅ Оплаченные"
 # Логи должны показывать:
 TELEGRAM_NOTIFICATION_TO_ORDERS_CHANNEL {
   notificationType: 'new_order',
-  chatId: '-1003037178274',
+  chatId: 'YOUR_ORDERS_CHAT_ID_HERE',
   topicId: 2,  # ← Topic ID
   orderId: 'xxx'
 }
@@ -194,7 +194,7 @@ TELEGRAM_NOTIFICATION_TO_ORDERS_CHANNEL {
 
 ```typescript
 {
-  chat_id: "-1003037178274",
+  chat_id: "YOUR_ORDERS_CHAT_ID_HERE",
   text: "...",
   parse_mode: "HTML",
   reply_markup: {...},

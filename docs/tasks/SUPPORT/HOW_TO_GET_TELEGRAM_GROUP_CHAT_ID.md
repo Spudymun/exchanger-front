@@ -80,7 +80,7 @@ export async function handleTelegramUpdate(update: TelegramUpdate): Promise<stri
 
 ```powershell
 # Замените YOUR_BOT_TOKEN на ваш токен из .env
-$token = "8080670068:AAG1LtOO0INbJFOXhj5--WHWRvImewP866E"
+$token = "YOUR_BOT_TOKEN_HERE"
 
 # 1. Добавьте бота в группу
 # 2. Отправьте любое сообщение в группу

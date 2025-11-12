@@ -65,19 +65,19 @@ ngrok http 3003
 #### Вариант A: Через браузер
 
 ```
-https://api.telegram.org/bot8080670068:AAG1LtOO0INbJFOXhj5--WHWRvImewP866E/setWebhook?url=https://452aee35d0d8.ngrok-free.app/api/webhook
+https://api.telegram.org/botYOUR_BOT_TOKEN_HERE/setWebhook?url=https://452aee35d0d8.ngrok-free.app/api/webhook
 ```
 
 ### Пример:
 
 ```
-https://api.telegram.org/bot8080670068:AAG1LtOO0INbJFOXhj5--WHWRvImewP866E/setWebhook?url=https://a4baa42e0524.ngrok-free.app/api/webhook
+https://api.telegram.org/botYOUR_BOT_TOKEN_HERE/setWebhook?url=https://a4baa42e0524.ngrok-free.app/api/webhook
 ```
 
 #### Вариант B: Через PowerShell
 
 ```powershell
-Invoke-RestMethod -Uri "https://api.telegram.org/bot8080670068:AAG1LtOO0INbJFOXhj5--WHWRvImewP866E/setWebhook?url=https://c9c182061a39.ngrok-free.app/api/webhook" -Method Post
+Invoke-RestMethod -Uri "https://api.telegram.org/botYOUR_BOT_TOKEN_HERE/setWebhook?url=https://c9c182061a39.ngrok-free.app/api/webhook" -Method Post
 ```
 
 #### Вариант C: Через curl
@@ -161,13 +161,13 @@ https://api.telegram.org/bot8080670068:AAG94FIreDoNJ_xc4aLFkxg0yKdSc-aV0cE/getWe
   "callback_query": {
     "id": "callback_query_id",
     "from": {
-      "id": 621882329,
+      "id": YOUR_OPERATOR_ID_HERE,
       "first_name": "User"
     },
     "message": {
       "message_id": 123,
       "chat": {
-        "id": 621882329,
+        "id": YOUR_OPERATOR_ID_HERE,
         "type": "private"
       }
     },
@@ -189,9 +189,9 @@ https://api.telegram.org/bot8080670068:AAG94FIreDoNJ_xc4aLFkxg0yKdSc-aV0cE/getWe
 
 ```bash
 # apps/telegram-bot/.env
-TELEGRAM_BOT_TOKEN=8080670068:AAG1LtOO0INbJFOXhj5--WHWRvImewP866E
+TELEGRAM_BOT_TOKEN=YOUR_BOT_TOKEN_HERE
 TELEGRAM_BOT_USERNAME=exchangego_operators_bot
-AUTHORIZED_TELEGRAM_OPERATORS=621882329
+AUTHORIZED_TELEGRAM_OPERATORS=YOUR_OPERATOR_ID_HERE
 WEB_APP_URL=http://localhost:3000
 NODE_ENV=development
 PORT=3003
@@ -241,7 +241,7 @@ https://api.telegram.org/bot8080670068:AAG94FIreDoNJ_xc4aLFkxg0yKdSc-aV0cE/getWe
 ### Удалить webhook:
 
 ```
-https://api.telegram.org/bot8080670068:AAG1LtOO0INbJFOXhj5--WHWRvImewP866E/deleteWebhook
+https://api.telegram.org/botYOUR_BOT_TOKEN_HERE/deleteWebhook
 ```
 
 ### Получить информацию о боте:
