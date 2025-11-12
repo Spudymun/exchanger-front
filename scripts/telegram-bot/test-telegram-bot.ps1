@@ -60,7 +60,7 @@ $script:Config = @{
     WebhookEndpoint   = "/api/webhook"
     TimeoutSeconds    = 30
     MaxRetries        = 3
-    DefaultOperatorId = 621882329  # Из .env AUTHORIZED_TELEGRAM_OPERATORS
+    DefaultOperatorId = YOUR_TELEGRAM_ID_HERE  # Из .env AUTHORIZED_TELEGRAM_OPERATORS
 }
 
 $script:Colors = @{

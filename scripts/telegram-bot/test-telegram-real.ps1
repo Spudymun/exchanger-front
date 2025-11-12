@@ -5,7 +5,7 @@
     
 .DESCRIPTION
     Скрипт для тестирования реального получения сообщений в Telegram
-    Ваш ID: 621882329 (оператор)
+    Ваш ID: YOUR_TELEGRAM_ID_HERE (оператор)
     
 .EXAMPLE
     .\scripts\test-telegram-real.ps1
@@ -48,7 +48,7 @@ function Write-Section {
 function Show-Menu {
     Write-Section "🎯 РЕАЛЬНЫЙ ТЕСТ TELEGRAM БОТА"
     
-    Write-ColorText "📱 Ваш Telegram ID: 621882329 (оператор)" -Color $script:Colors.Info
+    Write-ColorText "📱 Ваш Telegram ID: YOUR_TELEGRAM_ID_HERE (оператор)" -Color $script:Colors.Info
     Write-ColorText "🤖 Бот: @exchangego_operators_bot" -Color $script:Colors.Info
     Write-Host ""
     
