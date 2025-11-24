@@ -171,7 +171,7 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
         orderBy: { createdAt: 'desc' },
       });
 
-      return prismaOrders.map(order => this.mapPrismaToOrder(order as any));
+      return prismaOrders.map((order: PrismaOrder) => this.mapPrismaToOrder(order as any));
     } catch (error) {
       this.logger.error('PostgresOrderAdapter.findByUserId failed', {
         error: error instanceof Error ? error.message : String(error),
@@ -299,7 +299,7 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
         },
       });
 
-      return prismaOrders.map(order => this.mapPrismaToOrder(order as any));
+      return prismaOrders.map((order: PrismaOrder) => this.mapPrismaToOrder(order as any));
     } catch (error) {
       this.logger.error('PostgresOrderAdapter.findByOperator failed', {
         error: error instanceof Error ? error.message : String(error),
@@ -319,7 +319,7 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
         },
       });
 
-      return prismaOrders.map(order => this.mapPrismaToOrder(order as any));
+      return prismaOrders.map((order: PrismaOrder) => this.mapPrismaToOrder(order as any));
     } catch (error) {
       this.logger.error('PostgresOrderAdapter.findByStatus failed', {
         error: error instanceof Error ? error.message : String(error),
@@ -339,7 +339,7 @@ export class PostgresOrderAdapter extends BasePostgresAdapter implements OrderRe
         },
       });
 
-      return prismaOrders.map(order => this.mapPrismaToOrder(order as any));
+      return prismaOrders.map((order: PrismaOrder) => this.mapPrismaToOrder(order as any));
     } catch (error) {
       this.logger.error('PostgresOrderAdapter.findByCurrency failed', {
         error: error instanceof Error ? error.message : String(error),

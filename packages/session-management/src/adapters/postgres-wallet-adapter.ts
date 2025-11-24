@@ -65,7 +65,7 @@ export class PostgresWalletAdapter
         orderBy: { createdAt: 'asc' }, // FIFO order
       });
 
-      return wallets.map(wallet => this.mapPrismaToWallet(wallet));
+      return wallets.map((wallet: PrismaWallet) => this.mapPrismaToWallet(wallet));
     } catch (error) {
       this.handleError(error, 'findAvailable');
     }
@@ -82,7 +82,7 @@ export class PostgresWalletAdapter
         },
       });
 
-      return wallets.map(wallet => this.mapPrismaToWallet(wallet));
+      return wallets.map((wallet: PrismaWallet) => this.mapPrismaToWallet(wallet));
     } catch (error) {
       this.handleError(error, 'findOccupied');
     }
@@ -164,7 +164,7 @@ export class PostgresWalletAdapter
         where: { currency },
       });
 
-      return wallets.map(wallet => this.mapPrismaToWallet(wallet));
+      return wallets.map((wallet: PrismaWallet) => this.mapPrismaToWallet(wallet));
     } catch (error) {
       this.handleError(error, 'findByCurrency');
     }
@@ -303,7 +303,7 @@ export class PostgresWalletAdapter
     }
 
     const candidateWallets = wallets.filter(
-      w => w.totalOrders === firstWallet.totalOrders
+      (w: PrismaWallet) => w.totalOrders === firstWallet.totalOrders
     );
 
     if (candidateWallets.length === 0) {
@@ -343,8 +343,8 @@ export class PostgresWalletAdapter
       });
 
       return result
-        .map(item => item.currency as CryptoCurrency)
-        .filter(currency =>
+        .map((item: { currency: string }) => item.currency as CryptoCurrency)
+        .filter((currency: CryptoCurrency) =>
           CRYPTOCURRENCIES.includes(currency as (typeof CRYPTOCURRENCIES)[number])
         );
     } catch (error) {
@@ -363,9 +363,9 @@ export class PostgresWalletAdapter
       });
 
       return result
-        .map(item => item.tokenStandard)
+        .map((item: { tokenStandard: string | null }) => item.tokenStandard)
         .filter(
-          (standard): standard is string =>
+          (standard: string | null): standard is string =>
             standard !== null && standard !== undefined && standard.length > 0
         );
     } catch (error) {

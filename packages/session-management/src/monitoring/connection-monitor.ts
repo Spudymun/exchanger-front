@@ -118,10 +118,10 @@ export async function monitorConnections(prisma: PrismaClient): Promise<Connecti
       getConnectionsByApplication(prisma),
     ]);
 
-    const total = stateStats.reduce((sum, row) => sum + Number(row.count), 0);
-    const idle = Number(stateStats.find(r => r.state === 'idle')?.count || 0);
-    const active = Number(stateStats.find(r => r.state === 'active')?.count || 0);
-    const waiting = Number(stateStats.find(r => r.state === 'idle in transaction')?.count || 0);
+    const total = stateStats.reduce((sum: number, row: { state: string; count: bigint }) => sum + Number(row.count), 0);
+    const idle = Number(stateStats.find((r: { state: string; count: bigint }) => r.state === 'idle')?.count || 0);
+    const active = Number(stateStats.find((r: { state: string; count: bigint }) => r.state === 'active')?.count || 0);
+    const waiting = Number(stateStats.find((r: { state: string; count: bigint }) => r.state === 'idle in transaction')?.count || 0);
     const usagePercent = (total / maxConnections) * 100;
 
     const stats: ConnectionStats = {
@@ -132,7 +132,7 @@ export async function monitorConnections(prisma: PrismaClient): Promise<Connecti
       maxConnections,
       usagePercent,
       timestamp: new Date(),
-      byApplication: appStats.map(row => ({
+      byApplication: appStats.map((row: { application_name: string; state: string; count: bigint }) => ({
         name: row.application_name,
         count: Number(row.count),
         state: row.state,
