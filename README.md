@@ -299,6 +299,12 @@ TELEGRAM_ORDERS_CHAT_ID=-chat_id_for_orders
 # Установка зависимостей
 npm install
 
+# Генерация Prisma Client
+npm run db:generate
+
+# Сборка всех пакетов
+npm run build
+
 # Запуск в dev режиме (требует внешние PostgreSQL + Redis)
 npm run dev
 
